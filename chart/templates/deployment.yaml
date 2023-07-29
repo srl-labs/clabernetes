@@ -1,0 +1,142 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}-manager
+  namespace: {{ .Release.Namespace }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    clabernetes/app: {{ .Values.appName }}
+    clabernetes/name: "{{ .Values.appName }}-manager"
+    clabernetes/component: manager
+spec:
+  selector:
+    matchLabels:
+      clabernetes/app: {{ .Values.appName }}
+      release: {{ .Release.Name }}
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      {{- if (eq (int .Values.replicaCount) 1) }}
+      maxUnavailable: 0
+      {{- else }}
+      maxUnavailable: 1
+      {{- end }}
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: {{ .Release.Name }}
+        heritage: {{ .Release.Service }}
+        clabernetes/app: {{ .Values.appName }}
+        clabernetes/name: "{{ .Values.appName }}-manager"
+        clabernetes/component: manager
+    spec:
+      {{- if .Values.affinity }}
+      affinity:
+        {{ toYaml .Values.affinity | indent 8 }}
+      {{- else if (ge (int .Values.replicaCount) 2) }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    clabernetes/app: {{ .Values.appName }}
+                    clabernetes/name: "{{ .Values.appName }}-manager"
+                    clabernetes/component: manager
+                topologyKey: kubernetes.io/hostname
+            - weight: 50
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    clabernetes/app: {{ .Values.appName }}
+                    clabernetes/name: "{{ .Values.appName }}-manager"
+                    clabernetes/component: manager
+                topologyKey: topology.kubernetes.io/zone
+      {{- end }}
+      terminationGracePeriodSeconds: 10
+      serviceAccountName: "{{ .Values.appName }}-service-account"
+      initContainers:
+        - name: init
+          {{- if .Values.image }}
+          image: {{ .Values.image }}
+          {{- else }}
+          image: "ghcr.io/carlmontanari/clabernetes:{{ .Chart.Version }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          command: ["/clabernetes/manager", "run", "--initializer"]
+          env:
+            - name: APP_NAME
+              value: {{ .Values.appName }}
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            {{- if .Values.managerLogLevelOverride }}
+            - name: MANAGER_LOGGER_LEVEL
+              value: {{ .Values.managerLogLevel }}
+            {{- end }}
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory }}
+              cpu: {{ .Values.resources.requests.cpu }}
+            {{- if .Values.resources.limits }}
+            limits:
+              memory: {{ .Values.resources.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu }}
+            {{- end }}
+      containers:
+        - name: manager
+          {{- if .Values.image }}
+          image: {{ .Values.image }}
+          {{- else }}
+          image: "ghcr.io/carlmontanari/clabernetes:{{ .Chart.Version }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          command: ["/clabernetes/manager", "run"]
+          env:
+            - name: APP_NAME
+              value: {{ .Values.appName }}
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: CLIENT_OPERATION_TIMEOUT_MULTIPLIER
+              value: "{{ .Values.clientOperationTimeoutMultiplier }}"
+            - name: MANAGER_LOGGER_LEVEL
+              value: {{ .Values.managerLogLevel }}
+            - name: CONTROLLER_LOGGER_LEVEL
+              value: {{ .Values.controllerLogLevel }}
+            - name: LAUNCHER_LOGGER_LEVEL
+              value: {{ .Values.launcherLogLevel }}
+            - name: LAUNCHER_PULL_POLICY
+              value: "{{ .Values.launcherPullPolicy }}"
+            - name: LAUNCHER_IMAGE
+              {{- if .Values.launcherImage }}
+              value: {{ .Values.launcherImage }}
+              {{- else }}
+              value: "ghcr.io/carlmontanari/clabernetes:{{ .Chart.Version }}"
+              {{- end }}
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory }}
+              cpu: {{ .Values.resources.requests.cpu }}
+            {{- if .Values.resources.limits }}
+            limits:
+              memory: {{ .Values.resources.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu }}
+            {{- end }}

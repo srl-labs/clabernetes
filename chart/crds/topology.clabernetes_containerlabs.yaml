@@ -1,0 +1,106 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.12.1
+  name: containerlabs.topology.clabernetes
+spec:
+  group: topology.clabernetes
+  names:
+    kind: Containerlab
+    listKind: ContainerlabList
+    plural: containerlabs
+    singular: containerlab
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Containerlab represents a "normal" containerlab topology file.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ContainerlabSpec is the spec for a Containerlab topology
+              resource.
+            properties:
+              config:
+                description: Config is a "normal" containerlab configuration file.
+                type: string
+            required:
+            - config
+            type: object
+          status:
+            description: ContainerlabStatus is the status for a Containerlab topology
+              resource.
+            properties:
+              configs:
+                description: Configs is a map of node name -> clab config -- in other
+                  words, this is the original containerlab configuration broken up
+                  and modified to use multi-node topology setup (via host links+vxlan).
+                  This is stored as a raw message so we don't have any weirdness w/
+                  yaml tags instead of json tags in clab things, and so we kube builder
+                  doesnt poop itself on it.
+                type: string
+              configsHash:
+                description: ConfigsHash is a hash of the last storedConfgs data.
+                type: string
+              tunnels:
+                additionalProperties:
+                  items:
+                    description: Tunnel represents a VXLAN tunnel between clabernetes
+                      nodes (as configured by containerlab).
+                    properties:
+                      ID:
+                        description: ID is the VXLAN ID (vnid) for the tunnel.
+                        type: integer
+                      localLinkName:
+                        description: LocalLinkName is the local link name for the
+                          local end of the tunnel.
+                        type: string
+                      localNodeName:
+                        description: LocalNodeName is the name of the local node for
+                          this tunnel.
+                        type: string
+                      remoteLinkName:
+                        description: RemoteLinkName is the remote link name for the
+                          remote end of the tunnel.
+                        type: string
+                      remoteName:
+                        description: RemoteName is the name of the service to contact
+                          the remote end of the tunnel.
+                        type: string
+                      remoteNodeName:
+                        description: RemoteNodeName is the name of the remote node.
+                        type: string
+                    required:
+                    - ID
+                    - localLinkName
+                    - localNodeName
+                    - remoteLinkName
+                    - remoteName
+                    - remoteNodeName
+                    type: object
+                  type: array
+                description: Tunnels is a mapping of tunnels that need to be configured
+                  between nodes (nodes:[]tunnels).
+                type: object
+            required:
+            - configs
+            - configsHash
+            - tunnels
+            type: object
+        type: object
+    served: true
+    storage: true

@@ -1,0 +1,17 @@
+Dockerfile.launcher
+Dockerfile.manager
+.gitignore
+.gitlab-ci.yml
+.golangci.yaml
+devspace.yaml
+LICENSE
+Makefile
+README.md
+hack
+generated
+openapi
+.private
+.develop
+
+# not needed in the image obviously
+chart

@@ -1,0 +1,117 @@
+version: v2beta1
+name: clabernetes
+
+vars:
+  DEVSPACE_FLAGS: "-n clabernetes"
+
+  REGISTRY:
+    source: env
+    default: registry.gitlab.com/carlmontanari/clabernetes
+
+  PULL_POLICY: Always
+
+  IMAGE: ${REGISTRY}/clabernetes
+  DEV_IMAGE: ${REGISTRY}/clabernetes-dev
+
+  # to be set in ci
+  RELEASE_VERSION: ""
+
+localRegistry:
+  enabled: false
+
+images:
+  clabernetes:
+    image: ${IMAGE}
+    context: ../
+    dockerfile: ../Dockerfile.manager
+    rebuildStrategy: ignoreContextChanges
+    tags:
+      - dev-latest
+      - $(git describe --always --abbrev=8)
+
+  clabernetes-dev:
+    image: ${DEV_IMAGE}
+    context: ../
+    dockerfile: Dockerfile.dev
+    rebuildStrategy: ignoreContextChanges
+    tags:
+      - $(git describe --always --abbrev=8)
+
+  clabernetes-launcher:
+    image: ${IMAGE}-launcher
+    context: ../
+    dockerfile: ../Dockerfile.launcher
+    rebuildStrategy: ignoreContextChanges
+    tags:
+      - dev-latest
+      - $(git describe --always --abbrev=8)
+
+deployments:
+  clabernetes:
+    helm:
+      displayOutput: true
+      chart:
+        name: ../chart
+      values:
+        image: ${IMAGE}
+        imagePullPolicy: ${PULL_POLICY}
+
+dev:
+  clabernetes:
+    labelSelector:
+      clabernetes/app: clabernetes
+      clabernetes/component: manager
+    container: manager
+    devImage: ${DEV_IMAGE}
+    sync:
+      - path: ../.develop/:/clabernetes/.develop/
+        disableDownload: true
+      - path: ../:/clabernetes/
+        disableDownload: true
+        excludeFile: .dockerignore
+    terminal:
+      command: .develop/start.sh
+
+profiles:
+  - name: dev
+    patches:
+      - op: add
+        path: deployments.clabernetes.helm.values.managerLogLevel
+        value: debug
+      - op: add
+        path: deployments.clabernetes.helm.values.controllerLogLevel
+        value: debug
+      - op: add
+        path: deployments.clabernetes.helm.values.launcherLogLevel
+        value: debug
+      - op: add
+        path: deployments.clabernetes.helm.values.launcherPullPolicy
+        value: Always
+      - op: add
+        path: deployments.clabernetes.helm.values.launcherImage
+        value: ${IMAGE}-launcher
+      - op: add
+        path: deployments.clabernetes.helm.values.replicaCount
+        value: 1
+
+  - name: release
+    patches:
+      - op: replace
+        path: images.manager.tags
+        value:
+          - latest
+          - ${RELEASE_VERSION}
+          - $(git describe --always --abbrev=8)
+
+pipelines:
+  build:
+    # override the default build pipeline so we don't bother building dev image in ci
+    run: |
+      build_images clabernetes clabernetes-launcher
+
+  purge:
+    run: |-
+      stop_dev --all
+      purge_deployments --all
+      kubectl delete leases -n ${DEVSPACE_NAMESPACE} \
+        $(kubectl get leases -n ${DEVSPACE_NAMESPACE} 2> /dev/null | grep "clabernetes" | awk '{print $1}') 2> /dev/null || true

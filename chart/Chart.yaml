@@ -1,0 +1,17 @@
+---
+apiVersion: v2
+name: clabernetes
+description: Manage containerlab topologies in a kubernetes cluster
+home: https://gitlab.com/carlmontanari/clabernetes
+sources:
+  - https://gitlab.com/carlmontanari/clabernetes
+keywords:
+  - network
+  - containerlab
+maintainers:
+  - name: Carl Montanari
+    email: carl.r.montanari@gmail.com
+    url: https://twitter.com/carlrmontanari
+type: application
+version: 0.0.1
+dependencies: []

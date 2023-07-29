@@ -1,0 +1,172 @@
+linters-settings:
+  funlen:
+    lines: 150
+    statements: 50
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - whyNoLint
+  gocyclo:
+    min-complexity: 15
+  importas:
+    no-unaliased: true
+    alias:
+      # client-go
+      - pkg: k8s.io/client-go/dynamic/(\w+)
+        alias: clientgo$1
+      # controller-runtime
+      - pkg: sigs.k8s.io/controller-runtime
+        alias: ctrlruntime
+      # controller-runtime-client
+      - pkg: sigs.k8s.io/controller-runtime/pkg/(\w+)
+        alias: ctrlruntime$1
+      # controller-runtime-controllerutil
+      - pkg: sigs.k8s.io/controller-runtime/pkg/controller/controllerutil
+        alias: ctrlruntimeutil
+      # k8s api types
+      - pkg: k8s.io/api/(\w+)/(\w+)
+        alias: k8s$1$2
+      # cover apimachinery packages
+      - pkg: k8s.io/apimachinery/pkg/types
+        alias: apimachinerytypes
+      - pkg: k8s.io/apimachinery/pkg/apis/(\w+)/(\w+)
+        alias: $1$2
+      - pkg: k8s.io/apimachinery/pkg/api/errors
+        alias: apimachineryerrors
+      - pkg: k8s.io/apimachinery/pkg/runtime
+        alias: apimachineryruntime
+      - pkg: k8s.io/apimachinery/pkg/runtime/scheme
+        alias: apimachineryruntimescheme
+      # cover clabernetes packages
+      - pkg: gitlab.com/carlmontanari/clabernetes/(\w+)
+        alias: clabernetes$1
+      - pkg: gitlab.com/carlmontanari/clabernetes/(\w+)/(\w+)
+        alias: clabernetes$1$2
+      - pkg: gitlab.com/carlmontanari/clabernetes/(\w+)/(\w+)/(\w+)
+        alias: clabernetes$1$2$3
+  lll:
+    line-length: 100
+    tab-width: 4
+  stylecheck:
+    checks:
+      - "-ST1000"
+
+linters:
+  enable:
+    - asciicheck
+    - bodyclose
+    - decorder
+    - dogsled
+    - dupl
+    - dupword
+    - durationcheck
+    - errcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exhaustive
+    - exportloopref
+    - forbidigo
+    - forcetypeassert
+    - funlen
+    - gocheckcompilerdirectives
+    - gochecknoglobals
+    - gochecknoinits
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - godox
+    - goerr113
+    - gofmt
+    - gofumpt
+    - goimports
+    - gomnd
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - grouper
+    - importas
+    - ineffassign
+    - lll
+    - maintidx
+    - makezero
+    - misspell
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - nlreturn
+    - noctx
+    - nolintlint
+    - nolintlint
+    - prealloc
+    - predeclared
+    - reassign
+    - revive
+    - staticcheck
+    - stylecheck
+    - tenv
+    - testpackage
+    - thelper
+    - tparallel
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - wastedassign
+    - whitespace
+    - wsl
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  # https://github.com/golangci/golangci-lint/issues/2439#issuecomment-1002912465
+  exclude-use-default: false
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gomnd
+        - dupl
+        - structcheck
+        - unused
+        - unparam
+
+    # ignore globals for standard k8s things
+    - linters:
+        - gochecknoglobals
+      text: "schemeBuilder is a global variable"
+    - linters:
+        - gochecknoglobals
+      text: "localSchemeBuilder is a global variable"
+    - linters:
+        - gochecknoglobals
+      text: "SchemeGroupVersion is a global variable"
+    - linters:
+        - gochecknoglobals
+      text: "AddToScheme is a global variable"
+
+    # ignore package comments complaints in revive
+    - linters:
+        - revive
+      text: "package-comments"
+
+run:
+  go: '1.20'
+  skip-dirs:
+    - .private
+  timeout: 5m
+
+output:
+  uniq-by-line: false
+
+service:
+  golangci-lint-version: 1.52.x

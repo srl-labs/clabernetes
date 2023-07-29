@@ -1,0 +1,187 @@
+package logging
+
+import (
+	"fmt"
+	"sync"
+
+	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
+)
+
+// Instance is a logging instance managed by the Manager.
+type Instance interface {
+	Debug(f string)
+	Debugf(f string, a ...interface{})
+	Info(f string)
+	Infof(f string, a ...interface{})
+	Warn(f string)
+	Warnf(f string, a ...interface{})
+	Critical(f string)
+	Criticalf(f string, a ...interface{})
+	// Write implements io.Writer so that an instance can be used most places. Messages received
+	// via Write will always have the current formatter applied, and all messages will be queued
+	// for egress unless this logging instance's level is Disabled.
+	Write(p []byte) (n int, err error)
+	GetName() string
+	GetLevel() string
+}
+
+type instance struct {
+	lock      sync.Mutex
+	name      string
+	level     string
+	formatter Formatter
+	c         chan string
+	done      chan interface{}
+}
+
+func (i *instance) GetName() string {
+	return i.name
+}
+
+func (i *instance) GetLevel() string {
+	return i.level
+}
+
+func (i *instance) enqueue(m string) {
+	i.c <- m
+}
+
+func (i *instance) shouldLog(l string) bool {
+	switch i.level {
+	case clabernetesconstants.Disabled:
+		return false
+	case clabernetesconstants.Debug:
+		return true
+	case clabernetesconstants.Info:
+		switch l {
+		case clabernetesconstants.Info, clabernetesconstants.Warn, clabernetesconstants.Critical:
+			return true
+		default:
+			return false
+		}
+	case clabernetesconstants.Warn:
+		switch l {
+		case clabernetesconstants.Warn, clabernetesconstants.Critical:
+			return true
+		default:
+			return false
+		}
+	case clabernetesconstants.Critical:
+		if l == clabernetesconstants.Critical {
+			return true
+		}
+	}
+
+	return false
+}
+
+// Debug accepts a Debug level log message with no formatting.
+func (i *instance) Debug(f string) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	if !i.shouldLog(clabernetesconstants.Debug) {
+		return
+	}
+
+	i.enqueue(i.formatter(i, clabernetesconstants.Debug, f))
+}
+
+// Debugf accepts a Debug level log message normal fmt.Sprintf type formatting.
+func (i *instance) Debugf(f string, a ...interface{}) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	if !i.shouldLog(clabernetesconstants.Debug) {
+		return
+	}
+
+	i.enqueue(i.formatter(i, clabernetesconstants.Debug, fmt.Sprintf(f, a...)))
+}
+
+// Info accepts an Info level log message with no formatting.
+func (i *instance) Info(f string) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	if !i.shouldLog(clabernetesconstants.Info) {
+		return
+	}
+
+	i.enqueue(i.formatter(i, clabernetesconstants.Info, f))
+}
+
+// Infof accepts an Info level log message normal fmt.Sprintf type formatting.
+func (i *instance) Infof(f string, a ...interface{}) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	if !i.shouldLog(clabernetesconstants.Info) {
+		return
+	}
+
+	i.enqueue(i.formatter(i, clabernetesconstants.Info, fmt.Sprintf(f, a...)))
+}
+
+// Warn accepts a Warn level log message with no formatting.
+func (i *instance) Warn(f string) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	if !i.shouldLog(clabernetesconstants.Warn) {
+		return
+	}
+
+	i.enqueue(i.formatter(i, clabernetesconstants.Warn, f))
+}
+
+// Warnf accepts a Warn level log message normal fmt.Sprintf type formatting.
+func (i *instance) Warnf(f string, a ...interface{}) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	if !i.shouldLog(clabernetesconstants.Warn) {
+		return
+	}
+
+	i.enqueue(i.formatter(i, clabernetesconstants.Warn, fmt.Sprintf(f, a...)))
+}
+
+// Critical accepts a Critical level log message with no formatting.
+func (i *instance) Critical(f string) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	if !i.shouldLog(clabernetesconstants.Critical) {
+		return
+	}
+
+	i.enqueue(i.formatter(i, clabernetesconstants.Critical, f))
+}
+
+// Criticalf accepts a Critical level log message normal fmt.Sprintf type formatting.
+func (i *instance) Criticalf(f string, a ...interface{}) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	if !i.shouldLog(clabernetesconstants.Critical) {
+		return
+	}
+
+	i.enqueue(i.formatter(i, clabernetesconstants.Critical, fmt.Sprintf(f, a...)))
+}
+
+// Write allows a logging instance to be used as an io.Writer. Messages received via this method
+// will always be logged at informational unless the logger level is Disabled.
+func (i *instance) Write(p []byte) (n int, err error) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	if i.level == clabernetesconstants.Disabled {
+		return 0, nil
+	}
+
+	i.enqueue(i.formatter(i, clabernetesconstants.Info, string(p)))
+
+	return len(p), nil
+}

@@ -1,0 +1,19 @@
+---
+appName: clabernetes
+
+imagePullPolicy: IfNotPresent
+# image: ghcr.io/carlmontanari/clabernetes:{{ .Chart.Version }}
+# launcherImage: ghcr.io/carlmontanari/clabernetes:{{ .Chart.Version }}
+
+replicaCount: 3
+resources:
+  requests:
+    memory: 128Mi
+    cpu: 50m
+  # optionally limits
+
+clientOperationTimeoutMultiplier: 1
+managerLogLevel: info
+controllerLogLevel: info
+launcherLogLevel: info
+launcherPullPolicy: IfNotPresent
