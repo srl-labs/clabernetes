@@ -1,5 +1,9 @@
 package topology
 
+// InsecureRegistries is a slice of strings of insecure registries to configure in the launcher
+// pods.
+type InsecureRegistries []string
+
 // LinkEndpointElementCount defines the expected element count for a link endpoint slice.
 const LinkEndpointElementCount = 2
 

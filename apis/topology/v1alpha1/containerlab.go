@@ -23,6 +23,32 @@ type Containerlab struct {
 type ContainerlabSpec struct {
 	// Config is a "normal" containerlab configuration file.
 	Config string `json:"config"`
+	// InsecureRegistries is a slice of strings of insecure registries to configure in the launcher
+	// pods.
+	// +optional
+	InsecureRegistries clabernetesapistopology.InsecureRegistries `json:"insecureRegistries"`
+	// FilesFromConfigMap is a slice of FileFromConfigMap that define the configmap/path and node
+	// and path on a launcher node that the file should be mounted to. If the path is not provided
+	// the configmap is mounted in its entirety (like normal k8s things), so you *probably* want
+	// to specify the sub path unless you are sure what you're doing!
+	// +optional
+	FilesFromConfigMap []FileFromConfigMap `json:"filesFromConfigMap"`
+}
+
+// FileFromConfigMap represents a file that you would like to mount (from a configmap) in the
+// launcher pod for a given node.
+type FileFromConfigMap struct {
+	// NodeName is the name of the node (as in node from the clab topology) that the file should
+	// be mounted for.
+	NodeName string `json:"nodeName"`
+	// FilePath is the path to mount the file.
+	FilePath string `json:"filePath"`
+	// ConfigMapName is the name of the configmap to mount.
+	ConfigMapName string `json:"configMapName"`
+	// ConfigMapPath is the path/key in the configmap to mount, if not specified the configmap will
+	// be mounted without a sub-path.
+	// +optional
+	ConfigMapPath string `json:"configMapPath"`
 }
 
 // ContainerlabStatus is the status for a Containerlab topology resource.

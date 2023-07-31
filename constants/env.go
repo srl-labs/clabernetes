@@ -29,4 +29,8 @@ const (
 	// LauncherPullPolicyEnv env var that tells the controllers what pull policy to use for
 	// clabernetes (launcher) pods.
 	LauncherPullPolicyEnv = "LAUNCHER_PULL_POLICY"
+
+	// LauncherInsecureRegistries env var that tells the launcher pods which registries are
+	// insecure. Should be set by the controller via the topology spec.
+	LauncherInsecureRegistries = "LAUNCHER_INSECURE_REGISTRIES"
 )

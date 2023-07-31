@@ -83,7 +83,7 @@ func (c *Controller) processConfig(
 			}
 
 			if endpointA.NodeName == nodeName && endpointB.NodeName == nodeName {
-				// link loops back to ourself, no need to do overlay things just append the link
+				// link loops back to ourselves, no need to do overlay things just append the link
 				clabernetesConfigs[nodeName].Topology.Links = append(
 					clabernetesConfigs[nodeName].Topology.Links,
 					link,

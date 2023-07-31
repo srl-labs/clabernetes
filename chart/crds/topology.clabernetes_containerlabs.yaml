@@ -38,6 +38,42 @@ spec:
               config:
                 description: Config is a "normal" containerlab configuration file.
                 type: string
+              filesFromConfigMap:
+                description: FilesFromConfigMap is a slice of FileFromConfigMap that
+                  define the configmap/path and node and path on a launcher node that
+                  the file should be mounted to.
+                items:
+                  description: FileFromConfigMap represents a file that you would
+                    like to mount (from a configmap) in the launcher pod for a given
+                    node.
+                  properties:
+                    configMapName:
+                      description: ConfigMapName is the name of the configmap to mount.
+                      type: string
+                    configMapPath:
+                      description: ConfigMapPath is the path/key in the configmap
+                        to mount, if not specified the configmap will be mounted without
+                        a sub-path.
+                      type: string
+                    filePath:
+                      description: FilePath is the path to mount the file.
+                      type: string
+                    nodeName:
+                      description: NodeName is the name of the node (as in node from
+                        the clab topology) that the file should be mounted for.
+                      type: string
+                  required:
+                  - configMapName
+                  - filePath
+                  - nodeName
+                  type: object
+                type: array
+              insecureRegistries:
+                description: InsecureRegistries is a slice of strings of insecure
+                  registries to configure in the launcher pods.
+                items:
+                  type: string
+                type: array
             required:
             - config
             type: object

@@ -3,6 +3,9 @@ package containerlab
 import (
 	"context"
 
+	containerlabclab "github.com/srl-labs/containerlab/clab"
+	"gopkg.in/yaml.v3"
+
 	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
 
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -35,6 +38,19 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, nil
 	}
 
+	preReconcileConfigs := make(map[string]*containerlabclab.Config)
+
+	if clab.Status.Configs != "" {
+		err = yaml.Unmarshal([]byte(clab.Status.Configs), &preReconcileConfigs)
+		if err != nil {
+			c.BaseController.Log.Criticalf(
+				"failed parsing unmarshalling previously stored config, error: ", err,
+			)
+
+			return ctrlruntime.Result{}, err
+		}
+	}
+
 	// load the clab topo to make sure its all good
 	clabTopo, err := clabernetesutil.LoadContainerlabTopology(clab.Spec.Config)
 	if err != nil {
@@ -57,7 +73,7 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, err
 	}
 
-	err = c.reconcileDeployments(ctx, clab, configs)
+	err = c.reconcileDeployments(ctx, clab, preReconcileConfigs, configs)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed reconciling clabernetes deployments, error: ", err)
 

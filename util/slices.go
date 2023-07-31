@@ -20,3 +20,14 @@ func StringSliceDifference(a, b []string) []string {
 
 	return diff
 }
+
+// StringSliceContains returns true if the value val is in the string slice ss, otherwise false.
+func StringSliceContains(ss []string, val string) bool {
+	for _, s := range ss {
+		if s == val {
+			return true
+		}
+	}
+
+	return false
+}

@@ -42,6 +42,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.ContainerlabStatus": schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
 			ref,
 		),
+		"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.FileFromConfigMap": schema_clabernetes_apis_topology_v1alpha1_FileFromConfigMap(
+			ref,
+		),
 	}
 }
 
@@ -168,10 +171,43 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 							Format:      "",
 						},
 					},
+					"insecureRegistries": {
+						SchemaProps: spec.SchemaProps{
+							Description: "InsecureRegistries is a slice of strings of insecure registries to configure in the launcher pods.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"filesFromConfigMap": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FilesFromConfigMap is a slice of FileFromConfigMap that define the configmap/path and node and path on a launcher node that the file should be mounted to.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref: ref(
+											"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.FileFromConfigMap",
+										),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"config"},
 			},
 		},
+		Dependencies: []string{
+			"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.FileFromConfigMap"},
 	}
 }
 
@@ -229,5 +265,53 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
 		},
 		Dependencies: []string{
 			"gitlab.com/carlmontanari/clabernetes/apis/topology.Tunnel"},
+	}
+}
+
+func schema_clabernetes_apis_topology_v1alpha1_FileFromConfigMap(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "FileFromConfigMap represents a file that you would like to mount (from a configmap) in the launcher pod for a given node.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"nodeName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NodeName is the name of the node (as in node from the clab topology) that the file should be mounted for.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"filePath": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FilePath is the path to mount the file.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"configMapName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ConfigMapName is the name of the configmap to mount.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"configMapPath": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ConfigMapPath is the path/key in the configmap to mount, if not specified the configmap will be mounted without a sub-path.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"nodeName", "filePath", "configMapName"},
+			},
+		},
 	}
 }

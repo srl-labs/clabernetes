@@ -264,7 +264,7 @@ func renderService(
 			Ports: []k8scorev1.ServicePort{
 				{
 					Name:     "vxlan",
-					Protocol: "TCP",
+					Protocol: "UDP",
 					Port:     clabernetesconstants.VXLANPort,
 					TargetPort: intstr.IntOrString{
 						IntVal: clabernetesconstants.VXLANPort,

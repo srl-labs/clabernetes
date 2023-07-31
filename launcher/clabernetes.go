@@ -1,12 +1,15 @@
 package launcher
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"math/rand"
 	"net"
 	"os"
 	"os/exec"
+	"strings"
+	"text/template"
 	"time"
 
 	claberneteserrors "gitlab.com/carlmontanari/clabernetes/errors"
@@ -64,9 +67,18 @@ type clabernetes struct {
 func (c *clabernetes) startup() {
 	c.logger.Info("starting clabernetes...")
 
+	c.logger.Debug("configure insecure registries if requested...")
+
+	err := c.handleInsecureRegistries()
+	if err != nil {
+		c.logger.Criticalf("failed configuring insecure docker registries, err: %s", err)
+
+		clabernetesutil.Panic(err.Error())
+	}
+
 	c.logger.Debug("ensuring docker is running...")
 
-	err := c.startDocker()
+	err = c.startDocker()
 	if err != nil {
 		c.logger.Criticalf("failed ensuring docker is running, err: %s", err)
 
@@ -122,6 +134,51 @@ func (c *clabernetes) startup() {
 	c.logger.Info("running for forever or until sigint...")
 
 	<-c.ctx.Done()
+}
+
+func (c *clabernetes) handleInsecureRegistries() error {
+	insecureRegistries := os.Getenv(clabernetesconstants.LauncherInsecureRegistries)
+
+	if insecureRegistries == "" {
+		return nil
+	}
+
+	splitRegistries := strings.Split(insecureRegistries, ",")
+
+	quotedRegistries := make([]string, len(splitRegistries))
+
+	for idx, elem := range splitRegistries {
+		quotedRegistries[idx] = fmt.Sprintf("%q", elem)
+	}
+
+	templateVars := struct {
+		InsecureRegistries string
+	}{
+		InsecureRegistries: strings.Join(quotedRegistries, ","),
+	}
+
+	t, err := template.ParseFS(Assets, "assets/docker-daemon.json.template")
+	if err != nil {
+		return err
+	}
+
+	var rendered bytes.Buffer
+
+	err = t.Execute(&rendered, templateVars)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(
+		"/etc/docker/daemon.json",
+		rendered.Bytes(),
+		clabernetesconstants.PermissionsEveryoneRead,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *clabernetes) startDocker() error {
@@ -184,6 +241,8 @@ func (c *clabernetes) runClabVxlanTools(
 	}
 
 	resolvedVxlanRemote := resolvedVxlanRemotes[0].String()
+
+	c.logger.Debugf("resolved remote vxlan tunnel service address as '%s'", resolvedVxlanRemote)
 
 	cmd := exec.Command( //nolint:gosec
 		"containerlab",

@@ -4,6 +4,10 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
+	"time"
+
+	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 
 	clabernetescontrollers "gitlab.com/carlmontanari/clabernetes/controllers"
 	claberneteserrors "gitlab.com/carlmontanari/clabernetes/errors"
@@ -26,9 +30,10 @@ import (
 func (c *Controller) reconcileDeployments(
 	ctx context.Context,
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	clabernetesConfigs map[string]*containerlabclab.Config,
+	preReconcileConfigs,
+	configs map[string]*containerlabclab.Config,
 ) error {
-	deployments, err := c.resolveDeployments(ctx, clab, clabernetesConfigs)
+	deployments, err := c.resolveDeployments(ctx, clab, configs)
 	if err != nil {
 		return err
 	}
@@ -43,13 +48,35 @@ func (c *Controller) reconcileDeployments(
 		return err
 	}
 
+	nodesNeedingRestart := determineNodesNeedingRestart(preReconcileConfigs, configs)
+	if len(nodesNeedingRestart) == 0 {
+		return nil
+	}
+
+	for _, nodeName := range nodesNeedingRestart {
+		if !clabernetesutil.StringSliceContains(deployments.Missing, nodeName) {
+			// is a new node, don't restart
+			continue
+		}
+
+		c.BaseController.Log.Infof(
+			"restarting the nodes '%s' as configurations have changed",
+			nodesNeedingRestart,
+		)
+
+		err = c.restartDeploymentForNode(ctx, clab, nodeName)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 func (c *Controller) resolveDeployments(
 	ctx context.Context,
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	clabernetesConfigs map[string]*containerlabclab.Config,
+	configs map[string]*containerlabclab.Config,
 ) (*clabernetescontrollers.ResolvedDeployments, error) {
 	ownedDeployments := &k8sappsv1.DeploymentList{}
 
@@ -92,11 +119,11 @@ func (c *Controller) resolveDeployments(
 		deployments.Current[nodeName] = &ownedDeployments.Items[i]
 	}
 
-	allNodes := make([]string, len(clabernetesConfigs))
+	allNodes := make([]string, len(configs))
 
 	var nodeIdx int
 
-	for nodeName := range clabernetesConfigs {
+	for nodeName := range configs {
 		allNodes[nodeIdx] = nodeName
 
 		nodeIdx++
@@ -287,7 +314,7 @@ func renderDeployment(
 								{
 									Name:          "vxlan",
 									ContainerPort: clabernetesconstants.VXLANPort,
-									Protocol:      "TCP",
+									Protocol:      "UDP",
 								},
 							},
 							VolumeMounts: []k8scorev1.VolumeMount{
@@ -345,6 +372,73 @@ func renderDeployment(
 				},
 			},
 		},
+	}
+
+	deployment = renderDeploymentAddFilesFromConfigMaps(nodeName, clab, deployment)
+
+	deployment = renderDeploymentAddInsecureRegistries(clab, deployment)
+
+	return deployment
+}
+
+func renderDeploymentAddFilesFromConfigMaps(
+	nodeName string,
+	clab *clabernetesapistopologyv1alpha1.Containerlab,
+	deployment *k8sappsv1.Deployment,
+) *k8sappsv1.Deployment {
+	podVolumes := make([]clabernetesapistopologyv1alpha1.FileFromConfigMap, 0)
+
+	for _, fileFromConfigMap := range clab.Spec.FilesFromConfigMap {
+		if fileFromConfigMap.NodeName != nodeName {
+			continue
+		}
+
+		podVolumes = append(podVolumes, fileFromConfigMap)
+	}
+
+	for _, podVolume := range podVolumes {
+		deployment.Spec.Template.Spec.Volumes = append(
+			deployment.Spec.Template.Spec.Volumes,
+			k8scorev1.Volume{
+				Name: podVolume.ConfigMapName,
+				VolumeSource: k8scorev1.VolumeSource{
+					ConfigMap: &k8scorev1.ConfigMapVolumeSource{
+						LocalObjectReference: k8scorev1.LocalObjectReference{
+							Name: podVolume.ConfigMapName,
+						},
+					},
+				},
+			},
+		)
+
+		volumeMount := k8scorev1.VolumeMount{
+			Name:      podVolume.ConfigMapName,
+			ReadOnly:  false,
+			MountPath: fmt.Sprintf("/clabernetes/%s", podVolume.FilePath),
+			SubPath:   podVolume.ConfigMapPath,
+		}
+
+		deployment.Spec.Template.Spec.Containers[0].VolumeMounts = append(
+			deployment.Spec.Template.Spec.Containers[0].VolumeMounts,
+			volumeMount,
+		)
+	}
+
+	return deployment
+}
+
+func renderDeploymentAddInsecureRegistries(
+	clab *clabernetesapistopologyv1alpha1.Containerlab,
+	deployment *k8sappsv1.Deployment,
+) *k8sappsv1.Deployment {
+	if len(clab.Spec.InsecureRegistries) > 0 {
+		deployment.Spec.Template.Spec.Containers[0].Env = append(
+			deployment.Spec.Template.Spec.Containers[0].Env,
+			k8scorev1.EnvVar{
+				Name:  clabernetesconstants.LauncherInsecureRegistries,
+				Value: strings.Join(clab.Spec.InsecureRegistries, ","),
+			},
+		)
 	}
 
 	return deployment
@@ -443,4 +537,69 @@ func (c *Controller) enforceDeploymentOwnerReference(
 	}
 
 	return nil
+}
+
+func determineNodesNeedingRestart(
+	preReconcileConfigs,
+	configs map[string]*containerlabclab.Config,
+) []string {
+	var nodesNeedingRestart []string
+
+	for nodeName, nodeConfig := range configs {
+		_, nodeExistedBefore := preReconcileConfigs[nodeName]
+		if !nodeExistedBefore {
+			continue
+		}
+
+		if !reflect.DeepEqual(nodeConfig, preReconcileConfigs[nodeName]) {
+			nodesNeedingRestart = append(
+				nodesNeedingRestart,
+				nodeName,
+			)
+		}
+	}
+
+	return nodesNeedingRestart
+}
+
+func (c *Controller) restartDeploymentForNode(
+	ctx context.Context,
+	clab *clabernetesapistopologyv1alpha1.Containerlab,
+	nodeName string,
+) error {
+	deploymentName := fmt.Sprintf("%s-%s", clab.Name, nodeName)
+
+	nodeDeployment := &k8sappsv1.Deployment{}
+
+	err := c.BaseController.Client.Get(
+		ctx,
+		apimachinerytypes.NamespacedName{
+			Namespace: clab.Namespace,
+			Name:      deploymentName,
+		},
+		nodeDeployment,
+	)
+	if err != nil {
+		if apimachineryerrors.IsNotFound(err) {
+			c.BaseController.Log.Warnf(
+				"could not find deployment '%s', cannot restart after config change,"+
+					" this should not happen",
+				deploymentName,
+			)
+
+			return nil
+		}
+
+		return err
+	}
+
+	if nodeDeployment.Spec.Template.ObjectMeta.Annotations == nil {
+		nodeDeployment.Spec.Template.ObjectMeta.Annotations = map[string]string{}
+	}
+
+	now := time.Now().Format(time.RFC3339)
+
+	nodeDeployment.Spec.Template.ObjectMeta.Annotations["kubectl.kubernetes.io/restartedAt"] = now
+
+	return c.BaseController.Client.Update(ctx, nodeDeployment)
 }
