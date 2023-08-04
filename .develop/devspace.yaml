@@ -10,8 +10,11 @@ vars:
 
   PULL_POLICY: Always
 
-  IMAGE: ${REGISTRY}/clabernetes
-  DEV_IMAGE: ${REGISTRY}/clabernetes-dev
+  CLABERNETES: clabernetes
+  IMAGE_BASE: ${REGISTRY}/${CLABERNETES}
+  MANAGER_IMAGE: ${REGISTRY}/${CLABERNETES}-manager
+  MANAGER_DEV_IMAGE: ${MANAGER_IMAGE}-dev
+  LAUNCHER_IMAGE: ${REGISTRY}/${CLABERNETES}-launcher
 
   # to be set in ci
   RELEASE_VERSION: ""
@@ -21,7 +24,7 @@ localRegistry:
 
 images:
   clabernetes:
-    image: ${IMAGE}
+    image: ${MANAGER_IMAGE}
     context: ../
     dockerfile: ../Dockerfile.manager
     rebuildStrategy: ignoreContextChanges
@@ -30,7 +33,7 @@ images:
       - $(git describe --always --abbrev=8)
 
   clabernetes-dev:
-    image: ${DEV_IMAGE}
+    image: ${MANAGER_DEV_IMAGE}
     context: ../
     dockerfile: Dockerfile.dev
     rebuildStrategy: ignoreContextChanges
@@ -38,7 +41,7 @@ images:
       - $(git describe --always --abbrev=8)
 
   clabernetes-launcher:
-    image: ${IMAGE}-launcher
+    image: ${LAUNCHER_IMAGE}
     context: ../
     dockerfile: ../Dockerfile.launcher
     rebuildStrategy: ignoreContextChanges
@@ -53,7 +56,7 @@ deployments:
       chart:
         name: ../chart
       values:
-        image: ${IMAGE}
+        image: ${MANAGER_IMAGE}
         imagePullPolicy: ${PULL_POLICY}
 
 dev:
@@ -62,7 +65,7 @@ dev:
       clabernetes/app: clabernetes
       clabernetes/component: manager
     container: manager
-    devImage: ${DEV_IMAGE}
+    devImage: ${MANAGER_DEV_IMAGE}
     sync:
       - path: ../.develop/:/clabernetes/.develop/
         disableDownload: true
@@ -89,7 +92,7 @@ profiles:
         value: Always
       - op: add
         path: deployments.clabernetes.helm.values.launcherImage
-        value: ${IMAGE}-launcher
+        value: ${LAUNCHER_IMAGE}
       - op: add
         path: deployments.clabernetes.helm.values.replicaCount
         value: 1
