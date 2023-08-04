@@ -67,7 +67,7 @@ spec:
           {{- if .Values.image }}
           image: {{ .Values.image }}
           {{- else }}
-          image: "ghcr.io/carlmontanari/clabernetes:{{ .Chart.Version }}"
+          image: "ghcr.io/carlmontanari/clabernetes/clabernetes-manager:{{ .Chart.Version }}"
           {{- end }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           command: ["/clabernetes/manager", "run", "--initializer"]
@@ -100,7 +100,7 @@ spec:
           {{- if .Values.image }}
           image: {{ .Values.image }}
           {{- else }}
-          image: "ghcr.io/carlmontanari/clabernetes:{{ .Chart.Version }}"
+          image: "ghcr.io/carlmontanari/clabernetes/clabernetes-manager:{{ .Chart.Version }}"
           {{- end }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           command: ["/clabernetes/manager", "run"]

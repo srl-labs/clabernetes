@@ -2,8 +2,8 @@
 appName: clabernetes
 
 imagePullPolicy: IfNotPresent
-# image: ghcr.io/carlmontanari/clabernetes:{{ .Chart.Version }}
-# launcherImage: ghcr.io/carlmontanari/clabernetes:{{ .Chart.Version }}
+# image: ghcr.io/carlmontanari/clabernetes/clabernetes-manager:{{ .Chart.Version }}
+# launcherImage: ghcr.io/carlmontanari/clabernetes/clabernetes-launcher:{{ .Chart.Version }}
 
 replicaCount: 3
 resources:
