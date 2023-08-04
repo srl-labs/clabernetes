@@ -13,6 +13,7 @@ variables:
   DEVSPACE_VERSION: v6.3.2
   HELM_VERSION: 3.11.3-r0
   GITHUB_REGISTRY_USER: carlmontanari
+  GITLAB_REGISTRY_USER: clabernetes-registry-write-token
 
 .install_go_lint_tools: &install_go_lint_tools
   - go install mvdan.cc/gofumpt@$GOFUMPT_VERSION
@@ -40,6 +41,7 @@ variables:
 
 .registry_login: &registry_login
   - docker login -u $GITHUB_REGISTRY_USER -p $GITHUB_REGISTRY_TOKEN ghcr.io
+  - docker login -u $GITLAB_REGISTRY_USER -p $GITLAB_REGISTRY_TOKEN $CI_REGISTRY
 
 .build_release_template: &build_release_template
   image: docker:24.0.2
