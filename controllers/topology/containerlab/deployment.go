@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
+
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 
 	clabernetescontrollers "gitlab.com/carlmontanari/clabernetes/controllers"
@@ -16,8 +18,6 @@ import (
 
 	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
-
-	containerlabclab "github.com/srl-labs/containerlab/clab"
 
 	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
 	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
@@ -31,7 +31,7 @@ func (c *Controller) reconcileDeployments(
 	ctx context.Context,
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
 	preReconcileConfigs,
-	configs map[string]*containerlabclab.Config,
+	configs map[string]*clabernetescontainerlab.Config,
 ) error {
 	deployments, err := c.resolveDeployments(ctx, clab, configs)
 	if err != nil {
@@ -76,7 +76,7 @@ func (c *Controller) reconcileDeployments(
 func (c *Controller) resolveDeployments(
 	ctx context.Context,
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	configs map[string]*containerlabclab.Config,
+	configs map[string]*clabernetescontainerlab.Config,
 ) (*clabernetescontrollers.ResolvedDeployments, error) {
 	ownedDeployments := &k8sappsv1.DeploymentList{}
 
@@ -541,7 +541,7 @@ func (c *Controller) enforceDeploymentOwnerReference(
 
 func determineNodesNeedingRestart(
 	preReconcileConfigs,
-	configs map[string]*containerlabclab.Config,
+	configs map[string]*clabernetescontainerlab.Config,
 ) []string {
 	var nodesNeedingRestart []string
 

@@ -4,6 +4,8 @@ COLOR_RED="\033[0;31m"
 COLOR_CYAN="\033[0;36m"
 COLOR_RESET="\033[0m"
 
+RUN_CMD="go run cmd/clabernetes/main.go run"
+
 go mod tidy
 
 echo -e "${COLOR_RED}
@@ -17,8 +19,11 @@ echo -e "${COLOR_RED}
 
 ${COLOR_RESET}
 
-To run: ${COLOR_CYAN}go run main.go run${COLOR_RESET}
+To run: ${COLOR_CYAN}${RUN_CMD}${COLOR_RESET}
 
 "
+
+export HISTFILE=/tmp/.bash_history
+history -s "$RUN_CMD"
 
 bash

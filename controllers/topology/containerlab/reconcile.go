@@ -3,10 +3,9 @@ package containerlab
 import (
 	"context"
 
-	containerlabclab "github.com/srl-labs/containerlab/clab"
-	"gopkg.in/yaml.v3"
+	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
 
-	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
+	"gopkg.in/yaml.v3"
 
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
@@ -38,7 +37,7 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, nil
 	}
 
-	preReconcileConfigs := make(map[string]*containerlabclab.Config)
+	preReconcileConfigs := make(map[string]*clabernetescontainerlab.Config)
 
 	if clab.Status.Configs != "" {
 		err = yaml.Unmarshal([]byte(clab.Status.Configs), &preReconcileConfigs)
@@ -52,7 +51,7 @@ func (c *Controller) Reconcile(
 	}
 
 	// load the clab topo to make sure its all good
-	clabTopo, err := clabernetesutil.LoadContainerlabTopology(clab.Spec.Config)
+	clabTopo, err := clabernetescontainerlab.LoadContainerlabTopology(clab.Spec.Config)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed parsing containerlab config, error: ", err)
 

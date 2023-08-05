@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
+
 	"gopkg.in/yaml.v3"
 
 	clabernetesapistopology "gitlab.com/carlmontanari/clabernetes/apis/topology"
 
-	containerlabclab "github.com/srl-labs/containerlab/clab"
-	containerlabtypes "github.com/srl-labs/containerlab/types"
 	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
 	claberneteserrors "gitlab.com/carlmontanari/clabernetes/errors"
 	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
@@ -17,22 +17,22 @@ import (
 
 func (c *Controller) processConfig(
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	clabTopo *containerlabtypes.Topology,
+	clabTopo *clabernetescontainerlab.Topology,
 ) (
-	clabernetesConfigs map[string]*containerlabclab.Config,
+	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
 	clabernetesTunnels map[string][]*clabernetesapistopology.Tunnel,
 	shouldUpdate bool,
 	err error,
 ) {
-	clabernetesConfigs = make(map[string]*containerlabclab.Config)
+	clabernetesConfigs = make(map[string]*clabernetescontainerlab.Config)
 
 	tunnels := make(map[string][]*clabernetesapistopology.Tunnel)
 
 	for nodeName, nodeDefinition := range clabTopo.Nodes {
-		clabernetesConfigs[nodeName] = &containerlabclab.Config{
+		clabernetesConfigs[nodeName] = &clabernetescontainerlab.Config{
 			Name: fmt.Sprintf("clabernetes-%s", nodeName),
-			Topology: &containerlabtypes.Topology{
-				Nodes: map[string]*containerlabtypes.NodeDefinition{
+			Topology: &clabernetescontainerlab.Topology{
+				Nodes: map[string]*clabernetescontainerlab.NodeDefinition{
 					nodeName: nodeDefinition,
 				},
 				Links: nil,
@@ -102,8 +102,8 @@ func (c *Controller) processConfig(
 
 			clabernetesConfigs[nodeName].Topology.Links = append(
 				clabernetesConfigs[nodeName].Topology.Links,
-				&containerlabtypes.LinkDefinition{
-					LinkConfig: containerlabtypes.LinkConfig{
+				&clabernetescontainerlab.LinkDefinition{
+					LinkConfig: clabernetescontainerlab.LinkConfig{
 						Endpoints: []string{
 							fmt.Sprintf(
 								"%s:%s",
