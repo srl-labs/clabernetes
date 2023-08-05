@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/srl-labs/containerlab/types"
+	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
+
 	clabernetesapistopology "gitlab.com/carlmontanari/clabernetes/apis/topology"
 	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
 
 	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	containerlabclab "github.com/srl-labs/containerlab/clab"
 
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,7 +24,7 @@ import (
 func (c *Controller) reconcileConfigMap(
 	ctx context.Context,
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	clabernetesConfigs map[string]*containerlabclab.Config,
+	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
 	tunnels map[string][]*clabernetesapistopology.Tunnel,
 ) error {
 	configMap := &k8scorev1.ConfigMap{}
@@ -46,7 +45,7 @@ func (c *Controller) reconcileConfigMap(
 
 func (c *Controller) renderConfigMap(
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	clabernetesConfigs map[string]*containerlabclab.Config,
+	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
 	tunnels map[string][]*clabernetesapistopology.Tunnel,
 ) (*k8scorev1.ConfigMap, error) {
 	configMap := &k8scorev1.ConfigMap{
@@ -62,10 +61,6 @@ func (c *Controller) renderConfigMap(
 			p := clabernetesconstants.Clabernetes
 
 			nodeTopo.Prefix = &p
-		}
-
-		if nodeTopo.Mgmt == nil {
-			nodeTopo.Mgmt = &types.MgmtNet{}
 		}
 
 		yamlNodeTopo, err := yaml.Marshal(nodeTopo)
@@ -91,7 +86,7 @@ func (c *Controller) renderConfigMap(
 func (c *Controller) createConfigMap(
 	ctx context.Context,
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	clabernetesConfigs map[string]*containerlabclab.Config,
+	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
 	tunnels map[string][]*clabernetesapistopology.Tunnel,
 ) error {
 	configMap, err := c.renderConfigMap(clab, clabernetesConfigs, tunnels)
@@ -110,7 +105,7 @@ func (c *Controller) createConfigMap(
 func (c *Controller) enforceConfigMap(
 	ctx context.Context,
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	clabernetesConfigs map[string]*containerlabclab.Config,
+	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
 	tunnels map[string][]*clabernetesapistopology.Tunnel,
 	actual *k8scorev1.ConfigMap,
 ) error {

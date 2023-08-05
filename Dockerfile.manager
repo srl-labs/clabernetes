@@ -4,7 +4,7 @@ WORKDIR /clabernetes
 
 RUN mkdir certificates build
 
-COPY main.go main.go
+COPY cmd/clabernetes/main.go main.go
 
 COPY . .
 

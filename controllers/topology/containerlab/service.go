@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"reflect"
 
+	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
+
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	containerlabclab "github.com/srl-labs/containerlab/clab"
 	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
 	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
 	clabernetescontrollers "gitlab.com/carlmontanari/clabernetes/controllers"
@@ -24,7 +25,7 @@ import (
 func (c *Controller) reconcileServices(
 	ctx context.Context,
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	clabernetesConfigs map[string]*containerlabclab.Config,
+	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
 ) error {
 	services, err := c.resolveServices(ctx, clab, clabernetesConfigs)
 	if err != nil {
@@ -47,7 +48,7 @@ func (c *Controller) reconcileServices(
 func (c *Controller) resolveServices(
 	ctx context.Context,
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	clabernetesConfigs map[string]*containerlabclab.Config,
+	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
 ) (*clabernetescontrollers.ResolvedServices, error) {
 	ownedServices := &k8scorev1.ServiceList{}
 
