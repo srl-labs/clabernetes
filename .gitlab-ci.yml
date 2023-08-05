@@ -11,7 +11,7 @@ variables:
   GOLINES_VERSION: v0.11.0
   GOLANGCI_LINT_VERSION: v1.53.3
   DEVSPACE_VERSION: v6.3.2
-  HELM_VERSION: 3.11.3-r0
+  HELM_VERSION: "3.11"
   GITHUB_REGISTRY_USER: carlmontanari
   GITLAB_REGISTRY_USER: clabernetes-registry-write-token
 
@@ -32,7 +32,7 @@ variables:
     install -c -m 0755 devspace /usr/local/bin
 
 .install_helm: &install_helm
-  - apk add helm=$HELM_VERSION
+  - apk add helm~=$HELM_VERSION
 
 .install_release_tool: &install_release_tool
   - curl --location --output /usr/local/bin/release-cli
