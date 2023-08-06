@@ -137,6 +137,13 @@ func (in *ContainerlabStatus) DeepCopyInto(out *ContainerlabStatus) {
 			(*out)[key] = outVal
 		}
 	}
+	if in.NodeExposedPorts != nil {
+		in, out := &in.NodeExposedPorts, &out.NodeExposedPorts
+		*out = make(map[string]topology.ExposedPorts, len(*in))
+		for key, val := range *in {
+			(*out)[key] = *val.DeepCopy()
+		}
+	}
 	return
 }
 

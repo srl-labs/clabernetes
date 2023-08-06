@@ -171,6 +171,14 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 							Format:      "",
 						},
 					},
+					"disableExpose": {
+						SchemaProps: spec.SchemaProps{
+							Description: "DisableExpose indicates if exposing nodes via LoadBalancer service should be disabled, by default any mapped ports in a containerlab topology will be exposed.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"insecureRegistries": {
 						SchemaProps: spec.SchemaProps{
 							Description: "InsecureRegistries is a slice of strings of insecure registries to configure in the launcher pods.",
@@ -187,8 +195,13 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 						},
 					},
 					"filesFromConfigMap": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Description: "FilesFromConfigMap is a slice of FileFromConfigMap that define the configmap/path and node and path on a launcher node that the file should be mounted to.",
+							Description: "FilesFromConfigMap is a slice of FileFromConfigMap that define the configmap/path and node and path on a launcher node that the file should be mounted to. If the path is not provided the configmap is mounted in its entirety (like normal k8s things), so you *probably* want to specify the sub path unless you are sure what you're doing!",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -259,12 +272,29 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
 							},
 						},
 					},
+					"nodeExposedPorts": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NodeExposedPorts holds a map of (containerlab) nodes and their exposed ports (via load balancer).",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref: ref(
+											"gitlab.com/carlmontanari/clabernetes/apis/topology.ExposedPorts",
+										),
+									},
+								},
+							},
+						},
+					},
 				},
-				Required: []string{"configs", "configsHash", "tunnels"},
+				Required: []string{"configs", "configsHash", "tunnels", "nodeExposedPorts"},
 			},
 		},
 		Dependencies: []string{
-			"gitlab.com/carlmontanari/clabernetes/apis/topology.Tunnel"},
+			"gitlab.com/carlmontanari/clabernetes/apis/topology.ExposedPorts", "gitlab.com/carlmontanari/clabernetes/apis/topology.Tunnel"},
 	}
 }
 

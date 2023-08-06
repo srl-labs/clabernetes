@@ -23,6 +23,10 @@ type Containerlab struct {
 type ContainerlabSpec struct {
 	// Config is a "normal" containerlab configuration file.
 	Config string `json:"config"`
+	// DisableExpose indicates if exposing nodes via LoadBalancer service should be disabled, by
+	// default any mapped ports in a containerlab topology will be exposed.
+	// +optional
+	DisableExpose bool `json:"disableExpose"`
 	// InsecureRegistries is a slice of strings of insecure registries to configure in the launcher
 	// pods.
 	// +optional
@@ -31,6 +35,7 @@ type ContainerlabSpec struct {
 	// and path on a launcher node that the file should be mounted to. If the path is not provided
 	// the configmap is mounted in its entirety (like normal k8s things), so you *probably* want
 	// to specify the sub path unless you are sure what you're doing!
+	// +listType=atomic
 	// +optional
 	FilesFromConfigMap []FileFromConfigMap `json:"filesFromConfigMap"`
 }
@@ -62,6 +67,9 @@ type ContainerlabStatus struct {
 	ConfigsHash string `json:"configsHash"`
 	// Tunnels is a mapping of tunnels that need to be configured between nodes (nodes:[]tunnels).
 	Tunnels map[string][]*clabernetesapistopology.Tunnel `json:"tunnels"`
+	// NodeExposedPorts holds a map of (containerlab) nodes and their exposed ports
+	// (via load balancer).
+	NodeExposedPorts map[string]clabernetesapistopology.ExposedPorts `json:"nodeExposedPorts"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
