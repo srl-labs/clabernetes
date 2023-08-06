@@ -14,6 +14,7 @@ const (
 	insecureRegistries   = "insecureRegistries"
 	debug                = "debug"
 	quiet                = "quiet"
+	stdout               = "stdout"
 )
 
 // Entrypoint returns the clabernetes clabverter entrypoint.
@@ -61,6 +62,13 @@ func Entrypoint() *cli.App {
 				Required: false,
 				Value:    false,
 			},
+			&cli.BoolFlag{
+				Name: stdout,
+				Usage: "print all rendered manifests to stdout, if set," +
+					" output not written to disk",
+				Required: false,
+				Value:    false,
+			},
 		},
 		Action: func(c *cli.Context) error {
 			err := clabernetesclabverter.MustNewClabverter(
@@ -70,6 +78,7 @@ func Entrypoint() *cli.App {
 				c.String(insecureRegistries),
 				c.Bool(debug),
 				c.Bool(quiet),
+				c.Bool(stdout),
 			).Clabvert()
 
 			claberneteslogging.GetManager().Flush()

@@ -45,7 +45,8 @@ func MustNewClabverter(
 	destinationNamespace,
 	insecureRegistries string,
 	debug,
-	quiet bool,
+	quiet,
+	stdout bool,
 ) *Clabverter {
 	logLevel := clabernetesconstants.Info
 
@@ -68,6 +69,7 @@ func MustNewClabverter(
 		logger:                  clabverterLogger,
 		topologyFile:            topologyFile,
 		outputDirectory:         outputDirectory,
+		stdout:                  stdout,
 		destinationNamespace:    destinationNamespace,
 		insecureRegistries:      strings.Split(insecureRegistries, ","),
 		startupConfigConfigMaps: make(map[string]topologyConfigMapTemplateVars),
@@ -80,8 +82,10 @@ func MustNewClabverter(
 type Clabverter struct {
 	logger claberneteslogging.Instance
 
-	topologyFile         string
-	outputDirectory      string
+	topologyFile    string
+	outputDirectory string
+	stdout          bool
+
 	destinationNamespace string
 
 	insecureRegistries []string
@@ -305,17 +309,30 @@ func (c *Clabverter) handleStartupConfigs() error {
 			return err
 		}
 
-		err = os.WriteFile(
-			fmt.Sprintf("%s/%s-startup-config.yaml", c.outputDirectory, nodeName),
-			rendered.Bytes(),
-			clabernetesconstants.PermissionsEveryoneRead,
-		)
-		if err != nil {
-			c.logger.Criticalf(
-				"failed writing node '%s' startup config to output directory: %s", nodeName, err,
-			)
+		if c.stdout {
+			_, err = os.Stdout.Write(rendered.Bytes())
+			if err != nil {
+				c.logger.Criticalf(
+					"failed writing node '%s' startup config to stdout: %s", nodeName, err,
+				)
 
-			return err
+				return err
+			}
+		} else {
+			err = os.WriteFile(
+				fmt.Sprintf("%s/%s-startup-config.yaml", c.outputDirectory, nodeName),
+				rendered.Bytes(),
+				clabernetesconstants.PermissionsEveryoneRead,
+			)
+			if err != nil {
+				c.logger.Criticalf(
+					"failed writing node '%s' startup config to output directory: %s",
+					nodeName,
+					err,
+				)
+
+				return err
+			}
 		}
 
 		c.startupConfigConfigMaps[nodeName] = topologyConfigMapTemplateVars{
@@ -367,17 +384,28 @@ func (c *Clabverter) handleManifest() error {
 		return err
 	}
 
-	err = os.WriteFile(
-		fmt.Sprintf("%s/%s.yaml", c.outputDirectory, c.clabConfig.Name),
-		rendered.Bytes(),
-		clabernetesconstants.PermissionsEveryoneRead,
-	)
-	if err != nil {
-		c.logger.Criticalf(
-			"failed writing containerlab manifest to output directory: %s", err,
-		)
+	if c.stdout {
+		_, err = os.Stdout.Write(rendered.Bytes())
+		if err != nil {
+			c.logger.Criticalf(
+				"failed writing containerlab manifest to stdout: %s", err,
+			)
 
-		return err
+			return err
+		}
+	} else {
+		err = os.WriteFile(
+			fmt.Sprintf("%s/%s.yaml", c.outputDirectory, c.clabConfig.Name),
+			rendered.Bytes(),
+			clabernetesconstants.PermissionsEveryoneRead,
+		)
+		if err != nil {
+			c.logger.Criticalf(
+				"failed writing containerlab manifest to output directory: %s", err,
+			)
+
+			return err
+		}
 	}
 
 	return nil
