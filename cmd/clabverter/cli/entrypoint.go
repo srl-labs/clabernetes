@@ -13,6 +13,7 @@ const (
 	destinationNamespace = "destinationNamespace"
 	insecureRegistries   = "insecureRegistries"
 	debug                = "debug"
+	quiet                = "quiet"
 )
 
 // Entrypoint returns the clabernetes clabverter entrypoint.
@@ -54,6 +55,12 @@ func Entrypoint() *cli.App {
 				Required: false,
 				Value:    false,
 			},
+			&cli.BoolFlag{
+				Name:     quiet,
+				Usage:    "disable all output (other than stdout if enabled)",
+				Required: false,
+				Value:    false,
+			},
 		},
 		Action: func(c *cli.Context) error {
 			err := clabernetesclabverter.MustNewClabverter(
@@ -62,6 +69,7 @@ func Entrypoint() *cli.App {
 				c.String(destinationNamespace),
 				c.String(insecureRegistries),
 				c.Bool(debug),
+				c.Bool(quiet),
 			).Clabvert()
 
 			claberneteslogging.GetManager().Flush()

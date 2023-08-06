@@ -44,12 +44,17 @@ func MustNewClabverter(
 	outputDirectory,
 	destinationNamespace,
 	insecureRegistries string,
-	debug bool,
+	debug,
+	quiet bool,
 ) *Clabverter {
 	logLevel := clabernetesconstants.Info
 
 	if debug {
 		logLevel = clabernetesconstants.Debug
+	}
+
+	if quiet {
+		logLevel = clabernetesconstants.Disabled
 	}
 
 	logManager := claberneteslogging.GetManager()
