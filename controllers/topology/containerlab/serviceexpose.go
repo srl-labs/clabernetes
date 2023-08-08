@@ -3,6 +3,12 @@ package containerlab
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
+	"sync"
+
+	"gopkg.in/yaml.v3"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -19,6 +25,21 @@ import (
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+var (
+	portPattern     *regexp.Regexp //nolint:gochecknoglobals
+	portPatternOnce sync.Once      //nolint:gochecknoglobals
+)
+
+func getPortPattern() *regexp.Regexp {
+	portPatternOnce.Do(func() {
+		portPattern = regexp.MustCompile(
+			`(?P<exposePort>\d+):(?P<destinationPort>\d+)/?(?P<protocol>(TCP)|(UDP))?`,
+		)
+	})
+
+	return portPattern
+}
+
 func (c *Controller) reconcileExposeServices(
 	ctx context.Context,
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
@@ -27,7 +48,7 @@ func (c *Controller) reconcileExposeServices(
 	var shouldUpdate bool
 
 	if clab.Status.NodeExposedPorts == nil {
-		clab.Status.NodeExposedPorts = map[string]clabernetesapistopology.ExposedPorts{}
+		clab.Status.NodeExposedPorts = map[string]*clabernetesapistopology.ExposedPorts{}
 
 		shouldUpdate = true
 	}
@@ -42,9 +63,22 @@ func (c *Controller) reconcileExposeServices(
 		return shouldUpdate, err
 	}
 
-	err = c.enforceExposeServices(ctx, clab, services)
+	err = c.enforceExposeServices(ctx, clab, clabernetesConfigs, services)
 	if err != nil {
 		return shouldUpdate, err
+	}
+
+	nodeExposedPortsBytes, err := yaml.Marshal(clab.Status.NodeExposedPorts)
+	if err != nil {
+		return shouldUpdate, err
+	}
+
+	newNodeExposedPortsHash := clabernetesutil.HashBytes(nodeExposedPortsBytes)
+
+	if clab.Status.NodeExposedPortsHash != newNodeExposedPortsHash {
+		clab.Status.NodeExposedPortsHash = newNodeExposedPortsHash
+
+		shouldUpdate = true
 	}
 
 	return shouldUpdate, nil
@@ -172,16 +206,19 @@ func (c *Controller) pruneExposeServices(
 	return nil
 }
 
-func (c *Controller) enforceExposeServices( //nolint:dupl
+// TODO both service enforcements dont work properly, fix whatever is up.
+func (c *Controller) enforceExposeServices(
 	ctx context.Context,
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
+	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
 	services *clabernetescontrollers.ResolvedServices,
 ) error {
 	c.BaseController.Log.Info("creating missing expose services")
 
 	for _, nodeName := range services.Missing {
-		service := renderExposeService(
+		service := c.renderExposeService(
 			clab,
+			clabernetesConfigs,
 			nodeName,
 		)
 
@@ -219,10 +256,19 @@ func (c *Controller) enforceExposeServices( //nolint:dupl
 			service.Name,
 		)
 
-		expectedService := renderExposeService(
+		expectedService := c.renderExposeService(
 			clab,
+			clabernetesConfigs,
 			nodeName,
 		)
+
+		if len(service.Status.LoadBalancer.Ingress) == 1 {
+			// can/would this ever be more than 1? i dunno?
+			address := service.Status.LoadBalancer.Ingress[0].IP
+			if address != "" {
+				clab.Status.NodeExposedPorts[nodeName].LoadBalancerAddress = address
+			}
+		}
 
 		err := c.enforceServiceOwnerReference(clab, expectedService)
 		if err != nil {
@@ -254,10 +300,16 @@ func (c *Controller) enforceExposeServices( //nolint:dupl
 	return nil
 }
 
-func renderExposeService(
+func (c *Controller) renderExposeService(
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
+	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
 	nodeName string,
 ) *k8scorev1.Service {
+	clab.Status.NodeExposedPorts[nodeName] = &clabernetesapistopology.ExposedPorts{
+		TCPPorts: make([]int, 0),
+		UDPPorts: make([]int, 0),
+	}
+
 	serviceName := fmt.Sprintf("%s-%s-expose", clab.Name, nodeName)
 
 	labels := map[string]string{
@@ -268,6 +320,70 @@ func renderExposeService(
 		clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeExpose, //nolint:lll
 	}
 
+	ports := make([]k8scorev1.ServicePort, 0)
+
+	re := getPortPattern()
+
+	for _, portDefinition := range clabernetesConfigs[nodeName].Topology.Nodes[nodeName].Ports {
+		portDefinition = strings.ToUpper(portDefinition)
+
+		paramsMap := clabernetesutil.RegexStringSubMatchToMap(re, portDefinition)
+
+		protocol := clabernetesconstants.TCP
+		if paramsMap["protocol"] == clabernetesconstants.UDP {
+			protocol = clabernetesconstants.UDP
+		}
+
+		exposePortAsInt, err := strconv.ParseInt(paramsMap["exposePort"], 10, 32)
+		if err != nil || exposePortAsInt == 0 {
+			c.BaseController.Log.Warnf(
+				"failed converting exposed port to integer, full port string '%s', parsed port "+
+					"'%s'. skipping this port but continuing on...",
+				portDefinition,
+				paramsMap["exposePort"],
+			)
+
+			continue
+		}
+
+		destinationPortAsInt, err := strconv.ParseInt(paramsMap["destinationPort"], 10, 32)
+		if err != nil || destinationPortAsInt == 0 {
+			c.BaseController.Log.Warnf(
+				"failed converting destination port to integer, full port string '%s', parsed "+
+					"port '%s'.  skipping this port but continuing on...",
+				portDefinition,
+				paramsMap["destinationPort"],
+			)
+
+			continue
+		}
+
+		ports = append(
+			ports,
+			k8scorev1.ServicePort{
+				Name:     fmt.Sprintf("port-%s", paramsMap["destinationPort"]),
+				Protocol: k8scorev1.Protocol(protocol),
+				Port:     int32(destinationPortAsInt),
+				TargetPort: intstr.IntOrString{
+					IntVal: int32(exposePortAsInt),
+				},
+			},
+		)
+
+		// dont forget to update the exposed ports status bits
+		if protocol == clabernetesconstants.TCP {
+			clab.Status.NodeExposedPorts[nodeName].TCPPorts = append(
+				clab.Status.NodeExposedPorts[nodeName].TCPPorts,
+				int(destinationPortAsInt),
+			)
+		} else {
+			clab.Status.NodeExposedPorts[nodeName].UDPPorts = append(
+				clab.Status.NodeExposedPorts[nodeName].UDPPorts,
+				int(destinationPortAsInt),
+			)
+		}
+	}
+
 	service := &k8scorev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      serviceName,
@@ -275,17 +391,7 @@ func renderExposeService(
 			Labels:    labels,
 		},
 		Spec: k8scorev1.ServiceSpec{
-			Ports: []k8scorev1.ServicePort{
-				// TODO obviously load from the spec
-				{
-					Name:     "port-22",
-					Protocol: "TCP",
-					Port:     22,
-					TargetPort: intstr.IntOrString{
-						IntVal: 22,
-					},
-				},
-			},
+			Ports: ports,
 			Selector: map[string]string{
 				clabernetesconstants.LabelTopologyOwner: clab.Name,
 				clabernetesconstants.LabelTopologyNode:  nodeName,

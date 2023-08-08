@@ -63,13 +63,15 @@ type ContainerlabStatus struct {
 	// links+vxlan). This is stored as a raw message so we don't have any weirdness w/ yaml tags
 	// instead of json tags in clab things, and so we kube builder doesnt poop itself on it.
 	Configs string `json:"configs"`
-	// ConfigsHash is a hash of the last storedConfgs data.
+	// ConfigsHash is a hash of the last stored Configs data.
 	ConfigsHash string `json:"configsHash"`
 	// Tunnels is a mapping of tunnels that need to be configured between nodes (nodes:[]tunnels).
 	Tunnels map[string][]*clabernetesapistopology.Tunnel `json:"tunnels"`
 	// NodeExposedPorts holds a map of (containerlab) nodes and their exposed ports
 	// (via load balancer).
-	NodeExposedPorts map[string]clabernetesapistopology.ExposedPorts `json:"nodeExposedPorts"`
+	NodeExposedPorts map[string]*clabernetesapistopology.ExposedPorts `json:"nodeExposedPorts"`
+	// NodeExposedPortsHash is a hash of the last stored NodeExposedPorts data.
+	NodeExposedPortsHash string `json:"nodeExposedPortsHash"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

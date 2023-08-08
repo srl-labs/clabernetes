@@ -243,7 +243,7 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
 					},
 					"configsHash": {
 						SchemaProps: spec.SchemaProps{
-							Description: "ConfigsHash is a hash of the last storedConfgs data.",
+							Description: "ConfigsHash is a hash of the last stored Configs data.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -280,7 +280,6 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
 										Ref: ref(
 											"gitlab.com/carlmontanari/clabernetes/apis/topology.ExposedPorts",
 										),
@@ -289,8 +288,22 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
 							},
 						},
 					},
+					"nodeExposedPortsHash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NodeExposedPortsHash is a hash of the last stored NodeExposedPorts data.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
-				Required: []string{"configs", "configsHash", "tunnels", "nodeExposedPorts"},
+				Required: []string{
+					"configs",
+					"configsHash",
+					"tunnels",
+					"nodeExposedPorts",
+					"nodeExposedPortsHash",
+				},
 			},
 		},
 		Dependencies: []string{
