@@ -206,7 +206,6 @@ func (c *Controller) pruneExposeServices(
 	return nil
 }
 
-// TODO both service enforcements dont work properly, fix whatever is up.
 func (c *Controller) enforceExposeServices(
 	ctx context.Context,
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
@@ -361,7 +360,9 @@ func (c *Controller) renderExposeService(
 		ports = append(
 			ports,
 			k8scorev1.ServicePort{
-				Name:     fmt.Sprintf("port-%s", paramsMap["destinationPort"]),
+				Name: fmt.Sprintf(
+					"port-%s-%s", paramsMap["destinationPort"], strings.ToLower(protocol),
+				),
 				Protocol: k8scorev1.Protocol(protocol),
 				Port:     int32(destinationPortAsInt),
 				TargetPort: intstr.IntOrString{
