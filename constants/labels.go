@@ -16,4 +16,20 @@ const (
 
 	// LabelTopologyNode is the label indicating the node the deployment represents in a topology.
 	LabelTopologyNode = "clabernetes/topologyNode"
+
+	// LabelTopologyServiceType is a label that identifies what flavor of service a given service
+	// is -- that is, it is either a "connectivity" service, or an "expose" service; note that
+	// this is strictly a clabernetes concept, obviously not a kubernetes one!
+	LabelTopologyServiceType = "clabernetes/topologyServiceType"
+)
+
+const (
+	// TopologyServiceTypeFabric is one of the allowed values for the LabelTopologyServiceType label
+	// type -- this indicates that this service is of the type that facilitates the connectivity
+	// between containerlab devices in the cluster.
+	TopologyServiceTypeFabric = "fabric"
+	// TopologyServiceTypeExpose is one of the allowed values for the LabelTopologyServiceType label
+	// type -- this indicates that this service is of the type that is used for exposing ports on
+	// a containerlab node via a LoadBalancer service.
+	TopologyServiceTypeExpose = "expose"
 )

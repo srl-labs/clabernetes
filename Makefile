@@ -9,7 +9,7 @@ fmt: ## Run formatters
 	golines -w .
 
 lint: fmt ## Run linters; runs with GOOS env var for linting on darwin
-	GOOS=linux golangci-lint run
+	golangci-lint run
 
 test: ## Run unit tests
 	gotestsum --format testname --hide-summary=skipped -- -coverprofile=cover.out ./...

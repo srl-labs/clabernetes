@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+
+	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
 )
 
 func isURL(path string) bool {
@@ -29,19 +31,11 @@ func loadContentAtURL(path string) ([]byte, error) {
 }
 
 func gitHubNormalToRawLink(path string) string {
-	ghPattern := regexp.MustCompile(
+	p := regexp.MustCompile(
 		`(?mi)https?:\/\/(?:www\.)?github\.com\/(?P<GroupRepo>.*?\/.*?)\/(?:(blob)|(tree))(?P<Path>.*)`, //nolint:lll
 	)
 
-	match := ghPattern.FindStringSubmatch(path)
-
-	paramsMap := make(map[string]string)
-
-	for i, name := range ghPattern.SubexpNames() {
-		if i > 0 && i <= len(match) {
-			paramsMap[name] = match[i]
-		}
-	}
+	paramsMap := clabernetesutil.RegexStringSubMatchToMap(p, path)
 
 	return fmt.Sprintf(
 		"https://raw.githubusercontent.com/%s/%s", paramsMap["GroupRepo"], paramsMap["Path"],

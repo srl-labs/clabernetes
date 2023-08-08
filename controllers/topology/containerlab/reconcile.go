@@ -3,6 +3,8 @@ package containerlab
 import (
 	"context"
 
+	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
+
 	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
 
 	"gopkg.in/yaml.v3"
@@ -43,7 +45,7 @@ func (c *Controller) Reconcile(
 		err = yaml.Unmarshal([]byte(clab.Status.Configs), &preReconcileConfigs)
 		if err != nil {
 			c.BaseController.Log.Criticalf(
-				"failed parsing unmarshalling previously stored config, error: ", err,
+				"failed parsing unmarshalling previously stored config, error: %s", err,
 			)
 
 			return ctrlruntime.Result{}, err
@@ -58,36 +60,49 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, err
 	}
 
-	configs, tunnels, shouldUpdate, err := c.processConfig(clab, clabTopo)
+	configs, tunnels, configShouldUpdate, err := c.processConfig(clab, clabTopo)
 	if err != nil {
-		c.BaseController.Log.Criticalf("failed processing containerlab config, error: ", err)
+		c.BaseController.Log.Criticalf("failed processing containerlab config, error: %s", err)
 
 		return ctrlruntime.Result{}, err
 	}
 
 	err = c.reconcileConfigMap(ctx, clab, configs, tunnels)
 	if err != nil {
-		c.BaseController.Log.Criticalf("failed reconciling clabernetes config map, error: ", err)
+		c.BaseController.Log.Criticalf("failed reconciling clabernetes config map, error: %s", err)
 
 		return ctrlruntime.Result{}, err
 	}
 
 	err = c.reconcileDeployments(ctx, clab, preReconcileConfigs, configs)
 	if err != nil {
-		c.BaseController.Log.Criticalf("failed reconciling clabernetes deployments, error: ", err)
+		c.BaseController.Log.Criticalf("failed reconciling clabernetes deployments, error: %s", err)
 
 		return ctrlruntime.Result{}, err
 	}
 
 	err = c.reconcileServices(ctx, clab, configs)
 	if err != nil {
-		c.BaseController.Log.Criticalf("failed reconciling clabernetes services, error: ", err)
+		c.BaseController.Log.Criticalf("failed reconciling clabernetes services, error: %s", err)
 
 		return ctrlruntime.Result{}, err
 	}
 
-	if shouldUpdate {
-		// we should update because config hash or something changed, so psuh update to the object
+	var exposeServicesShouldUpdate bool
+
+	if !clab.Spec.DisableExpose {
+		exposeServicesShouldUpdate, err = c.reconcileExposeServices(ctx, clab, configs)
+		if err != nil {
+			c.BaseController.Log.Criticalf(
+				"failed reconciling clabernetes expose services, error: %s", err,
+			)
+
+			return ctrlruntime.Result{}, err
+		}
+	}
+
+	if clabernetesutil.AnyBoolTrue(configShouldUpdate, exposeServicesShouldUpdate) {
+		// we should update because config hash or something changed, so push update to the object
 		err = c.BaseController.Client.Update(ctx, clab)
 		if err != nil {
 			c.BaseController.Log.Criticalf(

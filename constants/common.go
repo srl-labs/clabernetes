@@ -22,4 +22,10 @@ const (
 	// LauncherDefaultImage is the default image for launchers -- this shouldn't be used normally
 	// since the chart has a default value for this.
 	LauncherDefaultImage = "ghcr.io/carlmontanari/clabernetes/clabernetes-launcher:latest"
+
+	// TCP is... TCP.
+	TCP = "TCP"
+
+	// UDP is... UDP.
+	UDP = "UDP"
 )
