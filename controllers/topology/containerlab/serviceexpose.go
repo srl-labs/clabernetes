@@ -13,8 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	clabernetesapistopology "gitlab.com/carlmontanari/clabernetes/apis/topology"
-
 	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
 	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
 	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
@@ -48,7 +46,7 @@ func (c *Controller) reconcileExposeServices(
 	var shouldUpdate bool
 
 	if clab.Status.NodeExposedPorts == nil {
-		clab.Status.NodeExposedPorts = map[string]*clabernetesapistopology.ExposedPorts{}
+		clab.Status.NodeExposedPorts = map[string]*clabernetesapistopologyv1alpha1.ExposedPorts{}
 
 		shouldUpdate = true
 	}
@@ -304,7 +302,7 @@ func (c *Controller) renderExposeService(
 	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
 	nodeName string,
 ) *k8scorev1.Service {
-	clab.Status.NodeExposedPorts[nodeName] = &clabernetesapistopology.ExposedPorts{
+	clab.Status.NodeExposedPorts[nodeName] = &clabernetesapistopologyv1alpha1.ExposedPorts{
 		TCPPorts: make([]int, 0),
 		UDPPorts: make([]int, 0),
 	}

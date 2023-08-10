@@ -8,8 +8,6 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	clabernetesapistopology "gitlab.com/carlmontanari/clabernetes/apis/topology"
-
 	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
 	claberneteserrors "gitlab.com/carlmontanari/clabernetes/errors"
 	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
@@ -20,13 +18,13 @@ func (c *Controller) processConfig(
 	clabTopo *clabernetescontainerlab.Topology,
 ) (
 	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
-	clabernetesTunnels map[string][]*clabernetesapistopology.Tunnel,
+	clabernetesTunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 	shouldUpdate bool,
 	err error,
 ) {
 	clabernetesConfigs = make(map[string]*clabernetescontainerlab.Config)
 
-	tunnels := make(map[string][]*clabernetesapistopology.Tunnel)
+	tunnels := make(map[string][]*clabernetesapistopologyv1alpha1.Tunnel)
 
 	for nodeName, nodeDefinition := range clabTopo.Nodes {
 		clabernetesConfigs[nodeName] = &clabernetescontainerlab.Config{
@@ -40,7 +38,7 @@ func (c *Controller) processConfig(
 		}
 
 		for _, link := range clabTopo.Links {
-			if len(link.Endpoints) != clabernetesapistopology.LinkEndpointElementCount {
+			if len(link.Endpoints) != clabernetesapistopologyv1alpha1.LinkEndpointElementCount {
 				msg := fmt.Sprintf(
 					"endpoint '%q' has wrong syntax, unexpected number of items", link.Endpoints,
 				)
@@ -55,8 +53,8 @@ func (c *Controller) processConfig(
 			endpointAParts := strings.Split(link.Endpoints[0], ":")
 			endpointBParts := strings.Split(link.Endpoints[1], ":")
 
-			if len(endpointAParts) != clabernetesapistopology.LinkEndpointElementCount ||
-				len(endpointBParts) != clabernetesapistopology.LinkEndpointElementCount {
+			if len(endpointAParts) != clabernetesapistopologyv1alpha1.LinkEndpointElementCount ||
+				len(endpointBParts) != clabernetesapistopologyv1alpha1.LinkEndpointElementCount {
 				msg := fmt.Sprintf(
 					"endpoint '%q' has wrong syntax, bad endpoint:interface config", link.Endpoints,
 				)
@@ -68,11 +66,11 @@ func (c *Controller) processConfig(
 				)
 			}
 
-			endpointA := clabernetesapistopology.LinkEndpoint{
+			endpointA := clabernetesapistopologyv1alpha1.LinkEndpoint{
 				NodeName:      endpointAParts[0],
 				InterfaceName: endpointAParts[1],
 			}
-			endpointB := clabernetesapistopology.LinkEndpoint{
+			endpointB := clabernetesapistopologyv1alpha1.LinkEndpoint{
 				NodeName:      endpointBParts[0],
 				InterfaceName: endpointBParts[1],
 			}
@@ -122,7 +120,7 @@ func (c *Controller) processConfig(
 
 			tunnels[nodeName] = append(
 				tunnels[nodeName],
-				&clabernetesapistopology.Tunnel{
+				&clabernetesapistopologyv1alpha1.Tunnel{
 					LocalNodeName:  nodeName,
 					RemoteNodeName: uninterestingEndpoint.NodeName,
 					RemoteName: fmt.Sprintf(
@@ -166,7 +164,7 @@ func (c *Controller) processConfig(
 
 func allocateTunnelIDs( //nolint:gocognit,gocyclo
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	tunnels map[string][]*clabernetesapistopology.Tunnel,
+	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 ) {
 	// iterate over stored (in status) tunnels and allocate previously assigned ids to any relevant
 	// tunnels -- while doing so, make a map of all allocated tunnel ids so we can make sure to not

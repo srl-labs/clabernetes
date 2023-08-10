@@ -7,7 +7,6 @@ import (
 
 	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
 
-	clabernetesapistopology "gitlab.com/carlmontanari/clabernetes/apis/topology"
 	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
 
 	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -25,7 +24,7 @@ func (c *Controller) reconcileConfigMap(
 	ctx context.Context,
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
 	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
-	tunnels map[string][]*clabernetesapistopology.Tunnel,
+	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 ) error {
 	configMap := &k8scorev1.ConfigMap{}
 
@@ -46,7 +45,7 @@ func (c *Controller) reconcileConfigMap(
 func (c *Controller) renderConfigMap(
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
 	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
-	tunnels map[string][]*clabernetesapistopology.Tunnel,
+	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 ) (*k8scorev1.ConfigMap, error) {
 	configMap := &k8scorev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -87,7 +86,7 @@ func (c *Controller) createConfigMap(
 	ctx context.Context,
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
 	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
-	tunnels map[string][]*clabernetesapistopology.Tunnel,
+	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 ) error {
 	configMap, err := c.renderConfigMap(clab, clabernetesConfigs, tunnels)
 	if err != nil {
@@ -106,7 +105,7 @@ func (c *Controller) enforceConfigMap(
 	ctx context.Context,
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
 	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
-	tunnels map[string][]*clabernetesapistopology.Tunnel,
+	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 	actual *k8scorev1.ConfigMap,
 ) error {
 	configMap, err := c.renderConfigMap(clab, clabernetesConfigs, tunnels)

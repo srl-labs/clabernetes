@@ -32,6 +32,10 @@ func (c *FakeTopologyV1alpha1) Containerlabs(namespace string) v1alpha1.Containe
 	return &FakeContainerlabs{c, namespace}
 }
 
+func (c *FakeTopologyV1alpha1) Knes(namespace string) v1alpha1.KneInterface {
+	return &FakeKnes{c, namespace}
+}
+
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
 func (c *FakeTopologyV1alpha1) RESTClient() rest.Interface {
