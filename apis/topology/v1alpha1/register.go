@@ -52,5 +52,7 @@ func GetAPIs() (apimachineryscheme.GroupVersion, []apimachineryruntime.Object) {
 	return SchemeGroupVersion, []apimachineryruntime.Object{
 		&Containerlab{},
 		&ContainerlabList{},
+		&Kne{},
+		&KneList{},
 	}
 }

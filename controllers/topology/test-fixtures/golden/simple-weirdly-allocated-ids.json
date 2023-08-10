@@ -1,0 +1,22 @@
+{
+    "srl1": [
+        {
+            "id": 1,
+            "localNodeName": "srl1",
+            "remoteName": "topo-1-srl2.clabernetes.svc.cluster.local",
+            "remoteNodeName": "srl2",
+            "localLinkName": "e1-1",
+            "remoteLinkName": "e1-1"
+        }
+    ],
+    "srl2": [
+        {
+            "id": 1,
+            "localNodeName": "srl2",
+            "remoteName": "topo-1-srl1.clabernetes.svc.cluster.local",
+            "remoteNodeName": "srl1",
+            "localLinkName": "e1-1",
+            "remoteLinkName": "e1-1"
+        }
+    ]
+}

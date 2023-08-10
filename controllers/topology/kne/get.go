@@ -1,18 +1,19 @@
-package containerlab
+package kne
 
 import (
+	"context"
+
 	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
-	"golang.org/x/net/context"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
 )
 
-// getClabFromReq fetches the reconcile target Containerlab topology from the Request.
-func (c *Controller) getClabFromReq(
+// getKneFromReq fetches the reconcile target Kne topology from the Request.
+func (c *Controller) getKneFromReq(
 	ctx context.Context,
 	req ctrlruntime.Request,
-) (*clabernetesapistopologyv1alpha1.Containerlab, error) {
-	clab := &clabernetesapistopologyv1alpha1.Containerlab{}
+) (*clabernetesapistopologyv1alpha1.Kne, error) {
+	kne := &clabernetesapistopologyv1alpha1.Kne{}
 
 	err := c.BaseController.Client.Get(
 		ctx,
@@ -20,8 +21,8 @@ func (c *Controller) getClabFromReq(
 			Namespace: req.Namespace,
 			Name:      req.Name,
 		},
-		clab,
+		kne,
 	)
 
-	return clab, err
+	return kne, err
 }

@@ -139,6 +139,8 @@ issues:
         - structcheck
         - unused
         - unparam
+        - maintidx
+        - funlen
 
     # ignore globals for standard k8s things
     - linters:

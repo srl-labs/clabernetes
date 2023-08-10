@@ -20,7 +20,7 @@ func (c *Controller) Reconcile(
 ) (ctrlruntime.Result, error) {
 	c.BaseController.LogReconcileStart(req)
 
-	clab, err := c.getClababFromReq(ctx, req)
+	clab, err := c.getClabFromReq(ctx, req)
 	if err != nil {
 		if apimachineryerrors.IsNotFound(err) {
 			// was deleted, nothing to do
