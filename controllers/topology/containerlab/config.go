@@ -32,6 +32,7 @@ func (c *Controller) processConfig(
 		clabernetesConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
 			Name: fmt.Sprintf("clabernetes-%s", nodeName),
 			Topology: &clabernetesutilcontainerlab.Topology{
+				Defaults: clabTopo.Defaults,
 				Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
 					nodeName: nodeDefinition,
 				},
