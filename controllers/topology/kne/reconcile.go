@@ -3,10 +3,11 @@ package kne
 import (
 	"context"
 
+	clabernetesutilcontainerlab "gitlab.com/carlmontanari/clabernetes/util/containerlab"
+
 	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
 
-	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
-	claberneteskne "gitlab.com/carlmontanari/clabernetes/kne"
+	clabernetesutilkne "gitlab.com/carlmontanari/clabernetes/util/kne"
 	"gopkg.in/yaml.v3"
 
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -39,7 +40,7 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, nil
 	}
 
-	preReconcileConfigs := make(map[string]*clabernetescontainerlab.Config)
+	preReconcileConfigs := make(map[string]*clabernetesutilcontainerlab.Config)
 
 	if kne.Status.Configs != "" {
 		err = yaml.Unmarshal([]byte(kne.Status.Configs), &preReconcileConfigs)
@@ -53,7 +54,7 @@ func (c *Controller) Reconcile(
 	}
 
 	// load the kne topo to make sure its all good
-	kneTopo, err := claberneteskne.LoadKneTopology(kne.Spec.Topology)
+	kneTopo, err := clabernetesutilkne.LoadKneTopology(kne.Spec.Topology)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed parsing kne topology, error: ", err)
 

@@ -40,7 +40,7 @@ run-openapi-gen: ## Run openapi-gen
 	--go-header-file hack/boilerplate.go.txt \
 	--input-dirs gitlab.com/carlmontanari/clabernetes/apis/... \
 	--trim-path-prefix ${GOPATH}/src/gitlab.com/carlmontanari/clabernetes \
-	--output-package gitlab.com/carlmontanari/clabernetes/openapi
+	--output-package gitlab.com/carlmontanari/clabernetes/generated/openapi
 
 run-client-gen: ## Run client-gen
 	GOMOD111=on \

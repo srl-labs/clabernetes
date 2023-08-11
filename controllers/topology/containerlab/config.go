@@ -6,7 +6,7 @@ import (
 
 	clabernetescontrollerstopology "gitlab.com/carlmontanari/clabernetes/controllers/topology"
 
-	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
+	clabernetesutilcontainerlab "gitlab.com/carlmontanari/clabernetes/util/containerlab"
 
 	"gopkg.in/yaml.v3"
 
@@ -17,22 +17,22 @@ import (
 
 func (c *Controller) processConfig(
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	clabTopo *clabernetescontainerlab.Topology,
+	clabTopo *clabernetesutilcontainerlab.Topology,
 ) (
-	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	clabernetesTunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 	shouldUpdate bool,
 	err error,
 ) {
-	clabernetesConfigs = make(map[string]*clabernetescontainerlab.Config)
+	clabernetesConfigs = make(map[string]*clabernetesutilcontainerlab.Config)
 
 	tunnels := make(map[string][]*clabernetesapistopologyv1alpha1.Tunnel)
 
 	for nodeName, nodeDefinition := range clabTopo.Nodes {
-		clabernetesConfigs[nodeName] = &clabernetescontainerlab.Config{
+		clabernetesConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
 			Name: fmt.Sprintf("clabernetes-%s", nodeName),
-			Topology: &clabernetescontainerlab.Topology{
-				Nodes: map[string]*clabernetescontainerlab.NodeDefinition{
+			Topology: &clabernetesutilcontainerlab.Topology{
+				Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
 					nodeName: nodeDefinition,
 				},
 				Links: nil,
@@ -102,8 +102,8 @@ func (c *Controller) processConfig(
 
 			clabernetesConfigs[nodeName].Topology.Links = append(
 				clabernetesConfigs[nodeName].Topology.Links,
-				&clabernetescontainerlab.LinkDefinition{
-					LinkConfig: clabernetescontainerlab.LinkConfig{
+				&clabernetesutilcontainerlab.LinkDefinition{
+					LinkConfig: clabernetesutilcontainerlab.LinkConfig{
 						Endpoints: []string{
 							fmt.Sprintf(
 								"%s:%s",

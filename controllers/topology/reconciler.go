@@ -3,10 +3,11 @@ package topology
 import (
 	"context"
 
+	clabernetesutilcontainerlab "gitlab.com/carlmontanari/clabernetes/util/containerlab"
+
 	"gopkg.in/yaml.v3"
 
 	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
-	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
 	claberneteslogging "gitlab.com/carlmontanari/clabernetes/logging"
 	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
 	k8scorev1 "k8s.io/api/core/v1"
@@ -29,7 +30,7 @@ type Reconciler struct {
 func (r *Reconciler) ReconcileConfigMap(
 	ctx context.Context,
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
-	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 ) error {
 	configMap := &k8scorev1.ConfigMap{}
@@ -58,7 +59,7 @@ func (r *Reconciler) ReconcileDeployments(
 	ctx context.Context,
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	preReconcileConfigs,
-	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 ) error {
 	deployments, err := r.resolveDeployments(ctx, obj, clabernetesConfigs)
 	if err != nil {
@@ -104,7 +105,7 @@ func (r *Reconciler) ReconcileDeployments(
 func (r *Reconciler) ReconcileServiceFabric(
 	ctx context.Context,
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
-	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 ) error {
 	services, err := r.resolveFabricServices(ctx, obj, clabernetesConfigs)
 	if err != nil {
@@ -128,7 +129,7 @@ func (r *Reconciler) ReconcileServiceFabric(
 func (r *Reconciler) ReconcileServicesExpose(
 	ctx context.Context,
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
-	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 ) (bool, error) {
 	var shouldUpdate bool
 

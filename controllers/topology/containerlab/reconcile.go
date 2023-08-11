@@ -5,7 +5,7 @@ import (
 
 	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
 
-	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
+	clabernetesutilcontainerlab "gitlab.com/carlmontanari/clabernetes/util/containerlab"
 
 	"gopkg.in/yaml.v3"
 
@@ -39,7 +39,7 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, nil
 	}
 
-	preReconcileConfigs := make(map[string]*clabernetescontainerlab.Config)
+	preReconcileConfigs := make(map[string]*clabernetesutilcontainerlab.Config)
 
 	if clab.Status.Configs != "" {
 		err = yaml.Unmarshal([]byte(clab.Status.Configs), &preReconcileConfigs)
@@ -53,7 +53,7 @@ func (c *Controller) Reconcile(
 	}
 
 	// load the clab topo to make sure its all good
-	clabTopo, err := clabernetescontainerlab.LoadContainerlabTopology(clab.Spec.Config)
+	clabTopo, err := clabernetesutilcontainerlab.LoadContainerlabTopology(clab.Spec.Config)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed parsing containerlab config, error: ", err)
 

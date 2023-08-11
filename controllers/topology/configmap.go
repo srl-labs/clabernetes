@@ -7,7 +7,7 @@ import (
 
 	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
 	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
-	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
+	clabernetesutilcontainerlab "gitlab.com/carlmontanari/clabernetes/util/containerlab"
 	"gopkg.in/yaml.v3"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,7 +17,7 @@ import (
 
 func renderConfigMap(
 	obj ctrlruntimeclient.Object,
-	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 ) (*k8scorev1.ConfigMap, error) {
 	configMap := &k8scorev1.ConfigMap{
@@ -58,7 +58,7 @@ func renderConfigMap(
 func (r *Reconciler) createConfigMap(
 	ctx context.Context,
 	obj ctrlruntimeclient.Object,
-	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 ) error {
 	configMap, err := renderConfigMap(obj, clabernetesConfigs, tunnels)
@@ -77,7 +77,7 @@ func (r *Reconciler) createConfigMap(
 func (r *Reconciler) enforceConfigMap(
 	ctx context.Context,
 	obj ctrlruntimeclient.Object,
-	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 	actual *k8scorev1.ConfigMap,
 ) error {

@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	clabernetesutilcontainerlab "gitlab.com/carlmontanari/clabernetes/util/containerlab"
+
 	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
-	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
 	clabernetescontrollers "gitlab.com/carlmontanari/clabernetes/controllers"
 	claberneteserrors "gitlab.com/carlmontanari/clabernetes/errors"
 	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
@@ -19,7 +20,7 @@ import (
 func (r *Reconciler) resolveFabricServices(
 	ctx context.Context,
 	obj ctrlruntimeclient.Object,
-	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 ) (*clabernetescontrollers.ResolvedServices, error) {
 	ownedServices := &k8scorev1.ServiceList{}
 

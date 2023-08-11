@@ -77,7 +77,6 @@ func (c *Controller) SetupWithManager(mgr ctrlruntime.Manager) error {
 			&k8scorev1.Service{},
 			ctrlruntimehandler.EnqueueRequestsFromMapFunc(c.mapServiceToContainerlab),
 		).
-		// TODO - should we watch deployments too to keep enforcing them? probably "yes"
 		Complete(c)
 }
 

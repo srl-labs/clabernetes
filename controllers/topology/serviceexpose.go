@@ -8,9 +8,10 @@ import (
 	"strings"
 	"sync"
 
+	clabernetesutilcontainerlab "gitlab.com/carlmontanari/clabernetes/util/containerlab"
+
 	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
 	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
-	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
 	clabernetescontrollers "gitlab.com/carlmontanari/clabernetes/controllers"
 	claberneteserrors "gitlab.com/carlmontanari/clabernetes/errors"
 	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
@@ -40,7 +41,7 @@ func getPortPattern() *regexp.Regexp {
 func (r *Reconciler) resolveExposeServices(
 	ctx context.Context,
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
-	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 ) (*clabernetescontrollers.ResolvedServices, error) {
 	ownedServices := &k8scorev1.ServiceList{}
 
@@ -163,7 +164,7 @@ func (r *Reconciler) enforceExposeServices(
 	ctx context.Context,
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	objTopologyStatus clabernetesapistopologyv1alpha1.TopologyStatus,
-	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	services *clabernetescontrollers.ResolvedServices,
 ) error {
 	r.Log.Info("creating missing expose services")
@@ -258,7 +259,7 @@ func (r *Reconciler) enforceExposeServices(
 func (r *Reconciler) renderExposeService(
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	objTopologyStatus clabernetesapistopologyv1alpha1.TopologyStatus,
-	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	nodeName string,
 ) *k8scorev1.Service {
 	name := obj.GetName()
