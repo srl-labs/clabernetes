@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	k8scorev1 "k8s.io/api/core/v1"
+	ctrlruntimehandler "sigs.k8s.io/controller-runtime/pkg/handler"
+
 	clabernetescontrollerstopology "gitlab.com/carlmontanari/clabernetes/controllers/topology"
 
 	clabernetesapistopology "gitlab.com/carlmontanari/clabernetes/apis/topology"
@@ -65,5 +68,13 @@ func (c *Controller) SetupWithManager(mgr ctrlruntime.Manager) error {
 			},
 		).
 		For(&clabernetesapistopologyv1alpha1.Kne{}).
+		// watch services so we can update the status of containerlab object with load balancer
+		// address
+		Watches(
+			&k8scorev1.Service{},
+			ctrlruntimehandler.EnqueueRequestsFromMapFunc(
+				c.TopologyReconciler.MapServiceToContainerlab,
+			),
+		).
 		Complete(c)
 }
