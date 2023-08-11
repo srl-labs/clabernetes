@@ -1,13 +1,10 @@
-package containerlab
+package topology
 
 import (
 	"reflect"
 
-	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
 	k8scorev1 "k8s.io/api/core/v1"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
-
-	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 func serviceConforms( //nolint: gocyclo
@@ -83,23 +80,4 @@ func serviceConforms( //nolint: gocyclo
 	}
 
 	return true
-}
-
-func (c *Controller) enforceServiceOwnerReference(
-	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	service *k8scorev1.Service,
-) error {
-	err := ctrlruntimeutil.SetOwnerReference(clab, service, c.BaseController.Client.Scheme())
-	if err != nil {
-		c.BaseController.Log.Criticalf(
-			"failed setting owner reference on service '%s/%s' error: %s",
-			service.Namespace,
-			service.Name,
-			err,
-		)
-
-		return err
-	}
-
-	return nil
 }

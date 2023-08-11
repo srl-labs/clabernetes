@@ -29,6 +29,7 @@ import (
 type TopologyV1alpha1Interface interface {
 	RESTClient() rest.Interface
 	ContainerlabsGetter
+	KnesGetter
 }
 
 // TopologyV1alpha1Client is used to interact with features provided by the topology.clabernetes group.
@@ -38,6 +39,10 @@ type TopologyV1alpha1Client struct {
 
 func (c *TopologyV1alpha1Client) Containerlabs(namespace string) ContainerlabInterface {
 	return newContainerlabs(c, namespace)
+}
+
+func (c *TopologyV1alpha1Client) Knes(namespace string) KneInterface {
+	return newKnes(c, namespace)
 }
 
 // NewForConfig creates a new TopologyV1alpha1Client for the given config.

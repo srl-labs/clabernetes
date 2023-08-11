@@ -14,7 +14,7 @@ import (
 
 	claberneteserrors "gitlab.com/carlmontanari/clabernetes/errors"
 
-	clabernetesapistopology "gitlab.com/carlmontanari/clabernetes/apis/topology"
+	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
 	"gopkg.in/yaml.v3"
 
 	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
@@ -103,7 +103,7 @@ func (c *clabernetes) startup() {
 		clabernetesutil.Panic(err.Error())
 	}
 
-	var tunnelObj []*clabernetesapistopology.Tunnel
+	var tunnelObj []*clabernetesapistopologyv1alpha1.Tunnel
 
 	err = yaml.Unmarshal(tunnelBytes, &tunnelObj)
 	if err != nil {

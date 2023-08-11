@@ -1,63 +1,39 @@
-package containerlab
+package topology
 
 import (
 	"context"
 	"fmt"
 
-	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
+	clabernetesutilcontainerlab "gitlab.com/carlmontanari/clabernetes/util/containerlab"
 
-	"k8s.io/apimachinery/pkg/util/intstr"
-
-	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
 	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
 	clabernetescontrollers "gitlab.com/carlmontanari/clabernetes/controllers"
 	claberneteserrors "gitlab.com/carlmontanari/clabernetes/errors"
 	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (c *Controller) reconcileServices(
+func (r *Reconciler) resolveFabricServices(
 	ctx context.Context,
-	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
-) error {
-	services, err := c.resolveServices(ctx, clab, clabernetesConfigs)
-	if err != nil {
-		return err
-	}
-
-	err = c.pruneServices(ctx, services)
-	if err != nil {
-		return err
-	}
-
-	err = c.enforceServices(ctx, clab, services)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *Controller) resolveServices(
-	ctx context.Context,
-	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
+	obj ctrlruntimeclient.Object,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 ) (*clabernetescontrollers.ResolvedServices, error) {
 	ownedServices := &k8scorev1.ServiceList{}
 
-	err := c.Client.List(
+	err := r.Client.List(
 		ctx,
 		ownedServices,
-		ctrlruntimeclient.InNamespace(clab.Namespace),
+		ctrlruntimeclient.InNamespace(obj.GetNamespace()),
 		ctrlruntimeclient.MatchingLabels{
-			clabernetesconstants.LabelTopologyOwner: clab.Name,
+			clabernetesconstants.LabelTopologyOwner: obj.GetName(),
 		},
 	)
 	if err != nil {
-		c.Log.Criticalf("failed fetching owned services, error: '%s'", err)
+		r.Log.Criticalf("failed fetching owned services, error: '%s'", err)
 
 		return nil, err
 	}
@@ -110,7 +86,7 @@ func (c *Controller) resolveServices(
 		allNodes,
 	)
 
-	c.BaseController.Log.Debugf(
+	r.Log.Debugf(
 		"services are missing for the following nodes: %s",
 		services.Missing,
 	)
@@ -120,7 +96,7 @@ func (c *Controller) resolveServices(
 		services.CurrentServiceNames(),
 	)
 
-	c.BaseController.Log.Debugf(
+	r.Log.Debugf(
 		"extraneous services exist for following nodes: %s",
 		extraEndpointDeployments,
 	)
@@ -134,22 +110,22 @@ func (c *Controller) resolveServices(
 	return services, nil
 }
 
-func (c *Controller) pruneServices(
+func (r *Reconciler) pruneFabricServices(
 	ctx context.Context,
 	services *clabernetescontrollers.ResolvedServices,
 ) error {
-	c.BaseController.Log.Info("pruning extraneous services")
+	r.Log.Info("pruning extraneous services")
 
 	for _, extraDeployment := range services.Extra {
-		c.BaseController.Log.Debugf(
+		r.Log.Debugf(
 			"removing service '%s/%s'",
 			extraDeployment.Namespace,
 			extraDeployment.Name,
 		)
 
-		err := c.Client.Delete(ctx, extraDeployment)
+		err := r.Client.Delete(ctx, extraDeployment)
 		if err != nil {
-			c.BaseController.Log.Criticalf(
+			r.Log.Criticalf(
 				"failed removing service '%s/%s' error: %s",
 				extraDeployment.Namespace,
 				extraDeployment.Name,
@@ -163,33 +139,33 @@ func (c *Controller) pruneServices(
 	return nil
 }
 
-func (c *Controller) enforceServices( //nolint:dupl
+func (r *Reconciler) enforceFabricServices( //nolint:dupl
 	ctx context.Context,
-	clab *clabernetesapistopologyv1alpha1.Containerlab,
+	obj ctrlruntimeclient.Object,
 	services *clabernetescontrollers.ResolvedServices,
 ) error {
-	c.BaseController.Log.Info("creating missing services")
+	r.Log.Info("creating missing services")
 
 	for _, nodeName := range services.Missing {
-		service := renderService(
-			clab,
+		service := renderFabricService(
+			obj,
 			nodeName,
 		)
 
-		err := c.enforceServiceOwnerReference(clab, service)
+		err := ctrlruntimeutil.SetOwnerReference(obj, service, r.Client.Scheme())
 		if err != nil {
 			return err
 		}
 
-		c.BaseController.Log.Debugf(
+		r.Log.Debugf(
 			"creating service '%s/%s'",
 			service.Namespace,
 			service.Name,
 		)
 
-		err = c.Client.Create(ctx, service)
+		err = r.Client.Create(ctx, service)
 		if err != nil {
-			c.BaseController.Log.Criticalf(
+			r.Log.Criticalf(
 				"failed creating service '%s/%s' error: %s",
 				service.Namespace,
 				service.Name,
@@ -201,36 +177,36 @@ func (c *Controller) enforceServices( //nolint:dupl
 	}
 
 	// compare and update existing deployments if we need to
-	c.BaseController.Log.Info("enforcing desired state on existing services")
+	r.Log.Info("enforcing desired state on existing services")
 
 	for nodeName, service := range services.Current {
-		c.BaseController.Log.Debugf(
+		r.Log.Debugf(
 			"comparing existing service '%s/%s' to desired state",
 			service.Namespace,
 			service.Name,
 		)
 
-		expectedService := renderService(
-			clab,
+		expectedService := renderFabricService(
+			obj,
 			nodeName,
 		)
 
-		err := c.enforceServiceOwnerReference(clab, expectedService)
+		err := ctrlruntimeutil.SetOwnerReference(obj, service, r.Client.Scheme())
 		if err != nil {
 			return err
 		}
 
-		if !serviceConforms(service, expectedService, clab.UID) {
-			c.BaseController.Log.Debugf(
+		if !serviceConforms(service, expectedService, obj.GetUID()) {
+			r.Log.Debugf(
 				"comparing existing service '%s/%s' spec does not conform to desired state, "+
 					"updating",
 				service.Namespace,
 				service.Name,
 			)
 
-			err = c.Client.Update(ctx, expectedService)
+			err = r.Client.Update(ctx, expectedService)
 			if err != nil {
-				c.BaseController.Log.Criticalf(
+				r.Log.Criticalf(
 					"failed updating service '%s/%s' error: %s",
 					expectedService.Namespace,
 					expectedService.Name,
@@ -245,16 +221,18 @@ func (c *Controller) enforceServices( //nolint:dupl
 	return nil
 }
 
-func renderService(
-	clab *clabernetesapistopologyv1alpha1.Containerlab,
+func renderFabricService(
+	obj ctrlruntimeclient.Object,
 	nodeName string,
 ) *k8scorev1.Service {
-	serviceName := fmt.Sprintf("%s-%s", clab.Name, nodeName)
+	name := obj.GetName()
+
+	serviceName := fmt.Sprintf("%s-%s", name, nodeName)
 
 	labels := map[string]string{
 		clabernetesconstants.LabelApp:                 clabernetesconstants.Clabernetes,
 		clabernetesconstants.LabelName:                serviceName,
-		clabernetesconstants.LabelTopologyOwner:       clab.Name,
+		clabernetesconstants.LabelTopologyOwner:       name,
 		clabernetesconstants.LabelTopologyNode:        nodeName,
 		clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeFabric, //nolint:lll
 	}
@@ -262,7 +240,7 @@ func renderService(
 	service := &k8scorev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      serviceName,
-			Namespace: clab.Namespace,
+			Namespace: obj.GetNamespace(),
 			Labels:    labels,
 		},
 		Spec: k8scorev1.ServiceSpec{
@@ -277,7 +255,7 @@ func renderService(
 				},
 			},
 			Selector: map[string]string{
-				clabernetesconstants.LabelTopologyOwner: clab.Name,
+				clabernetesconstants.LabelTopologyOwner: name,
 				clabernetesconstants.LabelTopologyNode:  nodeName,
 			},
 			Type: "ClusterIP",

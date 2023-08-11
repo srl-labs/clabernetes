@@ -1,20 +1,21 @@
-package containerlab
+package kne
 
 import (
 	"context"
 	"fmt"
+
+	k8scorev1 "k8s.io/api/core/v1"
+	ctrlruntimehandler "sigs.k8s.io/controller-runtime/pkg/handler"
 
 	clabernetescontrollerstopology "gitlab.com/carlmontanari/clabernetes/controllers/topology"
 
 	clabernetesapistopology "gitlab.com/carlmontanari/clabernetes/apis/topology"
 	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
 	clabernetescontrollers "gitlab.com/carlmontanari/clabernetes/controllers"
-	k8scorev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/rest"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlruntimecontroller "sigs.k8s.io/controller-runtime/pkg/controller"
-	ctrlruntimehandler "sigs.k8s.io/controller-runtime/pkg/handler"
 )
 
 // NewController returns a new Controller.
@@ -29,7 +30,7 @@ func NewController(
 		fmt.Sprintf(
 			"%s-%s",
 			clabernetesapistopology.Group,
-			clabernetesapistopology.Containerlab,
+			clabernetesapistopology.Kne,
 		),
 		appName,
 		config,
@@ -57,7 +58,7 @@ type Controller struct {
 func (c *Controller) SetupWithManager(mgr ctrlruntime.Manager) error {
 	c.BaseController.Log.Infof(
 		"setting up %s controller with manager",
-		clabernetesapistopology.Containerlab,
+		clabernetesapistopology.Kne,
 	)
 
 	return ctrlruntime.NewControllerManagedBy(mgr).
@@ -66,7 +67,7 @@ func (c *Controller) SetupWithManager(mgr ctrlruntime.Manager) error {
 				MaxConcurrentReconciles: 1,
 			},
 		).
-		For(&clabernetesapistopologyv1alpha1.Containerlab{}).
+		For(&clabernetesapistopologyv1alpha1.Kne{}).
 		// watch services so we can update the status of containerlab object with load balancer
 		// address
 		Watches(

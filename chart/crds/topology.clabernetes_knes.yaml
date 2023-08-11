@@ -4,21 +4,21 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.12.1
-  name: containerlabs.topology.clabernetes
+  name: knes.topology.clabernetes
 spec:
   group: topology.clabernetes
   names:
-    kind: Containerlab
-    listKind: ContainerlabList
-    plural: containerlabs
-    singular: containerlab
+    kind: Kne
+    listKind: KneList
+    plural: knes
+    singular: kne
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Containerlab is an object that holds a "normal" containerlab
-          topology file and any additional data necessary to "clabernetes-ify" it.
+        description: Kne is an object that holds a "normal" kne topology file and
+          any additional data necessary to "clabernetes-ify" it.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,12 +33,8 @@ spec:
           metadata:
             type: object
           spec:
-            description: ContainerlabSpec is the spec for a Containerlab topology
-              resource.
+            description: KneSpec is the spec for a Kne topology resource.
             properties:
-              config:
-                description: Config is a "normal" containerlab configuration file.
-                type: string
               disableExpose:
                 description: DisableExpose indicates if exposing nodes via LoadBalancer
                   service should be disabled, by default any mapped ports in a containerlab
@@ -83,12 +79,14 @@ spec:
                 items:
                   type: string
                 type: array
+              topology:
+                description: Topology is a "normal" kne topology proto file.
+                type: string
             required:
-            - config
+            - topology
             type: object
           status:
-            description: ContainerlabStatus is the status for a Containerlab topology
-              resource.
+            description: KneStatus is the status for a Kne topology resource.
             properties:
               configs:
                 description: Configs is a map of node name -> clab config -- in other

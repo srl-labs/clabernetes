@@ -10,7 +10,7 @@ import (
 
 	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
 
-	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
+	clabernetesutilcontainerlab "gitlab.com/carlmontanari/clabernetes/util/containerlab"
 
 	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
 	claberneteslogging "gitlab.com/carlmontanari/clabernetes/logging"
@@ -94,7 +94,7 @@ type Clabverter struct {
 	topologyPathParent string
 
 	rawClabConfig string
-	clabConfig    *clabernetescontainerlab.Config
+	clabConfig    *clabernetesutilcontainerlab.Config
 
 	// mapping of nodeName -> startup-config info for the templating process
 	startupConfigConfigMaps map[string]topologyConfigMapTemplateVars
@@ -209,7 +209,7 @@ func (c *Clabverter) load() error {
 	c.rawClabConfig = string(rawClabConfigBytes)
 
 	// parse the topo file
-	c.clabConfig, err = clabernetescontainerlab.LoadContainerlabConfig(c.rawClabConfig)
+	c.clabConfig, err = clabernetesutilcontainerlab.LoadContainerlabConfig(c.rawClabConfig)
 	if err != nil {
 		c.logger.Criticalf(
 			"failed parsing containerlab topology file at '%s', error: %s", c.topologyPath, err,

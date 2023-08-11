@@ -1,12 +1,13 @@
-package containerlab
+package kne
 
 import (
 	"context"
 
-	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
-
 	clabernetesutilcontainerlab "gitlab.com/carlmontanari/clabernetes/util/containerlab"
 
+	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
+
+	clabernetesutilkne "gitlab.com/carlmontanari/clabernetes/util/kne"
 	"gopkg.in/yaml.v3"
 
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -20,7 +21,7 @@ func (c *Controller) Reconcile(
 ) (ctrlruntime.Result, error) {
 	c.BaseController.LogReconcileStart(req)
 
-	clab, err := c.getClabFromReq(ctx, req)
+	kne, err := c.getKneFromReq(ctx, req)
 	if err != nil {
 		if apimachineryerrors.IsNotFound(err) {
 			// was deleted, nothing to do
@@ -34,15 +35,15 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, err
 	}
 
-	if clab.DeletionTimestamp != nil {
+	if kne.DeletionTimestamp != nil {
 		// deleting nothing to do, we have no finalizers or anything at this point
 		return ctrlruntime.Result{}, nil
 	}
 
 	preReconcileConfigs := make(map[string]*clabernetesutilcontainerlab.Config)
 
-	if clab.Status.Configs != "" {
-		err = yaml.Unmarshal([]byte(clab.Status.Configs), &preReconcileConfigs)
+	if kne.Status.Configs != "" {
+		err = yaml.Unmarshal([]byte(kne.Status.Configs), &preReconcileConfigs)
 		if err != nil {
 			c.BaseController.Log.Criticalf(
 				"failed parsing unmarshalling previously stored config, error: %s", err,
@@ -52,24 +53,24 @@ func (c *Controller) Reconcile(
 		}
 	}
 
-	// load the clab topo to make sure its all good
-	clabTopo, err := clabernetesutilcontainerlab.LoadContainerlabTopology(clab.Spec.Config)
+	// load the kne topo to make sure its all good
+	kneTopo, err := clabernetesutilkne.LoadKneTopology(kne.Spec.Topology)
 	if err != nil {
-		c.BaseController.Log.Criticalf("failed parsing containerlab config, error: ", err)
+		c.BaseController.Log.Criticalf("failed parsing kne topology, error: ", err)
 
 		return ctrlruntime.Result{}, err
 	}
 
-	clabernetesConfigs, tunnels, configShouldUpdate, err := c.processConfig(clab, clabTopo)
+	clabernetesConfigs, tunnels, configShouldUpdate, err := c.processConfig(kne, kneTopo)
 	if err != nil {
-		c.BaseController.Log.Criticalf("failed processing containerlab config, error: %s", err)
+		c.BaseController.Log.Criticalf("failed processing kne topology, error: %s", err)
 
 		return ctrlruntime.Result{}, err
 	}
 
 	err = c.TopologyReconciler.ReconcileConfigMap(
 		ctx,
-		clab,
+		kne,
 		clabernetesConfigs,
 		tunnels,
 	)
@@ -81,7 +82,7 @@ func (c *Controller) Reconcile(
 
 	err = c.TopologyReconciler.ReconcileDeployments(
 		ctx,
-		clab,
+		kne,
 		preReconcileConfigs,
 		clabernetesConfigs,
 	)
@@ -91,7 +92,7 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, err
 	}
 
-	err = c.TopologyReconciler.ReconcileServiceFabric(ctx, clab, clabernetesConfigs)
+	err = c.TopologyReconciler.ReconcileServiceFabric(ctx, kne, clabernetesConfigs)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed reconciling clabernetes services, error: %s", err)
 
@@ -100,10 +101,10 @@ func (c *Controller) Reconcile(
 
 	var exposeServicesShouldUpdate bool
 
-	if !clab.Spec.DisableExpose {
+	if !kne.Spec.DisableExpose {
 		exposeServicesShouldUpdate, err = c.TopologyReconciler.ReconcileServicesExpose(
 			ctx,
-			clab,
+			kne,
 			clabernetesConfigs,
 		)
 		if err != nil {
@@ -117,12 +118,12 @@ func (c *Controller) Reconcile(
 
 	if clabernetesutil.AnyBoolTrue(configShouldUpdate, exposeServicesShouldUpdate) {
 		// we should update because config hash or something changed, so push update to the object
-		err = c.BaseController.Client.Update(ctx, clab)
+		err = c.BaseController.Client.Update(ctx, kne)
 		if err != nil {
 			c.BaseController.Log.Criticalf(
 				"failed updating object '%s/%s' error: %s",
-				clab.Namespace,
-				clab.Name,
+				kne.Namespace,
+				kne.Name,
 				err,
 			)
 

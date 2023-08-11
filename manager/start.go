@@ -7,6 +7,7 @@ import (
 	"time"
 
 	clabernetescontrollerstopologycontainerlab "gitlab.com/carlmontanari/clabernetes/controllers/topology/containerlab"
+	clabernetescontrollerstopologykne "gitlab.com/carlmontanari/clabernetes/controllers/topology/kne"
 
 	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
 	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
@@ -121,6 +122,7 @@ func (c *clabernetes) start(ctx context.Context) {
 
 	controllersToRegisterFuncs := []clabernetescontrollers.NewController{
 		clabernetescontrollerstopologycontainerlab.NewController,
+		clabernetescontrollerstopologykne.NewController,
 	}
 
 	for _, newF := range controllersToRegisterFuncs {

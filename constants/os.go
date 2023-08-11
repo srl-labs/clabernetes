@@ -17,4 +17,8 @@ const (
 	// PermissionsGroupRead is 0666 permissions for files/directories -- group can read, owner can
 	// read, execute and write.
 	PermissionsGroupRead = 0o666
+
+	// PermissionsEveryoneReadUserWrite is 0644 permissions for files/directories -- everyone can
+	// read, user can write.
+	PermissionsEveryoneReadUserWrite = 0o644
 )

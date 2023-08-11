@@ -1,6 +1,7 @@
 ---
 stages:
   - lint
+  - test
   - build
   - release
   - container_scanning
@@ -9,7 +10,8 @@ variables:
   GOFUMPT_VERSION: v0.5.0
   GOIMPORTS_VERSION: v0.5.0
   GOLINES_VERSION: v0.11.0
-  GOLANGCI_LINT_VERSION: v1.53.3
+  GOLANGCI_LINT_VERSION: v1.54.1
+  GOTESTSUM_VERSION: v1.10.1
   DEVSPACE_VERSION: v6.3.2
   HELM_VERSION: "3.11"
   GITHUB_REGISTRY_USER: carlmontanari
@@ -22,6 +24,9 @@ variables:
   - curl -sSfL
     https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh |
     sh -s -- -b $(go env GOPATH)/bin $GOLANGCI_LINT_VERSION
+
+.install_go_test_tools: &install_go_test_tools
+  - go install gotest.tools/gotestsum@$GOTESTSUM_VERSION
 
 .install_common_tools: &install_common_tools
   - apk add curl git
@@ -64,10 +69,30 @@ lint:
     - go mod tidy
     - make lint
 
+test:
+  stage: test
+  needs:
+    - lint
+  rules:
+    # if on main branch or a mr pointing to main branch, also run on tags (releases)
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+  image: golang:1.20
+
+  script:
+    - *install_go_test_tools
+    - go mod tidy
+    - make test-race
+
 build:
   stage: build
   needs:
     - job: lint
+      optional: true
+    - job: test
+      optional: true
   rules:
     # never run build on tagged commits, we run release then
     - exists:
