@@ -60,28 +60,38 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, err
 	}
 
-	configs, tunnels, configShouldUpdate, err := c.processConfig(clab, clabTopo)
+	clabernetesConfigs, tunnels, configShouldUpdate, err := c.processConfig(clab, clabTopo)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed processing containerlab config, error: %s", err)
 
 		return ctrlruntime.Result{}, err
 	}
 
-	err = c.reconcileConfigMap(ctx, clab, configs, tunnels)
+	err = c.TopologyReconciler.ReconcileConfigMap(
+		ctx,
+		clab,
+		clabernetesConfigs,
+		tunnels,
+	)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed reconciling clabernetes config map, error: %s", err)
 
 		return ctrlruntime.Result{}, err
 	}
 
-	err = c.reconcileDeployments(ctx, clab, preReconcileConfigs, configs)
+	err = c.TopologyReconciler.ReconcileDeployments(
+		ctx,
+		clab,
+		preReconcileConfigs,
+		clabernetesConfigs,
+	)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed reconciling clabernetes deployments, error: %s", err)
 
 		return ctrlruntime.Result{}, err
 	}
 
-	err = c.reconcileServices(ctx, clab, configs)
+	err = c.TopologyReconciler.ReconcileServiceFabric(ctx, clab, clabernetesConfigs)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed reconciling clabernetes services, error: %s", err)
 
@@ -91,7 +101,11 @@ func (c *Controller) Reconcile(
 	var exposeServicesShouldUpdate bool
 
 	if !clab.Spec.DisableExpose {
-		exposeServicesShouldUpdate, err = c.reconcileExposeServices(ctx, clab, configs)
+		exposeServicesShouldUpdate, err = c.TopologyReconciler.ReconcileServicesExpose(
+			ctx,
+			clab,
+			clabernetesConfigs,
+		)
 		if err != nil {
 			c.BaseController.Log.Criticalf(
 				"failed reconciling clabernetes expose services, error: %s", err,

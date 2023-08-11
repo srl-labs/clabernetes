@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	clabernetescontrollerstopology "gitlab.com/carlmontanari/clabernetes/controllers/topology"
+
 	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 
@@ -26,18 +28,24 @@ func NewController(
 	config *rest.Config,
 	client ctrlruntimeclient.Client,
 ) clabernetescontrollers.Controller {
-	c := &Controller{
-		BaseController: clabernetescontrollers.NewBaseController(
-			ctx,
-			fmt.Sprintf(
-				"%s-%s",
-				clabernetesapistopology.Group,
-				clabernetesapistopology.Containerlab,
-			),
-			appName,
-			config,
-			client,
+	baseController := clabernetescontrollers.NewBaseController(
+		ctx,
+		fmt.Sprintf(
+			"%s-%s",
+			clabernetesapistopology.Group,
+			clabernetesapistopology.Containerlab,
 		),
+		appName,
+		config,
+		client,
+	)
+
+	c := &Controller{
+		BaseController: baseController,
+		TopologyReconciler: &clabernetescontrollerstopology.Reconciler{
+			Log:    baseController.Log,
+			Client: baseController.Client,
+		},
 	}
 
 	return c
@@ -46,6 +54,7 @@ func NewController(
 // Controller is the Containerlab topology controller object.
 type Controller struct {
 	*clabernetescontrollers.BaseController
+	TopologyReconciler *clabernetescontrollerstopology.Reconciler
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -68,6 +77,7 @@ func (c *Controller) SetupWithManager(mgr ctrlruntime.Manager) error {
 			&k8scorev1.Service{},
 			ctrlruntimehandler.EnqueueRequestsFromMapFunc(c.mapServiceToContainerlab),
 		).
+		// TODO - should we watch deployments too to keep enforcing them? probably "yes"
 		Complete(c)
 }
 

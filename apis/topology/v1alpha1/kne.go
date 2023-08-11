@@ -19,6 +19,22 @@ type Kne struct {
 	Status KneStatus `json:"status,omitempty"`
 }
 
+// GetTopologyCommonSpec returns the Kne resource's TopologyCommonSpec embedded in the object's
+// spec.
+func (c *Kne) GetTopologyCommonSpec() TopologyCommonSpec {
+	return c.Spec.TopologyCommonSpec
+}
+
+// GetTopologyStatus returns the Kne resource's TopologyStatus embedded in the object's status.
+func (c *Kne) GetTopologyStatus() TopologyStatus {
+	return c.Status.TopologyStatus
+}
+
+// SetTopologyStatus sets Kne resource's TopologyStatus embedded in the object's status.
+func (c *Kne) SetTopologyStatus(s TopologyStatus) {
+	c.Status.TopologyStatus = s
+}
+
 // KneSpec is the spec for a Kne topology resource.
 type KneSpec struct {
 	TopologyCommonSpec `json:",inline"`

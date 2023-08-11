@@ -1,4 +1,4 @@
-package containerlab
+package topology
 
 import (
 	"context"
@@ -8,11 +8,6 @@ import (
 	"strings"
 	"sync"
 
-	"gopkg.in/yaml.v3"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
-
 	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
 	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
 	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
@@ -20,7 +15,11 @@ import (
 	claberneteserrors "gitlab.com/carlmontanari/clabernetes/errors"
 	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
 	k8scorev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 var (
@@ -38,67 +37,23 @@ func getPortPattern() *regexp.Regexp {
 	return portPattern
 }
 
-func (c *Controller) reconcileExposeServices(
+func (r *Reconciler) resolveExposeServices(
 	ctx context.Context,
-	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
-) (bool, error) {
-	var shouldUpdate bool
-
-	if clab.Status.NodeExposedPorts == nil {
-		clab.Status.NodeExposedPorts = map[string]*clabernetesapistopologyv1alpha1.ExposedPorts{}
-
-		shouldUpdate = true
-	}
-
-	services, err := c.resolveExposeServices(ctx, clab, clabernetesConfigs)
-	if err != nil {
-		return shouldUpdate, err
-	}
-
-	err = c.pruneExposeServices(ctx, services)
-	if err != nil {
-		return shouldUpdate, err
-	}
-
-	err = c.enforceExposeServices(ctx, clab, clabernetesConfigs, services)
-	if err != nil {
-		return shouldUpdate, err
-	}
-
-	nodeExposedPortsBytes, err := yaml.Marshal(clab.Status.NodeExposedPorts)
-	if err != nil {
-		return shouldUpdate, err
-	}
-
-	newNodeExposedPortsHash := clabernetesutil.HashBytes(nodeExposedPortsBytes)
-
-	if clab.Status.NodeExposedPortsHash != newNodeExposedPortsHash {
-		clab.Status.NodeExposedPortsHash = newNodeExposedPortsHash
-
-		shouldUpdate = true
-	}
-
-	return shouldUpdate, nil
-}
-
-func (c *Controller) resolveExposeServices(
-	ctx context.Context,
-	clab *clabernetesapistopologyv1alpha1.Containerlab,
+	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
 ) (*clabernetescontrollers.ResolvedServices, error) {
 	ownedServices := &k8scorev1.ServiceList{}
 
-	err := c.Client.List(
+	err := r.Client.List(
 		ctx,
 		ownedServices,
-		ctrlruntimeclient.InNamespace(clab.Namespace),
+		ctrlruntimeclient.InNamespace(obj.GetNamespace()),
 		ctrlruntimeclient.MatchingLabels{
-			clabernetesconstants.LabelTopologyOwner: clab.Name,
+			clabernetesconstants.LabelTopologyOwner: obj.GetName(),
 		},
 	)
 	if err != nil {
-		c.Log.Criticalf("failed fetching owned expose services, error: '%s'", err)
+		r.Log.Criticalf("failed fetching owned expose services, error: '%s'", err)
 
 		return nil, err
 	}
@@ -151,7 +106,7 @@ func (c *Controller) resolveExposeServices(
 		exposedNodes,
 	)
 
-	c.BaseController.Log.Debugf(
+	r.Log.Debugf(
 		"expose services are missing for the following nodes: %s",
 		services.Missing,
 	)
@@ -161,7 +116,7 @@ func (c *Controller) resolveExposeServices(
 		services.CurrentServiceNames(),
 	)
 
-	c.BaseController.Log.Debugf(
+	r.Log.Debugf(
 		"extraneous expose services exist for following nodes: %s",
 		extraEndpointDeployments,
 	)
@@ -175,22 +130,22 @@ func (c *Controller) resolveExposeServices(
 	return services, nil
 }
 
-func (c *Controller) pruneExposeServices(
+func (r *Reconciler) pruneExposeServices(
 	ctx context.Context,
 	services *clabernetescontrollers.ResolvedServices,
 ) error {
-	c.BaseController.Log.Info("pruning extraneous expose services")
+	r.Log.Info("pruning extraneous expose services")
 
 	for _, extraDeployment := range services.Extra {
-		c.BaseController.Log.Debugf(
+		r.Log.Debugf(
 			"removing expose service '%s/%s'",
 			extraDeployment.Namespace,
 			extraDeployment.Name,
 		)
 
-		err := c.Client.Delete(ctx, extraDeployment)
+		err := r.Client.Delete(ctx, extraDeployment)
 		if err != nil {
-			c.BaseController.Log.Criticalf(
+			r.Log.Criticalf(
 				"failed removing expose service '%s/%s' error: %s",
 				extraDeployment.Namespace,
 				extraDeployment.Name,
@@ -204,35 +159,37 @@ func (c *Controller) pruneExposeServices(
 	return nil
 }
 
-func (c *Controller) enforceExposeServices(
+func (r *Reconciler) enforceExposeServices(
 	ctx context.Context,
-	clab *clabernetesapistopologyv1alpha1.Containerlab,
+	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
+	objTopologyStatus clabernetesapistopologyv1alpha1.TopologyStatus,
 	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
 	services *clabernetescontrollers.ResolvedServices,
 ) error {
-	c.BaseController.Log.Info("creating missing expose services")
+	r.Log.Info("creating missing expose services")
 
 	for _, nodeName := range services.Missing {
-		service := c.renderExposeService(
-			clab,
+		service := r.renderExposeService(
+			obj,
+			objTopologyStatus,
 			clabernetesConfigs,
 			nodeName,
 		)
 
-		err := c.enforceServiceOwnerReference(clab, service)
+		err := ctrlruntimeutil.SetOwnerReference(obj, service, r.Client.Scheme())
 		if err != nil {
 			return err
 		}
 
-		c.BaseController.Log.Debugf(
+		r.Log.Debugf(
 			"creating expose service '%s/%s'",
 			service.Namespace,
 			service.Name,
 		)
 
-		err = c.Client.Create(ctx, service)
+		err = r.Client.Create(ctx, service)
 		if err != nil {
-			c.BaseController.Log.Criticalf(
+			r.Log.Criticalf(
 				"failed creating expose service '%s/%s' error: %s",
 				service.Namespace,
 				service.Name,
@@ -244,17 +201,18 @@ func (c *Controller) enforceExposeServices(
 	}
 
 	// compare and update existing deployments if we need to
-	c.BaseController.Log.Info("enforcing desired state on existing expose services")
+	r.Log.Info("enforcing desired state on existing expose services")
 
 	for nodeName, service := range services.Current {
-		c.BaseController.Log.Debugf(
+		r.Log.Debugf(
 			"comparing existing expose service '%s/%s' to desired state",
 			service.Namespace,
 			service.Name,
 		)
 
-		expectedService := c.renderExposeService(
-			clab,
+		expectedService := r.renderExposeService(
+			obj,
+			objTopologyStatus,
 			clabernetesConfigs,
 			nodeName,
 		)
@@ -263,26 +221,26 @@ func (c *Controller) enforceExposeServices(
 			// can/would this ever be more than 1? i dunno?
 			address := service.Status.LoadBalancer.Ingress[0].IP
 			if address != "" {
-				clab.Status.NodeExposedPorts[nodeName].LoadBalancerAddress = address
+				objTopologyStatus.NodeExposedPorts[nodeName].LoadBalancerAddress = address
 			}
 		}
 
-		err := c.enforceServiceOwnerReference(clab, expectedService)
+		err := ctrlruntimeutil.SetOwnerReference(obj, expectedService, r.Client.Scheme())
 		if err != nil {
 			return err
 		}
 
-		if !serviceConforms(service, expectedService, clab.UID) {
-			c.BaseController.Log.Debugf(
+		if !serviceConforms(service, expectedService, obj.GetUID()) {
+			r.Log.Debugf(
 				"comparing existing expose service '%s/%s' spec does not conform to desired "+
 					"state, updating",
 				service.Namespace,
 				service.Name,
 			)
 
-			err = c.Client.Update(ctx, expectedService)
+			err = r.Client.Update(ctx, expectedService)
 			if err != nil {
-				c.BaseController.Log.Criticalf(
+				r.Log.Criticalf(
 					"failed updating expose service '%s/%s' error: %s",
 					expectedService.Namespace,
 					expectedService.Name,
@@ -297,22 +255,25 @@ func (c *Controller) enforceExposeServices(
 	return nil
 }
 
-func (c *Controller) renderExposeService(
-	clab *clabernetesapistopologyv1alpha1.Containerlab,
+func (r *Reconciler) renderExposeService(
+	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
+	objTopologyStatus clabernetesapistopologyv1alpha1.TopologyStatus,
 	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
 	nodeName string,
 ) *k8scorev1.Service {
-	clab.Status.NodeExposedPorts[nodeName] = &clabernetesapistopologyv1alpha1.ExposedPorts{
+	name := obj.GetName()
+
+	objTopologyStatus.NodeExposedPorts[nodeName] = &clabernetesapistopologyv1alpha1.ExposedPorts{
 		TCPPorts: make([]int, 0),
 		UDPPorts: make([]int, 0),
 	}
 
-	serviceName := fmt.Sprintf("%s-%s-expose", clab.Name, nodeName)
+	serviceName := fmt.Sprintf("%s-%s-expose", name, nodeName)
 
 	labels := map[string]string{
 		clabernetesconstants.LabelApp:                 clabernetesconstants.Clabernetes,
 		clabernetesconstants.LabelName:                serviceName,
-		clabernetesconstants.LabelTopologyOwner:       clab.Name,
+		clabernetesconstants.LabelTopologyOwner:       name,
 		clabernetesconstants.LabelTopologyNode:        nodeName,
 		clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeExpose, //nolint:lll
 	}
@@ -333,7 +294,7 @@ func (c *Controller) renderExposeService(
 
 		exposePortAsInt, err := strconv.ParseInt(paramsMap["exposePort"], 10, 32)
 		if err != nil || exposePortAsInt == 0 {
-			c.BaseController.Log.Warnf(
+			r.Log.Warnf(
 				"failed converting exposed port to integer, full port string '%s', parsed port "+
 					"'%s'. skipping this port but continuing on...",
 				portDefinition,
@@ -345,7 +306,7 @@ func (c *Controller) renderExposeService(
 
 		destinationPortAsInt, err := strconv.ParseInt(paramsMap["destinationPort"], 10, 32)
 		if err != nil || destinationPortAsInt == 0 {
-			c.BaseController.Log.Warnf(
+			r.Log.Warnf(
 				"failed converting destination port to integer, full port string '%s', parsed "+
 					"port '%s'.  skipping this port but continuing on...",
 				portDefinition,
@@ -371,13 +332,13 @@ func (c *Controller) renderExposeService(
 
 		// dont forget to update the exposed ports status bits
 		if protocol == clabernetesconstants.TCP {
-			clab.Status.NodeExposedPorts[nodeName].TCPPorts = append(
-				clab.Status.NodeExposedPorts[nodeName].TCPPorts,
+			objTopologyStatus.NodeExposedPorts[nodeName].TCPPorts = append(
+				objTopologyStatus.NodeExposedPorts[nodeName].TCPPorts,
 				int(destinationPortAsInt),
 			)
 		} else {
-			clab.Status.NodeExposedPorts[nodeName].UDPPorts = append(
-				clab.Status.NodeExposedPorts[nodeName].UDPPorts,
+			objTopologyStatus.NodeExposedPorts[nodeName].UDPPorts = append(
+				objTopologyStatus.NodeExposedPorts[nodeName].UDPPorts,
 				int(destinationPortAsInt),
 			)
 		}
@@ -386,13 +347,13 @@ func (c *Controller) renderExposeService(
 	service := &k8scorev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      serviceName,
-			Namespace: clab.Namespace,
+			Namespace: obj.GetNamespace(),
 			Labels:    labels,
 		},
 		Spec: k8scorev1.ServiceSpec{
 			Ports: ports,
 			Selector: map[string]string{
-				clabernetesconstants.LabelTopologyOwner: clab.Name,
+				clabernetesconstants.LabelTopologyOwner: name,
 				clabernetesconstants.LabelTopologyNode:  nodeName,
 			},
 			Type: "LoadBalancer",

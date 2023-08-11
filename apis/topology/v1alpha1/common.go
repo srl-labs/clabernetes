@@ -1,5 +1,20 @@
 package v1alpha1
 
+import (
+	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+// TopologyCommonObject is an interface that clabernetes topology objects must implement -- it
+// allows the CR object to be handled as a normal controller runtime object but with the addition
+// of a method that allows for accessing the common embedded TopologyCommonSpec struct that is
+// embedded in all clabernetes topology CR types.
+type TopologyCommonObject interface {
+	ctrlruntimeclient.Object
+	GetTopologyCommonSpec() TopologyCommonSpec
+	GetTopologyStatus() TopologyStatus
+	SetTopologyStatus(s TopologyStatus)
+}
+
 // InsecureRegistries is a slice of strings of insecure registries to configure in the launcher
 // pods.
 type InsecureRegistries []string

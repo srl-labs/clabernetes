@@ -1,4 +1,4 @@
-package containerlab
+package topology
 
 import (
 	"context"
@@ -7,89 +7,39 @@ import (
 	"strings"
 	"time"
 
+	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
+	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
 	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
-
-	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
-
 	clabernetescontrollers "gitlab.com/carlmontanari/clabernetes/controllers"
 	claberneteserrors "gitlab.com/carlmontanari/clabernetes/errors"
-
-	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
-
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
-	apimachinerytypes "k8s.io/apimachinery/pkg/types"
-
-	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
 	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
 	k8sappsv1 "k8s.io/api/apps/v1"
 	k8scorev1 "k8s.io/api/core/v1"
+	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apimachinerytypes "k8s.io/apimachinery/pkg/types"
+
+	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (c *Controller) reconcileDeployments(
+func (r *Reconciler) resolveDeployments(
 	ctx context.Context,
-	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	preReconcileConfigs,
-	configs map[string]*clabernetescontainerlab.Config,
-) error {
-	deployments, err := c.resolveDeployments(ctx, clab, configs)
-	if err != nil {
-		return err
-	}
-
-	err = c.pruneDeployments(ctx, deployments)
-	if err != nil {
-		return err
-	}
-
-	err = c.enforceDeployments(ctx, clab, deployments)
-	if err != nil {
-		return err
-	}
-
-	nodesNeedingRestart := determineNodesNeedingRestart(preReconcileConfigs, configs)
-	if len(nodesNeedingRestart) == 0 {
-		return nil
-	}
-
-	for _, nodeName := range nodesNeedingRestart {
-		if !clabernetesutil.StringSliceContains(deployments.Missing, nodeName) {
-			// is a new node, don't restart
-			continue
-		}
-
-		c.BaseController.Log.Infof(
-			"restarting the nodes '%s' as configurations have changed",
-			nodesNeedingRestart,
-		)
-
-		err = c.restartDeploymentForNode(ctx, clab, nodeName)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (c *Controller) resolveDeployments(
-	ctx context.Context,
-	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	configs map[string]*clabernetescontainerlab.Config,
+	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
+	clabernetesConfigs map[string]*clabernetescontainerlab.Config,
 ) (*clabernetescontrollers.ResolvedDeployments, error) {
 	ownedDeployments := &k8sappsv1.DeploymentList{}
 
-	err := c.Client.List(
+	err := r.Client.List(
 		ctx,
 		ownedDeployments,
-		ctrlruntimeclient.InNamespace(clab.Namespace),
+		ctrlruntimeclient.InNamespace(obj.GetNamespace()),
 		ctrlruntimeclient.MatchingLabels{
-			clabernetesconstants.LabelTopologyOwner: clab.Name,
+			clabernetesconstants.LabelTopologyOwner: obj.GetName(),
 		},
 	)
 	if err != nil {
-		c.Log.Criticalf("failed fetching owned deployments, error: '%s'", err)
+		r.Log.Criticalf("failed fetching owned deployments, error: '%s'", err)
 
 		return nil, err
 	}
@@ -119,11 +69,11 @@ func (c *Controller) resolveDeployments(
 		deployments.Current[nodeName] = &ownedDeployments.Items[i]
 	}
 
-	allNodes := make([]string, len(configs))
+	allNodes := make([]string, len(clabernetesConfigs))
 
 	var nodeIdx int
 
-	for nodeName := range configs {
+	for nodeName := range clabernetesConfigs {
 		allNodes[nodeIdx] = nodeName
 
 		nodeIdx++
@@ -134,7 +84,7 @@ func (c *Controller) resolveDeployments(
 		allNodes,
 	)
 
-	c.BaseController.Log.Debugf(
+	r.Log.Debugf(
 		"deployments are missing for the following nodes: %s",
 		deployments.Missing,
 	)
@@ -144,7 +94,7 @@ func (c *Controller) resolveDeployments(
 		deployments.CurrentDeploymentNames(),
 	)
 
-	c.BaseController.Log.Debugf(
+	r.Log.Debugf(
 		"extraneous deployments exist for following nodes: %s",
 		extraEndpointDeployments,
 	)
@@ -158,22 +108,22 @@ func (c *Controller) resolveDeployments(
 	return deployments, nil
 }
 
-func (c *Controller) pruneDeployments(
+func (r *Reconciler) pruneDeployments(
 	ctx context.Context,
 	deployments *clabernetescontrollers.ResolvedDeployments,
 ) error {
-	c.BaseController.Log.Info("pruning extraneous deployments")
+	r.Log.Info("pruning extraneous deployments")
 
 	for _, extraDeployment := range deployments.Extra {
-		c.BaseController.Log.Debugf(
+		r.Log.Debugf(
 			"removing deployment '%s/%s'",
 			extraDeployment.Namespace,
 			extraDeployment.Name,
 		)
 
-		err := c.Client.Delete(ctx, extraDeployment)
+		err := r.Client.Delete(ctx, extraDeployment)
 		if err != nil {
-			c.BaseController.Log.Criticalf(
+			r.Log.Criticalf(
 				"failed removing deployment '%s/%s' error: %s",
 				extraDeployment.Namespace,
 				extraDeployment.Name,
@@ -187,34 +137,34 @@ func (c *Controller) pruneDeployments(
 	return nil
 }
 
-func (c *Controller) enforceDeployments( //nolint:dupl
+func (r *Reconciler) enforceDeployments( //nolint:dupl
 	ctx context.Context,
-	clab *clabernetesapistopologyv1alpha1.Containerlab,
+	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	deployments *clabernetescontrollers.ResolvedDeployments,
 ) error {
 	// handle missing deployments
-	c.BaseController.Log.Info("creating missing deployments")
+	r.Log.Info("creating missing deployments")
 
 	for _, nodeName := range deployments.Missing {
 		deployment := renderDeployment(
-			clab,
+			obj,
 			nodeName,
 		)
 
-		err := c.enforceDeploymentOwnerReference(clab, deployment)
+		err := ctrlruntimeutil.SetOwnerReference(obj, deployment, r.Client.Scheme())
 		if err != nil {
 			return err
 		}
 
-		c.BaseController.Log.Debugf(
+		r.Log.Debugf(
 			"creating deployment '%s/%s'",
 			deployment.Namespace,
 			deployment.Name,
 		)
 
-		err = c.Client.Create(ctx, deployment)
+		err = r.Client.Create(ctx, deployment)
 		if err != nil {
-			c.BaseController.Log.Criticalf(
+			r.Log.Criticalf(
 				"failed creating deployment '%s/%s' error: %s",
 				deployment.Namespace,
 				deployment.Name,
@@ -226,36 +176,36 @@ func (c *Controller) enforceDeployments( //nolint:dupl
 	}
 
 	// compare and update existing deployments if we need to
-	c.BaseController.Log.Info("enforcing desired state on existing deployments")
+	r.Log.Info("enforcing desired state on existing deployments")
 
 	for nodeName, deployment := range deployments.Current {
-		c.BaseController.Log.Debugf(
+		r.Log.Debugf(
 			"comparing existing deployment '%s/%s' to desired state",
 			deployment.Namespace,
 			deployment.Name,
 		)
 
 		expectedDeployment := renderDeployment(
-			clab,
+			obj,
 			nodeName,
 		)
 
-		err := c.enforceDeploymentOwnerReference(clab, expectedDeployment)
+		err := ctrlruntimeutil.SetOwnerReference(obj, expectedDeployment, r.Client.Scheme())
 		if err != nil {
 			return err
 		}
 
-		if !deploymentConforms(deployment, expectedDeployment, clab.UID) {
-			c.BaseController.Log.Debugf(
+		if !deploymentConforms(deployment, expectedDeployment, obj.GetUID()) {
+			r.Log.Debugf(
 				"comparing existing deployment '%s/%s' spec does not conform to desired state, "+
 					"updating",
 				deployment.Namespace,
 				deployment.Name,
 			)
 
-			err = c.Client.Update(ctx, expectedDeployment)
+			err = r.Client.Update(ctx, expectedDeployment)
 			if err != nil {
-				c.BaseController.Log.Criticalf(
+				r.Log.Criticalf(
 					"failed updating deployment '%s/%s' error: %s",
 					expectedDeployment.Namespace,
 					expectedDeployment.Name,
@@ -270,24 +220,68 @@ func (c *Controller) enforceDeployments( //nolint:dupl
 	return nil
 }
 
+func (r *Reconciler) restartDeploymentForNode(
+	ctx context.Context,
+	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
+	nodeName string,
+) error {
+	deploymentName := fmt.Sprintf("%s-%s", obj.GetName(), nodeName)
+
+	nodeDeployment := &k8sappsv1.Deployment{}
+
+	err := r.Client.Get(
+		ctx,
+		apimachinerytypes.NamespacedName{
+			Namespace: obj.GetNamespace(),
+			Name:      deploymentName,
+		},
+		nodeDeployment,
+	)
+	if err != nil {
+		if apimachineryerrors.IsNotFound(err) {
+			r.Log.Warnf(
+				"could not find deployment '%s', cannot restart after config change,"+
+					" this should not happen",
+				deploymentName,
+			)
+
+			return nil
+		}
+
+		return err
+	}
+
+	if nodeDeployment.Spec.Template.ObjectMeta.Annotations == nil {
+		nodeDeployment.Spec.Template.ObjectMeta.Annotations = map[string]string{}
+	}
+
+	now := time.Now().Format(time.RFC3339)
+
+	nodeDeployment.Spec.Template.ObjectMeta.Annotations["kubectl.kubernetes.io/restartedAt"] = now
+
+	return r.Client.Update(ctx, nodeDeployment)
+}
+
 func renderDeployment(
-	clab *clabernetesapistopologyv1alpha1.Containerlab,
+	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	nodeName string,
 ) *k8sappsv1.Deployment {
-	deploymentName := fmt.Sprintf("%s-%s", clab.Name, nodeName)
-	configVolumeName := fmt.Sprintf("%s-config", clab.Name)
+	name := obj.GetName()
+
+	deploymentName := fmt.Sprintf("%s-%s", name, nodeName)
+	configVolumeName := fmt.Sprintf("%s-config", name)
 
 	labels := map[string]string{
 		clabernetesconstants.LabelApp:           clabernetesconstants.Clabernetes,
 		clabernetesconstants.LabelName:          deploymentName,
-		clabernetesconstants.LabelTopologyOwner: clab.Name,
+		clabernetesconstants.LabelTopologyOwner: name,
 		clabernetesconstants.LabelTopologyNode:  nodeName,
 	}
 
 	deployment := &k8sappsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      deploymentName,
-			Namespace: clab.Namespace,
+			Namespace: obj.GetNamespace(),
 			Labels:    labels,
 		},
 		Spec: k8sappsv1.DeploymentSpec{
@@ -363,7 +357,7 @@ func renderDeployment(
 							VolumeSource: k8scorev1.VolumeSource{
 								ConfigMap: &k8scorev1.ConfigMapVolumeSource{
 									LocalObjectReference: k8scorev1.LocalObjectReference{
-										Name: clab.Name,
+										Name: name,
 									},
 								},
 							},
@@ -374,21 +368,21 @@ func renderDeployment(
 		},
 	}
 
-	deployment = renderDeploymentAddFilesFromConfigMaps(nodeName, clab, deployment)
+	deployment = renderDeploymentAddFilesFromConfigMaps(nodeName, obj, deployment)
 
-	deployment = renderDeploymentAddInsecureRegistries(clab, deployment)
+	deployment = renderDeploymentAddInsecureRegistries(obj, deployment)
 
 	return deployment
 }
 
 func renderDeploymentAddFilesFromConfigMaps(
 	nodeName string,
-	clab *clabernetesapistopologyv1alpha1.Containerlab,
+	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	deployment *k8sappsv1.Deployment,
 ) *k8sappsv1.Deployment {
 	podVolumes := make([]clabernetesapistopologyv1alpha1.FileFromConfigMap, 0)
 
-	for _, fileFromConfigMap := range clab.Spec.FilesFromConfigMap {
+	for _, fileFromConfigMap := range obj.GetTopologyCommonSpec().FilesFromConfigMap {
 		if fileFromConfigMap.NodeName != nodeName {
 			continue
 		}
@@ -428,15 +422,17 @@ func renderDeploymentAddFilesFromConfigMaps(
 }
 
 func renderDeploymentAddInsecureRegistries(
-	clab *clabernetesapistopologyv1alpha1.Containerlab,
+	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	deployment *k8sappsv1.Deployment,
 ) *k8sappsv1.Deployment {
-	if len(clab.Spec.InsecureRegistries) > 0 {
+	insecureRegistries := obj.GetTopologyCommonSpec().InsecureRegistries
+
+	if len(insecureRegistries) > 0 {
 		deployment.Spec.Template.Spec.Containers[0].Env = append(
 			deployment.Spec.Template.Spec.Containers[0].Env,
 			k8scorev1.EnvVar{
 				Name:  clabernetesconstants.LauncherInsecureRegistries,
-				Value: strings.Join(clab.Spec.InsecureRegistries, ","),
+				Value: strings.Join(insecureRegistries, ","),
 			},
 		)
 	}
@@ -520,25 +516,6 @@ func deploymentConforms(
 	return true
 }
 
-func (c *Controller) enforceDeploymentOwnerReference(
-	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	deployment *k8sappsv1.Deployment,
-) error {
-	err := ctrlruntimeutil.SetOwnerReference(clab, deployment, c.BaseController.Client.Scheme())
-	if err != nil {
-		c.BaseController.Log.Criticalf(
-			"failed setting owner reference on deployment '%s/%s' error: %s",
-			deployment.Namespace,
-			deployment.Name,
-			err,
-		)
-
-		return err
-	}
-
-	return nil
-}
-
 func determineNodesNeedingRestart(
 	preReconcileConfigs,
 	configs map[string]*clabernetescontainerlab.Config,
@@ -560,46 +537,4 @@ func determineNodesNeedingRestart(
 	}
 
 	return nodesNeedingRestart
-}
-
-func (c *Controller) restartDeploymentForNode(
-	ctx context.Context,
-	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	nodeName string,
-) error {
-	deploymentName := fmt.Sprintf("%s-%s", clab.Name, nodeName)
-
-	nodeDeployment := &k8sappsv1.Deployment{}
-
-	err := c.BaseController.Client.Get(
-		ctx,
-		apimachinerytypes.NamespacedName{
-			Namespace: clab.Namespace,
-			Name:      deploymentName,
-		},
-		nodeDeployment,
-	)
-	if err != nil {
-		if apimachineryerrors.IsNotFound(err) {
-			c.BaseController.Log.Warnf(
-				"could not find deployment '%s', cannot restart after config change,"+
-					" this should not happen",
-				deploymentName,
-			)
-
-			return nil
-		}
-
-		return err
-	}
-
-	if nodeDeployment.Spec.Template.ObjectMeta.Annotations == nil {
-		nodeDeployment.Spec.Template.ObjectMeta.Annotations = map[string]string{}
-	}
-
-	now := time.Now().Format(time.RFC3339)
-
-	nodeDeployment.Spec.Template.ObjectMeta.Annotations["kubectl.kubernetes.io/restartedAt"] = now
-
-	return c.BaseController.Client.Update(ctx, nodeDeployment)
 }

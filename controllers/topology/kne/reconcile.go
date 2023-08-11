@@ -3,8 +3,6 @@ package kne
 import (
 	"context"
 
-	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
-
 	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
 
 	clabernetescontainerlab "gitlab.com/carlmontanari/clabernetes/containerlab"
@@ -62,20 +60,62 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, err
 	}
 
-	configs, tunnels, configShouldUpdate, err := c.processConfig(kne, kneTopo)
+	clabernetesConfigs, tunnels, configShouldUpdate, err := c.processConfig(kne, kneTopo)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed processing kne topology, error: %s", err)
 
 		return ctrlruntime.Result{}, err
 	}
 
-	_, _ = configs, tunnels
-	// TODO *things*
+	err = c.TopologyReconciler.ReconcileConfigMap(
+		ctx,
+		kne,
+		clabernetesConfigs,
+		tunnels,
+	)
+	if err != nil {
+		c.BaseController.Log.Criticalf("failed reconciling clabernetes config map, error: %s", err)
 
-	// TODO temp to not piss off k8s w/ required field
-	kne.Status.NodeExposedPorts = map[string]*clabernetesapistopologyv1alpha1.ExposedPorts{}
+		return ctrlruntime.Result{}, err
+	}
 
-	if clabernetesutil.AnyBoolTrue(configShouldUpdate) {
+	err = c.TopologyReconciler.ReconcileDeployments(
+		ctx,
+		kne,
+		preReconcileConfigs,
+		clabernetesConfigs,
+	)
+	if err != nil {
+		c.BaseController.Log.Criticalf("failed reconciling clabernetes deployments, error: %s", err)
+
+		return ctrlruntime.Result{}, err
+	}
+
+	err = c.TopologyReconciler.ReconcileServiceFabric(ctx, kne, clabernetesConfigs)
+	if err != nil {
+		c.BaseController.Log.Criticalf("failed reconciling clabernetes services, error: %s", err)
+
+		return ctrlruntime.Result{}, err
+	}
+
+	var exposeServicesShouldUpdate bool
+
+	if !kne.Spec.DisableExpose {
+		exposeServicesShouldUpdate, err = c.TopologyReconciler.ReconcileServicesExpose(
+			ctx,
+			kne,
+			clabernetesConfigs,
+		)
+		if err != nil {
+			c.BaseController.Log.Criticalf(
+				"failed reconciling clabernetes expose services, error: %s", err,
+			)
+
+			return ctrlruntime.Result{}, err
+		}
+	}
+
+	if clabernetesutil.AnyBoolTrue(configShouldUpdate, exposeServicesShouldUpdate) {
 		// we should update because config hash or something changed, so push update to the object
 		err = c.BaseController.Client.Update(ctx, kne)
 		if err != nil {

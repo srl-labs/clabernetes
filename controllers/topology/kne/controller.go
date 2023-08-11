@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	clabernetescontrollerstopology "gitlab.com/carlmontanari/clabernetes/controllers/topology"
+
 	clabernetesapistopology "gitlab.com/carlmontanari/clabernetes/apis/topology"
 	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
 	clabernetescontrollers "gitlab.com/carlmontanari/clabernetes/controllers"
@@ -20,18 +22,24 @@ func NewController(
 	config *rest.Config,
 	client ctrlruntimeclient.Client,
 ) clabernetescontrollers.Controller {
-	c := &Controller{
-		BaseController: clabernetescontrollers.NewBaseController(
-			ctx,
-			fmt.Sprintf(
-				"%s-%s",
-				clabernetesapistopology.Group,
-				clabernetesapistopology.Kne,
-			),
-			appName,
-			config,
-			client,
+	baseController := clabernetescontrollers.NewBaseController(
+		ctx,
+		fmt.Sprintf(
+			"%s-%s",
+			clabernetesapistopology.Group,
+			clabernetesapistopology.Kne,
 		),
+		appName,
+		config,
+		client,
+	)
+
+	c := &Controller{
+		BaseController: baseController,
+		TopologyReconciler: &clabernetescontrollerstopology.Reconciler{
+			Log:    baseController.Log,
+			Client: baseController.Client,
+		},
 	}
 
 	return c
@@ -40,6 +48,7 @@ func NewController(
 // Controller is the Containerlab topology controller object.
 type Controller struct {
 	*clabernetescontrollers.BaseController
+	TopologyReconciler *clabernetescontrollerstopology.Reconciler
 }
 
 // SetupWithManager sets up the controller with the Manager.

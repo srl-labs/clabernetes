@@ -58,9 +58,12 @@ func (c *Controller) processConfig( //nolint:funlen
 				Nodes: map[string]*clabernetescontainerlab.NodeDefinition{
 					nodeName: {
 						Kind: containerlabKind,
+						// TODO guess we need to resolve image too or maybe thats already in the
+						//  kne topo file
+						Image: "ghcr.io/nokia/srlinux",
 						// TODO -- does kne expose these like clab or is it just the controllers in
 						//  kne that are explicitly exposing things?
-						Ports: nil,
+						// Ports: nil,
 					},
 				},
 				Links: nil,

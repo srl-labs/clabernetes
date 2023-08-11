@@ -19,6 +19,23 @@ type Containerlab struct {
 	Status ContainerlabStatus `json:"status,omitempty"`
 }
 
+// GetTopologyCommonSpec returns the Containerlab resource's TopologyCommonSpec embedded in the
+// object's spec.
+func (c *Containerlab) GetTopologyCommonSpec() TopologyCommonSpec {
+	return c.Spec.TopologyCommonSpec
+}
+
+// GetTopologyStatus returns the Containerlab resource's TopologyStatus embedded in the object's
+// status.
+func (c *Containerlab) GetTopologyStatus() TopologyStatus {
+	return c.Status.TopologyStatus
+}
+
+// SetTopologyStatus sets Kne resource's TopologyStatus embedded in the object's status.
+func (c *Containerlab) SetTopologyStatus(s TopologyStatus) {
+	c.Status.TopologyStatus = s
+}
+
 // ContainerlabSpec is the spec for a Containerlab topology resource.
 type ContainerlabSpec struct {
 	TopologyCommonSpec `json:",inline"`
