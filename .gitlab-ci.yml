@@ -71,7 +71,8 @@ lint:
 
 test:
   stage: test
-  needs: []
+  needs:
+    - lint
   rules:
     # if on main branch or a mr pointing to main branch, also run on tags (releases)
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
