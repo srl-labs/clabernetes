@@ -129,7 +129,7 @@ spec:
               {{- if .Values.launcherImage }}
               value: {{ .Values.launcherImage }}
               {{- else }}
-              value: "ghcr.io/carlmontanari/clabernetes:{{ .Chart.Version }}"
+              value: "ghcr.io/carlmontanari/clabernetes/clabernetes-launcher:{{ .Chart.Version }}"
               {{- end }}
           resources:
             requests:
