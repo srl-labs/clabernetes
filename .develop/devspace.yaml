@@ -100,7 +100,13 @@ profiles:
   - name: release
     patches:
       - op: replace
-        path: images.manager.tags
+        path: images.clabernetes.tags
+        value:
+          - latest
+          - ${RELEASE_VERSION}
+          - $(git describe --always --abbrev=8)
+      - op: replace
+        path: images.clabernetes-launcher.tags
         value:
           - latest
           - ${RELEASE_VERSION}

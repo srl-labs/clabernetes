@@ -121,8 +121,8 @@ build:
     - REGISTRY=ghcr.io/carlmontanari/clabernetes devspace run build
 
     - helm registry login -u $GITHUB_REGISTRY_USER -p $GITHUB_REGISTRY_TOKEN ghcr.io
-    - helm package chart --version v0.0.0
-    - helm push clabernetes-v0.0.0.tgz oci://ghcr.io/carlmontanari/clabernetes
+    - helm package chart --version 0.0.0
+    - helm push clabernetes-0.0.0.tgz oci://ghcr.io/carlmontanari/clabernetes
 
 release:
   stage: release
@@ -148,7 +148,7 @@ release:
     - *install_devspace
     - *install_helm
 
-    - devspace run build --tag $CI_COMMIT_SHORT_SHA
+    - devspace run build --profile release --var RELEASE_VERSION=$CI_COMMIT_TAG
 
     - REGISTRY=ghcr.io/carlmontanari/clabernetes devspace run build --profile release --var RELEASE_VERSION=$CI_COMMIT_TAG
 
