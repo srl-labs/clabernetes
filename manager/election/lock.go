@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 
 	"k8s.io/client-go/kubernetes"
 

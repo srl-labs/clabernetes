@@ -21,8 +21,8 @@ package v1alpha1
 import (
 	"net/http"
 
-	v1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
-	"gitlab.com/carlmontanari/clabernetes/generated/clientset/scheme"
+	v1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
+	"github.com/srl-labs/clabernetes/generated/clientset/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

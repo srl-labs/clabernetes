@@ -1,0 +1,35 @@
+---
+name: lint
+
+on:
+  workflow_call: {}
+  workflow_dispatch: {}
+
+env:
+  GO_VERSION: "1.20"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: set up go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: install go lint tools
+        run: |
+          go install mvdan.cc/gofumpt@${{ vars.GOFUMPT_VERSION }}
+          go install golang.org/x/tools/cmd/goimports@${{ vars.GOIMPORTS_VERSION }}
+          go install github.com/segmentio/golines@${{ vars.GOLINES_VERSION }}
+          curl -sSfL \
+            https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh |
+            sh -s -- -b $(go env GOPATH)/bin ${{ vars.GOLANGCI_LINT_VERSION }}
+
+      - name: run the linter
+        run: make lint

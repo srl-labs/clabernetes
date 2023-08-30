@@ -67,7 +67,7 @@ spec:
           {{- if .Values.image }}
           image: {{ .Values.image }}
           {{- else }}
-          image: "ghcr.io/carlmontanari/clabernetes/clabernetes-manager:{{ .Chart.Version }}"
+          image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:{{ .Chart.Version }}"
           {{- end }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           command: ["/clabernetes/manager", "run", "--initializer"]
@@ -100,7 +100,7 @@ spec:
           {{- if .Values.image }}
           image: {{ .Values.image }}
           {{- else }}
-          image: "ghcr.io/carlmontanari/clabernetes/clabernetes-manager:{{ .Chart.Version }}"
+          image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:{{ .Chart.Version }}"
           {{- end }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           command: ["/clabernetes/manager", "run"]
@@ -129,7 +129,7 @@ spec:
               {{- if .Values.launcherImage }}
               value: {{ .Values.launcherImage }}
               {{- else }}
-              value: "ghcr.io/carlmontanari/clabernetes/clabernetes-launcher:{{ .Chart.Version }}"
+              value: "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:{{ .Chart.Version }}"
               {{- end }}
           resources:
             requests:

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 )
 
 // ValidateLogLevel accepts a string l and returns a case-normalized log level corresponding to l,

@@ -8,12 +8,12 @@ import (
 	"strings"
 	"text/template"
 
-	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 
-	clabernetesutilcontainerlab "gitlab.com/carlmontanari/clabernetes/util/containerlab"
+	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
-	claberneteslogging "gitlab.com/carlmontanari/clabernetes/logging"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 )
 
 const specIndentSpaces = 4

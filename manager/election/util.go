@@ -3,7 +3,7 @@ package election
 import (
 	"os"
 
-	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
 
 const (

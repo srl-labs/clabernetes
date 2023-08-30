@@ -1,10 +1,10 @@
 package cli
 
 import (
+	clabernetesclabverter "github.com/srl-labs/clabernetes/clabverter"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	"github.com/urfave/cli/v2"
-	clabernetesclabverter "gitlab.com/carlmontanari/clabernetes/clabverter"
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
-	claberneteslogging "gitlab.com/carlmontanari/clabernetes/logging"
 )
 
 const (

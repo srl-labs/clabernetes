@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
 
 func isURL(path string) bool {

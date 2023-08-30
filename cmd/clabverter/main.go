@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	clabernetescmdclabvertercli "gitlab.com/carlmontanari/clabernetes/cmd/clabverter/cli"
+	clabernetescmdclabvertercli "github.com/srl-labs/clabernetes/cmd/clabverter/cli"
 )
 
 func main() {

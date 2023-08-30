@@ -19,9 +19,9 @@
 package fake
 
 import (
-	clientset "gitlab.com/carlmontanari/clabernetes/generated/clientset"
-	topologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/generated/clientset/typed/topology/v1alpha1"
-	faketopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/generated/clientset/typed/topology/v1alpha1/fake"
+	clientset "github.com/srl-labs/clabernetes/generated/clientset"
+	topologyv1alpha1 "github.com/srl-labs/clabernetes/generated/clientset/typed/topology/v1alpha1"
+	faketopologyv1alpha1 "github.com/srl-labs/clabernetes/generated/clientset/typed/topology/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

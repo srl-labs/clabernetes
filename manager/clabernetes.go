@@ -7,13 +7,13 @@ import (
 
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
-	claberneteslogging "gitlab.com/carlmontanari/clabernetes/logging"
-	clabernetesmanagerprepare "gitlab.com/carlmontanari/clabernetes/manager/prepare"
-	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
+	clabernetesmanagerprepare "github.com/srl-labs/clabernetes/manager/prepare"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 
 	ctrlruntime "sigs.k8s.io/controller-runtime"
 )

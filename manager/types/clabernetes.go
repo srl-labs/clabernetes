@@ -3,7 +3,7 @@ package types
 import (
 	"context"
 
-	claberneteslogging "gitlab.com/carlmontanari/clabernetes/logging"
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 

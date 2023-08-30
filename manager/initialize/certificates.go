@@ -5,11 +5,11 @@ import (
 	"crypto/x509"
 	"fmt"
 
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
-	clabernetesmanagertypes "gitlab.com/carlmontanari/clabernetes/manager/types"
-	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 
-	clabernetesmanagerutil "gitlab.com/carlmontanari/clabernetes/manager/util"
+	clabernetesmanagerutil "github.com/srl-labs/clabernetes/manager/util"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

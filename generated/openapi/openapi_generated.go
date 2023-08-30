@@ -30,46 +30,46 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.Containerlab": schema_clabernetes_apis_topology_v1alpha1_Containerlab(
+		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Containerlab": schema_clabernetes_apis_topology_v1alpha1_Containerlab(
 			ref,
 		),
-		"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.ContainerlabList": schema_clabernetes_apis_topology_v1alpha1_ContainerlabList(
+		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ContainerlabList": schema_clabernetes_apis_topology_v1alpha1_ContainerlabList(
 			ref,
 		),
-		"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.ContainerlabSpec": schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
+		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ContainerlabSpec": schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 			ref,
 		),
-		"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.ContainerlabStatus": schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
+		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ContainerlabStatus": schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
 			ref,
 		),
-		"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.ExposedPorts": schema_clabernetes_apis_topology_v1alpha1_ExposedPorts(
+		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ExposedPorts": schema_clabernetes_apis_topology_v1alpha1_ExposedPorts(
 			ref,
 		),
-		"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.FileFromConfigMap": schema_clabernetes_apis_topology_v1alpha1_FileFromConfigMap(
+		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap": schema_clabernetes_apis_topology_v1alpha1_FileFromConfigMap(
 			ref,
 		),
-		"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.Kne": schema_clabernetes_apis_topology_v1alpha1_Kne(
+		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Kne": schema_clabernetes_apis_topology_v1alpha1_Kne(
 			ref,
 		),
-		"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.KneList": schema_clabernetes_apis_topology_v1alpha1_KneList(
+		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.KneList": schema_clabernetes_apis_topology_v1alpha1_KneList(
 			ref,
 		),
-		"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.KneSpec": schema_clabernetes_apis_topology_v1alpha1_KneSpec(
+		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.KneSpec": schema_clabernetes_apis_topology_v1alpha1_KneSpec(
 			ref,
 		),
-		"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.KneStatus": schema_clabernetes_apis_topology_v1alpha1_KneStatus(
+		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.KneStatus": schema_clabernetes_apis_topology_v1alpha1_KneStatus(
 			ref,
 		),
-		"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.LinkEndpoint": schema_clabernetes_apis_topology_v1alpha1_LinkEndpoint(
+		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.LinkEndpoint": schema_clabernetes_apis_topology_v1alpha1_LinkEndpoint(
 			ref,
 		),
-		"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.TopologyCommonSpec": schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
+		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.TopologyCommonSpec": schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 			ref,
 		),
-		"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.TopologyStatus": schema_clabernetes_apis_topology_v1alpha1_TopologyStatus(
+		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.TopologyStatus": schema_clabernetes_apis_topology_v1alpha1_TopologyStatus(
 			ref,
 		),
-		"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.Tunnel": schema_clabernetes_apis_topology_v1alpha1_Tunnel(
+		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Tunnel": schema_clabernetes_apis_topology_v1alpha1_Tunnel(
 			ref,
 		),
 	}
@@ -108,7 +108,7 @@ func schema_clabernetes_apis_topology_v1alpha1_Containerlab(
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
 							Ref: ref(
-								"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.ContainerlabSpec",
+								"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ContainerlabSpec",
 							),
 						},
 					},
@@ -116,7 +116,7 @@ func schema_clabernetes_apis_topology_v1alpha1_Containerlab(
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
 							Ref: ref(
-								"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.ContainerlabStatus",
+								"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ContainerlabStatus",
 							),
 						},
 					},
@@ -124,7 +124,7 @@ func schema_clabernetes_apis_topology_v1alpha1_Containerlab(
 			},
 		},
 		Dependencies: []string{
-			"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.ContainerlabSpec", "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.ContainerlabStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ContainerlabSpec", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ContainerlabStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -165,7 +165,7 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabList(
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
 										Ref: ref(
-											"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.Containerlab",
+											"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Containerlab",
 										),
 									},
 								},
@@ -177,7 +177,7 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabList(
 			},
 		},
 		Dependencies: []string{
-			"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.Containerlab", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Containerlab", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -227,7 +227,7 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
 										Ref: ref(
-											"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.FileFromConfigMap",
+											"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap",
 										),
 									},
 								},
@@ -247,7 +247,7 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 			},
 		},
 		Dependencies: []string{
-			"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.FileFromConfigMap"},
+			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap"},
 	}
 }
 
@@ -289,7 +289,7 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 													Ref: ref(
-														"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.Tunnel",
+														"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Tunnel",
 													),
 												},
 											},
@@ -308,7 +308,7 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Ref: ref(
-											"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.ExposedPorts",
+											"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ExposedPorts",
 										),
 									},
 								},
@@ -334,7 +334,7 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
 			},
 		},
 		Dependencies: []string{
-			"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.ExposedPorts", "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.Tunnel"},
+			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ExposedPorts", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Tunnel"},
 	}
 }
 
@@ -483,7 +483,7 @@ func schema_clabernetes_apis_topology_v1alpha1_Kne(
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
 							Ref: ref(
-								"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.KneSpec",
+								"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.KneSpec",
 							),
 						},
 					},
@@ -491,7 +491,7 @@ func schema_clabernetes_apis_topology_v1alpha1_Kne(
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
 							Ref: ref(
-								"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.KneStatus",
+								"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.KneStatus",
 							),
 						},
 					},
@@ -499,7 +499,7 @@ func schema_clabernetes_apis_topology_v1alpha1_Kne(
 			},
 		},
 		Dependencies: []string{
-			"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.KneSpec", "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.KneStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.KneSpec", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.KneStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -540,7 +540,7 @@ func schema_clabernetes_apis_topology_v1alpha1_KneList(
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
 										Ref: ref(
-											"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.Kne",
+											"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Kne",
 										),
 									},
 								},
@@ -552,7 +552,7 @@ func schema_clabernetes_apis_topology_v1alpha1_KneList(
 			},
 		},
 		Dependencies: []string{
-			"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.Kne", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Kne", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -602,7 +602,7 @@ func schema_clabernetes_apis_topology_v1alpha1_KneSpec(
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
 										Ref: ref(
-											"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.FileFromConfigMap",
+											"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap",
 										),
 									},
 								},
@@ -622,7 +622,7 @@ func schema_clabernetes_apis_topology_v1alpha1_KneSpec(
 			},
 		},
 		Dependencies: []string{
-			"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.FileFromConfigMap"},
+			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap"},
 	}
 }
 
@@ -664,7 +664,7 @@ func schema_clabernetes_apis_topology_v1alpha1_KneStatus(
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 													Ref: ref(
-														"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.Tunnel",
+														"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Tunnel",
 													),
 												},
 											},
@@ -683,7 +683,7 @@ func schema_clabernetes_apis_topology_v1alpha1_KneStatus(
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Ref: ref(
-											"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.ExposedPorts",
+											"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ExposedPorts",
 										),
 									},
 								},
@@ -709,7 +709,7 @@ func schema_clabernetes_apis_topology_v1alpha1_KneStatus(
 			},
 		},
 		Dependencies: []string{
-			"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.ExposedPorts", "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.Tunnel"},
+			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ExposedPorts", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Tunnel"},
 	}
 }
 
@@ -791,7 +791,7 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
 										Ref: ref(
-											"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.FileFromConfigMap",
+											"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap",
 										),
 									},
 								},
@@ -802,7 +802,7 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 			},
 		},
 		Dependencies: []string{
-			"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.FileFromConfigMap"},
+			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap"},
 	}
 }
 
@@ -844,7 +844,7 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyStatus(
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 													Ref: ref(
-														"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.Tunnel",
+														"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Tunnel",
 													),
 												},
 											},
@@ -863,7 +863,7 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyStatus(
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Ref: ref(
-											"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.ExposedPorts",
+											"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ExposedPorts",
 										),
 									},
 								},
@@ -889,7 +889,7 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyStatus(
 			},
 		},
 		Dependencies: []string{
-			"gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.ExposedPorts", "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1.Tunnel"},
+			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ExposedPorts", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Tunnel"},
 	}
 }
 

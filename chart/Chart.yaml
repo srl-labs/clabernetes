@@ -2,9 +2,9 @@
 apiVersion: v2
 name: clabernetes
 description: Manage containerlab topologies in a kubernetes cluster
-home: https://gitlab.com/carlmontanari/clabernetes
+home: https://github.com/srl-labs/clabernetes
 sources:
-  - https://gitlab.com/carlmontanari/clabernetes
+  - https://github.com/srl-labs/clabernetes
 keywords:
   - network
   - containerlab

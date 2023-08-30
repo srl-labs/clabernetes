@@ -12,14 +12,14 @@ import (
 	"text/template"
 	"time"
 
-	claberneteserrors "gitlab.com/carlmontanari/clabernetes/errors"
+	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 
-	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
+	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	"gopkg.in/yaml.v3"
 
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
-	claberneteslogging "gitlab.com/carlmontanari/clabernetes/logging"
-	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
 
 const maxDockerLaunchAttempts = 10

@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
-	clabernetesmanagerelection "gitlab.com/carlmontanari/clabernetes/manager/election"
-	clabernetesmanagerinitialize "gitlab.com/carlmontanari/clabernetes/manager/initialize"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	clabernetesmanagerelection "github.com/srl-labs/clabernetes/manager/election"
+	clabernetesmanagerinitialize "github.com/srl-labs/clabernetes/manager/initialize"
 )
 
 func (c *clabernetes) startInitLeading() {

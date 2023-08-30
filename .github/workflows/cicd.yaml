@@ -1,0 +1,24 @@
+---
+name: cicd
+
+on:
+  push:
+    branches:
+      - main
+  pull_request: {}
+  workflow_dispatch: {}
+
+jobs:
+  lint:
+    uses: ./.github/workflows/lint.yaml
+
+  test:
+    needs:
+      - lint
+    uses: ./.github/workflows/test.yaml
+
+  build:
+    needs:
+      - lint
+      - test
+    uses: ./.github/workflows/build.yaml

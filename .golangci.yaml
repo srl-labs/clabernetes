@@ -43,11 +43,11 @@ linters-settings:
       - pkg: k8s.io/apimachinery/pkg/runtime/scheme
         alias: apimachineryruntimescheme
       # cover clabernetes packages
-      - pkg: gitlab.com/carlmontanari/clabernetes/(\w+)
+      - pkg: github.com/srl-labs/clabernetes/(\w+)
         alias: clabernetes$1
-      - pkg: gitlab.com/carlmontanari/clabernetes/(\w+)/(\w+)
+      - pkg: github.com/srl-labs/clabernetes/(\w+)/(\w+)
         alias: clabernetes$1$2
-      - pkg: gitlab.com/carlmontanari/clabernetes/(\w+)/(\w+)/(\w+)
+      - pkg: github.com/srl-labs/clabernetes/(\w+)/(\w+)/(\w+)
         alias: clabernetes$1$2$3
   lll:
     line-length: 100

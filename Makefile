@@ -30,26 +30,26 @@ run-deepcopy-gen: ## Run deepcopy-gen
 	GOMOD111=on \
 	deepcopy-gen \
 	--go-header-file hack/boilerplate.go.txt \
-	--input-dirs gitlab.com/carlmontanari/clabernetes/apis/... \
+	--input-dirs github.com/srl-labs/clabernetes/apis/... \
 	--output-file-base zz_generated.deepcopy \
-	--trim-path-prefix ${GOPATH}/src/gitlab.com/carlmontanari/clabernetes
+	--trim-path-prefix ${GOPATH}/src/github.com/srl-labs/clabernetes
 
 run-openapi-gen: ## Run openapi-gen
 	GOMOD111=on \
 	openapi-gen \
 	--go-header-file hack/boilerplate.go.txt \
-	--input-dirs gitlab.com/carlmontanari/clabernetes/apis/... \
-	--trim-path-prefix ${GOPATH}/src/gitlab.com/carlmontanari/clabernetes \
-	--output-package gitlab.com/carlmontanari/clabernetes/generated/openapi
+	--input-dirs github.com/srl-labs/clabernetes/apis/... \
+	--trim-path-prefix ${GOPATH}/src/github.com/srl-labs/clabernetes \
+	--output-package github.com/srl-labs/clabernetes/generated/openapi
 
 run-client-gen: ## Run client-gen
 	GOMOD111=on \
 	client-gen \
 	--go-header-file hack/boilerplate.go.txt \
-	--input-base gitlab.com/carlmontanari/clabernetes/apis \
+	--input-base github.com/srl-labs/clabernetes/apis \
 	--input topology/v1alpha1 \
-	--trim-path-prefix ${GOPATH}/src/gitlab.com/carlmontanari/clabernetes \
-	--output-package gitlab.com/carlmontanari/clabernetes/generated \
+	--trim-path-prefix ${GOPATH}/src/github.com/srl-labs/clabernetes \
+	--output-package github.com/srl-labs/clabernetes/generated \
 	--clientset-name clientset
 
 run-generate-crds: ## Run controller-gen for crds

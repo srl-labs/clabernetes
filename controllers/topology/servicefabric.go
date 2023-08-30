@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	clabernetesutilcontainerlab "gitlab.com/carlmontanari/clabernetes/util/containerlab"
+	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
-	clabernetescontrollers "gitlab.com/carlmontanari/clabernetes/controllers"
-	claberneteserrors "gitlab.com/carlmontanari/clabernetes/errors"
-	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
+	claberneteserrors "github.com/srl-labs/clabernetes/errors"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"

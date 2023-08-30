@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"strings"
 
-	clabernetescontrollerstopology "gitlab.com/carlmontanari/clabernetes/controllers/topology"
+	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
 
-	clabernetesutilcontainerlab "gitlab.com/carlmontanari/clabernetes/util/containerlab"
+	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 
 	"gopkg.in/yaml.v3"
 
-	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
-	claberneteserrors "gitlab.com/carlmontanari/clabernetes/errors"
-	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
+	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
+	claberneteserrors "github.com/srl-labs/clabernetes/errors"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
 
 func (c *Controller) processConfig(

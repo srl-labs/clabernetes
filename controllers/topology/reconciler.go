@@ -3,13 +3,13 @@ package topology
 import (
 	"context"
 
-	clabernetesutilcontainerlab "gitlab.com/carlmontanari/clabernetes/util/containerlab"
+	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 
 	"gopkg.in/yaml.v3"
 
-	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
-	claberneteslogging "gitlab.com/carlmontanari/clabernetes/logging"
-	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
+	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	k8scorev1 "k8s.io/api/core/v1"
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"

@@ -3,7 +3,7 @@ package topology
 import (
 	"context"
 
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	k8scorev1 "k8s.io/api/core/v1"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"

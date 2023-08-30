@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 )
 
 // Instance is a logging instance managed by the Manager.

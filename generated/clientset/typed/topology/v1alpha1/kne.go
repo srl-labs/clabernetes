@@ -22,8 +22,8 @@ import (
 	"context"
 	"time"
 
-	v1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
-	scheme "gitlab.com/carlmontanari/clabernetes/generated/clientset/scheme"
+	v1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
+	scheme "github.com/srl-labs/clabernetes/generated/clientset/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"

@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	clabernetescmdclabernetescli "gitlab.com/carlmontanari/clabernetes/cmd/clabernetes/cli"
+	clabernetescmdclabernetescli "github.com/srl-labs/clabernetes/cmd/clabernetes/cli"
 )
 
 func main() {

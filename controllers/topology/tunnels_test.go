@@ -8,9 +8,9 @@ import (
 	"reflect"
 	"testing"
 
-	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
-	clabernetescontrollerstopology "gitlab.com/carlmontanari/clabernetes/controllers/topology"
-	clabernetestesthelper "gitlab.com/carlmontanari/clabernetes/testhelper"
+	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
+	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
+	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
 )
 
 func TestMain(m *testing.M) {

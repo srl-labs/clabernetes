@@ -1,10 +1,10 @@
 package cli
 
 import (
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	claberneteslauncher "github.com/srl-labs/clabernetes/launcher"
+	clabernetesmanager "github.com/srl-labs/clabernetes/manager"
 	"github.com/urfave/cli/v2"
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
-	claberneteslauncher "gitlab.com/carlmontanari/clabernetes/launcher"
-	clabernetesmanager "gitlab.com/carlmontanari/clabernetes/manager"
 )
 
 const (

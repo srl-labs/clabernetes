@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"reflect"
 
-	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
-	clabernetesutilcontainerlab "gitlab.com/carlmontanari/clabernetes/util/containerlab"
+	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	"gopkg.in/yaml.v3"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

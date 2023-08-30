@@ -3,9 +3,9 @@ package controllers
 import (
 	"context"
 
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
-	claberneteslogging "gitlab.com/carlmontanari/clabernetes/logging"
-	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 
 	clientgorest "k8s.io/client-go/rest"
 	ctrlruntime "sigs.k8s.io/controller-runtime"

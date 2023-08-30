@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 )
 
 // FailOutput is a simple func to nicely print actual vs expected output when a test fails.

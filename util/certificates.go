@@ -14,7 +14,7 @@ import (
 	"path/filepath"
 	"time"
 
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 )
 
 const (

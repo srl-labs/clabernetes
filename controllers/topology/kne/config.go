@@ -3,14 +3,14 @@ package kne
 import (
 	"fmt"
 
-	clabernetesutilcontainerlab "gitlab.com/carlmontanari/clabernetes/util/containerlab"
+	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 
 	knetopologyproto "github.com/openconfig/kne/proto/topo"
-	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
-	clabernetescontrollerstopology "gitlab.com/carlmontanari/clabernetes/controllers/topology"
-	claberneteserrors "gitlab.com/carlmontanari/clabernetes/errors"
-	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
-	clabernetesutilkne "gitlab.com/carlmontanari/clabernetes/util/kne"
+	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
+	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
+	claberneteserrors "github.com/srl-labs/clabernetes/errors"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
+	clabernetesutilkne "github.com/srl-labs/clabernetes/util/kne"
 	"gopkg.in/yaml.v3"
 )
 
@@ -82,6 +82,10 @@ func (c *Controller) processConfig( //nolint:funlen
 				},
 				Links: nil,
 			},
+		}
+
+		if kneModel != "" {
+			clabernetesConfigs[nodeName].Topology.Nodes[nodeName].Type = kneModel
 		}
 
 		for _, link := range kneTopo.Links {

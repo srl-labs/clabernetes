@@ -3,8 +3,8 @@ package prepare
 import (
 	"fmt"
 
-	clabernetesmanagertypes "gitlab.com/carlmontanari/clabernetes/manager/types"
-	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
+	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
 
 // Prepare handles preparation tasks that happen before running the clabernets.start method.

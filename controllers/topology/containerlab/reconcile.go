@@ -3,9 +3,9 @@ package containerlab
 import (
 	"context"
 
-	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 
-	clabernetesutilcontainerlab "gitlab.com/carlmontanari/clabernetes/util/containerlab"
+	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 
 	"gopkg.in/yaml.v3"
 

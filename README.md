@@ -1,5 +1,5 @@
 [![Discord](https://img.shields.io/discord/860500297297821756?style=flat-square&label=discord&logo=discord&color=00c9ff&labelColor=bec8d2)](https://discord.gg/vAyddtaEV9)
-[![Go Report](https://img.shields.io/badge/go%20report-A%2B-blue?style=flat-square&color=00c9ff&labelColor=bec8d2)](https://goreportcard.com/report/gitlab.com/carlmontanari/clabernetes)
+[![Go Report](https://img.shields.io/badge/go%20report-A%2B-blue?style=flat-square&color=00c9ff&labelColor=bec8d2)](https://goreportcard.com/report/github.com/srl-labs/clabernetes)
 
 clabernetes
 ===========
@@ -21,7 +21,7 @@ containerlab topologies into a kubernetes cluster.
 ## Installation
 
 ```
-helm upgrade --install clabernetes oci://ghcr.io/carlmontanari/clabernetes/clabernetes
+helm upgrade --install clabernetes oci://ghcr.io/srl-labs/clabernetes/clabernetes
 ```
 
 
@@ -48,3 +48,13 @@ spec:
       links:
         - endpoints: ["srl1:e1-1", "srl2:e1-1"]
 ```
+
+
+## TODOs
+
+- Watch docker process in container and restart if there is an issue
+- Be very nice if we cached images maybe at the controller and/or somehow used cluster to pull 
+  image rather than having to pull every time container starts
+- Generate kne binding for kne topos (and/or investigate doing that regardless of if topo is kne 
+  or not maybe... basically investigate just clab topo -> binding/testbed output so you can run 
+  fp tests against any topo)

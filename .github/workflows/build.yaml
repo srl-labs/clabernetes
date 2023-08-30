@@ -1,0 +1,52 @@
+---
+name: build
+
+on:
+  workflow_call: {}
+  workflow_dispatch: {}
+
+env:
+  GO_VERSION: "1.20"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: set up go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: install devspace
+        run: |
+          curl -L -o devspace \
+            "https://github.com/loft-sh/devspace/releases/download/${{ vars.DEVSPACE_VERSION}}/devspace-linux-amd64" &&
+            install -c -m 0755 devspace /usr/local/bin
+        working-directory: /tmp
+
+      - name: install helm
+        run: |
+          curl -L -o helm.tar.gz \
+            "https://get.helm.sh/helm-${{ vars.HELM_VERSION}}-linux-amd64.tar.gz"
+          tar -zxvf helm.tar.gz
+          mv linux-amd64/helm /usr/local/bin/helm
+        working-directory: /tmp
+
+      - name: login to ghcr
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: build images
+        run: |
+          devspace run build
+          helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
+          helm package chart --version 0.0.0
+          helm push clabernetes-0.0.0.tgz oci://ghcr.io/srl-labs/clabernetes

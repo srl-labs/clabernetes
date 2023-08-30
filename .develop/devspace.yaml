@@ -6,7 +6,7 @@ vars:
 
   REGISTRY:
     source: env
-    default: registry.gitlab.com/carlmontanari/clabernetes
+    default: ghcr.io/srl-labs/clabernetes
 
   PULL_POLICY: Always
 

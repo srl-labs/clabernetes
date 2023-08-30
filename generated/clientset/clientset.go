@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"net/http"
 
-	topologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/generated/clientset/typed/topology/v1alpha1"
+	topologyv1alpha1 "github.com/srl-labs/clabernetes/generated/clientset/typed/topology/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

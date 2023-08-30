@@ -3,7 +3,7 @@ package topology
 import (
 	"sort"
 
-	clabernetesapistopologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
+	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 )
 
 // AllocateTunnelIDs processes the given tunnels and allocates vnids. This function updates the

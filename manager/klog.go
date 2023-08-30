@@ -3,8 +3,8 @@ package manager
 import (
 	"flag"
 
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
-	claberneteslogging "gitlab.com/carlmontanari/clabernetes/logging"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	"k8s.io/klog/v2"
 )
 

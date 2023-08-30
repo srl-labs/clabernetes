@@ -3,12 +3,12 @@ package prepare
 import (
 	"fmt"
 
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
-	clabernetesmanagertypes "gitlab.com/carlmontanari/clabernetes/manager/types"
-	clabernetesmanagerutil "gitlab.com/carlmontanari/clabernetes/manager/util"
-	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
+	clabernetesmanagerutil "github.com/srl-labs/clabernetes/manager/util"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 
-	claberneteserrors "gitlab.com/carlmontanari/clabernetes/errors"
+	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 	k8scorev1 "k8s.io/api/core/v1"
 )
 

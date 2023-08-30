@@ -3,11 +3,11 @@ package kne
 import (
 	"context"
 
-	clabernetesutilcontainerlab "gitlab.com/carlmontanari/clabernetes/util/containerlab"
+	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 
-	clabernetesutil "gitlab.com/carlmontanari/clabernetes/util"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 
-	clabernetesutilkne "gitlab.com/carlmontanari/clabernetes/util/kne"
+	clabernetesutilkne "github.com/srl-labs/clabernetes/util/kne"
 	"gopkg.in/yaml.v3"
 
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"

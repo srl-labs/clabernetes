@@ -1,4 +1,4 @@
-module gitlab.com/carlmontanari/clabernetes
+module github.com/srl-labs/clabernetes
 
 go 1.20
 

@@ -19,7 +19,7 @@
 package fake
 
 import (
-	topologyv1alpha1 "gitlab.com/carlmontanari/clabernetes/apis/topology/v1alpha1"
+	topologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

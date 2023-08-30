@@ -3,8 +3,8 @@ package v1alpha1
 import (
 	"fmt"
 
-	clabernetesapistopology "gitlab.com/carlmontanari/clabernetes/apis/topology"
-	clabernetesconstants "gitlab.com/carlmontanari/clabernetes/constants"
+	clabernetesapistopology "github.com/srl-labs/clabernetes/apis/topology"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 

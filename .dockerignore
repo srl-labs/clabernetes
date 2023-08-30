@@ -1,6 +1,7 @@
 Dockerfile.launcher
 Dockerfile.manager
 .gitignore
+.github
 .gitlab-ci.yml
 .golangci.yaml
 devspace.yaml
