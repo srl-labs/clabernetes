@@ -116,7 +116,16 @@ func (c *Controller) Reconcile(
 		}
 	}
 
-	if clabernetesutil.AnyBoolTrue(configShouldUpdate, exposeServicesShouldUpdate) {
+	fpStatusShouldUpdate := c.reconcileFeatureProfilesTopo(
+		kne,
+		kneTopo,
+	)
+
+	if clabernetesutil.AnyBoolTrue(
+		configShouldUpdate,
+		exposeServicesShouldUpdate,
+		fpStatusShouldUpdate,
+	) {
 		// we should update because config hash or something changed, so push update to the object
 		err = c.BaseController.Client.Update(ctx, kne)
 		if err != nil {

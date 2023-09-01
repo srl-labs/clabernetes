@@ -3,10 +3,12 @@ module github.com/srl-labs/clabernetes
 go 1.20
 
 require (
+	github.com/openconfig/featureprofiles v0.0.0-20230901204022-b6ee5fdfad95
 	github.com/openconfig/kne v0.1.14
+	github.com/openconfig/ondatra v0.2.7
 	github.com/urfave/cli/v2 v2.25.7
 	golang.org/x/net v0.14.0
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.27.4
 	k8s.io/apiextensions-apiserver v0.27.2
@@ -57,7 +59,6 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
-	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/oauth2 v0.9.0 // indirect
 	golang.org/x/sys v0.11.0 // indirect
