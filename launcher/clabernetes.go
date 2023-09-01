@@ -200,8 +200,10 @@ func (c *clabernetes) startDocker() error {
 
 		cmd := exec.Command("service", "docker", "start")
 
-		_, err = cmd.Output()
+		output, err := cmd.CombinedOutput()
 		if err != nil {
+			c.logger.Criticalf("docker start encountered an error, output:\n%s", string(output))
+
 			return err
 		}
 
@@ -214,8 +216,10 @@ func (c *clabernetes) startDocker() error {
 func (c *clabernetes) runClab() error {
 	cmd := exec.Command("containerlab", "deploy", "-t", "topo.yaml", "--debug")
 
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
+		c.logger.Criticalf("containerlab start encountered an error, output:\n%s", string(output))
+
 		return err
 	}
 
@@ -257,10 +261,14 @@ func (c *clabernetes) runClabVxlanTools(
 		fmt.Sprintf("%s-%s", localNodeName, cntLink),
 	)
 
-	_, err = cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
+		c.logger.Criticalf("vxlan tunnel create encountered an error, output:\n%s", string(output))
+
 		return err
 	}
+
+	c.logger.Debugf("vxlan tunnel create output:\n%s", string(output))
 
 	return nil
 }

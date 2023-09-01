@@ -20,7 +20,6 @@ func (c *Controller) processConfig(
 	clabTopo *clabernetesutilcontainerlab.Topology,
 ) (
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
-	clabernetesTunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 	shouldUpdate bool,
 	err error,
 ) {
@@ -48,7 +47,7 @@ func (c *Controller) processConfig(
 
 				c.BaseController.Log.Critical(msg)
 
-				return nil, nil, false, fmt.Errorf(
+				return nil, false, fmt.Errorf(
 					"%w: %s", claberneteserrors.ErrParse, msg,
 				)
 			}
@@ -64,7 +63,7 @@ func (c *Controller) processConfig(
 
 				c.BaseController.Log.Critical(msg)
 
-				return nil, nil, false, fmt.Errorf(
+				return nil, false, fmt.Errorf(
 					"%w: %s", claberneteserrors.ErrParse, msg,
 				)
 			}
@@ -141,14 +140,14 @@ func (c *Controller) processConfig(
 
 	clabernetesConfigsBytes, err := yaml.Marshal(clabernetesConfigs)
 	if err != nil {
-		return nil, nil, false, err
+		return nil, false, err
 	}
 
 	newConfigsHash := clabernetesutil.HashBytes(clabernetesConfigsBytes)
 
 	if clab.Status.ConfigsHash == newConfigsHash {
 		// the configs hash matches, nothing to do, should reconcile is false, and no error
-		return clabernetesConfigs, tunnels, false, nil
+		return clabernetesConfigs, false, nil
 	}
 
 	// if we got here we know we need to re-reconcile as the hash has changed, set the config and
@@ -162,5 +161,5 @@ func (c *Controller) processConfig(
 	clab.Status.ConfigsHash = newConfigsHash
 	clab.Status.Tunnels = tunnels
 
-	return clabernetesConfigs, tunnels, true, nil
+	return clabernetesConfigs, true, nil
 }

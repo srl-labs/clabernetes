@@ -1,6 +1,7 @@
 package kne
 
 import (
+	"encoding/json"
 	"fmt"
 
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
@@ -14,12 +15,51 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+func mustFindNode(kneTopo *knetopologyproto.Topology, nodeName string) *knetopologyproto.Node {
+	for idx := range kneTopo.Nodes {
+		if kneTopo.Nodes[idx].Name != nodeName {
+			continue
+		}
+
+		return kneTopo.Nodes[idx]
+	}
+
+	panic(fmt.Sprintf("could not find node definition for node '%s'", nodeName))
+}
+
+// janky helper to yoink the config file name out of a kne topo, its hidden behind some weird pb
+// nonsense and the actual fields are not accessible but theyre there? or im dumb (or both!),
+// so just marshall/unmarshall to get what we want easily. panics if we fail here since i don't
+// really think this can/should fail... in theory!
+func getConfigFile(nodeConfigDefinition *knetopologyproto.Config) string {
+	topoB, err := json.Marshal(nodeConfigDefinition)
+	if err != nil {
+		panic(fmt.Sprintf("error marshalling node config definition, error: %s", err))
+	}
+
+	type kneConfigDataFile struct {
+		File string `json:"File"`
+	}
+
+	type kneConfigData struct {
+		Data kneConfigDataFile `json:"ConfigData"`
+	}
+
+	topoConfigData := &kneConfigData{}
+
+	err = json.Unmarshal(topoB, topoConfigData)
+	if err != nil {
+		panic(fmt.Sprintf("error unmarshalling node config definition, error: %s", err))
+	}
+
+	return topoConfigData.Data.File
+}
+
 func (c *Controller) processConfig( //nolint:funlen
 	kne *clabernetesapistopologyv1alpha1.Kne,
 	kneTopo *knetopologyproto.Topology,
 ) (
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
-	clabernetesTunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 	shouldUpdate bool,
 	err error,
 ) {
@@ -45,7 +85,7 @@ func (c *Controller) processConfig( //nolint:funlen
 
 			c.BaseController.Log.Critical(msg)
 
-			return nil, nil, false, fmt.Errorf(
+			return nil, false, fmt.Errorf(
 				"%w: %s", claberneteserrors.ErrParse, msg,
 			)
 		}
@@ -64,7 +104,7 @@ func (c *Controller) processConfig( //nolint:funlen
 
 				c.BaseController.Log.Critical(msg)
 
-				return nil, nil, false, fmt.Errorf(
+				return nil, false, fmt.Errorf(
 					"%w: %s", claberneteserrors.ErrParse, msg,
 				)
 			}
@@ -88,14 +128,22 @@ func (c *Controller) processConfig( //nolint:funlen
 			clabernetesConfigs[nodeName].Topology.Nodes[nodeName].Type = kneModel
 		}
 
+		configFile := getConfigFile(nodeDefinition.Config)
+
+		if configFile != "" {
+			clabernetesConfigs[nodeName].Topology.Nodes[nodeName].StartupConfig = configFile
+		}
+
 		for _, link := range kneTopo.Links {
+			zNodeDefinition := mustFindNode(kneTopo, link.ZNode)
+
 			endpointA := clabernetesapistopologyv1alpha1.LinkEndpoint{
 				NodeName:      link.ANode,
-				InterfaceName: link.AInt,
+				InterfaceName: nodeDefinition.Interfaces[link.AInt].Name,
 			}
 			endpointB := clabernetesapistopologyv1alpha1.LinkEndpoint{
 				NodeName:      link.ZNode,
-				InterfaceName: link.ZInt,
+				InterfaceName: zNodeDefinition.Interfaces[link.ZInt].Name,
 			}
 
 			if endpointA.NodeName != nodeName && endpointB.NodeName != nodeName {
@@ -111,8 +159,16 @@ func (c *Controller) processConfig( //nolint:funlen
 					&clabernetesutilcontainerlab.LinkDefinition{
 						LinkConfig: clabernetesutilcontainerlab.LinkConfig{
 							Endpoints: []string{
-								fmt.Sprintf("%s:%s", endpointA.NodeName, endpointA.InterfaceName),
-								fmt.Sprintf("%s:%s", endpointB.NodeName, endpointB.InterfaceName),
+								fmt.Sprintf(
+									"%s:%s",
+									endpointA.NodeName,
+									endpointA.InterfaceName,
+								),
+								fmt.Sprintf(
+									"%s:%s",
+									endpointA.NodeName,
+									endpointA.InterfaceName,
+								),
 							},
 						},
 					},
@@ -169,14 +225,14 @@ func (c *Controller) processConfig( //nolint:funlen
 
 	clabernetesConfigsBytes, err := yaml.Marshal(clabernetesConfigs)
 	if err != nil {
-		return nil, nil, false, err
+		return nil, false, err
 	}
 
 	newConfigsHash := clabernetesutil.HashBytes(clabernetesConfigsBytes)
 
 	if kne.Status.ConfigsHash == newConfigsHash {
 		// the configs hash matches, nothing to do, should reconcile is false, and no error
-		return clabernetesConfigs, tunnels, false, nil
+		return clabernetesConfigs, false, nil
 	}
 
 	// if we got here we know we need to re-reconcile as the hash has changed, set the config and
@@ -190,5 +246,5 @@ func (c *Controller) processConfig( //nolint:funlen
 	kne.Status.ConfigsHash = newConfigsHash
 	kne.Status.Tunnels = tunnels
 
-	return clabernetesConfigs, tunnels, true, nil
+	return clabernetesConfigs, true, nil
 }

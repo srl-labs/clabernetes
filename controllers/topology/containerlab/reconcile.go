@@ -60,7 +60,7 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, err
 	}
 
-	clabernetesConfigs, tunnels, configShouldUpdate, err := c.processConfig(clab, clabTopo)
+	clabernetesConfigs, configShouldUpdate, err := c.processConfig(clab, clabTopo)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed processing containerlab config, error: %s", err)
 
@@ -71,7 +71,7 @@ func (c *Controller) Reconcile(
 		ctx,
 		clab,
 		clabernetesConfigs,
-		tunnels,
+		clab.Status.TopologyStatus.Tunnels,
 	)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed reconciling clabernetes config map, error: %s", err)

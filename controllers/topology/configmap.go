@@ -91,7 +91,7 @@ func (r *Reconciler) enforceConfigMap(
 		return err
 	}
 
-	if reflect.DeepEqual(actual.BinaryData, configMap.BinaryData) {
+	if reflect.DeepEqual(actual.Data, configMap.Data) {
 		// nothing to do
 		return nil
 	}

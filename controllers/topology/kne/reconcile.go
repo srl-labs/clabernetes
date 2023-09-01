@@ -61,7 +61,7 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, err
 	}
 
-	clabernetesConfigs, tunnels, configShouldUpdate, err := c.processConfig(kne, kneTopo)
+	clabernetesConfigs, configShouldUpdate, err := c.processConfig(kne, kneTopo)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed processing kne topology, error: %s", err)
 
@@ -72,7 +72,7 @@ func (c *Controller) Reconcile(
 		ctx,
 		kne,
 		clabernetesConfigs,
-		tunnels,
+		kne.Status.TopologyStatus.Tunnels,
 	)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed reconciling clabernetes config map, error: %s", err)
