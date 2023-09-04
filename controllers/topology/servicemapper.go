@@ -41,6 +41,27 @@ func (r *Reconciler) MapServiceToContainerlab(
 		return nil
 	}
 
+	clabernetesTopologyKind, clabernetesKindOk := labels[clabernetesconstants.LabelTopologyKind]
+	if !clabernetesKindOk {
+		r.Log.Debugf(
+			"service '%s/%s' is not a clabernetes service, ignoring",
+			service.Namespace,
+			service.Name,
+		)
+
+		return nil
+	}
+
+	if clabernetesTopologyKind != r.ResourceKind {
+		r.Log.Debugf(
+			"service '%s/%s' is not a service for this controllers resource kind, ignoring",
+			service.Namespace,
+			service.Name,
+		)
+
+		return nil
+	}
+
 	_, clabernetesExposeOk := labels[clabernetesconstants.LabelTopologyServiceType]
 	if !clabernetesExposeOk {
 		r.Log.Debugf(

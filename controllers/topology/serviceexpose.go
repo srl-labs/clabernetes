@@ -3,10 +3,8 @@ package topology
 import (
 	"context"
 	"fmt"
-	"regexp"
-	"strconv"
+	"sort"
 	"strings"
-	"sync"
 
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 
@@ -22,21 +20,6 @@ import (
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
-
-var (
-	portPattern     *regexp.Regexp //nolint:gochecknoglobals
-	portPatternOnce sync.Once      //nolint:gochecknoglobals
-)
-
-func getPortPattern() *regexp.Regexp {
-	portPatternOnce.Do(func() {
-		portPattern = regexp.MustCompile(
-			`(?P<exposePort>\d+):(?P<destinationPort>\d+)/?(?P<protocol>(TCP)|(UDP))?`,
-		)
-	})
-
-	return portPattern
-}
 
 func (r *Reconciler) resolveExposeServices(
 	ctx context.Context,
@@ -266,49 +249,21 @@ func (r *Reconciler) enforceExposeServices(
 func (r *Reconciler) parseContainerlabTopologyPortsSection(
 	portDefinition string,
 ) (bool, *k8scorev1.ServicePort) {
-	re := getPortPattern()
-
-	portDefinition = strings.ToUpper(portDefinition)
-
-	paramsMap := clabernetesutil.RegexStringSubMatchToMap(re, portDefinition)
-
-	protocol := clabernetesconstants.TCP
-	if paramsMap["protocol"] == clabernetesconstants.UDP {
-		protocol = clabernetesconstants.UDP
-	}
-
-	exposePortAsInt, err := strconv.ParseInt(paramsMap["exposePort"], 10, 32)
-	if err != nil || exposePortAsInt == 0 {
-		r.Log.Warnf(
-			"failed converting exposed port to integer, full port string '%s', parsed port "+
-				"'%s'. skipping this port but continuing on...",
-			portDefinition,
-			paramsMap["exposePort"],
-		)
-
-		return true, nil
-	}
-
-	destinationPortAsInt, err := strconv.ParseInt(paramsMap["destinationPort"], 10, 32)
-	if err != nil || destinationPortAsInt == 0 {
-		r.Log.Warnf(
-			"failed converting destination port to integer, full port string '%s', parsed "+
-				"port '%s'.  skipping this port but continuing on...",
-			portDefinition,
-			paramsMap["destinationPort"],
-		)
+	typedPort, err := clabernetesutilcontainerlab.ProcessPortDefinition(portDefinition)
+	if err != nil {
+		r.Log.Warnf("skipping port due to the following error: %s", err)
 
 		return true, nil
 	}
 
 	return false, &k8scorev1.ServicePort{
 		Name: fmt.Sprintf(
-			"port-%s-%s", paramsMap["destinationPort"], strings.ToLower(protocol),
+			"port-%d-%s", typedPort.DestinationPort, strings.ToLower(typedPort.Protocol),
 		),
-		Protocol: k8scorev1.Protocol(protocol),
-		Port:     int32(destinationPortAsInt),
+		Protocol: k8scorev1.Protocol(typedPort.Protocol),
+		Port:     int32(typedPort.DestinationPort),
 		TargetPort: intstr.IntOrString{
-			IntVal: int32(exposePortAsInt),
+			IntVal: int32(typedPort.ExposePort),
 		},
 	}
 }
@@ -333,6 +288,7 @@ func (r *Reconciler) renderExposeService(
 		clabernetesconstants.LabelName:                serviceName,
 		clabernetesconstants.LabelTopologyOwner:       name,
 		clabernetesconstants.LabelTopologyNode:        nodeName,
+		clabernetesconstants.LabelTopologyKind:        r.ResourceKind,
 		clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeExpose, //nolint:lll
 	}
 
@@ -347,13 +303,12 @@ func (r *Reconciler) renderExposeService(
 
 	allContainerlabPorts.Extend(clabernetesConfigs[nodeName].Topology.Nodes[nodeName].Ports)
 
-	for k := range clabernetesConfigs {
-		allContainerlabPorts.Extend(clabernetesConfigs[k].Topology.Defaults.Ports)
+	allContainerlabPorts.Extend(clabernetesConfigs[nodeName].Topology.Defaults.Ports)
 
-		break
-	}
+	allContainerlabPortsItems := allContainerlabPorts.Items()
+	sort.Strings(allContainerlabPortsItems)
 
-	for _, portDefinition := range allContainerlabPorts.Items() {
+	for _, portDefinition := range allContainerlabPortsItems {
 		shouldSkip, port := r.parseContainerlabTopologyPortsSection(portDefinition)
 
 		if shouldSkip {

@@ -17,6 +17,10 @@ const (
 	// LabelTopologyNode is the label indicating the node the deployment represents in a topology.
 	LabelTopologyNode = "clabernetes/topologyNode"
 
+	// LabelTopologyKind is the label indicating the resource *kind* the object is associated with.
+	// For example, a "containerlab" kind, or a "kne" kind.
+	LabelTopologyKind = "clabernetes/topologyKind"
+
 	// LabelTopologyServiceType is a label that identifies what flavor of service a given service
 	// is -- that is, it is either a "connectivity" service, or an "expose" service; note that
 	// this is strictly a clabernetes concept, obviously not a kubernetes one!

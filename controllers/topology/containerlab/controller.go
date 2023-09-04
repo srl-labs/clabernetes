@@ -39,8 +39,9 @@ func NewController(
 	c := &Controller{
 		BaseController: baseController,
 		TopologyReconciler: &clabernetescontrollerstopology.Reconciler{
-			Log:    baseController.Log,
-			Client: baseController.Client,
+			Log:          baseController.Log,
+			Client:       baseController.Client,
+			ResourceKind: clabernetesapistopology.Containerlab,
 		},
 	}
 
