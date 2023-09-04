@@ -20,36 +20,36 @@ containerlab topologies into a kubernetes cluster.
 ## Installation
 
 ```bash
-$ helm upgrade --install clabernetes oci://ghcr.io/srl-labs/clabernetes/clabernetes
+helm upgrade --install clabernetes oci://ghcr.io/srl-labs/clabernetes/clabernetes
 ```
 
 ## Quickstart
 
-This quickstart uses [kind](https://kind.sigs.k8s.io/) to create a local kubernetes cluster and 
-then deploys clabernetes into. If you already have a kubernetes cluster, you can skip the first 
+This quickstart uses [kind](https://kind.sigs.k8s.io/) to create a local kubernetes cluster and
+then deploys clabernetes into. If you already have a kubernetes cluster, you can skip the first
 step.
 
 ### Creating a local multi-node kubernetes cluster with kind
 
-Clabernetes goal is to allow users to run networking labs with the easy of use of containerlab, 
-but with the scaling powers of kubernetes. To simulate the scaling aspect, we'll use kind to 
+Clabernetes goal is to allow users to run networking labs with the easy of use of containerlab,
+but with the scaling powers of kubernetes. To simulate the scaling aspect, we'll use kind to
 create a multi-node kubernetes cluster.
 
 ```bash
 # creates a 3-node kubernetes cluster
-$ kind create cluster --config examples/kind-cluster.yml
+kind create cluster --config examples/kind-cluster.yml
 ```
 
 ### Installing clabernetes
 
-Clabernetes is installed into a kubernetes cluster in a form of a clabernetes-manager component. 
+Clabernetes is installed into a kubernetes cluster in a form of a clabernetes-manager component.
 We install it with [helm](https://helm.sh/docs/intro/install/):
 
 ```bash
-$ helm upgrade --install clabernetes oci://ghcr.io/srl-labs/clabernetes/clabernetes
+helm upgrade --install clabernetes oci://ghcr.io/srl-labs/clabernetes/clabernetes
 ```
 
-A successful installation will result in a clabernetes-manager deployment of three pods running in 
+A successful installation will result in a clabernetes-manager deployment of three pods running in
 the cluster:
 
 ```bash
@@ -62,32 +62,33 @@ clabernetes-manager-85cf4ddbb5-k9rkk   1/1     Running   0          5m2s   10.24
 
 ### Installing Load Balancer
 
-To get external access to the nodes deployed by clabernetes we will install kube-vip load 
+To get external access to the nodes deployed by clabernetes we will install kube-vip load
 balancer into the cluster.
 
 Following [kube-vip + kind](https://kube-vip.io/docs/usage/kind/) installation instructions:
 
 ```bash
-$ kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/main/manifest/kube-vip-cloud-controller.yaml
-$ kubectl create configmap --namespace kube-system kubevip --from-literal range-global=172.18.1.10-172.18.1.250
+kubectl apply -f https://kube-vip.io/manifests/rbac.yaml
+kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/main/manifest/kube-vip-cloud-controller.yaml
+kubectl create configmap --namespace kube-system kubevip --from-literal range-global=172.18.1.10-172.18.1.250
 ```
 
 Next we setup kube-vip's container image:
 
 ```bash
-$ KVVERSION=$(curl -sL https://api.github.com/repos/kube-vip/kube-vip/releases | jq -r ".[0].name")
-$ alias kube-vip="docker run --network host --rm ghcr.io/kube-vip/kube-vip:$KVVERSION"
+KVVERSION=$(curl -sL https://api.github.com/repos/kube-vip/kube-vip/releases | jq -r ".[0].name")
+alias kube-vip="docker run --network host --rm ghcr.io/kube-vip/kube-vip:$KVVERSION"
 ```
 
 And install kube-vip load balancer daemonset in ARP mode:
 
 ```bash
-$ kube-vip manifest daemonset --services --inCluster --arp --interface eth0 | kubectl apply -f -
+kube-vip manifest daemonset --services --inCluster --arp --interface eth0 | kubectl apply -f -
 ```
 
 ### Deploying a topology
 
-Clabernetes uses the same topology format as containerlab. Take a look at the simple 
+Clabernetes uses the same topology format as containerlab. Take a look at the simple
 [2-node topology](examples/two-srl.c9s.yml) consisting of two SR Linux nodes:
 
 ```yaml
@@ -114,15 +115,15 @@ spec:
         - endpoints: ["srl1:e1-1", "srl2:e1-1"]
 ```
 
-As you can see, the familiar Containerlab topology is wrapped in a `Containerlab` Custom 
-Resource. The `spec.config` field contains the topology definition. The `metadata.name` field is 
-the name of the topology. The `metadata.namespace` field is the namespace in which the topology 
+As you can see, the familiar Containerlab topology is wrapped in a `Containerlab` Custom
+Resource. The `spec.config` field contains the topology definition. The `metadata.name` field is
+the name of the topology. The `metadata.namespace` field is the namespace in which the topology
 will be deployed.
 
 Before deploying this lab we need to create the `clabernetes` namespace:
 
 ```bash
-$ kubectl create namespace clabernetes
+kubectl create namespace clabernetes
 ```
 
 And now we are ready to deploy our first clabernetes topology:
@@ -146,11 +147,11 @@ clab-srl02   26m
 ```
 
 Looking in the Containerlab CR we can see that it took the topology definition from the `spec.
-config` field and split it to sub-topologies that are outlined in the `status.configs` section 
+config` field and split it to sub-topologies that are outlined in the `status.configs` section
 of the resource:
 
 ```bash
-$ kubectl get --namespace clabernetes Containerlabs clab-srl02 -o yaml
+kubectl get --namespace clabernetes Containerlabs clab-srl02 -o yaml
 ```
 
 ```yaml
@@ -184,7 +185,7 @@ status:
                     - host:srl2-e1-1
 ```
 
-The subtopologies are then deployed as deployments (which result in pods) in the cluster, and 
+The subtopologies are then deployed as deployments (which result in pods) in the cluster, and
 containerlab running inside each pod deploys the topology:
 
 ```bash
@@ -194,12 +195,12 @@ clab-srl02-srl1-77f7585fbc-m9v54   1/1     Running   0          31m   10.244.2.4
 clab-srl02-srl2-54f8dddb88-hfftq   1/1     Running   0          31m   10.244.1.3   kind-worker2   <none>           <none>
 ```
 
-We see that two pods are running, and more importantly, they run on different worker nodes. 
-These pods run containerlab inside in a docker-in-docker mode and each node deploys a subset of 
+We see that two pods are running, and more importantly, they run on different worker nodes.
+These pods run containerlab inside in a docker-in-docker mode and each node deploys a subset of
 the original topology. We can enter the pod and use containerlab CLI to verify the topology:
 
 ```bash
-$ kubectl exec -n clabernetes -it clab-srl02-srl1-77f7585fbc-m9v54  -- bash
+kubectl exec -n clabernetes -it clab-srl02-srl1-77f7585fbc-m9v54  -- bash
 ```
 
 And in the pod's shell we swim in the familiar containerlab waters:
