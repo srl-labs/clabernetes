@@ -1,7 +1,7 @@
 [![Discord](https://img.shields.io/discord/860500297297821756?style=flat-square&label=discord&logo=discord&color=00c9ff&labelColor=bec8d2)](https://discord.gg/vAyddtaEV9)
 [![Go Report](https://img.shields.io/badge/go%20report-A%2B-blue?style=flat-square&color=00c9ff&labelColor=bec8d2)](https://goreportcard.com/report/github.com/srl-labs/clabernetes)
 
-# clabernetes
+# clabernetes aka c9s
 
 Love containerlab? Want containerlab, just distributed in a kubernetes cluster? Enter
 clabernetes -- containerlab + kubernetes. clabernetes is a kubernetes controller that deploys valid
@@ -54,12 +54,28 @@ clabernetes-manager-85cf4ddbb5-grpbh   1/1     Running   0          5m2s   10.24
 clabernetes-manager-85cf4ddbb5-k9rkk   1/1     Running   0          5m2s   10.244.2.2   kind-worker    <none>           <none>
 ```
 
-### Loading node images
+### Installing Load Balancer
 
-For a faster deployment times let's pre-load SR Linux container image to all nodes of our cluster:
+To get external access to the nodes deployed by clabernetes we will install kube-vip load balancer into the cluster.
+
+Following [kube-vip + kind](https://kube-vip.io/docs/usage/kind/) installation instructions:
 
 ```bash
-kind load docker-image ghcr.io/nokia/srlinux:23.7.1
+kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/main/manifest/kube-vip-cloud-controller.yaml
+kubectl create configmap --namespace kube-system kubevip --from-literal range-global=172.18.1.10-172.18.1.250
+```
+
+Next we setup kube-vip's container image:
+
+```bash
+KVVERSION=$(curl -sL https://api.github.com/repos/kube-vip/kube-vip/releases | jq -r ".[0].name")
+alias kube-vip="docker run --network host --rm ghcr.io/kube-vip/kube-vip:$KVVERSION"
+```
+
+And install kube-vip load balancer daemonset in ARP mode:
+
+```bash
+kube-vip manifest daemonset --services --inCluster --arp --interface eth0 | kubectl apply -f -
 ```
 
 ### Deploying a topology
