@@ -21,8 +21,9 @@ import (
 // common/standard resources that represent a clabernetes object (configmap, deployments,
 // services, etc.).
 type Reconciler struct {
-	Log    claberneteslogging.Instance
-	Client ctrlruntimeclient.Client
+	Log          claberneteslogging.Instance
+	Client       ctrlruntimeclient.Client
+	ResourceKind string
 }
 
 // ReconcileConfigMap reconciles the primary configmap containing clabernetes configs and tunnel

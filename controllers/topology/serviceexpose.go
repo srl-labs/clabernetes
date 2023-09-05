@@ -3,10 +3,8 @@ package topology
 import (
 	"context"
 	"fmt"
-	"regexp"
-	"strconv"
+	"sort"
 	"strings"
-	"sync"
 
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 
@@ -22,21 +20,6 @@ import (
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
-
-var (
-	portPattern     *regexp.Regexp //nolint:gochecknoglobals
-	portPatternOnce sync.Once      //nolint:gochecknoglobals
-)
-
-func getPortPattern() *regexp.Regexp {
-	portPatternOnce.Do(func() {
-		portPattern = regexp.MustCompile(
-			`(?P<exposePort>\d+):(?P<destinationPort>\d+)/?(?P<protocol>(TCP)|(UDP))?`,
-		)
-	})
-
-	return portPattern
-}
 
 func (r *Reconciler) resolveExposeServices(
 	ctx context.Context,
@@ -92,10 +75,17 @@ func (r *Reconciler) resolveExposeServices(
 		services.Current[nodeName] = &ownedServices.Items[i]
 	}
 
+	commonTopologySpec := obj.GetTopologyCommonSpec()
+
 	exposedNodes := make([]string, 0)
 
 	for nodeName, nodeData := range clabernetesConfigs {
-		if len(nodeData.Topology.Nodes[nodeName].Ports) == 0 {
+		// if disable auto expose is true *and* there are no ports defined for the node *and*
+		// there are no default ports defined for the topology we can skip the node from an expose
+		// perspective.
+		if commonTopologySpec.DisableAutoExpose &&
+			len(nodeData.Topology.Nodes[nodeName].Ports) == 0 &&
+			len(nodeData.Topology.Defaults.Ports) == 0 {
 			continue
 		}
 
@@ -256,6 +246,28 @@ func (r *Reconciler) enforceExposeServices(
 	return nil
 }
 
+func (r *Reconciler) parseContainerlabTopologyPortsSection(
+	portDefinition string,
+) (bool, *k8scorev1.ServicePort) {
+	typedPort, err := clabernetesutilcontainerlab.ProcessPortDefinition(portDefinition)
+	if err != nil {
+		r.Log.Warnf("skipping port due to the following error: %s", err)
+
+		return true, nil
+	}
+
+	return false, &k8scorev1.ServicePort{
+		Name: fmt.Sprintf(
+			"port-%d-%s", typedPort.DestinationPort, strings.ToLower(typedPort.Protocol),
+		),
+		Protocol: k8scorev1.Protocol(typedPort.Protocol),
+		Port:     int32(typedPort.DestinationPort),
+		TargetPort: intstr.IntOrString{
+			IntVal: int32(typedPort.ExposePort),
+		},
+	}
+}
+
 func (r *Reconciler) renderExposeService(
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	objTopologyStatus clabernetesapistopologyv1alpha1.TopologyStatus,
@@ -276,71 +288,45 @@ func (r *Reconciler) renderExposeService(
 		clabernetesconstants.LabelName:                serviceName,
 		clabernetesconstants.LabelTopologyOwner:       name,
 		clabernetesconstants.LabelTopologyNode:        nodeName,
+		clabernetesconstants.LabelTopologyKind:        r.ResourceKind,
 		clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeExpose, //nolint:lll
 	}
 
 	ports := make([]k8scorev1.ServicePort, 0)
 
-	re := getPortPattern()
+	// for actual containerlab configs we copy the users given defaults into each "sub topology" --
+	// so in the case of containerlab we want to make sure we also iterate over the "default" or
+	// topology wide ports that were specified. in this process we dont want to duplicate things, so
+	// we use a simple set implementation to make sure we aren't doubling up on any port
+	// definitions.
+	allContainerlabPorts := clabernetesutil.NewStringSet()
 
-	for _, portDefinition := range clabernetesConfigs[nodeName].Topology.Nodes[nodeName].Ports {
-		portDefinition = strings.ToUpper(portDefinition)
+	allContainerlabPorts.Extend(clabernetesConfigs[nodeName].Topology.Nodes[nodeName].Ports)
 
-		paramsMap := clabernetesutil.RegexStringSubMatchToMap(re, portDefinition)
+	allContainerlabPorts.Extend(clabernetesConfigs[nodeName].Topology.Defaults.Ports)
 
-		protocol := clabernetesconstants.TCP
-		if paramsMap["protocol"] == clabernetesconstants.UDP {
-			protocol = clabernetesconstants.UDP
-		}
+	allContainerlabPortsItems := allContainerlabPorts.Items()
+	sort.Strings(allContainerlabPortsItems)
 
-		exposePortAsInt, err := strconv.ParseInt(paramsMap["exposePort"], 10, 32)
-		if err != nil || exposePortAsInt == 0 {
-			r.Log.Warnf(
-				"failed converting exposed port to integer, full port string '%s', parsed port "+
-					"'%s'. skipping this port but continuing on...",
-				portDefinition,
-				paramsMap["exposePort"],
-			)
+	for _, portDefinition := range allContainerlabPortsItems {
+		shouldSkip, port := r.parseContainerlabTopologyPortsSection(portDefinition)
 
+		if shouldSkip {
 			continue
 		}
 
-		destinationPortAsInt, err := strconv.ParseInt(paramsMap["destinationPort"], 10, 32)
-		if err != nil || destinationPortAsInt == 0 {
-			r.Log.Warnf(
-				"failed converting destination port to integer, full port string '%s', parsed "+
-					"port '%s'.  skipping this port but continuing on...",
-				portDefinition,
-				paramsMap["destinationPort"],
-			)
-
-			continue
-		}
-
-		ports = append(
-			ports,
-			k8scorev1.ServicePort{
-				Name: fmt.Sprintf(
-					"port-%s-%s", paramsMap["destinationPort"], strings.ToLower(protocol),
-				),
-				Protocol: k8scorev1.Protocol(protocol),
-				Port:     int32(destinationPortAsInt),
-				TargetPort: intstr.IntOrString{
-					IntVal: int32(exposePortAsInt),
-				},
-			},
-		)
+		ports = append(ports, *port)
 
 		// dont forget to update the exposed ports status bits
-		if protocol == clabernetesconstants.TCP {
+		if port.Protocol == clabernetesconstants.TCP {
 			objTopologyStatus.NodeExposedPorts[nodeName].TCPPorts = append(
 				objTopologyStatus.NodeExposedPorts[nodeName].TCPPorts,
-				int(destinationPortAsInt),
+				int(port.Port),
 			)
 		} else {
 			objTopologyStatus.NodeExposedPorts[nodeName].UDPPorts = append(
 				objTopologyStatus.NodeExposedPorts[nodeName].UDPPorts,
-				int(destinationPortAsInt),
+				int(port.Port),
 			)
 		}
 	}
