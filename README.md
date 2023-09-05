@@ -220,7 +220,6 @@ root@clab-srl02-srl1-77f7585fbc-m9v54:/clabernetes# clab ins -a
 
 - Make containerlab writing the deployment log to a file.
 - Add ssh to the clab pods to enable local ssh access to the nodes.
-- Add `ps` to clab pods.
 - Watch docker process in container and restart if there is an issue
 - Be very nice if we cached images maybe at the controller and/or somehow used cluster to pull
   image rather than having to pull every time container starts
