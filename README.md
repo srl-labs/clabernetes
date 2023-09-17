@@ -42,8 +42,7 @@ kind create cluster --config examples/kind-cluster.yml
 
 ### Installing clabernetes
 
-Clabernetes is installed into a kubernetes cluster in a form of a clabernetes-manager component.
-We install it with [helm](https://helm.sh/docs/intro/install/):
+Clabernetes is installed into a kubernetes cluster using [helm](https://helm.sh/docs/intro/install/):
 
 ```bash
 helm upgrade --install clabernetes oci://ghcr.io/srl-labs/clabernetes/clabernetes
