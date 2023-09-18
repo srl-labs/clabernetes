@@ -13,6 +13,7 @@ containerlab topologies into a kubernetes cluster.
   - Requires `MixedProtocolLBService` feature gate (stable in 1.26, enabled in 1.24).
   - Local testing can be done with [kind](https://kind.sigs.k8s.io/).
 - [Helm](https://helm.sh/docs/intro/install/) to install the clabernetes CRDs.
+- [jq](https://jqlang.github.io/jq/download/) to support kube-vip load balancer installation.
 - The ability to run privileged pods in your cluster.
 - A load balancer in your cluster if you want to expose nodes "directly".
 - Sufficient privileges to install the controller.
@@ -83,6 +84,15 @@ And install kube-vip load balancer daemonset in ARP mode:
 
 ```bash
 kube-vip manifest daemonset --services --inCluster --arp --interface eth0 | kubectl apply -f -
+```
+
+We can check kuve-vip daemonset pods are running on both worker nodes:
+
+```bash
+❯ k get pods -A -o wide | grep kube-vip
+kube-system          kube-vip-cloud-provider-54c878b6c5-tlvh5     1/1     Running   0          2m34s   10.244.0.5   kind-control-plane   <none>           <none>
+kube-system          kube-vip-ds-jn8qg                            1/1     Running   0          84s     172.18.0.3   kind-worker2         <none>           <none>
+kube-system          kube-vip-ds-tmfrq                            1/1     Running   0          84s     172.18.0.4   kind-worker          <none>           <none>
 ```
 
 ### Deploying a topology
