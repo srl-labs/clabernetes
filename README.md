@@ -15,7 +15,7 @@ containerlab topologies into a kubernetes cluster.
 - [Helm](https://helm.sh/docs/intro/install/) to install the clabernetes CRDs.
 - [jq](https://jqlang.github.io/jq/download/) to support kube-vip load balancer installation.
 - The ability to run privileged pods in your cluster.
-- A load balancer in your cluster if you want to expose nodes "directly".
+- (optional) A load balancer in your cluster if you want to expose nodes "directly".
 - Sufficient privileges to install the controller.
 
 ## Installation
@@ -63,7 +63,8 @@ clabernetes-manager-85cf4ddbb5-k9rkk   1/1     Running   0          5m2s   10.24
 ### Installing Load Balancer
 
 To get external access to the nodes deployed by clabernetes we will install kube-vip load
-balancer into the cluster.
+balancer into the cluster. Any load balancer will do, kube-vip is just an example. Moreover, if no
+external access to the nodes is desired, load balancer installation can be skipped altogether.
 
 Following [kube-vip + kind](https://kube-vip.io/docs/usage/kind/) installation instructions:
 
