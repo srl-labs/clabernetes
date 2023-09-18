@@ -66,6 +66,8 @@ spec:
         - name: init
           {{- if .Values.image }}
           image: {{ .Values.image }}
+          {{- else if eq .Chart.Version "0.0.0" }}
+          image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:dev-latest"
           {{- else }}
           image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:{{ .Chart.Version }}"
           {{- end }}
@@ -99,6 +101,8 @@ spec:
         - name: manager
           {{- if .Values.image }}
           image: {{ .Values.image }}
+          {{- else if eq .Chart.Version "0.0.0" }}
+          image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:dev-latest"
           {{- else }}
           image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:{{ .Chart.Version }}"
           {{- end }}
@@ -128,6 +132,8 @@ spec:
             - name: LAUNCHER_IMAGE
               {{- if .Values.launcherImage }}
               value: {{ .Values.launcherImage }}
+              {{- else if eq .Chart.Version "0.0.0" }}
+              value: "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:dev-latest"
               {{- else }}
               value: "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:{{ .Chart.Version }}"
               {{- end }}
