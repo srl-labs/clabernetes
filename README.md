@@ -106,7 +106,7 @@ apiVersion: topology.clabernetes/v1alpha1
 kind: Containerlab
 metadata:
   name: clab-srl02
-  namespace: clabernetes
+  namespace: srl02
 spec:
   # nodes' startup config is omitted for brevity
   config: |-
@@ -129,10 +129,10 @@ Resource. The `spec.config` field contains the topology definition. The `metadat
 the name of the topology. The `metadata.namespace` field is the namespace in which the topology
 will be deployed.
 
-Before deploying this lab we need to create the `clabernetes` namespace:
+Before deploying this lab we need to create the namespace as set in our Clabernetes resource:
 
 ```bash
-kubectl create namespace clabernetes
+kubectl create namespace srl02
 ```
 
 And now we are ready to deploy our first clabernetes topology:
@@ -150,17 +150,16 @@ let's just verify that it works:
 Starting with listing `Containerlab` CRs in the `clabernetes` namespace we can see it is available:
 
 ```bash
-$ kubectl get --namespace clabernetes Containerlab
+$ kubectl get --namespace srl02 Containerlab
 NAME         AGE
 clab-srl02   26m
 ```
 
-Looking in the Containerlab CR we can see that it took the topology definition from the `spec.
-config` field and split it to sub-topologies that are outlined in the `status.configs` section
+Looking in the Containerlab CR we can see that it took the topology definition from the `spec.config` field and split it to sub-topologies that are outlined in the `status.configs` section
 of the resource:
 
 ```bash
-kubectl get --namespace clabernetes Containerlabs clab-srl02 -o yaml
+kubectl get --namespace srl02 Containerlabs clab-srl02 -o yaml
 ```
 
 ```yaml
@@ -198,7 +197,7 @@ The subtopologies are then deployed as deployments (which result in pods) in the
 containerlab running inside each pod deploys the topology:
 
 ```bash
-$ kubectl get pods --namespace clabernetes -o wide
+$ kubectl get pods --namespace srl02 -o wide
 NAME                               READY   STATUS    RESTARTS   AGE   IP           NODE           NOMINATED NODE   READINESS GATES
 clab-srl02-srl1-77f7585fbc-m9v54   1/1     Running   0          31m   10.244.2.4   kind-worker    <none>           <none>
 clab-srl02-srl2-54f8dddb88-hfftq   1/1     Running   0          31m   10.244.1.3   kind-worker2   <none>           <none>
@@ -209,7 +208,7 @@ These pods run containerlab inside in a docker-in-docker mode and each node depl
 the original topology. We can enter the pod and use containerlab CLI to verify the topology:
 
 ```bash
-kubectl exec -n clabernetes -it clab-srl02-srl1-77f7585fbc-m9v54  -- bash
+kubectl exec -n srl02 -it clab-srl02-srl1-77f7585fbc-m9v54  -- bash
 ```
 
 And in the pod's shell we swim in the familiar containerlab waters:

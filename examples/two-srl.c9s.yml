@@ -3,7 +3,7 @@ apiVersion: topology.clabernetes/v1alpha1
 kind: Containerlab
 metadata:
   name: clab-srl02
-  namespace: clabernetes
+  namespace: srl02
 spec:
   config: |-
     name: srl02
