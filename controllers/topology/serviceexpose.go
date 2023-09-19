@@ -281,7 +281,7 @@ func (r *Reconciler) renderExposeService(
 		UDPPorts: make([]int, 0),
 	}
 
-	serviceName := fmt.Sprintf("%s-%s-expose", name, nodeName)
+	serviceName := fmt.Sprintf("%s-%s", name, nodeName)
 
 	labels := map[string]string{
 		clabernetesconstants.LabelApp:                 clabernetesconstants.Clabernetes,

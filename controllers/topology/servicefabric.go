@@ -76,7 +76,7 @@ func (r *Reconciler) resolveFabricServices(
 	var nodeIdx int
 
 	for nodeName := range clabernetesConfigs {
-		allNodes[nodeIdx] = nodeName
+		allNodes[nodeIdx] = fmt.Sprintf("%s-%s", nodeName, "vx")
 
 		nodeIdx++
 	}
