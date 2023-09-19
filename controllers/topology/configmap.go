@@ -6,7 +6,7 @@ import (
 	"reflect"
 
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
-	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	"gopkg.in/yaml.v3"
 	k8scorev1 "k8s.io/api/core/v1"
@@ -29,11 +29,10 @@ func renderConfigMap(
 	}
 
 	for nodeName, nodeTopo := range clabernetesConfigs {
-		if nodeTopo.Prefix == nil {
-			p := clabernetesconstants.Clabernetes
-
-			nodeTopo.Prefix = &p
-		}
+		// we override existing topo prefix and set it to empty prefix - ""
+		// since prefixes only useful when multiple labs are scheduled on the same node
+		// in clabernetes case, it is always a single node per pod, hence prefix is an obstacle
+		nodeTopo.Prefix = clabernetesutil.StringToPointer("")
 
 		yamlNodeTopo, err := yaml.Marshal(nodeTopo)
 		if err != nil {
