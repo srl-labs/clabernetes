@@ -8,3 +8,6 @@ func Int64ToPointer(i int64) *int64 { return &i }
 
 // BoolToPointer returns a pointer to b.
 func BoolToPointer(b bool) *bool { return &b }
+
+// StringToPointer returns a pointer to s.
+func StringToPointer(s string) *string { return &s }
