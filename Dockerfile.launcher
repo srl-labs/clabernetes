@@ -31,7 +31,8 @@ RUN apt-get update && \
         vim \
         iproute2 \
         tcpdump \
-        procps
+        procps \
+        openssh-client
 
 RUN echo "deb [trusted=yes] https://apt.fury.io/netdevops/ /" | \
     tee -a /etc/apt/sources.list.d/netdevops.list
