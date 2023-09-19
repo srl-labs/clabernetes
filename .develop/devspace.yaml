@@ -78,6 +78,14 @@ dev:
 profiles:
   - name: dev
     patches:
+      # replace the image pull policy for dev (but only for init/manager!) to IfNotPresent so that
+      # images loaded into kind are used for those folks that do local dev w/ kind/docker-desktop
+      # w/out this we'd try to pull from ghcr on a tag that doesn't exist. note that this shouldn't
+      # ever be annoying in "dev mode" since we'll already be syncing the code over and the launcher
+      # pull policy is configured independently (see below).
+      - op: replace
+        path: deployments.clabernetes.helm.values.imagePullPolicy
+        value: IfNotPresent
       - op: add
         path: deployments.clabernetes.helm.values.managerLogLevel
         value: debug
