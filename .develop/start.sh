@@ -25,5 +25,6 @@ To run: ${COLOR_CYAN}${RUN_CMD}${COLOR_RESET}
 
 export HISTFILE=/tmp/.bash_history
 history -s "$RUN_CMD"
+history -a
 
 bash
