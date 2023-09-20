@@ -20,7 +20,7 @@ RUN CGO_ENABLED=0 \
     -ldflags="-s -w" \
     -a -o build/manager main.go
 
-FROM debian:bookworm
+FROM debian:bookworm-slim
 
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
@@ -32,8 +32,7 @@ RUN apt-get update && \
         iproute2 \
         tcpdump \
         procps \
-        openssh-client \
-        ca-certificates
+        openssh-client
 
 RUN echo "deb [trusted=yes] https://apt.fury.io/netdevops/ /" | \
     tee -a /etc/apt/sources.list.d/netdevops.list
