@@ -76,7 +76,7 @@ func (r *Reconciler) resolveFabricServices(
 	var nodeIdx int
 
 	for nodeName := range clabernetesConfigs {
-		allNodes[nodeIdx] = fmt.Sprintf("%s-%s", nodeName, "vx")
+		allNodes[nodeIdx] = nodeName
 
 		nodeIdx++
 	}
@@ -227,7 +227,7 @@ func renderFabricService(
 ) *k8scorev1.Service {
 	name := obj.GetName()
 
-	serviceName := fmt.Sprintf("%s-%s", name, nodeName)
+	serviceName := fmt.Sprintf("%s-%s-vx", name, nodeName)
 
 	labels := map[string]string{
 		clabernetesconstants.LabelApp:                 clabernetesconstants.Clabernetes,
