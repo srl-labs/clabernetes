@@ -317,6 +317,11 @@ func (c *Controller) processConfig( //nolint:funlen,gocyclo
 				},
 				Links: nil,
 			},
+			// we override existing topo prefix and set it to empty prefix - "" (rather than accept
+			// what the user has provided *or* the default of "clab").
+			// since prefixes are only useful when multiple labs are scheduled on the same node, and
+			// that will never be the case with clabernetes, the prefix is unnecessary.
+			Prefix: clabernetesutil.StringToPointer(""),
 		}
 
 		for _, link := range clabTopo.Links {
