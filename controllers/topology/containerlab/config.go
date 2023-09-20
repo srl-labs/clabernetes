@@ -406,7 +406,7 @@ func (c *Controller) processConfig( //nolint:funlen,gocyclo
 					LocalNodeName:  nodeName,
 					RemoteNodeName: uninterestingEndpoint.NodeName,
 					RemoteName: fmt.Sprintf(
-						"%s-%s.%s.svc.cluster.local",
+						"%s-%s-vx.%s.svc.cluster.local",
 						clab.Name,
 						uninterestingEndpoint.NodeName,
 						clab.Namespace,
