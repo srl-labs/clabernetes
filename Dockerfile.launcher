@@ -32,7 +32,8 @@ RUN apt-get update && \
         iproute2 \
         tcpdump \
         procps \
-        openssh-client
+        openssh-client \
+        ca-certificates
 
 RUN echo "deb [trusted=yes] https://apt.fury.io/netdevops/ /" | \
     tee -a /etc/apt/sources.list.d/netdevops.list
@@ -46,14 +47,17 @@ RUN echo \
 
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
-        # fury repo stopped working, investigating
-        # containerlab=0.44.* \
+        containerlab=0.45.* \
         docker-ce \
         docker-ce-cli && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/apt/archive/*.deb
 
-RUN bash -c "$(curl -sL https://get.containerlab.dev)" -- -v 0.44.3
+# copy default ssh keys to the launcher image
+# to make use of password-less ssh access
+COPY launcher/assets/default_id_rsa /root/.ssh/id_rsa
+COPY launcher/assets/default_id_rsa.pub /root/.ssh/id_rsa.pub
+RUN chmod 600 /root/.ssh/id_rsa
 
 WORKDIR /clabernetes
 COPY --from=builder /clabernetes/build/manager .
