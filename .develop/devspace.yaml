@@ -81,8 +81,12 @@ profiles:
       # replace the image pull policy for dev (but only for init/manager!) to IfNotPresent so that
       # images loaded into kind are used for those folks that do local dev w/ kind/docker-desktop
       # w/out this we'd try to pull from ghcr on a tag that doesn't exist. note that this shouldn't
-      # ever be annoying in "dev mode" since we'll already be syncing the code over and the launcher
-      # pull policy is configured independently (see below).
+      # ever be annoying in "dev mode" since we'll already be syncing the code over via devspace.
+      # we also set this the same way for the launcher image. if you are developing on a "real"
+      # cluster and/or have a push/pull registry that you are using (and thereby don't have the
+      # images loaded into kind/docker-desktop and are actually pulling), you probably want to add
+      # the "dev-non-local" profile flag -- so for a devspace dev command from the root of this repo
+      # you would do `devspace run dev --profile dev-non-local`
       - op: replace
         path: deployments.clabernetes.helm.values.imagePullPolicy
         value: IfNotPresent
@@ -97,13 +101,22 @@ profiles:
         value: debug
       - op: add
         path: deployments.clabernetes.helm.values.launcherPullPolicy
-        value: Always
+        value: IfNotPresent
       - op: add
         path: deployments.clabernetes.helm.values.launcherImage
         value: ${LAUNCHER_IMAGE}
       - op: add
         path: deployments.clabernetes.helm.values.replicaCount
         value: 1
+
+  - name: dev-non-local
+    patches:
+      - op: replace
+        path: deployments.clabernetes.helm.values.imagePullPolicy
+        value: Always
+      - op: replace
+        path: deployments.clabernetes.helm.values.launcherPullPolicy
+        value: Always
 
   - name: release
     patches:
