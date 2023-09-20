@@ -22,6 +22,15 @@ func loadContentAtURL(path string) ([]byte, error) {
 
 	defer resp.Body.Close() //nolint
 
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf(
+			"%w: non 200 status attempting to load content at '%s', status code: %d",
+			ErrClabvert,
+			path,
+			resp.StatusCode,
+		)
+	}
+
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
