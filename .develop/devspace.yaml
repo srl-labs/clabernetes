@@ -1,3 +1,4 @@
+---
 version: v2beta1
 name: clabernetes
 
@@ -17,6 +18,11 @@ vars:
   LAUNCHER_IMAGE: ${REGISTRY}/${CLABERNETES}-launcher
   CLABVERTER_IMAGE: ${REGISTRY}/clabverter
 
+  # always build w/ 0.0.0 -- overriden for actual releases by release profile. for "normal" builds
+  # (not releases) we'll do VERSION-HASH, for releases we'll just override to have version tag.
+  VERSION: 0.0.0
+  COMMIT_HASH: $(git describe --always --abbrev=8)
+
   # to be set in ci
   RELEASE_VERSION: ""
 
@@ -24,42 +30,46 @@ localRegistry:
   enabled: false
 
 images:
-  clabernetes:
-    image: ${MANAGER_IMAGE}
-    context: ../
-    dockerfile: ../Dockerfile.manager
-    rebuildStrategy: ignoreContextChanges
-    tags:
-      - dev-latest
-      - $(git describe --always --abbrev=8)
-
   clabernetes-dev:
     image: ${MANAGER_DEV_IMAGE}
     context: ../
-    dockerfile: Dockerfile.dev
+    dockerfile: dev.Dockerfile
     rebuildStrategy: ignoreContextChanges
     tags:
+      - $(git describe --always --abbrev=8)
+
+  clabernetes:
+    image: ${MANAGER_IMAGE}
+    context: ../
+    dockerfile: ../build/manager.Dockerfile
+    rebuildStrategy: ignoreContextChanges
+    buildArgs:
+      VERSION: ${VERSION}-${COMMIT_HASH}
+    tags:
+      - dev-latest
       - $(git describe --always --abbrev=8)
 
   clabernetes-launcher:
     image: ${LAUNCHER_IMAGE}
     context: ../
-    dockerfile: ../Dockerfile.launcher
+    dockerfile: ../build/launcher.Dockerfile
     rebuildStrategy: ignoreContextChanges
+    buildArgs:
+      VERSION: ${VERSION}-${COMMIT_HASH}
     tags:
       - dev-latest
-      - $(git describe --always --abbrev=8)
+      - ${COMMIT_HASH}
 
   clabverter:
     image: ${CLABVERTER_IMAGE}
     context: ../
-    dockerfile: ../clabverter/clabverter.dockerfile
+    dockerfile: ../build/clabverter.Dockerfile
     rebuildStrategy: ignoreContextChanges
     buildArgs:
-      VERSION: "0.0.0-$(git rev-parse --short HEAD)"
+      VERSION: ${VERSION}-${COMMIT_HASH}
     tags:
       - dev-latest
-      - $(git rev-parse --short HEAD)
+      - ${COMMIT_HASH}
 
 deployments:
   clabernetes:
@@ -137,13 +147,30 @@ profiles:
         value:
           - latest
           - ${RELEASE_VERSION}
-          - $(git describe --always --abbrev=8)
+          - ${COMMIT_HASH}
+      - op: replace
+        path: images.clabernetes.buildArgs.VERSION
+        value: ${RELEASE_VERSION}
+
       - op: replace
         path: images.clabernetes-launcher.tags
         value:
           - latest
           - ${RELEASE_VERSION}
-          - $(git describe --always --abbrev=8)
+          - ${COMMIT_HASH}
+      - op: replace
+        path: images.clabernetes-launcher.buildArgs.VERSION
+        value: ${RELEASE_VERSION}
+
+      - op: replace
+        path: images.clabernetes-clabverter.tags
+        value:
+          - latest
+          - ${RELEASE_VERSION}
+          - ${COMMIT_HASH}
+      - op: replace
+        path: images.clabernetes-clabverter.buildArgs.VERSION
+        value: ${RELEASE_VERSION}
 
 pipelines:
   build:

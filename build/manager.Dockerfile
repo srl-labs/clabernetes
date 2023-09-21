@@ -1,4 +1,6 @@
-FROM golang:1.20 as builder
+FROM golang:1.21-bookworm as builder
+
+ARG VERSION
 
 WORKDIR /clabernetes
 
@@ -17,14 +19,18 @@ RUN CGO_ENABLED=0 \
     GOOS=linux \
     GOARCH=amd64 \
     go build \
-    -ldflags="-s -w" \
-    -a -o build/manager main.go
+    -ldflags "-s -w -X github.com/srl-labs/clabernetes/constants.Version=${VERSION}" \
+    -trimpath \
+    -a \
+    -o \
+    build/manager \
+    main.go
 
-FROM gcr.io/distroless/static-debian11:nonroot
+FROM gcr.io/distroless/static-debian12:nonroot
 
 WORKDIR /clabernetes
 COPY --from=builder --chown=nonroot:nonroot /clabernetes/certificates /clabernetes/certificates
 COPY --from=builder /clabernetes/build/manager .
-USER nonroot
+USER nonroot:nonroot
 
 ENTRYPOINT ["/clabernetes/manager", "run"]
