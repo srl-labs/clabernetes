@@ -45,12 +45,12 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: <not on main> build images, don't push
-        if: github.head_ref != 'main'
+        if: github.ref_name != 'main'
         run: |
           devspace run build --skip-push
 
       - name: <on main> build and push images
-        if: github.head_ref == 'main'
+        if: github.ref_name == 'main'
         run: |
           devspace run build
           helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
