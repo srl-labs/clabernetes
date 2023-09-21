@@ -1,6 +1,6 @@
 module github.com/srl-labs/clabernetes
 
-go 1.20
+go 1.21
 
 require (
 	github.com/openconfig/kne v0.1.14

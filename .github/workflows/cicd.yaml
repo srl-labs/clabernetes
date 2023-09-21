@@ -13,8 +13,6 @@ jobs:
     uses: ./.github/workflows/lint.yaml
 
   test:
-    needs:
-      - lint
     uses: ./.github/workflows/test.yaml
 
   build:
