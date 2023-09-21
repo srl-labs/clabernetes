@@ -15,6 +15,7 @@ vars:
   MANAGER_IMAGE: ${REGISTRY}/${CLABERNETES}-manager
   MANAGER_DEV_IMAGE: ${MANAGER_IMAGE}-dev
   LAUNCHER_IMAGE: ${REGISTRY}/${CLABERNETES}-launcher
+  CLABVERTER_IMAGE: ${REGISTRY}/clabverter
 
   # to be set in ci
   RELEASE_VERSION: ""
@@ -44,6 +45,15 @@ images:
     image: ${LAUNCHER_IMAGE}
     context: ../
     dockerfile: ../Dockerfile.launcher
+    rebuildStrategy: ignoreContextChanges
+    tags:
+      - dev-latest
+      - $(git describe --always --abbrev=8)
+
+  clabverter:
+    image: ${CLABVERTER_IMAGE}
+    context: ../
+    dockerfile: ../clabverter/clabverter.dockerfile
     rebuildStrategy: ignoreContextChanges
     tags:
       - dev-latest
@@ -137,7 +147,7 @@ pipelines:
   build:
     # override the default build pipeline so we don't bother building dev image in ci
     run: |
-      build_images clabernetes clabernetes-launcher
+      build_images clabernetes clabernetes-launcher clabverter
 
   purge:
     run: |-
