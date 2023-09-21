@@ -55,9 +55,11 @@ images:
     context: ../
     dockerfile: ../clabverter/clabverter.dockerfile
     rebuildStrategy: ignoreContextChanges
+    buildArgs:
+      VERSION: "0.0.0-$(git rev-parse --short HEAD)"
     tags:
       - dev-latest
-      - $(git describe --always --abbrev=8)
+      - $(git rev-parse --short HEAD)
 
 deployments:
   clabernetes:
