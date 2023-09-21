@@ -30,4 +30,4 @@ WORKDIR /clabernetes
 COPY --from=builder /clabernetes/build/clabverter .
 USER nonroot:nonroot
 
-ENTRYPOINT ["/clabernetes/clabverter", "run"]
+ENTRYPOINT ["/clabernetes/clabverter"]
