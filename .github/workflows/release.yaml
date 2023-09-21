@@ -10,7 +10,16 @@ env:
   GO_VERSION: "1.21"
 
 jobs:
+  lint:
+    uses: ./.github/workflows/lint.yaml
+
+  test:
+    uses: ./.github/workflows/test.yaml
+
   release:
+    needs:
+      - lint
+      - test
     runs-on: ubuntu-latest
     steps:
       - name: checkout
@@ -47,7 +56,9 @@ jobs:
 
       - name: build images
         run: |
-          devspace run build --profile release --var RELEASE_VERSION=${{ github.ref_name }}
+          RELEASE_TAG=${{ github.ref_name }}
+          RELEASE_VERSION=${RELEASE_TAG#v}
+          devspace run build --profile release --var RELEASE_VERSION=$RELEASE_VERSION
           helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
-          helm package chart --version ${{ github.ref_name }}
+          helm package chart --version $RELEASE_VERSION
           helm push clabernetes-${{ github.ref_name }}.tgz oci://ghcr.io/srl-labs/clabernetes
