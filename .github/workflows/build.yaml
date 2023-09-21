@@ -6,7 +6,7 @@ on:
   workflow_dispatch: {}
 
 env:
-  GO_VERSION: "1.20"
+  GO_VERSION: "1.21"
 
 jobs:
   build:
@@ -44,7 +44,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: build images
+      - name: <not on main> build images, don't push
+        if: github.head_ref != 'main'
+        run: |
+          devspace run build --skip-push
+
+      - name: <on main> build and push images
+        if: github.head_ref == 'main'
         run: |
           devspace run build
           helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
