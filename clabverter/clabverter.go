@@ -453,7 +453,7 @@ func (c *Clabverter) handleExtraFiles() error {
 				return err
 			}
 
-			extraFiles[nodeName][strings.ReplaceAll(extraFilePath, "/", "_")] = extraFileContent
+			extraFiles[nodeName][extraFilePath] = extraFileContent
 		}
 	}
 
@@ -478,8 +478,11 @@ func (c *Clabverter) handleExtraFiles() error {
 
 		c.extraFilesConfigMaps[nodeName] = make([]topologyConfigMapTemplateVars, 0)
 
-		for extraFileName, extraFileContent := range nodeExtraFiles {
-			templateVars.ExtraFiles[extraFileName] = "\n" + clabernetesutil.Indent(
+		for extraFilePath, extraFileContent := range nodeExtraFiles {
+			safeFileName := clabernetesutil.SafeConcatNameKubernetes(
+				strings.Split(extraFilePath, "/")...)
+
+			templateVars.ExtraFiles[safeFileName] = "\n" + clabernetesutil.Indent(
 				string(extraFileContent),
 				specIndentSpaces,
 			)
@@ -489,8 +492,8 @@ func (c *Clabverter) handleExtraFiles() error {
 				topologyConfigMapTemplateVars{
 					NodeName:      nodeName,
 					ConfigMapName: configMapName,
-					FilePath:      extraFileName,
-					FileName:      extraFileName,
+					FilePath:      extraFilePath,
+					FileName:      safeFileName,
 				},
 			)
 		}
@@ -509,7 +512,7 @@ func (c *Clabverter) handleExtraFiles() error {
 		c.renderedFiles = append(
 			c.renderedFiles,
 			renderedContent{
-				friendlyName: fmt.Sprintf("%s-statup-config", nodeName),
+				friendlyName: fmt.Sprintf("%s extra files", nodeName),
 				fileName:     fileName,
 				content:      rendered.Bytes(),
 			},
