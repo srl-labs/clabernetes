@@ -369,6 +369,16 @@ func renderDeployment(
 		},
 	}
 
+	if obj.GetTopologyCommonSpec().ContainerlabDebug {
+		deployment.Spec.Template.Spec.Containers[0].Env = append(
+			deployment.Spec.Template.Spec.Containers[0].Env,
+			k8scorev1.EnvVar{
+				Name:  clabernetesconstants.LauncherContainerlabDebug,
+				Value: clabernetesconstants.True,
+			},
+		)
+	}
+
 	deployment = renderDeploymentAddFilesFromConfigMaps(nodeName, obj, deployment)
 
 	deployment = renderDeploymentAddInsecureRegistries(obj, deployment)

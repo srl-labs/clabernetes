@@ -242,6 +242,14 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 							},
 						},
 					},
+					"containerlabDebug": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods. This is disabled by default.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"config": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Config is a \"normal\" containerlab configuration file.",
@@ -625,6 +633,14 @@ func schema_clabernetes_apis_topology_v1alpha1_KneSpec(
 							},
 						},
 					},
+					"containerlabDebug": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods. This is disabled by default.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"topology": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Topology is a \"normal\" kne topology proto file.",
@@ -820,6 +836,14 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 									},
 								},
 							},
+						},
+					},
+					"containerlabDebug": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods. This is disabled by default.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 				},
