@@ -316,7 +316,7 @@ func renderDeployment(
 								{
 									Name:      configVolumeName,
 									ReadOnly:  true,
-									MountPath: "/clabernetes/topo.yaml",
+									MountPath: "/clabernetes/topo.clab.yaml",
 									SubPath:   nodeName,
 								},
 								{
