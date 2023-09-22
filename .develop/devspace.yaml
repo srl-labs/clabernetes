@@ -163,13 +163,13 @@ profiles:
         value: ${RELEASE_VERSION}
 
       - op: replace
-        path: images.clabernetes-clabverter.tags
+        path: images.clabverter.tags
         value:
           - latest
           - ${RELEASE_VERSION}
           - ${COMMIT_HASH}
       - op: replace
-        path: images.clabernetes-clabverter.buildArgs.VERSION
+        path: images.clabverter.buildArgs.VERSION
         value: ${RELEASE_VERSION}
 
 pipelines:

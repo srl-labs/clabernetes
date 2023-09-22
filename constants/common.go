@@ -10,6 +10,9 @@ const (
 	// Clabverter is a constant for the lovely name "clabverter".
 	Clabverter = "clabverter"
 
+	// True is a constant representing the string "true".
+	True = "true"
+
 	// False is a constant representing the string "false".
 	False = "false"
 
