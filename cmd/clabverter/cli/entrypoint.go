@@ -28,9 +28,9 @@ func Entrypoint() *cli.App {
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     topologyFile,
-				Usage:    "set the topology file to parse",
+				Usage:    "set the topology file to parse. When not set, clabverter will look for a file named '*.clab.y*ml'",
 				Required: false,
-				Value:    "topo.yaml",
+				Value:    "",
 			},
 			&cli.StringFlag{
 				Name:     outputDirectory,

@@ -160,6 +160,11 @@ func (c *Clabverter) Clabvert() error {
 		return err
 	}
 
+	err = c.findClabFile()
+	if err != nil {
+		return err
+	}
+
 	err = c.load()
 	if err != nil {
 		return err
@@ -610,6 +615,31 @@ func (c *Clabverter) output() error {
 			}
 		}
 	}
+
+	return nil
+}
+
+// findClabFile attempts to find a clab file in the working directory
+// if the path was not provided.
+func (c *Clabverter) findClabFile() error {
+	if c.topologyFile != "" {
+		return nil
+	}
+
+	c.logger.Info("attempting to find topology file in the working directory...")
+
+	files, err := filepath.Glob("*.clab.y*ml")
+	if err != nil {
+		return err
+	}
+
+	if len(files) != 1 {
+		return fmt.Errorf("%w: none or more than one topology files found, can't auto select one", ErrClabvert)
+	}
+
+	c.logger.Infof("found topology file %q", files[0])
+
+	c.topologyFile = files[0]
 
 	return nil
 }

@@ -24,10 +24,9 @@ RUN CGO_ENABLED=0 \
     build/clabverter \
     main.go
 
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM debian:bookworm-slim
 
-WORKDIR /clabernetes
-COPY --from=builder /clabernetes/build/clabverter .
-USER nonroot:nonroot
+WORKDIR /clabverter
+COPY --from=builder /clabernetes/build/clabverter /bin/clabverter
 
-ENTRYPOINT ["/clabernetes/clabverter"]
+ENTRYPOINT ["/bin/clabverter"]
