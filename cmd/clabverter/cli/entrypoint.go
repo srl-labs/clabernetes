@@ -27,8 +27,9 @@ func Entrypoint() *cli.App {
 		Usage:   "run clabernetes clabverter -- clab to clabernetes manifest(s) converter",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:     topologyFile,
-				Usage:    "set the topology file to parse. When not set, clabverter will look for a file named '*.clab.y*ml'",
+				Name: topologyFile,
+				Usage: `set the topology file to parse.
+If not set, clabverter will look for a file named '*.clab.y*ml'`,
 				Required: false,
 				Value:    "",
 			},
