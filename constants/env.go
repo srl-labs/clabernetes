@@ -22,6 +22,10 @@ const (
 	// clabernetes launcher logger level.
 	LauncherLoggerLevelEnv = "LAUNCHER_LOGGER_LEVEL"
 
+	// LauncherContainerlabDebug is the environment variable name that can be used to enable the
+	// debug flag of clabernetes when invoked on the launcher pod.
+	LauncherContainerlabDebug = "LAUNCHER_CONTAINERLAB_DEBUG"
+
 	// LauncherImageEnv env var that tells the controllers what image to use for clabernetes
 	// (launcher) pods.
 	LauncherImageEnv = "LAUNCHER_IMAGE"

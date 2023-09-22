@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"math/rand"
 	"net"
 	"os"
@@ -212,14 +213,32 @@ func (c *clabernetes) startDocker() error {
 }
 
 func (c *clabernetes) runClab() error {
-	cmd := exec.Command("containerlab", "deploy", "-t", "topo.yaml", "--debug")
-
-	output, err := cmd.Output()
+	clabLogFile, err := os.Create("clab.log")
 	if err != nil {
 		return err
 	}
 
-	c.logger.Debugf("containerlab start output:\n%s", string(output))
+	clabOutWriter := io.MultiWriter(c.logger, clabLogFile)
+
+	args := []string{
+		"deploy",
+		"-t",
+		"topo.yaml",
+	}
+
+	if os.Getenv(clabernetesconstants.LauncherContainerlabDebug) == clabernetesconstants.True {
+		args = append(args, "--debug")
+	}
+
+	cmd := exec.Command("containerlab", args...)
+
+	cmd.Stdout = clabOutWriter
+	cmd.Stderr = clabOutWriter
+
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

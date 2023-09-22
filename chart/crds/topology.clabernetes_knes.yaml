@@ -35,6 +35,10 @@ spec:
           spec:
             description: KneSpec is the spec for a Kne topology resource.
             properties:
+              containerlabDebug:
+                description: ContainerlabDebug sets the `--debug` flag when invoking
+                  containerlab in the launcher pods. This is disabled by default.
+                type: boolean
               disableAutoExpose:
                 description: "DisableAutoExpose disables the automagic exposing of
                   ports for a given topology. When this setting is disabled clabernetes

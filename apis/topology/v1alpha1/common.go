@@ -80,6 +80,10 @@ type TopologyCommonSpec struct {
 	// +listType=atomic
 	// +optional
 	FilesFromConfigMap []FileFromConfigMap `json:"filesFromConfigMap"`
+	// ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods.
+	// This is disabled by default.
+	// +optional
+	ContainerlabDebug bool `json:"containerlabDebug"`
 }
 
 // LinkEndpoint is a simple struct to hold node/interface name info for a given link.
