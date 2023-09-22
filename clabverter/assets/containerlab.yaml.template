@@ -11,7 +11,7 @@ spec:
     - {{ $registry }}
     {{- end }}
   {{- end }}
-  {{- if gt (len .StartupConfigs) 0 }}
+  {{- if or (gt (len .StartupConfigs) 0) (gt (len .ExtraFiles) 0) }}
   filesFromConfigMap:
     {{- range $startupConfigData := .StartupConfigs }}
       - nodeName: {{ $startupConfigData.NodeName }}
@@ -19,6 +19,13 @@ spec:
         configMapName: {{ $startupConfigData.ConfigMapName }}
         configMapPath: startup-config
     {{- end }}
+    {{- range $extraFileData := .ExtraFiles }}
+      - nodeName: {{ $extraFileData.NodeName }}
+        filePath: {{ $extraFileData.FilePath }}
+        configMapName: {{ $extraFileData.ConfigMapName }}
+        configMapPath: {{ $extraFileData.FileName }}
+    {{- end }}
   {{- end }}
+
   config: |-
     {{- .ClabConfig }}

@@ -178,6 +178,14 @@ pipelines:
     run: |
       build_images clabernetes clabernetes-launcher clabverter
 
+  dev:
+    # override the default dev pipeline to not bother building clabverter while doing dev things
+    run: |
+      ensure_pull_secrets --all
+      build_images clabernetes-dev clabernetes clabernetes-launcher
+      create_deployments --all
+      start_dev --all
+
   purge:
     run: |-
       stop_dev --all
