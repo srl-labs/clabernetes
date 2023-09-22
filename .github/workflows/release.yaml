@@ -61,4 +61,4 @@ jobs:
           devspace run build --profile release --var RELEASE_VERSION=$RELEASE_VERSION
           helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
           helm package chart --version $RELEASE_VERSION
-          helm push clabernetes-${{ github.ref_name }}.tgz oci://ghcr.io/srl-labs/clabernetes
+          helm push clabernetes-$RELEASE_VERSION.tgz oci://ghcr.io/srl-labs/clabernetes
