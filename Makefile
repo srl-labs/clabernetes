@@ -66,3 +66,6 @@ refresh-chart-dependencies: ## Refreshes all dependent helm charts (ex: ui)
 	cd chart; \
 	helm dependency build; \
 	helm dependency update
+
+build-clabverter: ## Builds the clabverter container
+	docker build -t ghcr.io/srl-labs/clabernetes/clabverter:latest -f ./build/clabverter.Dockerfile .

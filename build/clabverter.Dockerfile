@@ -5,6 +5,7 @@ ARG VERSION
 WORKDIR /clabernetes
 
 RUN mkdir build
+RUN mkdir work
 
 COPY cmd/clabverter/main.go main.go
 
@@ -27,7 +28,9 @@ RUN CGO_ENABLED=0 \
 FROM gcr.io/distroless/static-debian12:nonroot
 
 WORKDIR /clabernetes
+COPY --from=builder --chown=nonroot:nonroot /clabernetes/work /clabernetes/work
 COPY --from=builder /clabernetes/build/clabverter .
-USER nonroot:nonroot
+
+WORKDIR /clabernetes/work
 
 ENTRYPOINT ["/clabernetes/clabverter"]
