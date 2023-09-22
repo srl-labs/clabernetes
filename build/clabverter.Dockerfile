@@ -5,6 +5,7 @@ ARG VERSION
 WORKDIR /clabernetes
 
 RUN mkdir build
+RUN mkdir work
 
 COPY cmd/clabverter/main.go main.go
 
