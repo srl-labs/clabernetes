@@ -195,7 +195,7 @@ func (c *Clabverter) ensureOutputDirectory() error {
 		return err
 	}
 
-	err = os.MkdirAll(c.outputDirectory, clabernetesconstants.PermissionsEveryoneRead)
+	err = os.MkdirAll(c.outputDirectory, clabernetesconstants.PermissionsEveryoneReadUserWrite)
 	if err != nil {
 		c.logger.Criticalf("failed ensuring output directory exists, error: %s", err)
 
