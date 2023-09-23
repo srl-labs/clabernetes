@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -19,33 +18,10 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func readFile(t *testing.T, f string) []byte {
-	t.Helper()
-
-	content, err := os.ReadFile(fmt.Sprintf("./test-fixtures/%s", f))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return content
-}
-
-func writeGoldenJSON(t *testing.T, k string, o interface{}) {
-	t.Helper()
-
-	j, err := json.MarshalIndent(o, "", "    ")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	golden := filepath.Join("test-fixtures", "golden", k+".json")
-
-	err = os.WriteFile(golden, j, 0o644) //nolint: gosec
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
+// TestAllocateTunnelIds ensures that the tunnel clabernetes controllers VXLAN tunnel ID allocation
+// process works as advertised. None of this is "hard" necessarily, but there are a lot of moving
+// parts in play to ensure that we use the tunnel IDs consistently and also obviously don't stomp
+// on any existing tunnel IDs.
 func TestAllocateTunnelIds(t *testing.T) {
 	testCases := []struct {
 		name             string
@@ -327,13 +303,20 @@ func TestAllocateTunnelIds(t *testing.T) {
 				got := testCase.processedTunnels
 
 				if *clabernetestesthelper.Update {
-					writeGoldenJSON(t, testCase.name, got)
+					clabernetestesthelper.WriteTestFixtureJSON(
+						t,
+						fmt.Sprintf("golden/%s.json", testCase.name),
+						got,
+					)
 				}
 
 				var want map[string][]*clabernetesapistopologyv1alpha1.Tunnel
 
 				err := json.Unmarshal(
-					readFile(t, fmt.Sprintf("golden/%s.json", testCase.name)),
+					clabernetestesthelper.ReadTestFixtureFile(
+						t,
+						fmt.Sprintf("golden/%s.json", testCase.name),
+					),
 					&want,
 				)
 				if err != nil {
