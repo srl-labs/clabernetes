@@ -26,7 +26,7 @@ func InitManager(options ...Option) {
 			formatter:       DefaultFormatter,
 			instances:       map[string]*instance{},
 			instanceCancels: map[string]context.CancelFunc{},
-			loggers:         []func(...interface{}){},
+			loggers:         []func(...any){},
 		}
 
 		for _, option := range options {
