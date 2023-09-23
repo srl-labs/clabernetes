@@ -223,7 +223,7 @@ func (c *clabernetes) runClab() error {
 	args := []string{
 		"deploy",
 		"-t",
-		"topo.yaml",
+		"topo.clab.yaml",
 	}
 
 	if os.Getenv(clabernetesconstants.LauncherContainerlabDebug) == clabernetesconstants.True {
