@@ -33,6 +33,8 @@ func StartClabernetes() {
 
 	rand.New(rand.NewSource(time.Now().UnixNano())) //nolint:gosec
 
+	claberneteslogging.InitManager()
+
 	logManager := claberneteslogging.GetManager()
 
 	clabernetesLogger := logManager.MustRegisterAndGetLogger(
