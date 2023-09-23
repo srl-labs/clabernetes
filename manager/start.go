@@ -143,9 +143,7 @@ func (c *clabernetes) start(ctx context.Context) {
 }
 
 func (c *clabernetes) exit(exitCode int) {
-	loggingManager := claberneteslogging.GetManager()
-
-	loggingManager.Flush()
+	claberneteslogging.GetManager().Flush()
 
 	os.Exit(exitCode)
 }

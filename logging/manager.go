@@ -17,20 +17,39 @@ const (
 	flushWaitSleep    = 25 * time.Millisecond
 )
 
-func printLog(a ...any) {
-	fmt.Println(a...) //nolint:forbidigo
-}
-
-// GetManager returns the global logging Manager.
-func GetManager() Manager {
+// InitManager initializes the logging manager with the provided options. It does nothing if the
+// manager has already been initialized. This may be a bit awkward but since this is not expected
+// to be used by anything but clabernetes and it works for us, it works!
+func InitManager(options ...Option) {
 	managerInstanceOnce.Do(func() {
-		managerInstance = &manager{
+		m := &manager{
 			formatter:       DefaultFormatter,
 			instances:       map[string]*instance{},
 			instanceCancels: map[string]context.CancelFunc{},
-			loggers:         []func(...interface{}){printLog},
+			loggers:         []func(...any){},
 		}
+
+		for _, option := range options {
+			option(m)
+		}
+
+		if len(m.loggers) == 0 {
+			m.loggers = []func(...interface{}){printLog}
+		}
+
+		managerInstance = m
 	})
+}
+
+// GetManager returns the global logging Manager. Panics if the logging manager has *not* been
+// initialized (via InitManager).
+func GetManager() Manager {
+	if managerInstance == nil {
+		panic(
+			"Manager instance is nil, 'GetManager' should never be called until the manager " +
+				"process has been started",
+		)
+	}
 
 	return managerInstance
 }

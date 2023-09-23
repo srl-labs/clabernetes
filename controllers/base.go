@@ -36,9 +36,9 @@ func NewBaseController(
 	config *clientgorest.Config,
 	client ctrlruntimeclient.Client,
 ) *BaseController {
-	lm := claberneteslogging.GetManager()
+	logManager := claberneteslogging.GetManager()
 
-	logger := lm.MustRegisterAndGetLogger(
+	logger := logManager.MustRegisterAndGetLogger(
 		controllerName,
 		clabernetesutil.GetEnvStrOrDefault(
 			clabernetesconstants.ControllerLoggerLevelEnv,

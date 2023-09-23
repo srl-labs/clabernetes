@@ -98,6 +98,10 @@ func MustNewClabverter(
 		logLevel = clabernetesconstants.Disabled
 	}
 
+	claberneteslogging.InitManager(
+		claberneteslogging.WithLogger(claberneteslogging.StdErrLog),
+	)
+
 	logManager := claberneteslogging.GetManager()
 
 	clabverterLogger := logManager.MustRegisterAndGetLogger(
@@ -634,7 +638,10 @@ func (c *Clabverter) findClabFile() error {
 	}
 
 	if len(files) != 1 {
-		return fmt.Errorf("%w: none or more than one topology files found, can't auto select one", ErrClabvert)
+		return fmt.Errorf(
+			"%w: none or more than one topology files found, can't auto select one",
+			ErrClabvert,
+		)
 	}
 
 	c.logger.Infof("found topology file %q", files[0])
