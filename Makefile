@@ -12,10 +12,13 @@ lint: fmt ## Run linters; runs with GOOS env var for linting on darwin
 	golangci-lint run
 
 test: ## Run unit tests
-	gotestsum --format testname --hide-summary=skipped -- -coverprofile=cover.out ./...
+	gotestsum --format testname --hide-summary=skipped -- -coverprofile=cover.out `go list ./... | grep -v e2e`
 
 test-race: ## Run unit tests with race flag
-	gotestsum --format testname --hide-summary=skipped -- -race -coverprofile=cover.out ./...
+	gotestsum --format testname --hide-summary=skipped -- -race -coverprofile=cover.out `go list ./... | grep -v e2e`
+
+test-e2e: ## Run e2e tests
+	gotestsum --format testname --hide-summary=skipped -- -race -coverprofile=cover.out ./e2e/...
 
 cov:  ## Produce html coverage report
 	go tool cover -html=cover.out
