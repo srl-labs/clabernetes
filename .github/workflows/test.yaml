@@ -33,6 +33,8 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - unit
+    # run e2e on main or prs pointing to main
+    if: github.ref_name == 'main' || github.base_ref == 'main'
     steps:
       - name: checkout
         uses: actions/checkout@v4
