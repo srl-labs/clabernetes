@@ -16,6 +16,25 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+func normalizeContainerlab(t *testing.T, objectData []byte) []byte {
+	t.Helper()
+
+	// unfortunately we need to remove the hash bits since any cluster may have no lb or get a
+	// different lb address assigned than what we have stored in golden file(s)
+	objectData = clabernetese2esuite.YQCommand(
+		t,
+		objectData,
+		"del(.status.nodeExposedPortsHash)",
+	)
+	objectData = clabernetese2esuite.YQCommand(
+		t,
+		objectData,
+		"del(.status.nodeExposedPorts[].loadBalancerAddress)",
+	)
+
+	return objectData
+}
+
 func normalizeExposeService(t *testing.T, objectData []byte) []byte {
 	t.Helper()
 
@@ -25,6 +44,13 @@ func normalizeExposeService(t *testing.T, objectData []byte) []byte {
 
 	// remove node ports since they'll be random
 	objectData = clabernetese2esuite.YQCommand(t, objectData, "del(.spec.ports[].nodePort)")
+
+	// and the lb ip in status because of course that may be different depending on cluster
+	objectData = clabernetese2esuite.YQCommand(
+		t,
+		objectData,
+		".status.loadBalancer = {}",
+	)
 
 	return objectData
 }
@@ -46,6 +72,9 @@ func TestContainerlabBasic(t *testing.T) {
 				"containerlab": {
 					{
 						Name: testName,
+						NormalizeFuncs: []func(t *testing.T, objectData []byte) []byte{
+							normalizeContainerlab,
+						},
 					},
 				},
 				"service": {

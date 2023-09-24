@@ -46,7 +46,6 @@ status:
   configsHash: 41aff2b4387815b524ebb3cc609121dcad8c15ee65ab638faf51b422641049ff
   nodeExposedPorts:
     srl1:
-      loadBalancerAddress: 10.201.0.1
       tcpPorts:
         - 21
         - 22
@@ -63,5 +62,4 @@ status:
         - 57400
       udpPorts:
         - 161
-  nodeExposedPortsHash: 89e817f1b5fb981b6f84fb9aaa587e53b318aa92680ccff2b6a758116ec81f59
   tunnels: {}
