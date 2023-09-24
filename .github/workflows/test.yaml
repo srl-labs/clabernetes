@@ -9,7 +9,7 @@ env:
   GO_VERSION: "1.21"
 
 jobs:
-  test:
+  unit:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
@@ -26,5 +26,48 @@ jobs:
         run: |
           go install gotest.tools/gotestsum@${{ vars.GOTESTSUM_VERSION }}
 
-      - name: run the tests
+      - name: run the unit tests
         run: make test-race
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs:
+      - unit
+    # run e2e on main or prs pointing to main
+    if: github.ref_name == 'main' || github.base_ref == 'main'
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: set up go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: install go test tools
+        run: |
+          go install gotest.tools/gotestsum@${{ vars.GOTESTSUM_VERSION }}
+
+      - name: install devspace
+        run: |
+          curl -L -o devspace \
+            "https://github.com/loft-sh/devspace/releases/download/${{ vars.DEVSPACE_VERSION}}/devspace-linux-amd64" &&
+            install -c -m 0755 devspace /usr/local/bin
+        working-directory: /tmp
+
+      - name: spin up kind cluster
+        uses: helm/kind-action@v1
+
+      - name: verify kind cluster
+        run: |
+          set -x
+          kubectl cluster-info
+          kubectl get pods -A
+
+      - name: deploy clabernetes
+        run: devspace run deploy
+
+      - name: run the e2e tests
+        run: make test-e2e
