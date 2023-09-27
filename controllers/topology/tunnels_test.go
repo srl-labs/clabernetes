@@ -3,7 +3,6 @@ package topology_test
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"reflect"
 	"testing"
 
@@ -12,11 +11,7 @@ import (
 	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
 )
 
-func TestMain(m *testing.M) {
-	clabernetestesthelper.Flags()
-
-	os.Exit(m.Run())
-}
+const testAllocateTunnelIdsTestName = "tunnels/allocate-tunnel-ids"
 
 // TestAllocateTunnelIds ensures that the tunnel clabernetes controllers VXLAN tunnel ID allocation
 // process works as advertised. None of this is "hard" necessarily, but there are a lot of moving
@@ -305,7 +300,11 @@ func TestAllocateTunnelIds(t *testing.T) {
 				if *clabernetestesthelper.Update {
 					clabernetestesthelper.WriteTestFixtureJSON(
 						t,
-						fmt.Sprintf("golden/%s.json", testCase.name),
+						fmt.Sprintf(
+							"golden/%s/%s.json",
+							testAllocateTunnelIdsTestName,
+							testCase.name,
+						),
 						got,
 					)
 				}
@@ -315,7 +314,11 @@ func TestAllocateTunnelIds(t *testing.T) {
 				err := json.Unmarshal(
 					clabernetestesthelper.ReadTestFixtureFile(
 						t,
-						fmt.Sprintf("golden/%s.json", testCase.name),
+						fmt.Sprintf(
+							"golden/%s/%s.json",
+							testAllocateTunnelIdsTestName,
+							testCase.name,
+						),
 					),
 					&want,
 				)

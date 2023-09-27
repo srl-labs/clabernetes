@@ -14,7 +14,11 @@ import (
 	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func renderConfigMap(
+// RenderConfigMap accepts an object (just for name/namespace reasons) and a mapping of clabernetes
+// sub-topology configs and tunnels and renders the final configmap for the deployment -- this is
+// the configmap that will ultimately be referenced when mounting sub-topologies and tunnel data in
+// the clabernetes launcher pod(s) for a given topology.
+func RenderConfigMap(
 	obj ctrlruntimeclient.Object,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
@@ -28,6 +32,11 @@ func renderConfigMap(
 	}
 
 	for nodeName, nodeTopo := range clabernetesConfigs {
+		// always initialize the tunnels keys in the configmap, this way we don't have to have any
+		// special handling for no tunnels and things always look consistent; we'll override this
+		// down below if the node has tunnels of course!
+		configMap.Data[fmt.Sprintf("%s-tunnels", nodeName)] = ""
+
 		yamlNodeTopo, err := yaml.Marshal(nodeTopo)
 		if err != nil {
 			return nil, err
@@ -54,7 +63,7 @@ func (r *Reconciler) createConfigMap(
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 ) error {
-	configMap, err := renderConfigMap(obj, clabernetesConfigs, tunnels)
+	configMap, err := RenderConfigMap(obj, clabernetesConfigs, tunnels)
 	if err != nil {
 		return err
 	}
@@ -74,7 +83,7 @@ func (r *Reconciler) enforceConfigMap(
 	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 	actual *k8scorev1.ConfigMap,
 ) error {
-	configMap, err := renderConfigMap(obj, clabernetesConfigs, tunnels)
+	configMap, err := RenderConfigMap(obj, clabernetesConfigs, tunnels)
 	if err != nil {
 		return err
 	}

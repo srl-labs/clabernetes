@@ -141,6 +141,7 @@ issues:
         - unparam
         - maintidx
         - funlen
+        - gochecknoglobals
 
     # ignore globals for standard k8s things
     - linters:
