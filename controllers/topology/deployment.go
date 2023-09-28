@@ -138,7 +138,7 @@ func (r *Reconciler) pruneDeployments(
 	return nil
 }
 
-func (r *Reconciler) enforceDeployments( //nolint:dupl
+func (r *Reconciler) enforceDeployments(
 	ctx context.Context,
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	deployments *clabernetescontrollers.ResolvedDeployments,
@@ -308,7 +308,7 @@ func renderDeployment(
 							Ports: []k8scorev1.ContainerPort{
 								{
 									Name:          "vxlan",
-									ContainerPort: clabernetesconstants.VXLANPort,
+									ContainerPort: clabernetesconstants.VXLANServicePort,
 									Protocol:      "UDP",
 								},
 							},
