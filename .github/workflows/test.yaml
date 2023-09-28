@@ -69,5 +69,9 @@ jobs:
       - name: deploy clabernetes
         run: devspace run deploy
 
+      - name: wait for clabernetes
+        run: |
+          kubectl rollout status deployment clabernetes-manager -n clabernetes
+
       - name: run the e2e tests
         run: make test-e2e
