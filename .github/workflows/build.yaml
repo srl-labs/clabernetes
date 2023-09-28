@@ -49,7 +49,7 @@ jobs:
         run: |
           devspace run build --skip-push
 
-      - name: <on main> build and push images
+      - name: <on main> build and push images and helm chart
         if: github.ref_name == 'main'
         run: |
           devspace run build

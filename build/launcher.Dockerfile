@@ -52,7 +52,7 @@ RUN echo \
 
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
-        containerlab=0.45.* \
+            containerlab=0.0.0~14789vxlan \
         docker-ce \
         docker-ce-cli && \
     apt-get clean && \
