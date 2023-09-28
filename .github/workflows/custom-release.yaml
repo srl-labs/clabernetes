@@ -1,0 +1,44 @@
+---
+name: custom-release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "version tag to use for custom release"
+        required: true
+
+env:
+  GO_VERSION: "1.21"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: set up go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: install devspace
+        run: |
+          curl -L -o devspace \
+            "https://github.com/loft-sh/devspace/releases/download/${{ vars.DEVSPACE_VERSION}}/devspace-linux-amd64" &&
+            install -c -m 0755 devspace /usr/local/bin
+        working-directory: /tmp
+
+      - name: login to ghcr
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: build and push images
+        run: |
+          devspace run build --profile custom-release --var RELEASE_VERSION=${{ github.event.inputs.version }}

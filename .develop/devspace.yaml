@@ -172,6 +172,34 @@ profiles:
         path: images.clabverter.buildArgs.VERSION
         value: ${RELEASE_VERSION}
 
+  # custom-release is used for "one off" releases where we want to build and push images with some
+  # tag that is not one of the normal tags -- something like "0.0.0-customFixTest1"
+  - name: custom-release
+    patches:
+      - op: replace
+        path: images.clabernetes.tags
+        value:
+          - ${RELEASE_VERSION}
+      - op: replace
+        path: images.clabernetes.buildArgs.VERSION
+        value: ${RELEASE_VERSION}
+
+      - op: replace
+        path: images.clabernetes-launcher.tags
+        value:
+          - ${RELEASE_VERSION}
+      - op: replace
+        path: images.clabernetes-launcher.buildArgs.VERSION
+        value: ${RELEASE_VERSION}
+
+      - op: replace
+        path: images.clabverter.tags
+        value:
+          - ${RELEASE_VERSION}
+      - op: replace
+        path: images.clabverter.buildArgs.VERSION
+        value: ${RELEASE_VERSION}
+
 pipelines:
   build:
     # override the default build pipeline so we don't bother building dev image in ci
