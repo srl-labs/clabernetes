@@ -58,6 +58,9 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/apt/archive/*.deb
 
+# copy a basic but nicer than standard bashrc for the user
+COPY build/launcher/.bashrc /root/.bashrc
+
 # copy default ssh keys to the launcher image
 # to make use of password-less ssh access
 COPY launcher/assets/default_id_rsa /root/.ssh/id_rsa
