@@ -40,8 +40,10 @@ type NodeDefinition struct {
 	Exec []string `yaml:"exec,omitempty"`
 	// list of bind mount compatible strings
 	Binds []string `yaml:"binds,omitempty"`
-	// list of port bindings
-	Ports []string `yaml:"ports,omitempty"`
+	// list of port bindings -- *NOTE* we dropped omitempty, this is different than normal clab, we
+	// do this because when comparing topos during reconciliation we had some nil and some empty
+	// slices which reflect deep equal says are not the same (because duh, but also come on man!)
+	Ports []string `yaml:"ports"`
 	// user-defined IPv4 address in the management network
 	MgmtIPv4 string `yaml:"mgmt-ipv4,omitempty"`
 	// user-defined IPv6 address in the management network

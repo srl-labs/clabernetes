@@ -83,8 +83,8 @@ func (r *Reconciler) ReconcileDeployments(
 	}
 
 	for _, nodeName := range nodesNeedingRestart {
-		if !clabernetesutil.StringSliceContains(deployments.Missing, nodeName) {
-			// is a new node, don't restart
+		if clabernetesutil.StringSliceContains(deployments.Missing, nodeName) {
+			// is a new node, don't restart, we'll deploy it soon
 			continue
 		}
 
