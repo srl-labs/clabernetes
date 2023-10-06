@@ -42,3 +42,34 @@ jobs:
       - name: build and push images
         run: |
           devspace run build --profile custom-release --var RELEASE_VERSION=${{ github.event.inputs.version }}
+
+      # packaging charts but *not* uploading them to ghcr, only to artifacts repo; mostly this is
+      # so we can have a process for testing ci bits w/out actually cutting a release and/or being
+      # on main
+      - name: package charts
+        run: |
+          RELEASE_VERSION=0.0.0
+          
+          helm package charts/clicker --version $RELEASE_VERSION
+          helm push clicker-$RELEASE_VERSION.tgz oci://ghcr.io/srl-labs/clabernetes
+
+          # patch clicker dep version so its always same as c9s
+          sed -i \
+            "s|    version: (.*)|    version: ${RELEASE_VERSION}|g" \
+            charts/clabernetes/Chart.yaml
+          helm package charts/clabernetes --version $RELEASE_VERSION
+          helm push clabernetes-$RELEASE_VERSION.tgz oci://ghcr.io/srl-labs/clabernetes
+
+      - name: archive packaged helm clicker chart
+        uses: actions/upload-artifact@v3
+        with:
+          name: clicker-0.0.0.tgz
+          path: clicker-0.0.0.tgz
+          retention-days: 30
+
+      - name: archive packaged helm clabernetes chart
+        uses: actions/upload-artifact@v3
+        with:
+          name: clabernetes-0.0.0.tgz
+          path: clabernetes-0.0.0.tgz
+          retention-days: 30

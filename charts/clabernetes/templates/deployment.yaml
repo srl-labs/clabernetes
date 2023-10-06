@@ -84,7 +84,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-            {{- if .Values.managerLogLevelOverride }}
+            {{- if .Values.managerLogLevel }}
             - name: MANAGER_LOGGER_LEVEL
               value: {{ .Values.managerLogLevel }}
             {{- end }}

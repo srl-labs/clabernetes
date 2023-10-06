@@ -23,7 +23,7 @@ const (
 	VXLANServicePort = 14789
 
 	// LauncherDefaultImage is the default image for launchers -- this shouldn't be used normally
-	// since the chart has a default value for this.
+	// since the clabernetes chart has a default value for this.
 	LauncherDefaultImage = "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:latest"
 
 	// TCP is... TCP.

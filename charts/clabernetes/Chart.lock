@@ -1,0 +1,6 @@
+dependencies:
+- name: clicker
+  repository: file://../clicker
+  version: 0.0.15
+digest: sha256:40dfe5c34c0b16654ca1486a75dc61c5a2ca46a11316565d9fde14afa37806e3
+generated: "2023-10-08T15:20:26.81434-07:00"

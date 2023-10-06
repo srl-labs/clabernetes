@@ -1,0 +1,25 @@
+---
+appName: clabernetes
+
+imagePullPolicy: IfNotPresent
+# image: ghcr.io/srl-labs/clabernetes/clabernetes-clicker:{{ .Chart.Version }}
+# workerImage: busybox
+
+# the command that and script that will be invoked; keep in mind the default image for the worker is
+# busybox and the script will be mounted as a file (via configmap/volume) -- so this will look like:
+# "/bin/sh clicker"
+command: /bin/sh
+script: |-
+  echo "hello, there"
+
+resources:
+  requests:
+    memory: 128Mi
+    cpu: 50m
+  # optionally limits
+
+logLevel: info
+
+cron:
+  enabled: false
+  schedule: 0 * * * *

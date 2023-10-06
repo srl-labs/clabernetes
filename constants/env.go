@@ -17,7 +17,9 @@ const (
 	// ClientOperationTimeoutMultiplierEnv is the multiplier applied to the default client
 	// operation timeout.
 	ClientOperationTimeoutMultiplierEnv = "CLIENT_OPERATION_TIMEOUT_MULTIPLIER"
+)
 
+const (
 	// LauncherLoggerLevelEnv is the environment variable name that can be used to set the
 	// clabernetes launcher logger level.
 	LauncherLoggerLevelEnv = "LAUNCHER_LOGGER_LEVEL"
@@ -37,4 +39,22 @@ const (
 	// LauncherInsecureRegistries env var that tells the launcher pods which registries are
 	// insecure. Should be set by the controller via the topology spec.
 	LauncherInsecureRegistries = "LAUNCHER_INSECURE_REGISTRIES"
+)
+
+const (
+	// ClickerLoggerLevelEnv is the environment variable name that can be used to set the
+	// cl(abernetes t)ick(l)er logger level.
+	ClickerLoggerLevelEnv = "CLICKER_LOGGER_LEVEL"
+
+	// ClickerWorkerImage is the environment variable name that can be used to set the
+	// cl(abernetes t)ick(l)er worker image -- that is, the image that is deployed in a pod on all
+	// target nodes, by default this is simply 'busybox'.
+	ClickerWorkerImage = "CLICKER_WORKER_IMAGE"
+
+	// ClickerWorkerCommand is the command for the worker -- defaults to "/bin/sh".
+	ClickerWorkerCommand = "CLICKER_WORKER_COMMAND"
+
+	// ClickerWorkerScript is the script for the clicker worker -- defaults to 'echo "hello, there"'
+	// since we can't know what users will need here.
+	ClickerWorkerScript = "CLICKER_WORKER_SCRIPT"
 )

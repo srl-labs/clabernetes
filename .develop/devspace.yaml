@@ -76,7 +76,7 @@ deployments:
     helm:
       displayOutput: true
       chart:
-        name: ../chart
+        name: ../charts/clabernetes
       values:
         image: ${MANAGER_IMAGE}
         imagePullPolicy: ${PULL_POLICY}

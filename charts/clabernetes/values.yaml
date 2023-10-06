@@ -17,3 +17,8 @@ managerLogLevel: info
 controllerLogLevel: info
 launcherLogLevel: info
 launcherPullPolicy: IfNotPresent
+
+# clicker is an optional feature that can configure nodes in a cluster -- useful for setting things
+# like ulimit and such.
+clicker:
+  enabled: false
