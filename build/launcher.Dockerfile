@@ -63,12 +63,12 @@ COPY build/launcher/.bashrc /root/.bashrc
 
 # copy default ssh keys to the launcher image
 # to make use of password-less ssh access
-COPY launcher/assets/default_id_rsa /root/.ssh/id_rsa
-COPY launcher/assets/default_id_rsa.pub /root/.ssh/id_rsa.pub
+COPY build/launcher/default_id_rsa /root/.ssh/id_rsa
+COPY build/launcher/default_id_rsa.pub /root/.ssh/id_rsa.pub
 RUN chmod 600 /root/.ssh/id_rsa
 
 # copy custom ssh config to enable easy ssh access from launcher
-COPY launcher/assets/ssh_config /etc/ssh/ssh_config
+COPY build/launcher/ssh_config /etc/ssh/ssh_config
 
 WORKDIR /clabernetes
 COPY --from=builder /clabernetes/build/manager .
