@@ -28,7 +28,7 @@ RUN CGO_ENABLED=0 \
 
 FROM debian:bookworm-slim
 
-ARG CONTAINERLAB_VERSION="0.0.0~14789vxlan"
+ARG CONTAINERLAB_VERSION="0.46.*"
 
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
