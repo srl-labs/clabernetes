@@ -55,8 +55,8 @@ RUN echo \
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
             containerlab=${CONTAINERLAB_VERSION} \
-        docker-ce \
-        docker-ce-cli && \
+            docker-ce \
+            docker-ce-cli && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/apt/archive/*.deb
 
