@@ -45,7 +45,7 @@ type ContainerlabSpec struct {
 
 // ContainerlabStatus is the status for a Containerlab topology resource.
 type ContainerlabStatus struct {
-	TopologyStatus `json:",inline"`
+	TopologyStatus `json:",inline,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

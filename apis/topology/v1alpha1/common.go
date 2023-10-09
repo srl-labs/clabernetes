@@ -43,7 +43,7 @@ type TopologyCommonSpec struct {
 	// DisableExpose indicates if exposing nodes via LoadBalancer service should be disabled, by
 	// default any mapped ports in a containerlab topology will be exposed.
 	// +optional
-	DisableExpose bool `json:"disableExpose"`
+	DisableExpose bool `json:"disableExpose,omitempty"`
 	// DisableAutoExpose disables the automagic exposing of ports for a given topology. When this
 	// setting is disabled clabernetes will not auto add ports so if you want to expose (via a
 	// load balancer service) you will need to have ports outlined in your containerlab config
@@ -68,22 +68,22 @@ type TopologyCommonSpec struct {
 	// This setting is *ignored completely* if `DisableExpose` is true!
 	//
 	// +optional
-	DisableAutoExpose bool `json:"disableAutoExpose"`
+	DisableAutoExpose bool `json:"disableAutoExpose,omitempty"`
 	// InsecureRegistries is a slice of strings of insecure registries to configure in the launcher
 	// pods.
 	// +optional
-	InsecureRegistries InsecureRegistries `json:"insecureRegistries"`
+	InsecureRegistries InsecureRegistries `json:"insecureRegistries,omitempty"`
 	// FilesFromConfigMap is a slice of FileFromConfigMap that define the configmap/path and node
 	// and path on a launcher node that the file should be mounted to. If the path is not provided
 	// the configmap is mounted in its entirety (like normal k8s things), so you *probably* want
 	// to specify the sub path unless you are sure what you're doing!
 	// +listType=atomic
 	// +optional
-	FilesFromConfigMap []FileFromConfigMap `json:"filesFromConfigMap"`
+	FilesFromConfigMap []FileFromConfigMap `json:"filesFromConfigMap,omitempty"`
 	// ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods.
 	// This is disabled by default.
 	// +optional
-	ContainerlabDebug bool `json:"containerlabDebug"`
+	ContainerlabDebug bool `json:"containerlabDebug,omitempty"`
 }
 
 // LinkEndpoint is a simple struct to hold node/interface name info for a given link.
@@ -129,14 +129,14 @@ type TopologyStatus struct {
 	// containerlab configuration broken up and modified to use multi-node topology setup (via host
 	// links+vxlan). This is stored as a raw message so we don't have any weirdness w/ yaml tags
 	// instead of json tags in clab things, and so we kube builder doesnt poop itself.
-	Configs string `json:"configs"`
+	Configs string `json:"configs,omitempty"`
 	// ConfigsHash is a hash of the last stored Configs data.
-	ConfigsHash string `json:"configsHash"`
+	ConfigsHash string `json:"configsHash,omitempty"`
 	// Tunnels is a mapping of tunnels that need to be configured between nodes (nodes:[]tunnels).
-	Tunnels map[string][]*Tunnel `json:"tunnels"`
+	Tunnels map[string][]*Tunnel `json:"tunnels,omitempty"`
 	// NodeExposedPorts holds a map of (containerlab) nodes and their exposed ports
 	// (via load balancer).
-	NodeExposedPorts map[string]*ExposedPorts `json:"nodeExposedPorts"`
+	NodeExposedPorts map[string]*ExposedPorts `json:"nodeExposedPorts,omitempty"`
 	// NodeExposedPortsHash is a hash of the last stored NodeExposedPorts data.
-	NodeExposedPortsHash string `json:"nodeExposedPortsHash"`
+	NodeExposedPortsHash string `json:"nodeExposedPortsHash,omitempty"`
 }
