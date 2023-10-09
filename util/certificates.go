@@ -33,7 +33,7 @@ func (c *CertData) Write(directory string) error {
 	err := os.WriteFile(
 		filepath.Join(directory, "tls.crt"),
 		c.TLS,
-		clabernetesconstants.PermissionsGroupRead,
+		clabernetesconstants.PermissionsEveryoneReadWrite,
 	)
 	if err != nil {
 		return err
@@ -42,7 +42,7 @@ func (c *CertData) Write(directory string) error {
 	err = os.WriteFile(
 		filepath.Join(directory, "ca.crt"),
 		c.CRT,
-		clabernetesconstants.PermissionsGroupRead,
+		clabernetesconstants.PermissionsEveryoneReadWrite,
 	)
 	if err != nil {
 		return err
@@ -51,7 +51,7 @@ func (c *CertData) Write(directory string) error {
 	return os.WriteFile(
 		filepath.Join(directory, "tls.key"),
 		c.Key,
-		clabernetesconstants.PermissionsGroupRead,
+		clabernetesconstants.PermissionsEveryoneReadWrite,
 	)
 }
 

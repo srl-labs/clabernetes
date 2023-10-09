@@ -70,5 +70,11 @@ refresh-chart-dependencies: ## Refreshes all dependent helm charts (ex: ui)
 	helm dependency build; \
 	helm dependency update
 
-build-clabverter: ## Builds the clabverter container
+build-manager: ## Builds the clabernetes manager container; typically built via devspace, but this is a handy shortcut for one offs.
+	docker build -t ghcr.io/srl-labs/clabernetes/clabernetes-launcher:latest -f ./build/clabernetes.Dockerfile .
+
+build-launcher: ## Builds the clabernetes launcher container; typically built via devspace, but this is a handy shortcut for one offs.
+	docker build -t ghcr.io/srl-labs/clabernetes/clabernetes-launcher:latest -f ./build/launcher.Dockerfile .
+
+build-clabverter: ## Builds the clabverter container; typically built via devspace, but this is a handy shortcut for one offs.
 	docker build -t ghcr.io/srl-labs/clabernetes/clabverter:latest -f ./build/clabverter.Dockerfile .

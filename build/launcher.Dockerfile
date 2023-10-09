@@ -28,6 +28,8 @@ RUN CGO_ENABLED=0 \
 
 FROM debian:bookworm-slim
 
+ARG CONTAINERLAB_VERSION="0.46.*"
+
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
         ca-certificates \
@@ -52,9 +54,9 @@ RUN echo \
 
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
-        containerlab=0.45.* \
-        docker-ce \
-        docker-ce-cli && \
+            containerlab=${CONTAINERLAB_VERSION} \
+            docker-ce \
+            docker-ce-cli && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/apt/archive/*.deb
 

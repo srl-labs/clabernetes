@@ -10,6 +10,20 @@ const (
 	kubectl = "kubectl"
 )
 
+func execute(t *testing.T, cmd *exec.Cmd) []byte {
+	t.Helper()
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Logf("error executing command, error: %q", err)
+		t.Logf("errored command: %s", cmd.String())
+		t.Logf("errored command combined output: %s", output)
+		t.FailNow()
+	}
+
+	return output
+}
+
 func kubectlNamespace(t *testing.T, operation Operation, namespace string) {
 	t.Helper()
 
@@ -48,10 +62,7 @@ func KubectlFileOp(t *testing.T, operation Operation, namespace, fileName string
 		fileName,
 	)
 
-	err := cmd.Run()
-	if err != nil {
-		t.Fatalf("error executing kubectl command, error: '%s'", err)
-	}
+	_ = execute(t, cmd)
 }
 
 // KubectlGetOp runs get on the given object, returning the yaml output.
@@ -69,12 +80,7 @@ func KubectlGetOp(t *testing.T, kind, namespace, name string) []byte {
 		"yaml",
 	)
 
-	output, err := cmd.Output()
-	if err != nil {
-		t.Fatalf("error executing kubectl command, error: '%s'", err)
-	}
-
-	return output
+	return execute(t, cmd)
 }
 
 // YQCommand accepts some yaml content and returns it after executing the given yqPattern against
@@ -90,11 +96,5 @@ func YQCommand(t *testing.T, content []byte, yqPattern string) []byte {
 		yqCmd,
 	)
 
-	output, err := cmd.Output()
-	if err != nil {
-		t.Log("yq command:", yqCmd)
-		t.Fatalf("error executing yq command, error: '%s'", err)
-	}
-
-	return output
+	return execute(t, cmd)
 }

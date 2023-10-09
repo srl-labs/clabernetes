@@ -19,8 +19,8 @@ const (
 	// AppNameDefault is the default name for the "app" (the helm value appName) -- "clabernetes".
 	AppNameDefault = "clabernetes"
 
-	// VXLANPort is the port number for vxlan.
-	VXLANPort = 4789
+	// VXLANServicePort is the port number for vxlan that we use in the kubernetes service.
+	VXLANServicePort = 14789
 
 	// LauncherDefaultImage is the default image for launchers -- this shouldn't be used normally
 	// since the chart has a default value for this.

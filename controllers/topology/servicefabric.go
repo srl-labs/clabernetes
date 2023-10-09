@@ -139,7 +139,7 @@ func (r *Reconciler) pruneFabricServices(
 	return nil
 }
 
-func (r *Reconciler) enforceFabricServices( //nolint:dupl
+func (r *Reconciler) enforceFabricServices(
 	ctx context.Context,
 	obj ctrlruntimeclient.Object,
 	services *clabernetescontrollers.ResolvedServices,
@@ -147,7 +147,7 @@ func (r *Reconciler) enforceFabricServices( //nolint:dupl
 	r.Log.Info("creating missing services")
 
 	for _, nodeName := range services.Missing {
-		service := renderFabricService(
+		service := r.renderFabricService(
 			obj,
 			nodeName,
 		)
@@ -186,7 +186,7 @@ func (r *Reconciler) enforceFabricServices( //nolint:dupl
 			service.Name,
 		)
 
-		expectedService := renderFabricService(
+		expectedService := r.renderFabricService(
 			obj,
 			nodeName,
 		)
@@ -221,7 +221,7 @@ func (r *Reconciler) enforceFabricServices( //nolint:dupl
 	return nil
 }
 
-func renderFabricService(
+func (r *Reconciler) renderFabricService(
 	obj ctrlruntimeclient.Object,
 	nodeName string,
 ) *k8scorev1.Service {
@@ -234,6 +234,7 @@ func renderFabricService(
 		clabernetesconstants.LabelName:                serviceName,
 		clabernetesconstants.LabelTopologyOwner:       name,
 		clabernetesconstants.LabelTopologyNode:        nodeName,
+		clabernetesconstants.LabelTopologyKind:        r.ResourceKind,
 		clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeFabric, //nolint:lll
 	}
 
@@ -248,9 +249,9 @@ func renderFabricService(
 				{
 					Name:     "vxlan",
 					Protocol: "UDP",
-					Port:     clabernetesconstants.VXLANPort,
+					Port:     clabernetesconstants.VXLANServicePort,
 					TargetPort: intstr.IntOrString{
-						IntVal: clabernetesconstants.VXLANPort,
+						IntVal: clabernetesconstants.VXLANServicePort,
 					},
 				},
 			},

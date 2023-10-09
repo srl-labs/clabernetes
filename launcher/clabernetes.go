@@ -23,7 +23,9 @@ import (
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
 
-const maxDockerLaunchAttempts = 10
+const (
+	maxDockerLaunchAttempts = 10
+)
 
 // StartClabernetes is a function that starts the clabernetes launcher.
 func StartClabernetes() {
@@ -276,6 +278,8 @@ func (c *clabernetes) runClabVxlanTools(
 		fmt.Sprint(vxlanID),
 		"--link",
 		fmt.Sprintf("%s-%s", localNodeName, cntLink),
+		"--port",
+		fmt.Sprint(clabernetesconstants.VXLANServicePort),
 	)
 
 	_, err = cmd.Output()
