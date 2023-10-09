@@ -47,13 +47,19 @@ func MustNewClabverter(
 		logLevel,
 	)
 
+	// trim insecureRegistries and split into array if not empty
+	var insecureRegistriesArr []string
+	if len(strings.TrimSpace(insecureRegistries)) > 0 {
+		insecureRegistriesArr = strings.Split(insecureRegistries, ",")
+	}
+
 	return &Clabverter{
 		logger:               clabverterLogger,
 		topologyFile:         topologyFile,
 		outputDirectory:      outputDirectory,
 		stdout:               stdout,
 		destinationNamespace: destinationNamespace,
-		insecureRegistries:   strings.Split(insecureRegistries, ","),
+		insecureRegistries:   insecureRegistriesArr,
 		configMaps:           []*corev1.ConfigMap{},
 	}
 }
