@@ -42,8 +42,9 @@ status:
                 srl1:
                     kind: srl
                     image: ghcr.io/nokia/srlinux
+                    ports: []
         debug: false
-  configsHash: 41aff2b4387815b524ebb3cc609121dcad8c15ee65ab638faf51b422641049ff
+  configsHash: 420183e825ce8790275e3d08f0d8c4fedf4557d1cd227bf25d9be78b23803438
   nodeExposedPorts:
     srl1:
       tcpPorts:
