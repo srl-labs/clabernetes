@@ -1,22 +1,20 @@
 package clabverter
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
-	"text/template"
 
-	clabernetesutil "github.com/srl-labs/clabernetes/util"
+	"github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
+	kyaml "sigs.k8s.io/yaml"
 
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 )
-
-const specIndentSpaces = 4
 
 // MustNewClabverter returns an instance of Clabverter or panics.
 func MustNewClabverter(
@@ -50,15 +48,13 @@ func MustNewClabverter(
 	)
 
 	return &Clabverter{
-		logger:                  clabverterLogger,
-		topologyFile:            topologyFile,
-		outputDirectory:         outputDirectory,
-		stdout:                  stdout,
-		destinationNamespace:    destinationNamespace,
-		insecureRegistries:      strings.Split(insecureRegistries, ","),
-		startupConfigConfigMaps: make(map[string]topologyConfigMapTemplateVars),
-		extraFilesConfigMaps:    make(map[string][]topologyConfigMapTemplateVars),
-		renderedFiles:           []renderedContent{},
+		logger:               clabverterLogger,
+		topologyFile:         topologyFile,
+		outputDirectory:      outputDirectory,
+		stdout:               stdout,
+		destinationNamespace: destinationNamespace,
+		insecureRegistries:   strings.Split(insecureRegistries, ","),
+		configMaps:           []*corev1.ConfigMap{},
 	}
 }
 
@@ -82,26 +78,22 @@ type Clabverter struct {
 	rawClabConfig string
 	clabConfig    *clabernetesutilcontainerlab.Config
 
-	// mapping of nodeName -> startup-config info for the templating process; this is its own thing
-	// because configurations may be huge and configmaps have a 1M char limit, so while keeping them
-	// by themselves may not "solve" for ginormous configs, it can certainly give us a little extra
-	// breathing room by not having other data in the startup configmap.
-	startupConfigConfigMaps map[string]topologyConfigMapTemplateVars
+	// kubernetes ConfigMaps
+	configMaps []*corev1.ConfigMap
 
-	// all other config files associated to the node(s) -- for example license file(s).
-	extraFilesConfigMaps map[string][]topologyConfigMapTemplateVars
-
-	// filenames -> content of all rendered files we need to either print to stdout or write to disk
-	renderedFiles []renderedContent
+	ClabKrm *v1alpha1.Containerlab
 }
 
 // Clabvert is the main (only) entrypoint that kicks off the "clabversion" process.
 func (c *Clabverter) Clabvert() error {
+	var err error
 	c.logger.Info("starting clabversion!")
 
-	err := c.ensureOutputDirectory()
-	if err != nil {
-		return err
+	if !c.stdout {
+		err = c.ensureOutputDirectory()
+		if err != nil {
+			return err
+		}
 	}
 
 	err = c.findClabTopologyFile()
@@ -210,15 +202,7 @@ func (c *Clabverter) load() error {
 		"determined fully qualified containerlab topology path as: %s", c.topologyPath,
 	)
 
-	// make sure we set working dir to the dir of the topo file, or the "parent" folder if its a url
-	switch {
-	case isURL(c.topologyFile):
-		pathParts := strings.Split(c.topologyFile, "/")
-
-		c.topologyPathParent = strings.Join(pathParts[:len(pathParts)-1], "/")
-	default:
-		c.topologyPathParent = filepath.Dir(c.topologyPath)
-	}
+	c.topologyPathParent, _ = filepath.Split(c.topologyFile)
 
 	c.logger.Debug("attempting to load containerlab topology....")
 
@@ -282,92 +266,114 @@ func (c *Clabverter) handleAssociatedFiles() error {
 }
 
 func (c *Clabverter) handleManifest() error {
-	t, err := template.ParseFS(Assets, "assets/containerlab.yaml.template")
-	if err != nil {
-		c.logger.Criticalf("failed loading containerlab manifest from assets: %s", err)
+	c.ClabKrm = NewContainerlabKRM(c.clabConfig.Name, c.destinationNamespace, nil)
 
-		return err
-	}
+	// set insecure registries
+	c.ClabKrm.Spec.InsecureRegistries = c.insecureRegistries
 
-	startupConfigs := make([]topologyConfigMapTemplateVars, len(c.startupConfigConfigMaps))
-
-	var startupConfigsIdx int
-
-	for _, startupConfig := range c.startupConfigConfigMaps {
-		startupConfigs[startupConfigsIdx] = startupConfig
-
-		startupConfigsIdx++
-	}
-
-	extraFiles := make([]topologyConfigMapTemplateVars, 0)
-
-	for _, nodeExtraFiles := range c.extraFilesConfigMaps {
-		extraFiles = append(extraFiles, nodeExtraFiles...)
-	}
-
-	var rendered bytes.Buffer
-
-	err = t.Execute(
-		&rendered,
-		containerlabTemplateVars{
-			Name:      c.clabConfig.Name,
-			Namespace: c.destinationNamespace,
-			// pad w/ a newline so the template can look prettier :)
-			ClabConfig:         "\n" + clabernetesutil.Indent(c.rawClabConfig, specIndentSpaces),
-			StartupConfigs:     startupConfigs,
-			ExtraFiles:         extraFiles,
-			InsecureRegistries: c.insecureRegistries,
-		},
-	)
-	if err != nil {
-		c.logger.Criticalf("failed executing configmap template: %s", err)
-
-		return err
-	}
-
-	fileName := fmt.Sprintf("%s/%s.yaml", c.outputDirectory, c.clabConfig.Name)
-
-	c.renderedFiles = append(
-		c.renderedFiles,
-		renderedContent{
-			friendlyName: "clabernetes manifest",
-			fileName:     fileName,
-			content:      rendered.Bytes(),
-		},
-	)
+	// set config
+	c.ClabKrm.Spec.Config = c.rawClabConfig
 
 	return nil
 }
 
 func (c *Clabverter) output() error {
-	for _, rendered := range c.renderedFiles {
+	var err error
+	if err = c.outputConfigMaps(); err != nil {
+		c.logger.Criticalf("failed marshalling ConfigMaps: %s", err)
+		return err
+	}
+	if err = c.outputContainerlab(); err != nil {
+		c.logger.Criticalf("failed marshalling Containerlab: %s", err)
+		return err
+	}
+	return nil
+}
+
+func (c *Clabverter) outputContainerlab() error {
+
+	data, err := kyaml.Marshal(c.ClabKrm)
+	if err != nil {
+		c.logger.Criticalf(
+			"failed marshalling containerlab krm",
+			err,
+		)
+
+		return err
+	}
+
+	if c.stdout {
+		os.Stdout.WriteString("---\n")
+		_, err := os.Stdout.Write(data)
+		if err != nil {
+			c.logger.Criticalf(
+				"failed writing containerlab krm to stdout: %s", err,
+			)
+
+			return err
+		}
+	} else {
+		filename := fmt.Sprintf("%s.yaml", c.clabConfig.Name)
+		err := os.WriteFile(
+			filename,
+			data,
+			clabernetesconstants.PermissionsEveryoneRead,
+		)
+		if err != nil {
+			c.logger.Criticalf(
+				"failed writing '%s' to output directory: %s",
+				filename,
+				err,
+			)
+
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *Clabverter) outputConfigMaps() error {
+	for _, configMap := range c.configMaps {
+		os.Stdout.WriteString("---\n")
+		data, err := kyaml.Marshal(configMap)
+		if err != nil {
+			c.logger.Criticalf(
+				"failed marshalling %s/%s",
+				configMap.Kind, configMap.Name,
+				err,
+			)
+
+			return err
+		}
+
 		if c.stdout {
-			_, err := os.Stdout.Write(rendered.content)
+			_, err := os.Stdout.Write(data)
 			if err != nil {
 				c.logger.Criticalf(
-					"failed writing '%s' startup config to stdout: %s", rendered.friendlyName, err,
+					"failed writing '%s/%s' to stdout: %s", configMap.Kind, configMap.Name, err,
 				)
 
 				return err
 			}
 		} else {
 			err := os.WriteFile(
-				rendered.fileName,
-				rendered.content,
+				fmt.Sprintf("%s/%s", configMap.Kind, configMap.Name),
+				data,
 				clabernetesconstants.PermissionsEveryoneRead,
 			)
 			if err != nil {
 				c.logger.Criticalf(
-					"failed writing '%s' to output directory: %s",
-					rendered.friendlyName,
+					"failed writing '%s/%s' to output directory: %s",
+					configMap.Kind, configMap.Name,
 					err,
 				)
 
 				return err
 			}
 		}
-	}
 
+	}
 	return nil
 }
 

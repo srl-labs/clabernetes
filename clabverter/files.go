@@ -1,11 +1,10 @@
 package clabverter
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
-	"text/template"
 
+	"github.com/srl-labs/clabernetes/constants"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 )
@@ -107,9 +106,6 @@ func getExtraFilesForNode(
 // thing in part because the startup config configmap is its own thing, we do this because of size
 // imitations of configmaps, so best keep startups by themselves in case they are huge.
 func (c *Clabverter) handleStartupConfigs() error {
-	c.logger.Info("handling containerlab topology startup config(s) if present...")
-
-	startupConfigs := map[string][]byte{}
 
 	for nodeName, nodeData := range c.clabConfig.Topology.Nodes {
 		if nodeData.StartupConfig == "" {
@@ -127,65 +123,26 @@ func (c *Clabverter) handleStartupConfigs() error {
 				nodeName,
 				err,
 			)
-
 			return err
 		}
 
-		startupConfigs[nodeName] = startupConfigContents
-	}
-
-	c.logger.Info("rendering clabernetes startup config outputs...")
-
-	// render configmap(s) for startup configs
-	for nodeName, startupConfigContents := range startupConfigs {
-		t, err := template.ParseFS(Assets, "assets/startup-config-configmap.yaml.template")
-		if err != nil {
-			c.logger.Criticalf(
-				"failed loading startup-config configmap template from assets: %s",
-				err,
-			)
-
-			return err
-		}
-
+		// generate config map name
 		configMapName := fmt.Sprintf("%s-%s-startup-config", c.clabConfig.Name, nodeName)
 
-		var rendered bytes.Buffer
-
-		err = t.Execute(
-			&rendered,
-			startupConfigConfigMapTemplateVars{
-				Name:      configMapName,
-				Namespace: c.destinationNamespace,
-				// pad w/ a newline so the template can look prettier :)
-				StartupConfig: "\n" + clabernetesutil.Indent(
-					string(startupConfigContents),
-					specIndentSpaces,
-				),
-			},
-		)
-		if err != nil {
-			c.logger.Criticalf("failed executing configmap template: %s", err)
-
-			return err
+		// Generate labels
+		configMapLabels := map[string]string{
+			constants.LabelKRMKind:      constants.LabelKRMKindStartupConfig,
+			constants.LabelTopologyNode: nodeName,
 		}
 
-		fileName := fmt.Sprintf("%s/%s-startup-config.yaml", c.outputDirectory, nodeName)
+		// create config map
+		configMap := NewConfigMapKRM(configMapName, c.destinationNamespace, configMapLabels)
 
-		c.renderedFiles = append(
-			c.renderedFiles,
-			renderedContent{
-				friendlyName: fmt.Sprintf("%s-statup-config", nodeName),
-				fileName:     fileName,
-				content:      rendered.Bytes(),
-			},
-		)
+		// set the configMap Startup-Config data
+		configMap.Data["startup-config"] = string(startupConfigContents)
 
-		c.startupConfigConfigMaps[nodeName] = topologyConfigMapTemplateVars{
-			NodeName:      nodeName,
-			ConfigMapName: configMapName,
-			FilePath:      c.clabConfig.Topology.Nodes[nodeName].StartupConfig,
-		}
+		// append to ConfigMaps
+		c.configMaps = append(c.configMaps, configMap)
 	}
 
 	c.logger.Debug("handling startup configs complete")
@@ -198,8 +155,6 @@ func (c *Clabverter) handleStartupConfigs() error {
 // bind mounts.
 func (c *Clabverter) handleExtraFiles() error {
 	c.logger.Info("handling containerlab extra file(s) if present...")
-
-	extraFiles := make(map[string]map[string][]byte)
 
 	for nodeName := range c.clabConfig.Topology.Nodes {
 		extraFilePaths, err := getExtraFilesForNode(c.clabConfig, nodeName, c.topologyPathParent)
@@ -217,14 +172,24 @@ func (c *Clabverter) handleExtraFiles() error {
 			continue
 		}
 
-		extraFiles[nodeName] = make(map[string][]byte)
+		configMapName := fmt.Sprintf("%s-%s-files", c.clabConfig.Name, nodeName)
+		// Generate labels
+		configMapLabels := map[string]string{
+			constants.LabelKRMKind:      constants.LabelKRMKindExtraFiles,
+			constants.LabelTopologyNode: nodeName,
+		}
 
+		configMap := NewConfigMapKRM(configMapName, c.destinationNamespace, configMapLabels)
+
+		// add config map to clabverter configmaps
+		c.configMaps = append(c.configMaps, configMap)
+
+		// iterate over extra files adding them to the ConfigMap
 		for _, extraFilePath := range extraFilePaths {
 			c.logger.Debugf("loading node '%s' extra file '%s'...", nodeName, extraFilePath)
 
-			var extraFileContent []byte
-
-			extraFileContent, err = c.resolveContentAtPath(extraFilePath.sourcePath)
+			// resolve filepath and read content
+			extraFileContent, err := c.resolveContentAtPath(extraFilePath.sourcePath)
 			if err != nil {
 				c.logger.Criticalf(
 					"failed loading extra file '%s' contents for node '%s', error: %s",
@@ -235,76 +200,16 @@ func (c *Clabverter) handleExtraFiles() error {
 
 				return err
 			}
-
-			extraFiles[nodeName][extraFilePath.destinationPath] = extraFileContent
-		}
-	}
-
-	c.logger.Info("rendering clabernetes extra file(s) outputs...")
-
-	// render "extra" files
-	for nodeName, nodeExtraFiles := range extraFiles {
-		t, err := template.ParseFS(Assets, "assets/files-configmap.yaml.template")
-		if err != nil {
-			c.logger.Criticalf("failed loading files configmap template from assets: %s", err)
-
-			return err
-		}
-
-		configMapName := fmt.Sprintf("%s-%s-files", c.clabConfig.Name, nodeName)
-
-		templateVars := extraFilesConfigMapTemplateVars{
-			Name:       configMapName,
-			Namespace:  c.destinationNamespace,
-			ExtraFiles: make(map[string]string),
-		}
-
-		c.extraFilesConfigMaps[nodeName] = make([]topologyConfigMapTemplateVars, 0)
-
-		for extraFilePath, extraFileContent := range nodeExtraFiles {
+			// convert filename to save filename
 			safeFileName := clabernetesutil.SafeConcatNameKubernetes(
-				strings.Split(extraFilePath, "/")...)
+				strings.Split(extraFilePath.destinationPath, "/")...)
 
 			safeFileName = strings.TrimPrefix(safeFileName, "-")
 
-			templateVars.ExtraFiles[safeFileName] = "\n" + clabernetesutil.Indent(
-				string(extraFileContent),
-				specIndentSpaces,
-			)
-
-			c.extraFilesConfigMaps[nodeName] = append(
-				c.extraFilesConfigMaps[nodeName],
-				topologyConfigMapTemplateVars{
-					NodeName:      nodeName,
-					ConfigMapName: configMapName,
-					FilePath:      extraFilePath,
-					FileName:      safeFileName,
-				},
-			)
+			// finally add date to ConfigMap
+			configMap.Data[safeFileName] = string(extraFileContent)
 		}
-
-		var rendered bytes.Buffer
-
-		err = t.Execute(&rendered, templateVars)
-		if err != nil {
-			c.logger.Criticalf("failed executing configmap template: %s", err)
-
-			return err
-		}
-
-		fileName := fmt.Sprintf("%s/%s-extra-files.yaml", c.outputDirectory, nodeName)
-
-		c.renderedFiles = append(
-			c.renderedFiles,
-			renderedContent{
-				friendlyName: fmt.Sprintf("%s extra files", nodeName),
-				fileName:     fileName,
-				content:      rendered.Bytes(),
-			},
-		)
 	}
-
 	c.logger.Debug("handling extra file(s) complete")
-
 	return nil
 }

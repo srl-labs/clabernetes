@@ -25,6 +25,8 @@ const (
 	// is -- that is, it is either a "connectivity" service, or an "expose" service; note that
 	// this is strictly a clabernetes concept, obviously not a kubernetes one!
 	LabelTopologyServiceType = "clabernetes/topologyServiceType"
+
+	LabelKRMKind = "clabernetes/labelkind"
 )
 
 const (
@@ -36,4 +38,7 @@ const (
 	// type -- this indicates that this service is of the type that is used for exposing ports on
 	// a containerlab node via a LoadBalancer service.
 	TopologyServiceTypeExpose = "expose"
+
+	LabelKRMKindStartupConfig = "startup-config"
+	LabelKRMKindExtraFiles    = "extra-files"
 )
