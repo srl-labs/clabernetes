@@ -41,7 +41,7 @@ func WriteTestFixtureFile(t *testing.T, f string, b []byte) { //nolint:thelper
 func WriteTestFile(t *testing.T, f string, b []byte) {
 	t.Helper()
 
-	err := os.WriteFile(f, b, clabernetesconstants.PermissionsEveryoneReadUserWrite)
+	err := os.WriteFile(f, b, clabernetesconstants.PermissionsEveryoneRead)
 	if err != nil {
 		t.Fatal(err)
 	}
