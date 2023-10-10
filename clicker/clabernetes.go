@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	claberneteserrors "github.com/srl-labs/clabernetes/errors"
+
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
@@ -55,7 +57,10 @@ func StartClabernetes(overrideNodes bool, nodeSelector string) {
 		nodeSelector:  nodeSelector,
 	}
 
-	clabernetesInstance.startup()
+	err := clabernetesInstance.run()
+	if err != nil {
+		clabernetesutil.Exit(clabernetesconstants.ExitCodeError)
+	}
 }
 
 var clabernetesInstance *clabernetes //nolint:gochecknoglobals
@@ -75,7 +80,7 @@ type clabernetes struct {
 	kubeClient *kubernetes.Clientset
 }
 
-func (c *clabernetes) startup() {
+func (c *clabernetes) run() error {
 	c.logger.Info("starting clabernetes...")
 
 	err := c.setup()
@@ -113,11 +118,13 @@ func (c *clabernetes) startup() {
 			ConfigMaps(c.namespace).
 			Delete(c.ctx, createdConfigMap.Name, metav1.DeleteOptions{})
 
-		c.logger.Criticalf(
-			"failed deleting clicker configmap %q, err: %s",
-			createdConfigMap.Name,
-			err,
-		)
+		if err != nil {
+			c.logger.Criticalf(
+				"failed deleting clicker configmap %q, err: %s",
+				createdConfigMap.Name,
+				err,
+			)
+		}
 	}()
 
 	pods := c.buildPods(selfPod, createdConfigMap, targetNodes)
@@ -126,7 +133,8 @@ func (c *clabernetes) startup() {
 	if err != nil {
 		c.logger.Criticalf("failed creating clicker pods, err: %s", err)
 
-		clabernetesutil.Panic(err.Error())
+		// no more panicking to exit since we want ot let the defers run if we get this far
+		return err
 	}
 
 	defer c.removePods(pods)
@@ -153,12 +161,22 @@ func (c *clabernetes) startup() {
 		c.logger.Infof("clicker pod %q was successful!", podName)
 	}
 
+	var failed bool
+
 	// log failed pods
 	for len(failChan) > 0 {
+		failed = true
+
 		podName := <-failChan
 
 		c.logger.Criticalf("clicker pod %q was not successful", podName)
 	}
+
+	if failed {
+		return fmt.Errorf("%w: one or more workers failed", claberneteserrors.ErrJob)
+	}
+
+	return nil
 }
 
 func (c *clabernetes) setup() error {

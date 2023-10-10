@@ -14,10 +14,5 @@ maintainers:
     url: https://twitter.com/carlrmontanari
 type: application
 version: 0.0.15
-dependencies:
-  - name: clicker
-    version: 0.0.15
-    #repository: oci://ghcr.io/srl-labs/clabernetes/clicker
-    repository: file://../clicker
-    condition: clicker.enabled
-
+# clicker dependency is symlinked into charts subdir, no need to manage it as an "external" dep
+dependencies: []

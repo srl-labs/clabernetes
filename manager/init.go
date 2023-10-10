@@ -3,8 +3,9 @@ package manager
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
+
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetesmanagerelection "github.com/srl-labs/clabernetes/manager/election"
@@ -48,5 +49,5 @@ func (c *clabernetes) init(ctx context.Context) {
 
 	c.logger.Info("init complete...")
 
-	os.Exit(clabernetesconstants.ExitCode)
+	clabernetesutil.Exit(clabernetesconstants.ExitCode)
 }

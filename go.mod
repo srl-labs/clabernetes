@@ -6,7 +6,6 @@ require (
 	github.com/carlmontanari/difflibgo v0.0.0-20210718194309-31b9e131c298
 	github.com/openconfig/kne v0.1.14
 	github.com/urfave/cli/v2 v2.25.7
-	golang.org/x/net v0.15.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.28.2
@@ -57,6 +56,7 @@ require (
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
+	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/oauth2 v0.9.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/term v0.12.0 // indirect
