@@ -129,6 +129,8 @@ func (c *clabernetes) run() error {
 
 	pods := c.buildPods(selfPod, createdConfigMap, targetNodes)
 
+	defer c.removePods(pods)
+
 	err = c.deployPods(pods)
 	if err != nil {
 		c.logger.Criticalf("failed creating clicker pods, err: %s", err)
@@ -136,8 +138,6 @@ func (c *clabernetes) run() error {
 		// no more panicking to exit since we want ot let the defers run if we get this far
 		return err
 	}
-
-	defer c.removePods(pods)
 
 	wg := &sync.WaitGroup{}
 
