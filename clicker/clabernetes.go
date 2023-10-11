@@ -26,8 +26,16 @@ const (
 	defaultImage = "busybox"
 )
 
+// Args holds arguments for the clabernetes "clicker" process.
+type Args struct {
+	OverrideNodes        bool
+	NodeSelector         string
+	SkipConfigMapCleanup bool
+	SkipPodsCleanup      bool
+}
+
 // StartClabernetes is a function that starts the clabernetes node clicker.
-func StartClabernetes(overrideNodes bool, nodeSelector string) {
+func StartClabernetes(args *Args) {
 	if clabernetesInstance != nil {
 		clabernetesutil.Panic("clabernetes instance already created...")
 	}
@@ -52,9 +60,8 @@ func StartClabernetes(overrideNodes bool, nodeSelector string) {
 			clabernetesconstants.AppNameEnvVar,
 			clabernetesconstants.AppNameDefault,
 		),
-		logger:        clabernetesLogger,
-		overrideNodes: overrideNodes,
-		nodeSelector:  nodeSelector,
+		logger: clabernetesLogger,
+		args:   args,
 	}
 
 	err := clabernetesInstance.run()
@@ -72,8 +79,7 @@ type clabernetes struct {
 
 	logger claberneteslogging.Instance
 
-	overrideNodes bool
-	nodeSelector  string
+	args *Args
 
 	namespace  string
 	kubeConfig *rest.Config
@@ -113,23 +119,27 @@ func (c *clabernetes) run() error {
 		clabernetesutil.Panic(err.Error())
 	}
 
-	defer func() {
-		err = c.kubeClient.CoreV1().
-			ConfigMaps(c.namespace).
-			Delete(c.ctx, createdConfigMap.Name, metav1.DeleteOptions{})
+	if !c.args.SkipConfigMapCleanup {
+		defer func() {
+			err = c.kubeClient.CoreV1().
+				ConfigMaps(c.namespace).
+				Delete(c.ctx, createdConfigMap.Name, metav1.DeleteOptions{})
 
-		if err != nil {
-			c.logger.Criticalf(
-				"failed deleting clicker configmap %q, err: %s",
-				createdConfigMap.Name,
-				err,
-			)
-		}
-	}()
+			if err != nil {
+				c.logger.Criticalf(
+					"failed deleting clicker configmap %q, err: %s",
+					createdConfigMap.Name,
+					err,
+				)
+			}
+		}()
+	}
 
 	pods := c.buildPods(selfPod, createdConfigMap, targetNodes)
 
-	defer c.removePods(pods)
+	if !c.args.SkipPodsCleanup {
+		defer c.removePods(pods)
+	}
 
 	err = c.deployPods(pods)
 	if err != nil {
@@ -221,7 +231,7 @@ func (c *clabernetes) getSelfPod() (*k8scorev1.Pod, error) {
 
 func (c *clabernetes) getInvokeNodes() ([]k8scorev1.Node, error) {
 	listOptions := metav1.ListOptions{
-		LabelSelector: c.nodeSelector,
+		LabelSelector: c.args.NodeSelector,
 	}
 
 	nodesList, err := c.kubeClient.CoreV1().Nodes().List(c.ctx, listOptions)
@@ -231,7 +241,7 @@ func (c *clabernetes) getInvokeNodes() ([]k8scorev1.Node, error) {
 
 	nodes := nodesList.Items
 
-	if c.overrideNodes {
+	if c.args.OverrideNodes {
 		// override set, we want to run on all the nodes
 		return nodes, nil
 	}

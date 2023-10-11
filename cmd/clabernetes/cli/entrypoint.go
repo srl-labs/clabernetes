@@ -20,6 +20,14 @@ const (
 
 	// indicates the node selector filter that should be applied to the nodes clicker targets.
 	clickerNodeSelector = "nodeSelector"
+
+	// indicates that the clicker job should *not* cleanup the "worker" pods it creates. useful for
+	// troubleshooting so we can see logs and such, without this the pods get cleaned up way too
+	// quickly to investigate!
+	clickerSkipPodCleanup = "skipPodCleanup"
+
+	// indicates that the clicker job should *not* cleanup the configmap it creates.
+	clickerSkipConfigMapCleanup = "skipConfigMapCleanup"
 )
 
 // Entrypoint returns the clabernetes manager entrypoint, kicking off one of the clabernetes
@@ -79,11 +87,29 @@ func Entrypoint() *cli.App {
 						Required: false,
 						Value:    "",
 					},
+					&cli.BoolFlag{
+						Name: clickerSkipConfigMapCleanup,
+						Usage: "indicates if the clicker should skip cleaning up the configmap" +
+							" it creates",
+						Required: false,
+						Value:    false,
+					},
+					&cli.BoolFlag{
+						Name: clickerSkipPodCleanup,
+						Usage: "indicates if the clicker should skip cleaning up the worker pods" +
+							" it creates",
+						Required: false,
+						Value:    false,
+					},
 				},
 				Action: func(c *cli.Context) error {
 					clabernetesclicker.StartClabernetes(
-						c.Bool(clickerOverrideNodes),
-						c.String(clickerNodeSelector),
+						&clabernetesclicker.Args{
+							OverrideNodes:        c.Bool(clickerOverrideNodes),
+							NodeSelector:         c.String(clickerNodeSelector),
+							SkipConfigMapCleanup: c.Bool(clickerSkipConfigMapCleanup),
+							SkipPodsCleanup:      c.Bool(clickerSkipPodCleanup),
+						},
 					)
 
 					return nil

@@ -20,6 +20,12 @@ resources:
 
 logLevel: info
 
+# disable cleaning up the configmap created by the job pod; useful for troubleshooting
+disableConfigmapCleanup: false
+# disable cleaning up the "worker" pods created by the job pod; useful for troubleshooting
+disablePodCleanup: false
+
+# if cron is left disabled this is ran as a one-time job
 cron:
   enabled: false
   schedule: 0 * * * *
