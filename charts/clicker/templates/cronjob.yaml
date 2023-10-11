@@ -13,7 +13,7 @@ metadata:
     clabernetes/name: "{{ .Values.appName }}-clicker"
     clabernetes/component: clicker
 spec:
-  schedule: {{ .Values.cron.schedule }}
+  schedule: "{{ .Values.cron.schedule }}"
   jobTemplate:
     spec:
       template:
