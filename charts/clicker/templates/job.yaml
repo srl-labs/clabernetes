@@ -16,7 +16,7 @@ spec:
   template:
     spec:
       containers:
-{{ include "jobContainer" . | indent 10 }}
+{{ include "jobContainer" . | indent 8 }}
       restartPolicy: Never
       serviceAccountName: "{{ .Values.appName }}-clicker-service-account"
   backoffLimit: 4

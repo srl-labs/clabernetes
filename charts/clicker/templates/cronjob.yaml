@@ -14,12 +14,13 @@ metadata:
     clabernetes/component: clicker
 spec:
   schedule: "{{ .Values.cron.schedule }}"
+  successfulJobsHistoryLimit: 1
   jobTemplate:
     spec:
       template:
         spec:
           containers:
-{{ include "jobContainer" . | indent 8 }}
+{{ include "jobContainer" . | indent 10 }}
           restartPolicy: Never
           serviceAccountName: "{{ .Values.appName }}-clicker-service-account"
 {{- end }}

@@ -11,10 +11,16 @@
   command: [
     "/clabernetes/manager",
      "clicker",
-     {{- if .Values.disableConfigmapCleanup }}
+     {{- if .Values.overrideNodes }}
+     "--overrideNodes",
+     {{- end }}
+     {{- if .Values.nodeSelector }}
+     "--nodeSelector={{ .Values.nodeSelector }}",
+     {{- end }}
+     {{- if not .Values.cleanupConfigMap }}
      "--skipConfigMapCleanup",
      {{- end }}
-     {{- if .Values.disablePodCleanup }}
+     {{- if not .Values.cleanupPods }}
      "--skipPodCleanup",
      {{- end }}
   ]

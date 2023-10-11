@@ -20,10 +20,16 @@ resources:
 
 logLevel: info
 
-# disable cleaning up the configmap created by the job pod; useful for troubleshooting
-disableConfigmapCleanup: false
-# disable cleaning up the "worker" pods created by the job pod; useful for troubleshooting
-disablePodCleanup: false
+# overrideNodes tells the clicker job to re-run the worker against a node even if the node label
+# for the clicker job has already been applied.
+overrideNodes: false
+# nodeSelector is the selector used to find nodes to run the clicker job on, if not set all nodes
+# are selected.
+nodeSelector: ""
+# cleanup the configmap we create for the worker invocation
+cleanupConfigMap: true
+# cleanup the worker pods after an invocation
+cleanupPods: true
 
 # if cron is left disabled this is ran as a one-time job
 cron:
