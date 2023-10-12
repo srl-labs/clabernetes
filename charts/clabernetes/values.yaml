@@ -1,24 +1,56 @@
 ---
+#
+# global options
+#
+
 appName: clabernetes
 
-imagePullPolicy: IfNotPresent
-# image: ghcr.io/srl-labs/clabernetes/clabernetes-manager:{{ .Chart.Version }}
-# launcherImage: ghcr.io/srl-labs/clabernetes/clabernetes-launcher:{{ .Chart.Version }}
 
-replicaCount: 3
-resources:
-  requests:
-    memory: 128Mi
-    cpu: 50m
-  # optionally limits
+#
+# manager options
+#
+# the manager is the c9s controller
+#
+manager:
+  imagePullPolicy: IfNotPresent
 
-clientOperationTimeoutMultiplier: 1
-managerLogLevel: info
-controllerLogLevel: info
-launcherLogLevel: info
-launcherPullPolicy: IfNotPresent
+  # defaults to .Chart.Version, if 0.0.0 version defaults to 'dev-latest' tag
+  image: "" # ghcr.io/srl-labs/clabernetes/clabernetes-manager:{{ .Chart.Version }}
 
-# clicker is an optional feature that can configure nodes in a cluster -- useful for setting things
+  replicaCount: 3
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 50m
+    limits: {}
+
+  clientOperationTimeoutMultiplier: 1
+  managerLogLevel: info
+  controllerLogLevel: info
+  # inClusterDNSSuffixOverride: domain.or.whatever
+
+  # pod affinity settings, directly inserted into manager deployment spec; if not provided basic
+  # common-sense anti-affinity is applied.
+  affinity: {}
+
+
+#
+# launcher options
+#
+# the launcher is the actual "worker" pod where the nos is running/launched
+#
+launcher:
+  launcherPullPolicy: IfNotPresent
+
+  launcherImage: "" #" ghcr.io/srl-labs/clabernetes/clabernetes-launcher:{{ .Chart.Version }}
+
+  launcherLogLevel: info
+
+#
+# clicker
+#
+# this is an optional feature that can configure nodes in a cluster -- useful for setting things
 # like ulimit and such.
+#
 clicker:
   enabled: false

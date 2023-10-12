@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
-
 	clabernetesapistopology "github.com/srl-labs/clabernetes/apis/topology"
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
+	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
 	k8scorev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/rest"
 	ctrlruntime "sigs.k8s.io/controller-runtime"

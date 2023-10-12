@@ -411,10 +411,11 @@ func (c *Controller) processConfig( //nolint:funlen,gocyclo
 					LocalNodeName:  nodeName,
 					RemoteNodeName: uninterestingEndpoint.NodeName,
 					RemoteName: fmt.Sprintf(
-						"%s-%s-vx.%s.svc.cluster.local",
+						"%s-%s-vx.%s.%s",
 						clab.Name,
 						uninterestingEndpoint.NodeName,
 						clab.Namespace,
+						clabernetescontrollerstopology.GetServiceDNSSuffix(),
 					),
 					LocalLinkName:  interestingEndpoint.InterfaceName,
 					RemoteLinkName: uninterestingEndpoint.InterfaceName,

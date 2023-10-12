@@ -156,10 +156,11 @@ func (c *Controller) processConfig( //nolint:funlen
 					LocalNodeName:  nodeName,
 					RemoteNodeName: uninterestingEndpoint.NodeName,
 					RemoteName: fmt.Sprintf(
-						"%s-%s.%s.svc.cluster.local",
+						"%s-%s-vx.%s.%s",
 						kne.Name,
 						uninterestingEndpoint.NodeName,
 						kne.Namespace,
+						clabernetescontrollerstopology.GetServiceDNSSuffix(),
 					),
 					LocalLinkName:  interestingEndpoint.InterfaceName,
 					RemoteLinkName: uninterestingEndpoint.InterfaceName,

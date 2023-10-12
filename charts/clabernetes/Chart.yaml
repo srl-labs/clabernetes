@@ -14,5 +14,7 @@ maintainers:
     url: https://twitter.com/carlrmontanari
 type: application
 version: 0.0.15
-# clicker dependency is symlinked into charts subdir, no need to manage it as an "external" dep
-dependencies: []
+dependencies:
+  # being a local (symlinked) dep, no need for version or repo or anything
+  - name: clicker
+    condition: clicker.enabled

@@ -31,4 +31,7 @@ const (
 
 	// UDP is... UDP.
 	UDP = "UDP"
+
+	// DefaultInClusterDNSSuffix is the default "svc.cluster.local" dns suffix.
+	DefaultInClusterDNSSuffix = "svc.cluster.local"
 )
