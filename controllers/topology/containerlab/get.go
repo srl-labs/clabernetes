@@ -1,8 +1,9 @@
 package containerlab
 
 import (
+	"context"
+
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
-	"golang.org/x/net/context"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
 )

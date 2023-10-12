@@ -15,4 +15,4 @@ openapi
 .develop
 
 # not needed in the image obviously
-chart
+charts

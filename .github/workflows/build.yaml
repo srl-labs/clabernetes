@@ -53,6 +53,15 @@ jobs:
         if: github.ref_name == 'main'
         run: |
           devspace run build
+          
           helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
-          helm package chart --version 0.0.0
+          
+          helm package charts/clicker --version 0.0.0
+          helm push clicker-0.0.0.tgz oci://ghcr.io/srl-labs/clabernetes
+          
+          # patch clicker dep version so its always same as c9s
+          sed -i \
+            's|    version: (.*)|    version: 0.0.0|g' \
+            charts/clabernetes/Chart.yaml
+          helm package charts/clabernetes --version 0.0.0
           helm push clabernetes-0.0.0.tgz oci://ghcr.io/srl-labs/clabernetes

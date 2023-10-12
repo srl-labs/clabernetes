@@ -1,0 +1,24 @@
+---
+{{ if not .Values.cron.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.appName }}-clicker
+  namespace: {{ .Release.Namespace }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    clabernetes/app: {{ .Values.appName }}
+    clabernetes/name: "{{ .Values.appName }}-clicker"
+    clabernetes/component: clicker
+spec:
+  template:
+    spec:
+      containers:
+{{ include "jobContainer" . | indent 8 }}
+      restartPolicy: Never
+      serviceAccountName: "{{ .Values.appName }}-clicker-service-account"
+  backoffLimit: 4
+  ttlSecondsAfterFinished: 300
+{{- end }}

@@ -1,0 +1,37 @@
+---
+appName: clabernetes
+
+imagePullPolicy: IfNotPresent
+# image: ghcr.io/srl-labs/clabernetes/clabernetes-clicker:{{ .Chart.Version }}
+# workerImage: busybox
+
+# the command that and script that will be invoked; keep in mind the default image for the worker is
+# busybox and the script will be mounted as a file (via configmap/volume) -- so this will look like:
+# "/bin/sh clicker"
+command: /bin/sh
+script: |-
+  echo "hello, there"
+
+resources:
+  requests:
+    memory: 128Mi
+    cpu: 50m
+  # optionally limits
+
+logLevel: info
+
+# overrideNodes tells the clicker job to re-run the worker against a node even if the node label
+# for the clicker job has already been applied.
+overrideNodes: false
+# nodeSelector is the selector used to find nodes to run the clicker job on, if not set all nodes
+# are selected.
+nodeSelector: ""
+# cleanup the configmap we create for the worker invocation
+cleanupConfigMap: true
+# cleanup the worker pods after an invocation
+cleanupPods: true
+
+# if cron is left disabled this is ran as a one-time job
+cron:
+  enabled: false
+  schedule: 0 * * * *

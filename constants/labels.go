@@ -37,3 +37,11 @@ const (
 	// a containerlab node via a LoadBalancer service.
 	TopologyServiceTypeExpose = "expose"
 )
+
+const (
+	// LabelClickerNodeConfigured is a label that is set on nodes that have been tickled via the
+	// clabernetes clicker tool -- the value is the unix timestamp that the node was tickled.
+	LabelClickerNodeConfigured = "clabernetes/clickerNodeConfigured"
+	// LabelClickerNodeTarget is the target node for the clicker job.
+	LabelClickerNodeTarget = "clabernetes/clickerNodeTarget"
+)

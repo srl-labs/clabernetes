@@ -3,7 +3,6 @@ package manager
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	clabernetescontrollerstopologycontainerlab "github.com/srl-labs/clabernetes/controllers/topology/containerlab"
@@ -12,7 +11,6 @@ import (
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
-	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesmanagerelection "github.com/srl-labs/clabernetes/manager/election"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -53,7 +51,7 @@ func (c *clabernetes) startLeading() {
 func (c *clabernetes) stopLeading() {
 	c.logger.Info("stopping clabernetes...")
 
-	os.Exit(clabernetesconstants.ExitCode)
+	clabernetesutil.Exit(clabernetesconstants.ExitCode)
 }
 
 func (c *clabernetes) newLeader(leaderElectionIdentity string) {
@@ -103,7 +101,7 @@ func (c *clabernetes) start(ctx context.Context) {
 				err,
 			)
 
-			c.exit(clabernetesconstants.ExitCodeError)
+			clabernetesutil.Exit(clabernetesconstants.ExitCodeError)
 		}
 	}()
 
@@ -113,7 +111,7 @@ func (c *clabernetes) start(ctx context.Context) {
 	if !synced {
 		c.logger.Critical("encountered error syncing controller-runtime manager cache")
 
-		c.exit(clabernetesconstants.ExitCodeError)
+		clabernetesutil.Exit(clabernetesconstants.ExitCodeError)
 	}
 
 	c.logger.Debug("controller-runtime manager cache synced...")
@@ -139,11 +137,5 @@ func (c *clabernetes) start(ctx context.Context) {
 
 	<-c.leaderCtx.Done()
 
-	c.exit(clabernetesconstants.ExitCode)
-}
-
-func (c *clabernetes) exit(exitCode int) {
-	claberneteslogging.GetManager().Flush()
-
-	os.Exit(exitCode)
+	clabernetesutil.Exit(clabernetesconstants.ExitCode)
 }

@@ -1,0 +1,41 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: clabernetes-clicker
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    clabernetes/app: {{ .Values.appName }}
+    clabernetes/name: "{{ .Values.appName }}-clicker-cluster-role-binding"
+    clabernetes/component: cluster-role-binding
+subjects:
+  - kind: ServiceAccount
+    name: "{{ .Values.appName }}-clicker-service-account"
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: "{{ .Values.appName }}-cluster-role"
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: clabernetes-clicker-nodes
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    clabernetes/app: {{ .Values.appName }}
+    clabernetes/name: "{{ .Values.appName }}-clicker-cluster-role-binding"
+    clabernetes/component: cluster-role-binding
+subjects:
+  - kind: ServiceAccount
+    name: "{{ .Values.appName }}-clicker-service-account"
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: "{{ .Values.appName }}-clicker-cluster-role"
+  apiGroup: rbac.authorization.k8s.io
