@@ -11,6 +11,15 @@ metadata:
     clabernetes/app: {{ .Values.appName }}
     clabernetes/name: "{{ .Values.appName }}-manager"
     clabernetes/component: manager
+    {{- $labels := merge .Values.globalLabels .Values.manager.deploymentLabels }}
+      {{- if $labels }}
+        {{ toYaml $labels | indent 4 }}
+      {{- end }}
+  {{- $annotations := merge .Values.globalAnnotations .Values.manager.deploymentAnnotations }}
+  {{- if $annotations }}
+  annotations:
+    {{ toYaml $annotations | indent 4 }}
+  {{- end }}
 spec:
   selector:
     matchLabels:
@@ -35,6 +44,15 @@ spec:
         clabernetes/app: {{ .Values.appName }}
         clabernetes/name: "{{ .Values.appName }}-manager"
         clabernetes/component: manager
+        {{- $podLabels := merge .Values.globalLabels .Values.manager.podLabels }}
+          {{- if $podLabels }}
+            {{ toYaml $podLabels | indent 4 }}
+          {{- end }}
+      {{- $podAnnotations := merge .Values.globalAnnotations .Values.manager.podAnnotations }}
+      {{- if $podAnnotations }}
+      annotations:
+        {{ toYaml $podAnnotations | indent 4 }}
+      {{- end }}
     spec:
       {{- if .Values.manager.affinity }}
       affinity:

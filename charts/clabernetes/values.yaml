@@ -5,6 +5,9 @@
 
 appName: clabernetes
 
+# extra labels/annotations that are added to all objects
+globalAnnotations: {}
+globalLabels: {}
 
 #
 # manager options
@@ -12,6 +15,11 @@ appName: clabernetes
 # the manager is the c9s controller
 #
 manager:
+  deploymentAnnotations: {}
+  deploymentLabels: {}
+  podAnnotations: {}
+  podLabels: {}
+
   imagePullPolicy: IfNotPresent
 
   # defaults to .Chart.Version, if 0.0.0 version defaults to 'dev-latest' tag
@@ -54,3 +62,4 @@ launcher:
 #
 clicker:
   enabled: false
+  # values to pass to clicker go here if ya want

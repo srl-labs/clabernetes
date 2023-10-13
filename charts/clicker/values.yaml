@@ -1,6 +1,17 @@
 ---
 appName: clabernetes
 
+# extra labels/annotations that are added to all objects
+globalAnnotations: {}
+globalLabels: {}
+
+# (cron)job labels/annotations that are added to the (cron)job objects
+jobAnnotations: {}
+jobLabels: {}
+
+workerPodAnnotations: {}
+workerPodLabels: {}
+
 imagePullPolicy: IfNotPresent
 # image: ghcr.io/srl-labs/clabernetes/clabernetes-clicker:{{ .Chart.Version }}
 # workerImage: busybox
