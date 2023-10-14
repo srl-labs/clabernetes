@@ -122,15 +122,19 @@ profiles:
       - op: add
         path: deployments.clabernetes.helm.values.manager.replicaCount
         value: 1
+
       - op: add
-        path: deployments.clabernetes.helm.values.launcher.launcherLogLevel
-        value: debug
+        path: deployments.clabernetes.helm.values.launcher
+        value:
+          image: ${LAUNCHER_IMAGE}
+          pullPolicy: IfNotPresent
+          logLevel: debug
+
+      # for testing clicker things we want to also replace that image, probably not necessary often
       - op: add
-        path: deployments.clabernetes.helm.values.launcher.launcherPullPolicy
-        value: IfNotPresent
-      - op: add
-        path: deployments.clabernetes.helm.values.launcher.launcherImage
-        value: ${LAUNCHER_IMAGE}
+        path: deployments.clabernetes.helm.values.clicker
+        value:
+          image: ${MANAGER_IMAGE}
 
   - name: dev-non-local
     patches:

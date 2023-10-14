@@ -3,11 +3,11 @@
 # global options
 #
 
-appName: clabernetes
+appName: &_appName clabernetes
 
 # extra labels/annotations that are added to all objects
-globalAnnotations: {}
-globalLabels: {}
+globalAnnotations: &_globalAnnotations {}
+globalLabels: &_globalLabels {}
 
 #
 # manager options
@@ -62,4 +62,11 @@ launcher:
 #
 clicker:
   enabled: false
-  # values to pass to clicker go here if ya want
+
+  # pass in the "global" values to the sub chart, you can still override them, but this keeps things
+  # more aligned while still being easy to override
+  appName: *_appName
+  globalAnnotations: *_globalAnnotations
+  globalLabels: *_globalLabels
+
+  # other values to pass to clicker go here if ya want

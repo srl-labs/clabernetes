@@ -13,7 +13,7 @@ maintainers:
     email: carl.r.montanari@gmail.com
     url: https://twitter.com/carlrmontanari
 type: application
-version: 0.0.15
+version: 0.0.16
 dependencies:
   # being a local (symlinked) dep, no need for version or repo or anything
   - name: clicker
