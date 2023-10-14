@@ -386,6 +386,16 @@ func renderDeployment(
 	return deployment
 }
 
+func volumeAlreadyMounted(volumeName string, existingVolumes []k8scorev1.Volume) bool {
+	for _, volume := range existingVolumes {
+		if volumeName == volume.Name {
+			return true
+		}
+	}
+
+	return false
+}
+
 func renderDeploymentAddFilesFromConfigMaps(
 	nodeName string,
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
@@ -401,20 +411,24 @@ func renderDeploymentAddFilesFromConfigMaps(
 		podVolumes = append(podVolumes, fileFromConfigMap)
 	}
 
+	fmt.Println("POD VOLUMES -> ", podVolumes)
+
 	for _, podVolume := range podVolumes {
-		deployment.Spec.Template.Spec.Volumes = append(
-			deployment.Spec.Template.Spec.Volumes,
-			k8scorev1.Volume{
-				Name: podVolume.ConfigMapName,
-				VolumeSource: k8scorev1.VolumeSource{
-					ConfigMap: &k8scorev1.ConfigMapVolumeSource{
-						LocalObjectReference: k8scorev1.LocalObjectReference{
-							Name: podVolume.ConfigMapName,
+		if !volumeAlreadyMounted(podVolume.ConfigMapName, deployment.Spec.Template.Spec.Volumes) {
+			deployment.Spec.Template.Spec.Volumes = append(
+				deployment.Spec.Template.Spec.Volumes,
+				k8scorev1.Volume{
+					Name: podVolume.ConfigMapName,
+					VolumeSource: k8scorev1.VolumeSource{
+						ConfigMap: &k8scorev1.ConfigMapVolumeSource{
+							LocalObjectReference: k8scorev1.LocalObjectReference{
+								Name: podVolume.ConfigMapName,
+							},
 						},
 					},
 				},
-			},
-		)
+			)
+		}
 
 		volumeMount := k8scorev1.VolumeMount{
 			Name:      podVolume.ConfigMapName,

@@ -136,6 +136,4 @@ func (c *clabernetes) start(ctx context.Context) {
 	c.logger.Info("running forever or until interrupt...")
 
 	<-c.leaderCtx.Done()
-
-	clabernetesutil.Exit(clabernetesconstants.ExitCode)
 }
