@@ -138,7 +138,7 @@ spec:
                   fieldPath: metadata.namespace
             - name: CLIENT_OPERATION_TIMEOUT_MULTIPLIER
               value: "{{ .Values.manager.clientOperationTimeoutMultiplier }}"
-              {{- if .Values.launcher.launcherImage }}
+              {{- if .Values.launcher.image }}
             - name:  IN_CLUSTER_DNS_SUFFIX_OVERRIDE
               value: {{ .Values.manager.inClusterDNSSuffixOverride }}
               {{- end }}
@@ -147,12 +147,12 @@ spec:
             - name: CONTROLLER_LOGGER_LEVEL
               value: {{ .Values.manager.controllerLogLevel }}
             - name: LAUNCHER_LOGGER_LEVEL
-              value: {{ .Values.launcher.launcherLogLevel }}
+              value: {{ .Values.launcher.logLevel }}
             - name: LAUNCHER_PULL_POLICY
-              value: "{{ .Values.launcher.launcherPullPolicy }}"
+              value: "{{ .Values.launcher.imagePullPolicy }}"
             - name: LAUNCHER_IMAGE
-              {{- if .Values.launcher.launcherImage }}
-              value: {{ .Values.launcher.launcherImage }}
+              {{- if .Values.launcher.image }}
+              value: {{ .Values.launcher.image }}
               {{- else if eq .Chart.Version "0.0.0" }}
               value: "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:dev-latest"
               {{- else }}

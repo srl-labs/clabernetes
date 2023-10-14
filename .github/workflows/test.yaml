@@ -3,7 +3,18 @@ name: test
 
 on:
   workflow_call: {}
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      debug_unit:
+        description: "start tmate before unit tests"
+        type: boolean
+        required: false
+        default: false
+      debug_e2e:
+        description: "start tmate before e2e tests"
+        type: boolean
+        required: false
+        default: false
 
 env:
   GO_VERSION: "1.21"
@@ -25,6 +36,10 @@ jobs:
       - name: install go test tools
         run: |
           go install gotest.tools/gotestsum@${{ vars.GOTESTSUM_VERSION }}
+
+      - name: setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_unit }}
 
       - name: run the unit tests
         run: make test-race
@@ -72,6 +87,10 @@ jobs:
       - name: wait for clabernetes
         run: |
           kubectl rollout status deployment clabernetes-manager -n clabernetes
+
+      - name: setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_e2e }}
 
       - name: run the e2e tests
         run: make test-e2e

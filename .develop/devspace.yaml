@@ -78,8 +78,9 @@ deployments:
       chart:
         name: ../charts/clabernetes
       values:
-        image: ${MANAGER_IMAGE}
-        imagePullPolicy: ${PULL_POLICY}
+        manager:
+          image: ${MANAGER_IMAGE}
+          imagePullPolicy: ${PULL_POLICY}
 
 dev:
   clabernetes:
@@ -110,34 +111,34 @@ profiles:
       # the "dev-non-local" profile flag -- so for a devspace dev command from the root of this repo
       # you would do `devspace run dev --profile dev-non-local`
       - op: replace
-        path: deployments.clabernetes.helm.values.imagePullPolicy
+        path: deployments.clabernetes.helm.values.manager.imagePullPolicy
         value: IfNotPresent
       - op: add
-        path: deployments.clabernetes.helm.values.managerLogLevel
+        path: deployments.clabernetes.helm.values.manager.managerLogLevel
         value: debug
       - op: add
-        path: deployments.clabernetes.helm.values.controllerLogLevel
+        path: deployments.clabernetes.helm.values.manager.controllerLogLevel
         value: debug
       - op: add
-        path: deployments.clabernetes.helm.values.launcherLogLevel
-        value: debug
-      - op: add
-        path: deployments.clabernetes.helm.values.launcherPullPolicy
-        value: IfNotPresent
-      - op: add
-        path: deployments.clabernetes.helm.values.launcherImage
-        value: ${LAUNCHER_IMAGE}
-      - op: add
-        path: deployments.clabernetes.helm.values.replicaCount
+        path: deployments.clabernetes.helm.values.manager.replicaCount
         value: 1
+      - op: add
+        path: deployments.clabernetes.helm.values.launcher.launcherLogLevel
+        value: debug
+      - op: add
+        path: deployments.clabernetes.helm.values.launcher.launcherPullPolicy
+        value: IfNotPresent
+      - op: add
+        path: deployments.clabernetes.helm.values.launcher.launcherImage
+        value: ${LAUNCHER_IMAGE}
 
   - name: dev-non-local
     patches:
       - op: replace
-        path: deployments.clabernetes.helm.values.imagePullPolicy
+        path: deployments.clabernetes.helm.values.manager.imagePullPolicy
         value: Always
       - op: replace
-        path: deployments.clabernetes.helm.values.launcherPullPolicy
+        path: deployments.clabernetes.helm.values.launcher.imagePullPolicy
         value: Always
 
   - name: release

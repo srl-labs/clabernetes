@@ -48,11 +48,11 @@ manager:
 # the launcher is the actual "worker" pod where the nos is running/launched
 #
 launcher:
-  launcherPullPolicy: IfNotPresent
+  imagePullPolicy: IfNotPresent
 
-  launcherImage: "" #" ghcr.io/srl-labs/clabernetes/clabernetes-launcher:{{ .Chart.Version }}
+  image: "" #" ghcr.io/srl-labs/clabernetes/clabernetes-launcher:{{ .Chart.Version }}
 
-  launcherLogLevel: info
+  logLevel: info
 
 #
 # clicker
