@@ -51,7 +51,7 @@ func (c *clabernetes) startLeading() {
 func (c *clabernetes) stopLeading() {
 	c.logger.Info("stopping clabernetes...")
 
-	clabernetesutil.Exit(clabernetesconstants.ExitCode)
+	c.Exit(clabernetesconstants.ExitCode)
 }
 
 func (c *clabernetes) newLeader(leaderElectionIdentity string) {
@@ -101,7 +101,7 @@ func (c *clabernetes) start(ctx context.Context) {
 				err,
 			)
 
-			clabernetesutil.Exit(clabernetesconstants.ExitCodeError)
+			c.Exit(clabernetesconstants.ExitCodeError)
 		}
 	}()
 
@@ -111,7 +111,7 @@ func (c *clabernetes) start(ctx context.Context) {
 	if !synced {
 		c.logger.Critical("encountered error syncing controller-runtime manager cache")
 
-		clabernetesutil.Exit(clabernetesconstants.ExitCodeError)
+		c.Exit(clabernetesconstants.ExitCodeError)
 	}
 
 	c.logger.Debug("controller-runtime manager cache synced...")

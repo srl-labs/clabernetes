@@ -10,6 +10,13 @@ metadata:
     clabernetes/app: {{ .Values.appName }}
     clabernetes/name: "{{ .Values.appName }}-cluster-role-binding"
     clabernetes/component: cluster-role-binding
+    {{- if .Values.globalLabels }}
+{{ .Values.globalLabels | toYaml | indent 4 }}
+    {{- end }}
+  {{- if .Values.globalAnnotations }}
+  annotations:
+{{ .Values.globalAnnotations | toYaml | indent 4 }}
+  {{- end }}
 subjects:
   - kind: ServiceAccount
     name: "{{ .Values.appName }}-service-account"

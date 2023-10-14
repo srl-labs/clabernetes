@@ -5,24 +5,11 @@ kind: Job
 metadata:
   name: {{ .Values.appName }}-clicker
   namespace: {{ .Release.Namespace }}
-  labels:
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
-    clabernetes/app: {{ .Values.appName }}
-    clabernetes/name: "{{ .Values.appName }}-clicker"
-    clabernetes/component: clicker
-    {{- $labels := merge .Values.globalLabels .Values.jobLabels }}
-      {{- if $labels }}
-        {{ toYaml $labels | indent 4 }}
-      {{- end }}
-  {{- $annotations := merge .Values.globalAnnotations .Values.jobAnnotations }}
-  {{- if $annotations }}
-  annotations:
-    {{ toYaml $annotations | indent 4 }}
-  {{- end }}
+{{ include "jobMetadata" . | indent 2 }}
 spec:
   template:
+    metadata:
+{{ include "jobMetadata" . | indent 6 }}
     spec:
       containers:
 {{ include "jobContainer" . | indent 8 }}

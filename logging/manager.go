@@ -46,8 +46,8 @@ func InitManager(options ...Option) {
 func GetManager() Manager {
 	if managerInstance == nil {
 		panic(
-			"Manager instance is nil, 'GetManager' should never be called until the manager " +
-				"process has been started",
+			"Logging Manager instance is nil, 'GetManager' should never be called until the " +
+				"manager process has been started",
 		)
 	}
 

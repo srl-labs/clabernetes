@@ -387,8 +387,8 @@ func renderDeployment(
 }
 
 func volumeAlreadyMounted(volumeName string, existingVolumes []k8scorev1.Volume) bool {
-	for _, volume := range existingVolumes {
-		if volumeName == volume.Name {
+	for idx := range existingVolumes {
+		if volumeName == existingVolumes[idx].Name {
 			return true
 		}
 	}
@@ -410,8 +410,6 @@ func renderDeploymentAddFilesFromConfigMaps(
 
 		podVolumes = append(podVolumes, fileFromConfigMap)
 	}
-
-	fmt.Println("POD VOLUMES -> ", podVolumes)
 
 	for _, podVolume := range podVolumes {
 		if !volumeAlreadyMounted(podVolume.ConfigMapName, deployment.Spec.Template.Spec.Volumes) {

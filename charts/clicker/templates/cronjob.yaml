@@ -12,21 +12,14 @@ metadata:
     clabernetes/app: {{ .Values.appName }}
     clabernetes/name: "{{ .Values.appName }}-clicker"
     clabernetes/component: clicker
-    {{- $labels := merge .Values.globalLabels .Values.jobLabels }}
-      {{- if $labels }}
-        {{ toYaml $labels | indent 4 }}
-      {{- end }}
-  {{- $annotations := merge .Values.globalAnnotations .Values.jobAnnotations }}
-  {{- if $annotations }}
-  annotations:
-    {{ toYaml $annotations | indent 4 }}
-  {{- end }}
+{{ include "jobMetadata" . | indent 2 }}
 spec:
   schedule: "{{ .Values.cron.schedule }}"
   successfulJobsHistoryLimit: 1
   jobTemplate:
     spec:
       template:
+{{ include "jobMetadata" . | indent 8 }}
         spec:
           containers:
 {{ include "jobContainer" . | indent 10 }}

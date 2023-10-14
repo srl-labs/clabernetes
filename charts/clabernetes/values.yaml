@@ -54,6 +54,10 @@ launcher:
 
   logLevel: info
 
+  # default resources is a mapping of containerlab kind/type -> k8s resources/requests to apply to
+  # the launcher pod(s)
+  defaultResources: {}
+
 #
 # clicker
 #

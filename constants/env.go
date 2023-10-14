@@ -61,4 +61,14 @@ const (
 	// ClickerWorkerScript is the script for the clicker worker -- defaults to 'echo "hello, there"'
 	// since we can't know what users will need here.
 	ClickerWorkerScript = "CLICKER_WORKER_SCRIPT"
+
+	// ClickerGlobalAnnotations is the env var where we store the global annotations from the helm
+	// deployment -- these annotations need to be stored such that they can be set on the actual
+	// "worker" pods as well. In "normal" clabernetes operations this is stored in the configmap
+	// where other config things are stored, but in context of the clicker this configmap may not
+	// exist, so we'll just stuff these into env vars.
+	ClickerGlobalAnnotations = "CLICKER_GLOBAL_ANNOTATIONS"
+
+	// ClickerGlobalLabels -- see also ClickerGlobalAnnotations -- same thing just for labels.
+	ClickerGlobalLabels = "CLICKER_GLOBAL_LABELS"
 )

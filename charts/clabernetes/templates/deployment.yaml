@@ -13,12 +13,12 @@ metadata:
     clabernetes/component: manager
     {{- $labels := merge .Values.globalLabels .Values.manager.deploymentLabels }}
       {{- if $labels }}
-        {{ toYaml $labels | indent 4 }}
+{{ toYaml $labels | indent 4 }}
       {{- end }}
   {{- $annotations := merge .Values.globalAnnotations .Values.manager.deploymentAnnotations }}
   {{- if $annotations }}
   annotations:
-    {{ toYaml $annotations | indent 4 }}
+{{ toYaml $annotations | indent 4 }}
   {{- end }}
 spec:
   selector:
@@ -46,12 +46,12 @@ spec:
         clabernetes/component: manager
         {{- $podLabels := merge .Values.globalLabels .Values.manager.podLabels }}
           {{- if $podLabels }}
-            {{ toYaml $podLabels | indent 4 }}
+{{ toYaml $podLabels | indent 8 }}
           {{- end }}
       {{- $podAnnotations := merge .Values.globalAnnotations .Values.manager.podAnnotations }}
       {{- if $podAnnotations }}
       annotations:
-        {{ toYaml $podAnnotations | indent 4 }}
+{{ toYaml $podAnnotations | indent 8 }}
       {{- end }}
     spec:
       {{- if .Values.manager.affinity }}
@@ -166,3 +166,11 @@ spec:
             limits:
               {{ toYaml .Values.manager.resources.limits | indent 14 }}
             {{- end }}
+          volumeMounts:
+            - name: config
+              readOnly: true
+              mountPath: /clabernetes/config
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Values.appName }}-config
