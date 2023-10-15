@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	clabernetesconfig "github.com/srl-labs/clabernetes/config"
+
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
@@ -267,33 +269,50 @@ func renderDeployment(
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	nodeName string,
 ) *k8sappsv1.Deployment {
+	configManager := clabernetesconfig.GetManager()
+	globalAnnotations, globalLabels := configManager.GetAllMetadata()
+
 	name := obj.GetName()
 
 	deploymentName := fmt.Sprintf("%s-%s", name, nodeName)
 	configVolumeName := fmt.Sprintf("%s-config", name)
 
-	labels := map[string]string{
+	// match labels are immutable and dont matter if they have the users provided "global" labels,
+	// so make those first then copy those into "normal" labels and add the other stuff
+	matchLabels := map[string]string{
 		clabernetesconstants.LabelApp:           clabernetesconstants.Clabernetes,
 		clabernetesconstants.LabelName:          deploymentName,
 		clabernetesconstants.LabelTopologyOwner: name,
 		clabernetesconstants.LabelTopologyNode:  nodeName,
 	}
 
+	labels := make(map[string]string)
+
+	for k, v := range matchLabels {
+		labels[k] = v
+	}
+
+	for k, v := range globalLabels {
+		labels[k] = v
+	}
+
 	deployment := &k8sappsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      deploymentName,
-			Namespace: obj.GetNamespace(),
-			Labels:    labels,
+			Name:        deploymentName,
+			Namespace:   obj.GetNamespace(),
+			Annotations: globalAnnotations,
+			Labels:      labels,
 		},
 		Spec: k8sappsv1.DeploymentSpec{
 			Replicas:             clabernetesutil.Int32ToPointer(1),
 			RevisionHistoryLimit: clabernetesutil.Int32ToPointer(0),
 			Selector: &metav1.LabelSelector{
-				MatchLabels: labels,
+				MatchLabels: matchLabels,
 			},
 			Template: k8scorev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: labels,
+					Annotations: globalAnnotations,
+					Labels:      labels,
 				},
 				Spec: k8scorev1.PodSpec{
 					Containers: []k8scorev1.Container{
@@ -386,6 +405,16 @@ func renderDeployment(
 	return deployment
 }
 
+func volumeAlreadyMounted(volumeName string, existingVolumes []k8scorev1.Volume) bool {
+	for idx := range existingVolumes {
+		if volumeName == existingVolumes[idx].Name {
+			return true
+		}
+	}
+
+	return false
+}
+
 func renderDeploymentAddFilesFromConfigMaps(
 	nodeName string,
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
@@ -402,19 +431,21 @@ func renderDeploymentAddFilesFromConfigMaps(
 	}
 
 	for _, podVolume := range podVolumes {
-		deployment.Spec.Template.Spec.Volumes = append(
-			deployment.Spec.Template.Spec.Volumes,
-			k8scorev1.Volume{
-				Name: podVolume.ConfigMapName,
-				VolumeSource: k8scorev1.VolumeSource{
-					ConfigMap: &k8scorev1.ConfigMapVolumeSource{
-						LocalObjectReference: k8scorev1.LocalObjectReference{
-							Name: podVolume.ConfigMapName,
+		if !volumeAlreadyMounted(podVolume.ConfigMapName, deployment.Spec.Template.Spec.Volumes) {
+			deployment.Spec.Template.Spec.Volumes = append(
+				deployment.Spec.Template.Spec.Volumes,
+				k8scorev1.Volume{
+					Name: podVolume.ConfigMapName,
+					VolumeSource: k8scorev1.VolumeSource{
+						ConfigMap: &k8scorev1.ConfigMapVolumeSource{
+							LocalObjectReference: k8scorev1.LocalObjectReference{
+								Name: podVolume.ConfigMapName,
+							},
 						},
 					},
 				},
-			},
-		)
+			)
+		}
 
 		volumeMount := k8scorev1.VolumeMount{
 			Name:      podVolume.ConfigMapName,

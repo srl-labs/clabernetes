@@ -3,6 +3,7 @@ package manager
 import (
 	"context"
 	"math/rand"
+	"os"
 	"time"
 
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -51,8 +52,11 @@ func StartClabernetes(initializer bool) {
 		clabernetesutil.Panic(err.Error())
 	}
 
+	ctx, cancel := clabernetesutil.SignalHandledContext(clabernetesLogger.Criticalf)
+
 	clabernetesInstance = &clabernetes{
-		baseCtx: clabernetesutil.SignalHandledContext(clabernetesLogger.Criticalf),
+		baseCtx:       ctx,
+		baseCtxCancel: cancel,
 		appName: clabernetesutil.GetEnvStrOrDefault(
 			clabernetesconstants.AppNameEnvVar,
 			clabernetesconstants.AppNameDefault,
@@ -67,8 +71,9 @@ func StartClabernetes(initializer bool) {
 var clabernetesInstance *clabernetes //nolint:gochecknoglobals
 
 type clabernetes struct {
-	baseCtx   context.Context
-	leaderCtx context.Context
+	baseCtx       context.Context
+	baseCtxCancel context.CancelFunc
+	leaderCtx     context.Context
 
 	appName string
 
@@ -170,9 +175,17 @@ func (c *clabernetes) startup() {
 		// creating crds/webhook configs. once done with this we are done and the init process will
 		// call os.exit to kill the process.
 		c.startInitLeading()
+
+		return
 	}
 
 	clabernetesmanagerprepare.Prepare(c)
 
 	c.startLeading()
+}
+
+func (c *clabernetes) Exit(exitCode int) {
+	claberneteslogging.GetManager().Flush()
+
+	os.Exit(exitCode)
 }

@@ -274,6 +274,9 @@ func (r *Reconciler) renderExposeService(
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	nodeName string,
 ) *k8scorev1.Service {
+	configManager := r.ConfigManagerGetter()
+	globalAnnotations, globalLabels := configManager.GetAllMetadata()
+
 	name := obj.GetName()
 
 	objTopologyStatus.NodeExposedPorts[nodeName] = &clabernetesapistopologyv1alpha1.ExposedPorts{
@@ -290,6 +293,10 @@ func (r *Reconciler) renderExposeService(
 		clabernetesconstants.LabelTopologyNode:        nodeName,
 		clabernetesconstants.LabelTopologyKind:        r.ResourceKind,
 		clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeExpose, //nolint:lll
+	}
+
+	for k, v := range globalLabels {
+		labels[k] = v
 	}
 
 	ports := make([]k8scorev1.ServicePort, 0)
@@ -333,9 +340,10 @@ func (r *Reconciler) renderExposeService(
 
 	service := &k8scorev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      serviceName,
-			Namespace: obj.GetNamespace(),
-			Labels:    labels,
+			Name:        serviceName,
+			Namespace:   obj.GetNamespace(),
+			Annotations: globalAnnotations,
+			Labels:      labels,
 		},
 		Spec: k8scorev1.ServiceSpec{
 			Ports: ports,

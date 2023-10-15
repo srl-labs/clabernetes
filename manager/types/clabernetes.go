@@ -48,4 +48,7 @@ type Clabernetes interface {
 	// NewContextWithTimeout returns a new context and its cancelFunc from the base clabernetes
 	// context.
 	NewContextWithTimeout() (context.Context, context.CancelFunc)
+
+	// Exit flushes the logging manager and exits with the given exit code.
+	Exit(exitCode int)
 }

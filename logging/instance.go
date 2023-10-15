@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
+
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 )
 
@@ -17,6 +19,8 @@ type Instance interface {
 	Warnf(f string, a ...interface{})
 	Critical(f string)
 	Criticalf(f string, a ...interface{})
+	Fatal(f string)
+	Fatalf(f string, a ...interface{})
 	// Write implements io.Writer so that an instance can be used most places. Messages received
 	// via Write will always have the current formatter applied, and all messages will be queued
 	// for egress unless this logging instance's level is Disabled.
@@ -169,6 +173,37 @@ func (i *instance) Criticalf(f string, a ...interface{}) {
 	}
 
 	i.enqueue(i.formatter(i, clabernetesconstants.Critical, fmt.Sprintf(f, a...)))
+}
+
+// Fatal accepts a Fatal level log message with no formatting. After emitting the message the log
+// manager is flushed and the program is crashed via the calbernetesutil.Panic function.
+func (i *instance) Fatal(f string) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	formattedMsg := i.formatter(i, clabernetesconstants.Fatal, f)
+
+	i.enqueue(formattedMsg)
+
+	GetManager().Flush()
+
+	clabernetesutil.Panic(formattedMsg)
+}
+
+// Fatalf accepts a Fatal level log message normal fmt.Sprintf type formatting. After emitting the
+// message the log manager is flushed and the program is crashed via the calbernetesutil.Panic
+// function.
+func (i *instance) Fatalf(f string, a ...interface{}) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	formattedMsg := i.formatter(i, clabernetesconstants.Fatal, fmt.Sprintf(f, a...))
+
+	i.enqueue(formattedMsg)
+
+	GetManager().Flush()
+
+	clabernetesutil.Panic(formattedMsg)
 }
 
 // Write allows a logging instance to be used as an io.Writer. Messages received via this method

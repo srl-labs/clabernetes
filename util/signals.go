@@ -14,7 +14,9 @@ var onlyOneSignalHandler = make(chan struct{}) //nolint: gochecknoglobals
 
 // SignalHandledContext returns a context that will be canceled if a SIGINT or SIGTERM is
 // received.
-func SignalHandledContext(logf func(f string, a ...interface{})) context.Context {
+func SignalHandledContext(
+	logf func(f string, a ...interface{}),
+) (context.Context, context.CancelFunc) {
 	// panics when called twice, this way there can only be one signal handled context
 	close(onlyOneSignalHandler)
 
@@ -36,7 +38,7 @@ func SignalHandledContext(logf func(f string, a ...interface{})) context.Context
 		os.Exit(clabernetesconstants.ExitCodeSigint)
 	}()
 
-	return ctx
+	return ctx, cancel
 }
 
 // Panic tries to panic "nicely" but will send a second sigint to really kill the process if the

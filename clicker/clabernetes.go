@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"gopkg.in/yaml.v3"
+
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
@@ -54,8 +56,10 @@ func StartClabernetes(args *Args) {
 		),
 	)
 
+	ctx, _ := clabernetesutil.SignalHandledContext(clabernetesLogger.Criticalf)
+
 	clabernetesInstance = &clabernetes{
-		ctx: clabernetesutil.SignalHandledContext(clabernetesLogger.Criticalf),
+		ctx: ctx,
 		appName: clabernetesutil.GetEnvStrOrDefault(
 			clabernetesconstants.AppNameEnvVar,
 			clabernetesconstants.AppNameDefault,
@@ -66,7 +70,9 @@ func StartClabernetes(args *Args) {
 
 	err := clabernetesInstance.run()
 	if err != nil {
-		clabernetesutil.Exit(clabernetesconstants.ExitCodeError)
+		claberneteslogging.GetManager().Flush()
+
+		os.Exit(clabernetesconstants.ExitCodeError)
 	}
 }
 
@@ -135,7 +141,13 @@ func (c *clabernetes) run() error {
 		}()
 	}
 
-	pods := c.buildPods(selfPod, createdConfigMap, targetNodes)
+	pods, err := c.buildPods(selfPod, createdConfigMap, targetNodes)
+	if err != nil {
+		c.logger.Criticalf("failed building clicker pod spec, err: %s", err)
+
+		// no more panicking to exit since we want ot let the defers run if we get this far
+		return err
+	}
 
 	if !c.args.SkipPodsCleanup {
 		defer c.removePods(pods)
@@ -145,7 +157,6 @@ func (c *clabernetes) run() error {
 	if err != nil {
 		c.logger.Criticalf("failed creating clicker pods, err: %s", err)
 
-		// no more panicking to exit since we want ot let the defers run if we get this far
 		return err
 	}
 
@@ -283,14 +294,67 @@ func (c *clabernetes) buildConfigMap() *k8scorev1.ConfigMap {
 	}
 }
 
+func envToMapStrStr(env string) (map[string]string, error) {
+	var out map[string]string
+
+	asStr := os.Getenv(env)
+	if asStr == "" {
+		return out, nil
+	}
+
+	err := yaml.Unmarshal([]byte(asStr), &out)
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
+func envToResources() (k8scorev1.ResourceRequirements, error) {
+	out := k8scorev1.ResourceRequirements{}
+
+	asStr := os.Getenv(clabernetesconstants.ClickerWorkerResources)
+	if asStr == "" {
+		return out, nil
+	}
+
+	parsedOut, err := clabernetesutil.YAMLToK8sResourceRequirements(asStr)
+	if err != nil {
+		return out, err
+	}
+
+	return *parsedOut, nil
+}
+
 func (c *clabernetes) buildPods(
 	selfPod *k8scorev1.Pod,
 	configMap *k8scorev1.ConfigMap,
 	targetNodes []k8scorev1.Node,
-) []*k8scorev1.Pod {
+) ([]*k8scorev1.Pod, error) {
 	image := os.Getenv(clabernetesconstants.ClickerWorkerImage)
 	if image == "" {
 		image = defaultImage
+	}
+
+	globalAnnotations, err := envToMapStrStr(clabernetesconstants.ClickerGlobalAnnotations)
+	if err != nil {
+		c.logger.Criticalf("failed unmarshalling global annotations for worker pod, error: %s", err)
+
+		return nil, err
+	}
+
+	globalLabels, err := envToMapStrStr(clabernetesconstants.ClickerGlobalLabels)
+	if err != nil {
+		c.logger.Criticalf("failed unmarshalling global labels for worker pod, error: %s", err)
+
+		return nil, err
+	}
+
+	resources, err := envToResources()
+	if err != nil {
+		c.logger.Criticalf("failed building worker pod resources, error: %s", err)
+
+		return nil, err
 	}
 
 	pods := make([]*k8scorev1.Pod, 0)
@@ -307,13 +371,18 @@ func (c *clabernetes) buildPods(
 			clabernetesconstants.LabelClickerNodeTarget: nodeName,
 		}
 
+		for k, v := range globalLabels {
+			labels[k] = v
+		}
+
 		pods = append(
 			pods,
 			&k8scorev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      name,
-					Namespace: c.namespace,
-					Labels:    labels,
+					Name:        name,
+					Namespace:   c.namespace,
+					Annotations: globalAnnotations,
+					Labels:      labels,
 				},
 				Spec: k8scorev1.PodSpec{
 					Containers: []k8scorev1.Container{
@@ -347,6 +416,7 @@ func (c *clabernetes) buildPods(
 									SubPath:   "script",
 								},
 							},
+							Resources: resources,
 						},
 					},
 					RestartPolicy: "Never",
@@ -371,7 +441,7 @@ func (c *clabernetes) buildPods(
 		)
 	}
 
-	return pods
+	return pods, nil
 }
 
 func (c *clabernetes) deployPods(pods []*k8scorev1.Pod) error {

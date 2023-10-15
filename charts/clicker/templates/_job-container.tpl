@@ -47,6 +47,12 @@
       value: {{ .Values.command }}
     - name: CLICKER_WORKER_SCRIPT
       value: {{ .Values.script }}
+    - name: CLICKER_WORKER_RESOURCES
+      value: {{ .Values.workerPodResources | toYaml | quote }}
+    - name: CLICKER_GLOBAL_ANNOTATIONS
+      value: {{ .Values.globalAnnotations | toYaml | quote }}
+    - name: CLICKER_GLOBAL_LABELS
+      value: {{ .Values.globalLabels | toYaml | quote  }}
   resources:
     requests:
       memory: {{ .Values.resources.requests.memory }}

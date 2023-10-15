@@ -9,6 +9,13 @@ metadata:
     clabernetes/app: {{ .Values.appName }}
     clabernetes/name: "{{ .Values.appName }}-clicker-cluster-role"
     clabernetes/component: cluster-role
+    {{- if .Values.globalLabels }}
+{{ .Values.globalLabels | toYaml | indent 4 }}
+    {{- end }}
+  {{- if .Values.globalAnnotations }}
+  annotations:
+{{ .Values.globalAnnotations | toYaml | indent 4 }}
+  {{- end }}
   name: "{{ .Values.appName }}-clicker-cluster-role"
 rules:
   - apiGroups:

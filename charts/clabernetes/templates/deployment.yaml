@@ -11,6 +11,15 @@ metadata:
     clabernetes/app: {{ .Values.appName }}
     clabernetes/name: "{{ .Values.appName }}-manager"
     clabernetes/component: manager
+    {{- $labels := merge .Values.globalLabels .Values.manager.deploymentLabels }}
+      {{- if $labels }}
+{{ toYaml $labels | indent 4 }}
+      {{- end }}
+  {{- $annotations := merge .Values.globalAnnotations .Values.manager.deploymentAnnotations }}
+  {{- if $annotations }}
+  annotations:
+{{ toYaml $annotations | indent 4 }}
+  {{- end }}
 spec:
   selector:
     matchLabels:
@@ -35,11 +44,20 @@ spec:
         clabernetes/app: {{ .Values.appName }}
         clabernetes/name: "{{ .Values.appName }}-manager"
         clabernetes/component: manager
+        {{- $podLabels := merge .Values.globalLabels .Values.manager.podLabels }}
+          {{- if $podLabels }}
+{{ toYaml $podLabels | indent 8 }}
+          {{- end }}
+      {{- $podAnnotations := merge .Values.globalAnnotations .Values.manager.podAnnotations }}
+      {{- if $podAnnotations }}
+      annotations:
+{{ toYaml $podAnnotations | indent 8 }}
+      {{- end }}
     spec:
-      {{- if .Values.affinity }}
+      {{- if .Values.manager.affinity }}
       affinity:
-        {{ toYaml .Values.affinity | indent 8 }}
-      {{- else if (ge (int .Values.replicaCount) 2) }}
+        {{ toYaml .Values.manager.affinity | indent 8 }}
+      {{- else if (ge (int .Values.manager.replicaCount) 2) }}
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -64,14 +82,14 @@ spec:
       serviceAccountName: "{{ .Values.appName }}-service-account"
       initContainers:
         - name: init
-          {{- if .Values.image }}
-          image: {{ .Values.image }}
+          {{- if .Values.manager.image }}
+          image: {{ .Values.manager.image }}
           {{- else if eq .Chart.Version "0.0.0" }}
           image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:dev-latest"
           {{- else }}
           image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:{{ .Chart.Version }}"
           {{- end }}
-          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.manager.imagePullPolicy }}
           command: ["/clabernetes/manager", "run", "--initializer"]
           env:
             - name: APP_NAME
@@ -84,29 +102,28 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-            {{- if .Values.managerLogLevel }}
+            {{- if .Values.manager.managerLogLevel }}
             - name: MANAGER_LOGGER_LEVEL
-              value: {{ .Values.managerLogLevel }}
+              value: {{ .Values.manager.managerLogLevel }}
             {{- end }}
           resources:
             requests:
-              memory: {{ .Values.resources.requests.memory }}
-              cpu: {{ .Values.resources.requests.cpu }}
-            {{- if .Values.resources.limits }}
+              memory: {{ .Values.manager.resources.requests.memory }}
+              cpu: {{ .Values.manager.resources.requests.cpu }}
+            {{- if .Values.manager.resources.limits }}
             limits:
-              memory: {{ .Values.resources.limits.memory }}
-              cpu: {{ .Values.resources.limits.cpu }}
+              {{ toYaml .Values.manager.resources.limits | indent 14 }}
             {{- end }}
       containers:
         - name: manager
-          {{- if .Values.image }}
-          image: {{ .Values.image }}
+          {{- if .Values.manager.image }}
+          image: {{ .Values.manager.image }}
           {{- else if eq .Chart.Version "0.0.0" }}
           image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:dev-latest"
           {{- else }}
           image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:{{ .Chart.Version }}"
           {{- end }}
-          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.manager.imagePullPolicy }}
           command: ["/clabernetes/manager", "run"]
           env:
             - name: APP_NAME
@@ -120,18 +137,22 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: CLIENT_OPERATION_TIMEOUT_MULTIPLIER
-              value: "{{ .Values.clientOperationTimeoutMultiplier }}"
+              value: "{{ .Values.manager.clientOperationTimeoutMultiplier }}"
+              {{- if .Values.launcher.image }}
+            - name:  IN_CLUSTER_DNS_SUFFIX_OVERRIDE
+              value: {{ .Values.manager.inClusterDNSSuffixOverride }}
+              {{- end }}
             - name: MANAGER_LOGGER_LEVEL
-              value: {{ .Values.managerLogLevel }}
+              value: {{ .Values.manager.managerLogLevel }}
             - name: CONTROLLER_LOGGER_LEVEL
-              value: {{ .Values.controllerLogLevel }}
+              value: {{ .Values.manager.controllerLogLevel }}
             - name: LAUNCHER_LOGGER_LEVEL
-              value: {{ .Values.launcherLogLevel }}
+              value: {{ .Values.launcher.logLevel }}
             - name: LAUNCHER_PULL_POLICY
-              value: "{{ .Values.launcherPullPolicy }}"
+              value: "{{ .Values.launcher.imagePullPolicy }}"
             - name: LAUNCHER_IMAGE
-              {{- if .Values.launcherImage }}
-              value: {{ .Values.launcherImage }}
+              {{- if .Values.launcher.image }}
+              value: {{ .Values.launcher.image }}
               {{- else if eq .Chart.Version "0.0.0" }}
               value: "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:dev-latest"
               {{- else }}
@@ -139,10 +160,9 @@ spec:
               {{- end }}
           resources:
             requests:
-              memory: {{ .Values.resources.requests.memory }}
-              cpu: {{ .Values.resources.requests.cpu }}
-            {{- if .Values.resources.limits }}
+              memory: {{ .Values.manager.resources.requests.memory }}
+              cpu: {{ .Values.manager.resources.requests.cpu }}
+            {{- if .Values.manager.resources.limits }}
             limits:
-              memory: {{ .Values.resources.limits.memory }}
-              cpu: {{ .Values.resources.limits.cpu }}
+              {{ toYaml .Values.manager.resources.limits | indent 14 }}
             {{- end }}

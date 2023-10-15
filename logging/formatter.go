@@ -41,7 +41,7 @@ func DefaultFormatter(i Instance, l, m string) string {
 		l = colorMap[clabernetesconstants.Info] + strings.ToUpper(l) + colorStop
 	case clabernetesconstants.Warn:
 		l = colorMap[clabernetesconstants.Warn] + strings.ToUpper(l) + colorStop
-	case clabernetesconstants.Critical:
+	case clabernetesconstants.Critical, clabernetesconstants.Fatal:
 		l = colorMap[clabernetesconstants.Critical] + strings.ToUpper(l) + colorStop
 	}
 

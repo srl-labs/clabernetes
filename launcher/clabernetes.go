@@ -47,8 +47,10 @@ func StartClabernetes() {
 		),
 	)
 
+	ctx, _ := clabernetesutil.SignalHandledContext(clabernetesLogger.Criticalf)
+
 	clabernetesInstance = &clabernetes{
-		ctx: clabernetesutil.SignalHandledContext(clabernetesLogger.Criticalf),
+		ctx: ctx,
 		appName: clabernetesutil.GetEnvStrOrDefault(
 			clabernetesconstants.AppNameEnvVar,
 			clabernetesconstants.AppNameDefault,

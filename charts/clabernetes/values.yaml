@@ -1,24 +1,76 @@
 ---
-appName: clabernetes
+#
+# global options
+#
 
-imagePullPolicy: IfNotPresent
-# image: ghcr.io/srl-labs/clabernetes/clabernetes-manager:{{ .Chart.Version }}
-# launcherImage: ghcr.io/srl-labs/clabernetes/clabernetes-launcher:{{ .Chart.Version }}
+appName: &_appName clabernetes
 
-replicaCount: 3
-resources:
-  requests:
-    memory: 128Mi
-    cpu: 50m
-  # optionally limits
+# extra labels/annotations that are added to all objects
+globalAnnotations: &_globalAnnotations {}
+globalLabels: &_globalLabels {}
 
-clientOperationTimeoutMultiplier: 1
-managerLogLevel: info
-controllerLogLevel: info
-launcherLogLevel: info
-launcherPullPolicy: IfNotPresent
+#
+# manager options
+#
+# the manager is the c9s controller
+#
+manager:
+  deploymentAnnotations: {}
+  deploymentLabels: {}
+  podAnnotations: {}
+  podLabels: {}
 
-# clicker is an optional feature that can configure nodes in a cluster -- useful for setting things
+  imagePullPolicy: IfNotPresent
+
+  # defaults to .Chart.Version, if 0.0.0 version defaults to 'dev-latest' tag
+  image: "" # ghcr.io/srl-labs/clabernetes/clabernetes-manager:{{ .Chart.Version }}
+
+  replicaCount: 3
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 50m
+    limits: {}
+
+  clientOperationTimeoutMultiplier: 1
+  managerLogLevel: info
+  controllerLogLevel: info
+  # inClusterDNSSuffixOverride: domain.or.whatever
+
+  # pod affinity settings, directly inserted into manager deployment spec; if not provided basic
+  # common-sense anti-affinity is applied.
+  affinity: {}
+
+
+#
+# launcher options
+#
+# the launcher is the actual "worker" pod where the nos is running/launched
+#
+launcher:
+  imagePullPolicy: IfNotPresent
+
+  image: "" #" ghcr.io/srl-labs/clabernetes/clabernetes-launcher:{{ .Chart.Version }}
+
+  logLevel: info
+
+  # default resources is a mapping of containerlab kind/type -> k8s resources/requests to apply to
+  # the launcher pod(s)
+  defaultResources: {}
+
+#
+# clicker
+#
+# this is an optional feature that can configure nodes in a cluster -- useful for setting things
 # like ulimit and such.
+#
 clicker:
   enabled: false
+
+  # pass in the "global" values to the sub chart, you can still override them, but this keeps things
+  # more aligned while still being easy to override
+  appName: *_appName
+  globalAnnotations: *_globalAnnotations
+  globalLabels: *_globalLabels
+
+  # other values to pass to clicker go here if ya want

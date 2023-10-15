@@ -5,10 +5,12 @@ const (
 	Debug = "debug"
 	// Info is the info(rmational) log level.
 	Info = "info"
-	// Critical is the critical log level.
-	Critical = "critical"
 	// Warn is the warning log level.
 	Warn = "warn"
+	// Critical is the critical log level.
+	Critical = "critical"
+	// Fatal is the fatal log level.
+	Fatal = "fatal"
 	// Disabled is the disabled (no logging) log level.
 	Disabled = "disabled"
 )

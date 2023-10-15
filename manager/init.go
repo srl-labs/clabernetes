@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	clabernetesutil "github.com/srl-labs/clabernetes/util"
-
-	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetesmanagerelection "github.com/srl-labs/clabernetes/manager/election"
 	clabernetesmanagerinitialize "github.com/srl-labs/clabernetes/manager/initialize"
 )
@@ -49,5 +46,5 @@ func (c *clabernetes) init(ctx context.Context) {
 
 	c.logger.Info("init complete...")
 
-	clabernetesutil.Exit(clabernetesconstants.ExitCode)
+	c.baseCtxCancel()
 }

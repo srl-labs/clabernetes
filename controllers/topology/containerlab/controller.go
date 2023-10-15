@@ -4,17 +4,20 @@ import (
 	"context"
 	"fmt"
 
-	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
+	clabernetesconfig "github.com/srl-labs/clabernetes/config"
+
+	k8scorev1 "k8s.io/api/core/v1"
+	ctrlruntimebuilder "sigs.k8s.io/controller-runtime/pkg/builder"
+	ctrlruntimecontroller "sigs.k8s.io/controller-runtime/pkg/controller"
+	ctrlruntimehandler "sigs.k8s.io/controller-runtime/pkg/handler"
 
 	clabernetesapistopology "github.com/srl-labs/clabernetes/apis/topology"
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
-	k8scorev1 "k8s.io/api/core/v1"
+	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
 	"k8s.io/client-go/rest"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
-	ctrlruntimecontroller "sigs.k8s.io/controller-runtime/pkg/controller"
-	ctrlruntimehandler "sigs.k8s.io/controller-runtime/pkg/handler"
 )
 
 // NewController returns a new Controller.
@@ -42,6 +45,29 @@ func NewController(
 			Log:          baseController.Log,
 			Client:       baseController.Client,
 			ResourceKind: clabernetesapistopology.Containerlab,
+			ResourceLister: func(
+				ctx context.Context,
+				client ctrlruntimeclient.Client,
+			) ([]ctrlruntimeclient.Object, error) {
+				containerlabs := &clabernetesapistopologyv1alpha1.ContainerlabList{}
+
+				err := client.List(ctx, containerlabs)
+				if err != nil {
+					return nil, err
+				}
+
+				var out []ctrlruntimeclient.Object
+
+				for idx := range containerlabs.Items {
+					out = append(
+						out,
+						&containerlabs.Items[idx],
+					)
+				}
+
+				return out, nil
+			},
+			ConfigManagerGetter: clabernetesconfig.GetManager,
 		},
 	}
 
@@ -72,8 +98,22 @@ func (c *Controller) SetupWithManager(mgr ctrlruntime.Manager) error {
 		// address
 		Watches(
 			&k8scorev1.Service{},
+			ctrlruntimehandler.EnqueueRequestForOwner(
+				mgr.GetScheme(),
+				mgr.GetRESTMapper(),
+				&clabernetesapistopologyv1alpha1.Containerlab{},
+				ctrlruntimehandler.OnlyControllerOwner(),
+			),
+		).
+		// watch configmaps so we can react to global config changes; predicates ensure we only
+		// watch the "clabernetes-config" (or appName-config) configmap
+		Watches(
+			&k8scorev1.ConfigMap{},
 			ctrlruntimehandler.EnqueueRequestsFromMapFunc(
-				c.TopologyReconciler.MapServiceToContainerlab,
+				c.TopologyReconciler.EnqueueForAll,
+			),
+			ctrlruntimebuilder.WithPredicates(
+				c.BaseController.GlobalConfigPredicates(),
 			),
 		).
 		Complete(c)

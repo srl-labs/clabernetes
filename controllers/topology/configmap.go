@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	"gopkg.in/yaml.v3"
@@ -18,17 +20,33 @@ import (
 // sub-topology configs and tunnels and renders the final configmap for the deployment -- this is
 // the configmap that will ultimately be referenced when mounting sub-topologies and tunnel data in
 // the clabernetes launcher pod(s) for a given topology.
-func RenderConfigMap(
+func (r *Reconciler) RenderConfigMap(
 	obj ctrlruntimeclient.Object,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 ) (*k8scorev1.ConfigMap, error) {
+	configManager := r.ConfigManagerGetter()
+	globalAnnotations, globalLabels := configManager.GetAllMetadata()
+
+	configMapName := obj.GetName()
+
 	configMap := &k8scorev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      obj.GetName(),
-			Namespace: obj.GetNamespace(),
+			Name:        configMapName,
+			Namespace:   obj.GetNamespace(),
+			Annotations: globalAnnotations,
+			Labels: map[string]string{
+				clabernetesconstants.LabelApp:           clabernetesconstants.Clabernetes,
+				clabernetesconstants.LabelName:          configMapName,
+				clabernetesconstants.LabelTopologyOwner: configMapName,
+				clabernetesconstants.LabelTopologyKind:  r.ResourceKind,
+			},
 		},
 		Data: map[string]string{},
+	}
+
+	for k, v := range globalLabels {
+		configMap.Labels[k] = v
 	}
 
 	for nodeName, nodeTopo := range clabernetesConfigs {
@@ -63,7 +81,7 @@ func (r *Reconciler) createConfigMap(
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 ) error {
-	configMap, err := RenderConfigMap(obj, clabernetesConfigs, tunnels)
+	configMap, err := r.RenderConfigMap(obj, clabernetesConfigs, tunnels)
 	if err != nil {
 		return err
 	}
@@ -83,7 +101,7 @@ func (r *Reconciler) enforceConfigMap(
 	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 	actual *k8scorev1.ConfigMap,
 ) error {
-	configMap, err := RenderConfigMap(obj, clabernetesConfigs, tunnels)
+	configMap, err := r.RenderConfigMap(obj, clabernetesConfigs, tunnels)
 	if err != nil {
 		return err
 	}

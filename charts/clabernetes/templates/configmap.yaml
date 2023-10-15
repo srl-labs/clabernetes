@@ -1,16 +1,16 @@
 ---
 apiVersion: v1
-kind: ServiceAccount
+kind: ConfigMap
 metadata:
-  name: "{{ .Values.appName }}-service-account"
+  name: {{ .Values.appName }}-config
   namespace: {{ .Release.Namespace }}
   labels:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     clabernetes/app: {{ .Values.appName }}
-    clabernetes/name: "{{ .Values.appName }}-service-account"
-    clabernetes/component: service-account
+    clabernetes/name: "{{ .Values.appName }}-config"
+    clabernetes/component: config
     {{- if .Values.globalLabels }}
 {{ .Values.globalLabels | toYaml | indent 4 }}
     {{- end }}
@@ -18,3 +18,13 @@ metadata:
   annotations:
 {{ .Values.globalAnnotations | toYaml | indent 4 }}
   {{- end }}
+data:
+  globalAnnotations: |-
+    ---
+{{ .Values.globalAnnotations | toYaml | indent 4 }}
+  globalLabels: |-
+    ---
+{{ .Values.globalLabels | toYaml | indent 4 }}
+  defaultResources: |-
+    ---
+{{ .Values.launcher.defaultResources | toYaml | indent 4 }}

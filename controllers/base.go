@@ -2,6 +2,10 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+
+	ctrlruntimeevent "sigs.k8s.io/controller-runtime/pkg/event"
+	ctrlruntimepredicate "sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
@@ -71,6 +75,24 @@ type BaseController struct {
 	Log                 claberneteslogging.Instance
 	Config              *clientgorest.Config
 	Client              ctrlruntimeclient.Client
+}
+
+// GlobalConfigPredicates returns predicate funcs to only reconcile on events for the clabernetes
+// global config configmap.
+func (c *BaseController) GlobalConfigPredicates() ctrlruntimepredicate.Predicate {
+	configName := fmt.Sprintf("%s-config", c.AppName)
+
+	return ctrlruntimepredicate.Funcs{
+		CreateFunc: func(e ctrlruntimeevent.CreateEvent) bool {
+			return e.Object.GetName() == configName
+		},
+		UpdateFunc: func(e ctrlruntimeevent.UpdateEvent) bool {
+			return e.ObjectNew.GetName() == configName
+		},
+		DeleteFunc: func(e ctrlruntimeevent.DeleteEvent) bool {
+			return e.Object.GetName() == configName
+		},
+	}
 }
 
 // LogReconcileStart is a convenience/consistency function to log the start of a reconcile event.
