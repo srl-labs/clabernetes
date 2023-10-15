@@ -62,6 +62,10 @@ const (
 	// since we can't know what users will need here.
 	ClickerWorkerScript = "CLICKER_WORKER_SCRIPT"
 
+	// ClickerWorkerResources -- see also ClickerGlobalAnnotations -- same thing just for the worker
+	// pod resources, we'll just unmarshal to k8scorev1.ResourceRequirements.
+	ClickerWorkerResources = "CLICKER_WORKER_RESOURCES"
+
 	// ClickerGlobalAnnotations is the env var where we store the global annotations from the helm
 	// deployment -- these annotations need to be stored such that they can be set on the actual
 	// "worker" pods as well. In "normal" clabernetes operations this is stored in the configmap

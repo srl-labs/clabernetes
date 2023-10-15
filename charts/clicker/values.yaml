@@ -29,6 +29,12 @@ resources:
     cpu: 50m
   # optionally limits
 
+workerPodResources:
+  requests:
+    memory: 128Mi
+    cpu: 50m
+  # optionally limits
+
 logLevel: info
 
 # overrideNodes tells the clicker job to re-run the worker against a node even if the node label

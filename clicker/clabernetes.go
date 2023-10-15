@@ -310,6 +310,22 @@ func envToMapStrStr(env string) (map[string]string, error) {
 	return out, nil
 }
 
+func envToResources() (k8scorev1.ResourceRequirements, error) {
+	out := k8scorev1.ResourceRequirements{}
+
+	asStr := os.Getenv(clabernetesconstants.ClickerWorkerResources)
+	if asStr == "" {
+		return out, nil
+	}
+
+	parsedOut, err := clabernetesutil.YAMLToK8sResourceRequirements(asStr)
+	if err != nil {
+		return out, err
+	}
+
+	return *parsedOut, nil
+}
+
 func (c *clabernetes) buildPods(
 	selfPod *k8scorev1.Pod,
 	configMap *k8scorev1.ConfigMap,
@@ -330,6 +346,13 @@ func (c *clabernetes) buildPods(
 	globalLabels, err := envToMapStrStr(clabernetesconstants.ClickerGlobalLabels)
 	if err != nil {
 		c.logger.Criticalf("failed unmarshalling global labels for worker pod, error: %s", err)
+
+		return nil, err
+	}
+
+	resources, err := envToResources()
+	if err != nil {
+		c.logger.Criticalf("failed building worker pod resources, error: %s", err)
 
 		return nil, err
 	}
@@ -393,6 +416,7 @@ func (c *clabernetes) buildPods(
 									SubPath:   "script",
 								},
 							},
+							Resources: resources,
 						},
 					},
 					RestartPolicy: "Never",
