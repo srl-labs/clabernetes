@@ -105,9 +105,13 @@ type Clabverter struct {
 func (c *Clabverter) Clabvert() error {
 	c.logger.Info("starting clabversion!")
 
-	err := c.ensureOutputDirectory()
-	if err != nil {
-		return err
+	var err error
+
+	if !c.stdout {
+		err = c.ensureOutputDirectory()
+		if err != nil {
+			return err
+		}
 	}
 
 	err = c.findClabTopologyFile()
