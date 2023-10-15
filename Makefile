@@ -1,5 +1,11 @@
 .DEFAULT_GOAL := help
 
+ifeq (set-chart-versions,$(firstword $(MAKECMDGOALS)))
+  # use the rest as arguments for "set-chart-versions" directive
+  BUMP_CHART_VERSION_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  $(eval $(BUMP_CHART_VERSION_ARGS):;@:)
+endif
+
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
@@ -56,19 +62,16 @@ run-client-gen: ## Run client-gen
 	--clientset-name clientset
 
 run-generate-crds: ## Run controller-gen for crds
-	controller-gen crd paths=./apis/... output:crd:dir=./chart/crds/
+	controller-gen crd paths=./apis/... output:crd:dir=./charts/clabernetes/crds/
 
 run-generate: install-code-generators run-deepcopy-gen run-openapi-gen run-client-gen run-generate-crds fmt ## Run all code gen tasks
+	cp charts/clabernetes/crds/*.yaml assets/crd/
 
 delete-generated: ## Deletes all zz_*.go (generated) files, and crds
 	find . -name "zz_*.go" -exec rm {} \;
-	rm chart/crds/*.yaml || true
+	rm charts/clabernetes/crds/*.yaml || true
+	rm assets/crd/*.yaml || true
 	rm -rf generated/*
-
-refresh-chart-dependencies: ## Refreshes all dependent helm charts (ex: ui)
-	cd chart; \
-	helm dependency build; \
-	helm dependency update
 
 build-manager: ## Builds the clabernetes manager container; typically built via devspace, but this is a handy shortcut for one offs.
 	docker build -t ghcr.io/srl-labs/clabernetes/clabernetes-launcher:latest -f ./build/manager.Dockerfile .
@@ -78,3 +81,6 @@ build-launcher: ## Builds the clabernetes launcher container; typically built vi
 
 build-clabverter: ## Builds the clabverter container; typically built via devspace, but this is a handy shortcut for one offs.
 	docker build -t ghcr.io/srl-labs/clabernetes/clabverter:latest -f ./build/clabverter.Dockerfile .
+
+set-chart-versions: ## Sets the helm chart versions to the given value.
+	./hack/set-chart-versions.sh $(BUMP_CHART_VERSION_ARGS)

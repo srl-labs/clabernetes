@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"reflect"
 
+	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
+	apimachinerytypes "k8s.io/apimachinery/pkg/types"
+
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
@@ -111,10 +114,46 @@ func (r *Reconciler) enforceConfigMap(
 		return err
 	}
 
-	if reflect.DeepEqual(actual.BinaryData, configMap.BinaryData) {
+	if configMapConforms(actual, configMap, obj.GetUID()) {
 		// nothing to do
 		return nil
 	}
 
 	return r.Client.Update(ctx, configMap)
+}
+
+func configMapConforms(
+	existingConfigMap,
+	renderedConfigMap *k8scorev1.ConfigMap,
+	expectedOwnerUID apimachinerytypes.UID,
+) bool {
+	if !reflect.DeepEqual(existingConfigMap.Data, renderedConfigMap.Data) {
+		return false
+	}
+
+	if !clabernetescontrollers.AnnotationsOrLabelsConform(
+		existingConfigMap.ObjectMeta.Annotations,
+		renderedConfigMap.ObjectMeta.Annotations,
+	) {
+		return false
+	}
+
+	if !clabernetescontrollers.AnnotationsOrLabelsConform(
+		existingConfigMap.ObjectMeta.Labels,
+		renderedConfigMap.ObjectMeta.Labels,
+	) {
+		return false
+	}
+
+	if len(existingConfigMap.ObjectMeta.OwnerReferences) != 1 {
+		// we should have only one owner reference, the extractor
+		return false
+	}
+
+	if existingConfigMap.ObjectMeta.OwnerReferences[0].UID != expectedOwnerUID {
+		// owner ref uid is not us
+		return false
+	}
+
+	return true
 }

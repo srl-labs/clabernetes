@@ -296,6 +296,17 @@ func renderDeployment(
 		labels[k] = v
 	}
 
+	commonSpec := obj.GetTopologyCommonSpec()
+
+	launcherLogLevel := clabernetesutil.GetEnvStrOrDefault(
+		clabernetesconstants.LauncherLoggerLevelEnv,
+		clabernetesconstants.Info,
+	)
+
+	if commonSpec.LauncherLogLevel != "" {
+		launcherLogLevel = commonSpec.LauncherLogLevel
+	}
+
 	deployment := &k8sappsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        deploymentName,
@@ -360,11 +371,8 @@ func renderDeployment(
 							},
 							Env: []k8scorev1.EnvVar{
 								{
-									Name: clabernetesconstants.LauncherLoggerLevelEnv,
-									Value: clabernetesutil.GetEnvStrOrDefault(
-										clabernetesconstants.LauncherLoggerLevelEnv,
-										clabernetesconstants.Info,
-									),
+									Name:  clabernetesconstants.LauncherLoggerLevelEnv,
+									Value: launcherLogLevel,
 								},
 							},
 						},
@@ -388,7 +396,7 @@ func renderDeployment(
 		},
 	}
 
-	if obj.GetTopologyCommonSpec().ContainerlabDebug {
+	if commonSpec.ContainerlabDebug {
 		deployment.Spec.Template.Spec.Containers[0].Env = append(
 			deployment.Spec.Template.Spec.Containers[0].Env,
 			k8scorev1.EnvVar{
@@ -516,6 +524,16 @@ func deploymentConforms(
 		return false
 	}
 
+	// this and labels will probably be a future us problem -- maybe some mutating webhooks will be
+	// adding labels or annotations that will cause us to continually reconcile, that would be lame
+	// ... we'll cross that bridge when we get there :)
+	if !reflect.DeepEqual(
+		existingDeployment.Spec.Template.ObjectMeta.Annotations,
+		renderedDeployment.Spec.Template.ObjectMeta.Annotations,
+	) {
+		return false
+	}
+
 	if !reflect.DeepEqual(
 		existingDeployment.Spec.Template.ObjectMeta.Labels,
 		renderedDeployment.Spec.Template.ObjectMeta.Labels,
@@ -523,26 +541,24 @@ func deploymentConforms(
 		return false
 	}
 
-	if existingDeployment.ObjectMeta.Labels == nil {
-		// obviously our labels don't exist, so we need to enforce that
+	if existingDeployment.ObjectMeta.Annotations == nil &&
+		renderedDeployment.ObjectMeta.Annotations != nil {
+		// obviously our annotations don't exist, so we need to enforce that
 		return false
 	}
 
-	for k, v := range renderedDeployment.ObjectMeta.Labels {
-		var expectedLabelExists bool
+	if !clabernetescontrollers.AnnotationsOrLabelsConform(
+		existingDeployment.ObjectMeta.Annotations,
+		renderedDeployment.ObjectMeta.Annotations,
+	) {
+		return false
+	}
 
-		for nk, nv := range existingDeployment.ObjectMeta.Labels {
-			if k == nk && v == nv {
-				expectedLabelExists = true
-
-				break
-			}
-		}
-
-		if !expectedLabelExists {
-			// missing some expected label, and/or value is wrong
-			return false
-		}
+	if !clabernetescontrollers.AnnotationsOrLabelsConform(
+		existingDeployment.ObjectMeta.Labels,
+		renderedDeployment.ObjectMeta.Labels,
+	) {
+		return false
 	}
 
 	if len(existingDeployment.ObjectMeta.OwnerReferences) != 1 {

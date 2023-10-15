@@ -17,4 +17,5 @@ version: 0.0.16
 dependencies:
   # being a local (symlinked) dep, no need for version or repo or anything
   - name: clicker
+    version: 0.0.16
     condition: clicker.enabled

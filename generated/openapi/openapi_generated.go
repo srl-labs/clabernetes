@@ -250,6 +250,13 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 							Format:      "",
 						},
 					},
+					"launcherLogLevel": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LauncherLogLevel sets the launcher clabernetes worker log level -- this overrides whatever is set on the controllers env vars for this topology. Note: omitempty because empty str does not satisfy enum of course.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"config": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Config is a \"normal\" containerlab configuration file.",
@@ -641,6 +648,13 @@ func schema_clabernetes_apis_topology_v1alpha1_KneSpec(
 							Format:      "",
 						},
 					},
+					"launcherLogLevel": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LauncherLogLevel sets the launcher clabernetes worker log level -- this overrides whatever is set on the controllers env vars for this topology. Note: omitempty because empty str does not satisfy enum of course.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"topology": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Topology is a \"normal\" kne topology proto file.",
@@ -843,6 +857,13 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 							Description: "ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods. This is disabled by default.",
 							Default:     false,
 							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"launcherLogLevel": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LauncherLogLevel sets the launcher clabernetes worker log level -- this overrides whatever is set on the controllers env vars for this topology. Note: omitempty because empty str does not satisfy enum of course.",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},

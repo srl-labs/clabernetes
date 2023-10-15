@@ -23,4 +23,17 @@ func Initialize(c clabernetesmanagertypes.Clabernetes) {
 	}
 
 	logger.Debugf("initializing certificates complete...")
+
+	logger.Info("initializing crds...")
+
+	err = crds(c)
+	if err != nil {
+		msg := fmt.Sprintf("failed initializing crds, err: %s", err)
+
+		logger.Critical(msg)
+
+		clabernetesutil.Panic(msg)
+	}
+
+	logger.Debugf("initializing crds complete...")
 }
