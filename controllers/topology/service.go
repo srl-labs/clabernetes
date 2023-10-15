@@ -3,6 +3,8 @@ package topology
 import (
 	"reflect"
 
+	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
+
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 
@@ -10,7 +12,7 @@ import (
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 )
 
-func serviceConforms( //nolint: gocyclo
+func serviceConforms(
 	existingService,
 	renderedService *k8scorev1.Service,
 	expectedOwnerUID apimachinerytypes.UID,
@@ -50,26 +52,18 @@ func serviceConforms( //nolint: gocyclo
 		}
 	}
 
-	if existingService.ObjectMeta.Labels == nil {
-		// obviously our labels don't exist, so we need to enforce that
+	if !clabernetescontrollers.AnnotationsOrLabelsConform(
+		existingService.ObjectMeta.Annotations,
+		renderedService.ObjectMeta.Annotations,
+	) {
 		return false
 	}
 
-	for k, v := range renderedService.ObjectMeta.Labels {
-		var expectedLabelExists bool
-
-		for nk, nv := range existingService.ObjectMeta.Labels {
-			if k == nk && v == nv {
-				expectedLabelExists = true
-
-				break
-			}
-		}
-
-		if !expectedLabelExists {
-			// missing some expected label, and/or value is wrong
-			return false
-		}
+	if !clabernetescontrollers.AnnotationsOrLabelsConform(
+		existingService.ObjectMeta.Labels,
+		renderedService.ObjectMeta.Labels,
+	) {
+		return false
 	}
 
 	if len(existingService.ObjectMeta.OwnerReferences) != 1 {

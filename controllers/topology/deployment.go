@@ -524,6 +524,16 @@ func deploymentConforms(
 		return false
 	}
 
+	// this and labels will probably be a future us problem -- maybe some mutating webhooks will be
+	// adding labels or annotations that will cause us to continually reconcile, that would be lame
+	// ... we'll cross that bridge when we get there :)
+	if !reflect.DeepEqual(
+		existingDeployment.Spec.Template.ObjectMeta.Annotations,
+		renderedDeployment.Spec.Template.ObjectMeta.Annotations,
+	) {
+		return false
+	}
+
 	if !reflect.DeepEqual(
 		existingDeployment.Spec.Template.ObjectMeta.Labels,
 		renderedDeployment.Spec.Template.ObjectMeta.Labels,
@@ -531,26 +541,24 @@ func deploymentConforms(
 		return false
 	}
 
-	if existingDeployment.ObjectMeta.Labels == nil {
-		// obviously our labels don't exist, so we need to enforce that
+	if existingDeployment.ObjectMeta.Annotations == nil &&
+		renderedDeployment.ObjectMeta.Annotations != nil {
+		// obviously our annotations don't exist, so we need to enforce that
 		return false
 	}
 
-	for k, v := range renderedDeployment.ObjectMeta.Labels {
-		var expectedLabelExists bool
+	if !clabernetescontrollers.AnnotationsOrLabelsConform(
+		existingDeployment.ObjectMeta.Annotations,
+		renderedDeployment.ObjectMeta.Annotations,
+	) {
+		return false
+	}
 
-		for nk, nv := range existingDeployment.ObjectMeta.Labels {
-			if k == nk && v == nv {
-				expectedLabelExists = true
-
-				break
-			}
-		}
-
-		if !expectedLabelExists {
-			// missing some expected label, and/or value is wrong
-			return false
-		}
+	if !clabernetescontrollers.AnnotationsOrLabelsConform(
+		existingDeployment.ObjectMeta.Labels,
+		renderedDeployment.ObjectMeta.Labels,
+	) {
+		return false
 	}
 
 	if len(existingDeployment.ObjectMeta.OwnerReferences) != 1 {
