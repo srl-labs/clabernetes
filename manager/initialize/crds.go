@@ -7,12 +7,12 @@ import (
 
 	clabernetesassets "github.com/srl-labs/clabernetes/assets"
 	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
-	"gopkg.in/yaml.v3"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
 func crds(c clabernetesmanagertypes.Clabernetes) error {
@@ -29,7 +29,7 @@ func crds(c clabernetesmanagertypes.Clabernetes) error {
 	for _, crd := range loadedCrds {
 		err = applyCRD(c, extensionsClient, crd)
 		if err != nil {
-			return fmt.Errorf("%s: %w", fmt.Sprintf("apply crd %s", crd.Kind), err)
+			return fmt.Errorf("%s: %w", fmt.Sprintf("apply crd %s", crd.Name), err)
 		}
 	}
 
@@ -71,6 +71,7 @@ func loadCrdsFromAssets() ([]*apiextensionsv1.CustomResourceDefinition, error) {
 
 		crd := &apiextensionsv1.CustomResourceDefinition{}
 
+		// *note* apimachinery runtime yaml, dunno what's different but... whatever
 		err = yaml.Unmarshal(b, crd)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", fmt.Sprintf("unmarshalling crd %s", crdFileName), err)

@@ -1,5 +1,11 @@
 .DEFAULT_GOAL := help
 
+ifeq (set-chart-versions,$(firstword $(MAKECMDGOALS)))
+  # use the rest as arguments for "set-chart-versions" directive
+  BUMP_CHART_VERSION_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  $(eval $(BUMP_CHART_VERSION_ARGS):;@:)
+endif
+
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
@@ -64,6 +70,7 @@ run-generate: install-code-generators run-deepcopy-gen run-openapi-gen run-clien
 delete-generated: ## Deletes all zz_*.go (generated) files, and crds
 	find . -name "zz_*.go" -exec rm {} \;
 	rm charts/clabernetes/crds/*.yaml || true
+	rm assets/crd/*.yaml || true
 	rm -rf generated/*
 
 build-manager: ## Builds the clabernetes manager container; typically built via devspace, but this is a handy shortcut for one offs.
@@ -74,3 +81,6 @@ build-launcher: ## Builds the clabernetes launcher container; typically built vi
 
 build-clabverter: ## Builds the clabverter container; typically built via devspace, but this is a handy shortcut for one offs.
 	docker build -t ghcr.io/srl-labs/clabernetes/clabverter:latest -f ./build/clabverter.Dockerfile .
+
+set-chart-versions: ## Sets the helm chart versions to the given value.
+	./hack/set-chart-versions.sh $(BUMP_CHART_VERSION_ARGS)
