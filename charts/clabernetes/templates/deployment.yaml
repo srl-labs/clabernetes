@@ -166,11 +166,3 @@ spec:
             limits:
               {{ toYaml .Values.manager.resources.limits | indent 14 }}
             {{- end }}
-          volumeMounts:
-            - name: config
-              readOnly: true
-              mountPath: /clabernetes/config
-      volumes:
-        - name: config
-          configMap:
-            name: {{ .Values.appName }}-config

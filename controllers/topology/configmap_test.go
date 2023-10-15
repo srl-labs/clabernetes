@@ -6,6 +6,10 @@ import (
 	"reflect"
 	"testing"
 
+	clabernetesconfig "github.com/srl-labs/clabernetes/config"
+
+	k8scorev1 "k8s.io/api/core/v1"
+
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
 	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
@@ -180,7 +184,12 @@ func TestRenderConfigMap(t *testing.T) {
 		t.Run(
 			testCase.name,
 			func(t *testing.T) {
-				actual, err := clabernetescontrollerstopology.RenderConfigMap(
+				reconciler := clabernetescontrollerstopology.Reconciler{
+					ResourceKind:        "containerlab",
+					ConfigManagerGetter: clabernetesconfig.GetFakeManager,
+				}
+
+				got, err := reconciler.RenderConfigMap(
 					testCase.obj,
 					testCase.clabernetesConfigs,
 					testCase.tunnels,
@@ -188,9 +197,6 @@ func TestRenderConfigMap(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-
-				// we only care about checking the data, this makes the comparison way easier too
-				got := actual.Data
 
 				if *clabernetestesthelper.Update {
 					clabernetestesthelper.WriteTestFixtureJSON(
@@ -200,7 +206,7 @@ func TestRenderConfigMap(t *testing.T) {
 					)
 				}
 
-				var want map[string]string
+				var want k8scorev1.ConfigMap
 
 				err = json.Unmarshal(
 					clabernetestesthelper.ReadTestFixtureFile(
@@ -213,8 +219,14 @@ func TestRenderConfigMap(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				if !reflect.DeepEqual(got, want) {
-					clabernetestesthelper.FailOutput(t, got, want)
+				if !reflect.DeepEqual(got.Annotations, want.Annotations) {
+					clabernetestesthelper.FailOutput(t, got.Annotations, want.Annotations)
+				}
+				if !reflect.DeepEqual(got.Labels, want.Labels) {
+					clabernetestesthelper.FailOutput(t, got.Labels, want.Labels)
+				}
+				if !reflect.DeepEqual(got.Data, want.Data) {
+					clabernetestesthelper.FailOutput(t, got.Data, want.Data)
 				}
 			},
 		)

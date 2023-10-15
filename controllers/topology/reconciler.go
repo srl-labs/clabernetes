@@ -4,17 +4,18 @@ import (
 	"context"
 	"slices"
 
-	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
-
-	"gopkg.in/yaml.v3"
+	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
+	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
+	"gopkg.in/yaml.v3"
 	k8scorev1 "k8s.io/api/core/v1"
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlruntimereconcile "sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // Reconciler (TopologyReconciler) is the base clabernetes topology reconciler that is embedded in
@@ -22,9 +23,14 @@ import (
 // common/standard resources that represent a clabernetes object (configmap, deployments,
 // services, etc.).
 type Reconciler struct {
-	Log          claberneteslogging.Instance
-	Client       ctrlruntimeclient.Client
-	ResourceKind string
+	Log            claberneteslogging.Instance
+	Client         ctrlruntimeclient.Client
+	ResourceKind   string
+	ResourceLister func(
+		ctx context.Context,
+		client ctrlruntimeclient.Client,
+	) ([]ctrlruntimeclient.Object, error)
+	ConfigManagerGetter func() clabernetesconfig.Manager
 }
 
 // ReconcileConfigMap reconciles the primary configmap containing clabernetes configs and tunnel
@@ -174,4 +180,32 @@ func (r *Reconciler) ReconcileServicesExpose(
 	}
 
 	return shouldUpdate, nil
+}
+
+// EnqueueForAll enqueues a reconcile for kinds the Reconciler represents. This is probably not very
+// efficient/good but we should have low volume and we're using the cached ctrlruntime client so its
+// probably ok :).
+func (r *Reconciler) EnqueueForAll(
+	ctx context.Context,
+	_ ctrlruntimeclient.Object,
+) []ctrlruntimereconcile.Request {
+	objList, err := r.ResourceLister(ctx, r.Client)
+	if err != nil {
+		r.Log.Criticalf("failed listing resource objects in EnqueueForAll, err: %s", err)
+
+		return nil
+	}
+
+	requests := make([]ctrlruntimereconcile.Request, len(objList))
+
+	for idx := range objList {
+		requests[idx] = ctrlruntimereconcile.Request{
+			NamespacedName: apimachinerytypes.NamespacedName{
+				Namespace: objList[idx].GetNamespace(),
+				Name:      objList[idx].GetName(),
+			},
+		}
+	}
+
+	return requests
 }

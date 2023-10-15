@@ -4,6 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	clabernetesconfig "github.com/srl-labs/clabernetes/config"
+
+	ctrlruntimebuilder "sigs.k8s.io/controller-runtime/pkg/builder"
+
 	k8scorev1 "k8s.io/api/core/v1"
 	ctrlruntimehandler "sigs.k8s.io/controller-runtime/pkg/handler"
 
@@ -43,6 +47,29 @@ func NewController(
 			Log:          baseController.Log,
 			Client:       baseController.Client,
 			ResourceKind: clabernetesapistopology.Kne,
+			ResourceLister: func(
+				ctx context.Context,
+				client ctrlruntimeclient.Client,
+			) ([]ctrlruntimeclient.Object, error) {
+				knes := &clabernetesapistopologyv1alpha1.KneList{}
+
+				err := client.List(ctx, knes)
+				if err != nil {
+					return nil, err
+				}
+
+				var out []ctrlruntimeclient.Object
+
+				for idx := range knes.Items {
+					out = append(
+						out,
+						&knes.Items[idx],
+					)
+				}
+
+				return out, nil
+			},
+			ConfigManagerGetter: clabernetesconfig.GetManager,
 		},
 	}
 
@@ -73,8 +100,22 @@ func (c *Controller) SetupWithManager(mgr ctrlruntime.Manager) error {
 		// address
 		Watches(
 			&k8scorev1.Service{},
+			ctrlruntimehandler.EnqueueRequestForOwner(
+				mgr.GetScheme(),
+				mgr.GetRESTMapper(),
+				&clabernetesapistopologyv1alpha1.Kne{},
+				ctrlruntimehandler.OnlyControllerOwner(),
+			),
+		).
+		// watch configmaps so we can react to global config changes; predicates ensure we only
+		// watch the "clabernetes-config" (or appName-config) configmap
+		Watches(
+			&k8scorev1.ConfigMap{},
 			ctrlruntimehandler.EnqueueRequestsFromMapFunc(
-				c.TopologyReconciler.MapServiceToContainerlab,
+				c.TopologyReconciler.EnqueueForAll,
+			),
+			ctrlruntimebuilder.WithPredicates(
+				c.BaseController.GlobalConfigPredicates(),
 			),
 		).
 		Complete(c)
