@@ -296,6 +296,17 @@ func renderDeployment(
 		labels[k] = v
 	}
 
+	commonSpec := obj.GetTopologyCommonSpec()
+
+	launcherLogLevel := clabernetesutil.GetEnvStrOrDefault(
+		clabernetesconstants.LauncherLoggerLevelEnv,
+		clabernetesconstants.Info,
+	)
+
+	if commonSpec.LauncherLogLevel != "" {
+		launcherLogLevel = commonSpec.LauncherLogLevel
+	}
+
 	deployment := &k8sappsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        deploymentName,
@@ -360,11 +371,8 @@ func renderDeployment(
 							},
 							Env: []k8scorev1.EnvVar{
 								{
-									Name: clabernetesconstants.LauncherLoggerLevelEnv,
-									Value: clabernetesutil.GetEnvStrOrDefault(
-										clabernetesconstants.LauncherLoggerLevelEnv,
-										clabernetesconstants.Info,
-									),
+									Name:  clabernetesconstants.LauncherLoggerLevelEnv,
+									Value: launcherLogLevel,
 								},
 							},
 						},
@@ -388,7 +396,7 @@ func renderDeployment(
 		},
 	}
 
-	if obj.GetTopologyCommonSpec().ContainerlabDebug {
+	if commonSpec.ContainerlabDebug {
 		deployment.Spec.Template.Spec.Containers[0].Env = append(
 			deployment.Spec.Template.Spec.Containers[0].Env,
 			k8scorev1.EnvVar{

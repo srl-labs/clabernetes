@@ -84,6 +84,12 @@ type TopologyCommonSpec struct {
 	// This is disabled by default.
 	// +optional
 	ContainerlabDebug bool `json:"containerlabDebug"`
+	// LauncherLogLevel sets the launcher clabernetes worker log level -- this overrides whatever
+	// is set on the controllers env vars for this topology. Note: omitempty because empty str does
+	// not satisfy enum of course.
+	// +kubebuilder:validation:Enum=disabled;critical;warn;info;debug
+	// +optional
+	LauncherLogLevel string `json:"launcherLogLevel,omitempty"`
 }
 
 // LinkEndpoint is a simple struct to hold node/interface name info for a given link.

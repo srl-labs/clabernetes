@@ -56,19 +56,15 @@ run-client-gen: ## Run client-gen
 	--clientset-name clientset
 
 run-generate-crds: ## Run controller-gen for crds
-	controller-gen crd paths=./apis/... output:crd:dir=./chart/crds/
+	controller-gen crd paths=./apis/... output:crd:dir=./charts/clabernetes/crds/
 
 run-generate: install-code-generators run-deepcopy-gen run-openapi-gen run-client-gen run-generate-crds fmt ## Run all code gen tasks
+	cp charts/clabernetes/crds/*.yaml assets/crd/
 
 delete-generated: ## Deletes all zz_*.go (generated) files, and crds
 	find . -name "zz_*.go" -exec rm {} \;
-	rm chart/crds/*.yaml || true
+	rm charts/clabernetes/crds/*.yaml || true
 	rm -rf generated/*
-
-refresh-chart-dependencies: ## Refreshes all dependent helm charts (ex: ui)
-	cd chart; \
-	helm dependency build; \
-	helm dependency update
 
 build-manager: ## Builds the clabernetes manager container; typically built via devspace, but this is a handy shortcut for one offs.
 	docker build -t ghcr.io/srl-labs/clabernetes/clabernetes-launcher:latest -f ./build/manager.Dockerfile .
