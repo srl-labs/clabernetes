@@ -145,6 +145,16 @@ profiles:
         path: deployments.clabernetes.helm.values.launcher.imagePullPolicy
         value: Always
 
+  # for deployment in ci, crank up logging, but still roll w/ default (3) replicas
+  - name: ci
+    patches:
+      - op: add
+        path: deployments.clabernetes.helm.values.manager.managerLogLevel
+        value: debug
+      - op: add
+        path: deployments.clabernetes.helm.values.manager.controllerLogLevel
+        value: debug
+
   - name: release
     patches:
       - op: replace

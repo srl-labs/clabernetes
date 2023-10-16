@@ -82,7 +82,7 @@ jobs:
           kubectl get pods -A
 
       - name: deploy clabernetes
-        run: devspace run deploy
+        run: devspace run deploy --profile ci
 
       - name: wait for clabernetes
         run: |
@@ -94,3 +94,14 @@ jobs:
 
       - name: run the e2e tests
         run: make test-e2e
+
+      - name: dump logs from controller if tests fail
+        if: steps.run-the-e2e-tests.outcome != 'success'
+        run: |
+          set -x
+          kubectl get pods -n clabernetes -o yaml
+          echo "\n********************************\n"
+          kubectl get events -n clabernetes --sort-by='.lastTimestamp'
+          echo "\n********************************\n"
+          kubectl logs -l clabernetes/name=clabernetes-manager -n clabernetes --tail=-1
+          exit 1
