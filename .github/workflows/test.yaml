@@ -49,7 +49,7 @@ jobs:
     needs:
       - unit
     # run e2e on main or prs pointing to main
-    if: github.ref_name == 'main' || github.base_ref == 'main'
+    if: (github.ref_name == 'main' || github.base_ref == 'main') || (github.event_name == 'workflow_dispatch' && inputs.debug_e2e)
     steps:
       - name: checkout
         uses: actions/checkout@v4
