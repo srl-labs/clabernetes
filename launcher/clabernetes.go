@@ -1,19 +1,10 @@
 package launcher
 
 import (
-	"bytes"
 	"context"
-	"fmt"
-	"io"
 	"math/rand"
-	"net"
 	"os"
-	"os/exec"
-	"strings"
-	"text/template"
 	"time"
-
-	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	"sigs.k8s.io/yaml"
@@ -76,6 +67,15 @@ func (c *clabernetes) startup() {
 
 	c.logger.Debugf("clabernetes version %s", clabernetesconstants.Version)
 
+	c.setup()
+	c.launch()
+
+	c.logger.Info("running for forever or until sigint...")
+
+	<-c.ctx.Done()
+}
+
+func (c *clabernetes) setup() {
 	c.logger.Debug("configure insecure registries if requested...")
 
 	err := c.handleInsecureRegistries()
@@ -89,14 +89,33 @@ func (c *clabernetes) startup() {
 
 	err = c.startDocker()
 	if err != nil {
-		c.logger.Criticalf("failed ensuring docker is running, err: %s", err)
+		c.logger.Warn(
+			"failed ensuring docker is running, attempting to fallback to legacy ip tables",
+		)
 
-		clabernetesutil.Panic(err.Error())
+		// see https://github.com/srl-labs/clabernetes/issues/47
+		err = c.enableLegacyIPTables()
+		if err != nil {
+			c.logger.Criticalf("failed enabling legacy ip tables, err: %s", err)
+
+			clabernetesutil.Panic(err.Error())
+		}
+
+		err = c.startDocker()
+		if err != nil {
+			c.logger.Criticalf("failed ensuring docker is running, err: %s", err)
+
+			clabernetesutil.Panic(err.Error())
+		}
+
+		c.logger.Warn("docker started, but using legacy ip tables")
 	}
+}
 
+func (c *clabernetes) launch() {
 	c.logger.Debug("launching containerlab...")
 
-	err = c.runClab()
+	err := c.runClab()
 	if err != nil {
 		c.logger.Criticalf("failed launching containerlab, err: %s", err)
 
@@ -139,157 +158,4 @@ func (c *clabernetes) startup() {
 			clabernetesutil.Panic(err.Error())
 		}
 	}
-
-	c.logger.Info("running for forever or until sigint...")
-
-	<-c.ctx.Done()
-}
-
-func (c *clabernetes) handleInsecureRegistries() error {
-	insecureRegistries := os.Getenv(clabernetesconstants.LauncherInsecureRegistries)
-
-	if insecureRegistries == "" {
-		return nil
-	}
-
-	splitRegistries := strings.Split(insecureRegistries, ",")
-
-	quotedRegistries := make([]string, len(splitRegistries))
-
-	for idx, elem := range splitRegistries {
-		quotedRegistries[idx] = fmt.Sprintf("%q", elem)
-	}
-
-	templateVars := struct {
-		InsecureRegistries string
-	}{
-		InsecureRegistries: strings.Join(quotedRegistries, ","),
-	}
-
-	t, err := template.ParseFS(Assets, "assets/docker-daemon.json.template")
-	if err != nil {
-		return err
-	}
-
-	var rendered bytes.Buffer
-
-	err = t.Execute(&rendered, templateVars)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(
-		"/etc/docker/daemon.json",
-		rendered.Bytes(),
-		clabernetesconstants.PermissionsEveryoneRead,
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *clabernetes) startDocker() error {
-	// this is janky, why am i too dumb to make docker start in the container?! (no systemd things)
-	var attempts int
-
-	for {
-		psCmd := exec.Command("docker", "ps")
-
-		_, err := psCmd.Output()
-		if err == nil {
-			// exit 0, docker seems happy
-			return nil
-		}
-
-		if attempts > maxDockerLaunchAttempts {
-			return fmt.Errorf("%w: failed starting docker", claberneteserrors.ErrLaunch)
-		}
-
-		cmd := exec.Command("service", "docker", "start")
-
-		_, err = cmd.Output()
-		if err != nil {
-			return err
-		}
-
-		time.Sleep(time.Second)
-
-		attempts++
-	}
-}
-
-func (c *clabernetes) runClab() error {
-	clabLogFile, err := os.Create("clab.log")
-	if err != nil {
-		return err
-	}
-
-	clabOutWriter := io.MultiWriter(c.logger, clabLogFile)
-
-	args := []string{
-		"deploy",
-		"-t",
-		"topo.clab.yaml",
-	}
-
-	if os.Getenv(clabernetesconstants.LauncherContainerlabDebug) == clabernetesconstants.True {
-		args = append(args, "--debug")
-	}
-
-	cmd := exec.Command("containerlab", args...)
-
-	cmd.Stdout = clabOutWriter
-	cmd.Stderr = clabOutWriter
-
-	err = cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *clabernetes) runClabVxlanTools(
-	localNodeName, cntLink, vxlanRemote string,
-	vxlanID int,
-) error {
-	resolvedVxlanRemotes, err := net.LookupIP(vxlanRemote)
-	if err != nil {
-		return err
-	}
-
-	if len(resolvedVxlanRemotes) != 1 {
-		return fmt.Errorf(
-			"%w: did not get exactly one ip resolved for remote vxlan endpoint",
-			claberneteserrors.ErrConnectivity,
-		)
-	}
-
-	resolvedVxlanRemote := resolvedVxlanRemotes[0].String()
-
-	c.logger.Debugf("resolved remote vxlan tunnel service address as '%s'", resolvedVxlanRemote)
-
-	cmd := exec.Command( //nolint:gosec
-		"containerlab",
-		"tools",
-		"vxlan",
-		"create",
-		"--remote",
-		resolvedVxlanRemote,
-		"--id",
-		fmt.Sprint(vxlanID),
-		"--link",
-		fmt.Sprintf("%s-%s", localNodeName, cntLink),
-		"--port",
-		fmt.Sprint(clabernetesconstants.VXLANServicePort),
-	)
-
-	_, err = cmd.Output()
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
