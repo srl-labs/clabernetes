@@ -153,7 +153,7 @@ func (r *Reconciler) pruneExposeServices(
 func (r *Reconciler) enforceExposeServices(
 	ctx context.Context,
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
-	objTopologyStatus clabernetesapistopologyv1alpha1.TopologyStatus,
+	objTopologyStatus *clabernetesapistopologyv1alpha1.TopologyStatus,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	services *clabernetescontrollers.ResolvedServices,
 ) error {
@@ -270,7 +270,7 @@ func (r *Reconciler) parseContainerlabTopologyPortsSection(
 
 func (r *Reconciler) renderExposeService(
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
-	objTopologyStatus clabernetesapistopologyv1alpha1.TopologyStatus,
+	objTopologyStatus *clabernetesapistopologyv1alpha1.TopologyStatus,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	nodeName string,
 ) *k8scorev1.Service {

@@ -270,7 +270,151 @@ func processPorts(
 	return defaultPortsAsString, nodePortsAsString
 }
 
-func (c *Controller) processConfig( //nolint:funlen,gocyclo
+func (c *Controller) processConfigForNode(
+	clab *clabernetesapistopologyv1alpha1.Containerlab,
+	clabTopo *clabernetesutilcontainerlab.Topology,
+	nodeName string,
+	nodeDefinition *clabernetesutilcontainerlab.NodeDefinition,
+	defaultsYAML []byte,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
+	clabernetesTunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
+) error {
+	deepCopiedDefaults := &clabernetesutilcontainerlab.NodeDefinition{}
+
+	err := yaml.Unmarshal(defaultsYAML, deepCopiedDefaults)
+	if err != nil {
+		return err
+	}
+
+	if !clab.Spec.DisableExpose && !clab.Spec.DisableAutoExpose {
+		// disable expose is *not* set and disable auto expose is *not* set, so we want to
+		// automagically add our default expose ports to the topo. we'll simply tack this onto
+		// the clab defaults ports list since that will get merged w/ any user defined ports
+		defaultPorts, nodePorts := processPorts(clabTopo.Defaults.Ports, nodeDefinition.Ports)
+
+		deepCopiedDefaults.Ports = defaultPorts
+		nodeDefinition.Ports = nodePorts
+	}
+
+	clabernetesConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
+		Name: fmt.Sprintf("clabernetes-%s", nodeName),
+		Topology: &clabernetesutilcontainerlab.Topology{
+			Defaults: deepCopiedDefaults,
+			Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
+				nodeName: nodeDefinition,
+			},
+			Links: nil,
+		},
+		// we override existing topo prefix and set it to empty prefix - "" (rather than accept
+		// what the user has provided *or* the default of "clab").
+		// since prefixes are only useful when multiple labs are scheduled on the same node, and
+		// that will never be the case with clabernetes, the prefix is unnecessary.
+		Prefix: clabernetesutil.StringToPointer(""),
+	}
+
+	for _, link := range clabTopo.Links {
+		if len(link.Endpoints) != clabernetesapistopologyv1alpha1.LinkEndpointElementCount {
+			msg := fmt.Sprintf(
+				"endpoint '%q' has wrong syntax, unexpected number of items", link.Endpoints,
+			)
+
+			c.BaseController.Log.Critical(msg)
+
+			return fmt.Errorf(
+				"%w: %s", claberneteserrors.ErrParse, msg,
+			)
+		}
+
+		endpointAParts := strings.Split(link.Endpoints[0], ":")
+		endpointBParts := strings.Split(link.Endpoints[1], ":")
+
+		if len(endpointAParts) != clabernetesapistopologyv1alpha1.LinkEndpointElementCount ||
+			len(endpointBParts) != clabernetesapistopologyv1alpha1.LinkEndpointElementCount {
+			msg := fmt.Sprintf(
+				"endpoint '%q' has wrong syntax, bad endpoint:interface config", link.Endpoints,
+			)
+
+			c.BaseController.Log.Critical(msg)
+
+			return fmt.Errorf(
+				"%w: %s", claberneteserrors.ErrParse, msg,
+			)
+		}
+
+		endpointA := clabernetesapistopologyv1alpha1.LinkEndpoint{
+			NodeName:      endpointAParts[0],
+			InterfaceName: endpointAParts[1],
+		}
+		endpointB := clabernetesapistopologyv1alpha1.LinkEndpoint{
+			NodeName:      endpointBParts[0],
+			InterfaceName: endpointBParts[1],
+		}
+
+		if endpointA.NodeName != nodeName && endpointB.NodeName != nodeName {
+			// link doesn't apply to this node, carry on
+			continue
+		}
+
+		if endpointA.NodeName == nodeName && endpointB.NodeName == nodeName {
+			// link loops back to ourselves, no need to do overlay things just append the link
+			clabernetesConfigs[nodeName].Topology.Links = append(
+				clabernetesConfigs[nodeName].Topology.Links,
+				link,
+			)
+
+			continue
+		}
+
+		interestingEndpoint := endpointA
+		uninterestingEndpoint := endpointB
+
+		if endpointB.NodeName == nodeName {
+			interestingEndpoint = endpointB
+			uninterestingEndpoint = endpointA
+		}
+
+		clabernetesConfigs[nodeName].Topology.Links = append(
+			clabernetesConfigs[nodeName].Topology.Links,
+			&clabernetesutilcontainerlab.LinkDefinition{
+				LinkConfig: clabernetesutilcontainerlab.LinkConfig{
+					Endpoints: []string{
+						fmt.Sprintf(
+							"%s:%s",
+							interestingEndpoint.NodeName,
+							interestingEndpoint.InterfaceName,
+						),
+						fmt.Sprintf(
+							"host:%s-%s",
+							interestingEndpoint.NodeName,
+							interestingEndpoint.InterfaceName,
+						),
+					},
+				},
+			},
+		)
+
+		clabernetesTunnels[nodeName] = append(
+			clabernetesTunnels[nodeName],
+			&clabernetesapistopologyv1alpha1.Tunnel{
+				LocalNodeName:  nodeName,
+				RemoteNodeName: uninterestingEndpoint.NodeName,
+				RemoteName: fmt.Sprintf(
+					"%s-%s-vx.%s.%s",
+					clab.Name,
+					uninterestingEndpoint.NodeName,
+					clab.Namespace,
+					clabernetescontrollerstopology.GetServiceDNSSuffix(),
+				),
+				LocalLinkName:  interestingEndpoint.InterfaceName,
+				RemoteLinkName: uninterestingEndpoint.InterfaceName,
+			},
+		)
+	}
+
+	return nil
+}
+
+func (c *Controller) processConfig(
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
 	clabTopo *clabernetesutilcontainerlab.Topology,
 ) (
@@ -281,146 +425,27 @@ func (c *Controller) processConfig( //nolint:funlen,gocyclo
 ) {
 	clabernetesConfigs = make(map[string]*clabernetesutilcontainerlab.Config)
 
-	tunnels := make(map[string][]*clabernetesapistopologyv1alpha1.Tunnel)
+	clabernetesTunnels = make(map[string][]*clabernetesapistopologyv1alpha1.Tunnel)
 
 	// we may have *different defaults per "sub-topology" so we do a cheater "deep copy" by just
 	// marshalling/unmarshalling :)
 	defaultsYAML, err := yaml.Marshal(clabTopo.Defaults)
 	if err != nil {
-		return clabernetesConfigs, tunnels, false, err
+		return clabernetesConfigs, clabernetesTunnels, false, err
 	}
 
 	for nodeName, nodeDefinition := range clabTopo.Nodes {
-		deepCopiedDefaults := &clabernetesutilcontainerlab.NodeDefinition{}
-
-		err = yaml.Unmarshal(defaultsYAML, deepCopiedDefaults)
+		err = c.processConfigForNode(
+			clab,
+			clabTopo,
+			nodeName,
+			nodeDefinition,
+			defaultsYAML,
+			clabernetesConfigs,
+			clabernetesTunnels,
+		)
 		if err != nil {
-			return clabernetesConfigs, tunnels, false, err
-		}
-
-		if !clab.Spec.DisableExpose && !clab.Spec.DisableAutoExpose {
-			// disable expose is *not* set and disable auto expose is *not* set, so we want to
-			// automagically add our default expose ports to the topo. we'll simply tack this onto
-			// the clab defaults ports list since that will get merged w/ any user defined ports
-			defaultPorts, nodePorts := processPorts(clabTopo.Defaults.Ports, nodeDefinition.Ports)
-
-			deepCopiedDefaults.Ports = defaultPorts
-			nodeDefinition.Ports = nodePorts
-		}
-
-		clabernetesConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
-			Name: fmt.Sprintf("clabernetes-%s", nodeName),
-			Topology: &clabernetesutilcontainerlab.Topology{
-				Defaults: deepCopiedDefaults,
-				Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
-					nodeName: nodeDefinition,
-				},
-				Links: nil,
-			},
-			// we override existing topo prefix and set it to empty prefix - "" (rather than accept
-			// what the user has provided *or* the default of "clab").
-			// since prefixes are only useful when multiple labs are scheduled on the same node, and
-			// that will never be the case with clabernetes, the prefix is unnecessary.
-			Prefix: clabernetesutil.StringToPointer(""),
-		}
-
-		for _, link := range clabTopo.Links {
-			if len(link.Endpoints) != clabernetesapistopologyv1alpha1.LinkEndpointElementCount {
-				msg := fmt.Sprintf(
-					"endpoint '%q' has wrong syntax, unexpected number of items", link.Endpoints,
-				)
-
-				c.BaseController.Log.Critical(msg)
-
-				return nil, nil, false, fmt.Errorf(
-					"%w: %s", claberneteserrors.ErrParse, msg,
-				)
-			}
-
-			endpointAParts := strings.Split(link.Endpoints[0], ":")
-			endpointBParts := strings.Split(link.Endpoints[1], ":")
-
-			if len(endpointAParts) != clabernetesapistopologyv1alpha1.LinkEndpointElementCount ||
-				len(endpointBParts) != clabernetesapistopologyv1alpha1.LinkEndpointElementCount {
-				msg := fmt.Sprintf(
-					"endpoint '%q' has wrong syntax, bad endpoint:interface config", link.Endpoints,
-				)
-
-				c.BaseController.Log.Critical(msg)
-
-				return nil, nil, false, fmt.Errorf(
-					"%w: %s", claberneteserrors.ErrParse, msg,
-				)
-			}
-
-			endpointA := clabernetesapistopologyv1alpha1.LinkEndpoint{
-				NodeName:      endpointAParts[0],
-				InterfaceName: endpointAParts[1],
-			}
-			endpointB := clabernetesapistopologyv1alpha1.LinkEndpoint{
-				NodeName:      endpointBParts[0],
-				InterfaceName: endpointBParts[1],
-			}
-
-			if endpointA.NodeName != nodeName && endpointB.NodeName != nodeName {
-				// link doesn't apply to this node, carry on
-				continue
-			}
-
-			if endpointA.NodeName == nodeName && endpointB.NodeName == nodeName {
-				// link loops back to ourselves, no need to do overlay things just append the link
-				clabernetesConfigs[nodeName].Topology.Links = append(
-					clabernetesConfigs[nodeName].Topology.Links,
-					link,
-				)
-
-				continue
-			}
-
-			interestingEndpoint := endpointA
-			uninterestingEndpoint := endpointB
-
-			if endpointB.NodeName == nodeName {
-				interestingEndpoint = endpointB
-				uninterestingEndpoint = endpointA
-			}
-
-			clabernetesConfigs[nodeName].Topology.Links = append(
-				clabernetesConfigs[nodeName].Topology.Links,
-				&clabernetesutilcontainerlab.LinkDefinition{
-					LinkConfig: clabernetesutilcontainerlab.LinkConfig{
-						Endpoints: []string{
-							fmt.Sprintf(
-								"%s:%s",
-								interestingEndpoint.NodeName,
-								interestingEndpoint.InterfaceName,
-							),
-							fmt.Sprintf(
-								"host:%s-%s",
-								interestingEndpoint.NodeName,
-								interestingEndpoint.InterfaceName,
-							),
-						},
-					},
-				},
-			)
-
-			tunnels[nodeName] = append(
-				tunnels[nodeName],
-				&clabernetesapistopologyv1alpha1.Tunnel{
-					LocalNodeName:  nodeName,
-					RemoteNodeName: uninterestingEndpoint.NodeName,
-					RemoteName: fmt.Sprintf(
-						"%s-%s-vx.%s.%s",
-						clab.Name,
-						uninterestingEndpoint.NodeName,
-						clab.Namespace,
-						clabernetescontrollerstopology.GetServiceDNSSuffix(),
-					),
-					LocalLinkName:  interestingEndpoint.InterfaceName,
-					RemoteLinkName: uninterestingEndpoint.InterfaceName,
-				},
-			)
+			return nil, nil, false, err
 		}
 	}
 
@@ -429,11 +454,18 @@ func (c *Controller) processConfig( //nolint:funlen,gocyclo
 		return nil, nil, false, err
 	}
 
+	tunnelsBytes, err := yaml.Marshal(clabernetesTunnels)
+	if err != nil {
+		return nil, nil, false, err
+	}
+
 	newConfigsHash := clabernetesutil.HashBytes(clabernetesConfigsBytes)
 
-	if clab.Status.ConfigsHash == newConfigsHash {
-		// the configs hash matches, nothing to do, should reconcile is false, and no error
-		return clabernetesConfigs, tunnels, false, nil
+	newTunnelsHash := clabernetesutil.HashBytes(tunnelsBytes)
+
+	if clab.Status.ConfigsHash == newConfigsHash && clab.Status.TunnelsHash == newTunnelsHash {
+		// the configs hashes match, nothing to do, should reconcile is false, and no error
+		return clabernetesConfigs, clabernetesTunnels, false, nil
 	}
 
 	// if we got here we know we need to re-reconcile as the hash has changed, set the config and
@@ -441,11 +473,15 @@ func (c *Controller) processConfig( //nolint:funlen,gocyclo
 	// can do that though, we need to handle setting tunnel ids. so first we go over and re-use
 	// all the existing tunnel ids by assigning matching node/interface pairs from the previous
 	// status to the new tunnels... when doing so we record the allocated ids...
-	clabernetescontrollerstopology.AllocateTunnelIDs(clab.Status.TopologyStatus.Tunnels, tunnels)
+	clabernetescontrollerstopology.AllocateTunnelIDs(
+		clab.Status.TopologyStatus.Tunnels,
+		clabernetesTunnels,
+	)
 
 	clab.Status.Configs = string(clabernetesConfigsBytes)
 	clab.Status.ConfigsHash = newConfigsHash
-	clab.Status.Tunnels = tunnels
+	clab.Status.Tunnels = clabernetesTunnels
+	clab.Status.TunnelsHash = newTunnelsHash
 
-	return clabernetesConfigs, tunnels, true, nil
+	return clabernetesConfigs, clabernetesTunnels, true, nil
 }

@@ -159,7 +159,7 @@ func (r *Reconciler) ReconcileServicesExpose(
 		return shouldUpdate, err
 	}
 
-	err = r.enforceExposeServices(ctx, obj, objTopologyStatus, clabernetesConfigs, services)
+	err = r.enforceExposeServices(ctx, obj, &objTopologyStatus, clabernetesConfigs, services)
 	if err != nil {
 		return shouldUpdate, err
 	}

@@ -138,7 +138,7 @@ spec:
                   fieldPath: metadata.namespace
             - name: CLIENT_OPERATION_TIMEOUT_MULTIPLIER
               value: "{{ .Values.manager.clientOperationTimeoutMultiplier }}"
-              {{- if .Values.launcher.image }}
+              {{- if .Values.manager.inClusterDNSSuffixOverride }}
             - name:  IN_CLUSTER_DNS_SUFFIX_OVERRIDE
               value: {{ .Values.manager.inClusterDNSSuffixOverride }}
               {{- end }}

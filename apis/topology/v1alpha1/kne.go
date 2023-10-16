@@ -31,7 +31,7 @@ func (c *Kne) GetTopologyStatus() TopologyStatus {
 }
 
 // SetTopologyStatus sets Kne resource's TopologyStatus embedded in the object's status.
-func (c *Kne) SetTopologyStatus(s TopologyStatus) {
+func (c *Kne) SetTopologyStatus(s TopologyStatus) { //nolint:gocritic
 	c.Status.TopologyStatus = s
 }
 
