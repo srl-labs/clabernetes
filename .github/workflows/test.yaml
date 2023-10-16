@@ -82,7 +82,7 @@ jobs:
           kubectl get pods -A
 
       - name: deploy clabernetes
-        run: devspace run deploy
+        run: devspace run deploy --profile debug
 
       - name: wait for clabernetes
         run: |
@@ -93,4 +93,17 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_e2e }}
 
       - name: run the e2e tests
+        id: run-the-e2e-tests
         run: make test-e2e
+        continue-on-error: true
+
+      - name: dump logs from controller if tests fail
+        if: steps.run-the-e2e-tests.outcome != 'success'
+        run: |
+          set -x
+          kubectl get pods -n clabernetes -o yaml
+          echo "\n********************************\n"
+          kubectl get events -n clabernetes --sort-by='.lastTimestamp'
+          echo "\n********************************\n"
+          kubectl logs -l clabernetes/name=clabernetes-manager -n clabernetes --tail=-1
+          exit 1
