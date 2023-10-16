@@ -204,12 +204,18 @@ spec:
                 description: Tunnels is a mapping of tunnels that need to be configured
                   between nodes (nodes:[]tunnels).
                 type: object
+              tunnelsHash:
+                description: TunnelsHash is a hash of hte last stored Tunnels data.
+                  As this can change due to the dns suffix changing and not just the
+                  config changing we need to independently track this state.
+                type: string
             required:
             - configs
             - configsHash
             - nodeExposedPorts
             - nodeExposedPortsHash
             - tunnels
+            - tunnelsHash
             type: object
         type: object
     served: true

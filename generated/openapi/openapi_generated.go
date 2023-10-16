@@ -322,6 +322,14 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
 							},
 						},
 					},
+					"tunnelsHash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TunnelsHash is a hash of hte last stored Tunnels data. As this can change due to the dns suffix changing and not just the config changing we need to independently track this state.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"nodeExposedPorts": {
 						SchemaProps: spec.SchemaProps{
 							Description: "NodeExposedPorts holds a map of (containerlab) nodes and their exposed ports (via load balancer).",
@@ -351,6 +359,7 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
 					"configs",
 					"configsHash",
 					"tunnels",
+					"tunnelsHash",
 					"nodeExposedPorts",
 					"nodeExposedPortsHash",
 				},
@@ -720,6 +729,14 @@ func schema_clabernetes_apis_topology_v1alpha1_KneStatus(
 							},
 						},
 					},
+					"tunnelsHash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TunnelsHash is a hash of hte last stored Tunnels data. As this can change due to the dns suffix changing and not just the config changing we need to independently track this state.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"nodeExposedPorts": {
 						SchemaProps: spec.SchemaProps{
 							Description: "NodeExposedPorts holds a map of (containerlab) nodes and their exposed ports (via load balancer).",
@@ -749,6 +766,7 @@ func schema_clabernetes_apis_topology_v1alpha1_KneStatus(
 					"configs",
 					"configsHash",
 					"tunnels",
+					"tunnelsHash",
 					"nodeExposedPorts",
 					"nodeExposedPortsHash",
 				},
@@ -923,6 +941,14 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyStatus(
 							},
 						},
 					},
+					"tunnelsHash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TunnelsHash is a hash of hte last stored Tunnels data. As this can change due to the dns suffix changing and not just the config changing we need to independently track this state.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"nodeExposedPorts": {
 						SchemaProps: spec.SchemaProps{
 							Description: "NodeExposedPorts holds a map of (containerlab) nodes and their exposed ports (via load balancer).",
@@ -952,6 +978,7 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyStatus(
 					"configs",
 					"configsHash",
 					"tunnels",
+					"tunnelsHash",
 					"nodeExposedPorts",
 					"nodeExposedPortsHash",
 				},

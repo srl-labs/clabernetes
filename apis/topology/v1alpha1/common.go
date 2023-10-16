@@ -140,6 +140,9 @@ type TopologyStatus struct {
 	ConfigsHash string `json:"configsHash"`
 	// Tunnels is a mapping of tunnels that need to be configured between nodes (nodes:[]tunnels).
 	Tunnels map[string][]*Tunnel `json:"tunnels"`
+	// TunnelsHash is a hash of hte last stored Tunnels data. As this can change due to the dns
+	// suffix changing and not just the config changing we need to independently track this state.
+	TunnelsHash string `json:"tunnelsHash"`
 	// NodeExposedPorts holds a map of (containerlab) nodes and their exposed ports
 	// (via load balancer).
 	NodeExposedPorts map[string]*ExposedPorts `json:"nodeExposedPorts"`

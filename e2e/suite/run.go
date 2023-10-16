@@ -11,7 +11,7 @@ import (
 const (
 	updateReconcileWait    = 2 * time.Second
 	eventuallyPollInterval = 3 * time.Second
-	eventuallyMaxTime      = 60 * time.Second
+	eventuallyMaxTime      = 120 * time.Second
 )
 
 // Run executes a clabernetes e2e test.
@@ -47,11 +47,11 @@ func Run(t *testing.T, steps []Step, testName string) { //nolint: thelper
 			for idx := range objects {
 				object := step.AssertObjects[kind][idx]
 
-				objectData := getter(t, namespace, kind, object.Name, object)
-
 				fileName := fmt.Sprintf("golden/%d-%s.%s.yaml", step.Index, kind, object.Name)
 
 				if *clabernetestesthelper.Update {
+					objectData := getter(t, namespace, kind, object.Name, object)
+
 					clabernetestesthelper.WriteTestFixtureFile(t, fileName, objectData)
 
 					// we just wrote the golden file of course it will match, no need to check

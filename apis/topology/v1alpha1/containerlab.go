@@ -32,7 +32,7 @@ func (c *Containerlab) GetTopologyStatus() TopologyStatus {
 }
 
 // SetTopologyStatus sets Kne resource's TopologyStatus embedded in the object's status.
-func (c *Containerlab) SetTopologyStatus(s TopologyStatus) {
+func (c *Containerlab) SetTopologyStatus(s TopologyStatus) { //nolint:gocritic
 	c.Status.TopologyStatus = s
 }
 
