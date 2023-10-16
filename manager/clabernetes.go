@@ -147,6 +147,8 @@ func (c *clabernetes) NewContextWithTimeout() (context.Context, context.CancelFu
 func (c *clabernetes) startup() {
 	c.logger.Info("starting clabernetes...")
 
+	c.logger.Debugf("clabernetes version %s", clabernetesconstants.Version)
+
 	var err error
 
 	c.namespace, err = clabernetesutil.CurrentNamespace()

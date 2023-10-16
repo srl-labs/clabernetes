@@ -93,7 +93,9 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_e2e }}
 
       - name: run the e2e tests
+        id: run-the-e2e-tests
         run: make test-e2e
+        continue-on-error: true
 
       - name: dump logs from controller if tests fail
         if: steps.run-the-e2e-tests.outcome != 'success'

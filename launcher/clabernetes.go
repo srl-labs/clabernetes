@@ -16,7 +16,7 @@ import (
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
-	"gopkg.in/yaml.v3"
+	"sigs.k8s.io/yaml"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
@@ -73,6 +73,8 @@ type clabernetes struct {
 
 func (c *clabernetes) startup() {
 	c.logger.Info("starting clabernetes...")
+
+	c.logger.Debugf("clabernetes version %s", clabernetesconstants.Version)
 
 	c.logger.Debug("configure insecure registries if requested...")
 
