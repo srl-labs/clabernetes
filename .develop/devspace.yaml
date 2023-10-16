@@ -9,7 +9,7 @@ vars:
     source: env
     default: ghcr.io/srl-labs/clabernetes
 
-  PULL_POLICY: Always
+  PULL_POLICY: IfNotPresent
 
   CLABERNETES: clabernetes
   IMAGE_BASE: ${REGISTRY}/${CLABERNETES}
@@ -81,6 +81,12 @@ deployments:
         manager:
           image: ${MANAGER_IMAGE}
           imagePullPolicy: ${PULL_POLICY}
+        launcher:
+          image: ${MANAGER_IMAGE}
+          imagePullPolicy: ${PULL_POLICY}
+        clicker:
+          image: ${MANAGER_IMAGE}
+          imagePullPolicy: ${PULL_POLICY}
 
 dev:
   clabernetes:
@@ -99,20 +105,8 @@ dev:
       command: .develop/start.sh
 
 profiles:
-  - name: dev
+  - name: debug
     patches:
-      # replace the image pull policy for dev (but only for init/manager!) to IfNotPresent so that
-      # images loaded into kind are used for those folks that do local dev w/ kind/docker-desktop
-      # w/out this we'd try to pull from ghcr on a tag that doesn't exist. note that this shouldn't
-      # ever be annoying in "dev mode" since we'll already be syncing the code over via devspace.
-      # we also set this the same way for the launcher image. if you are developing on a "real"
-      # cluster and/or have a push/pull registry that you are using (and thereby don't have the
-      # images loaded into kind/docker-desktop and are actually pulling), you probably want to add
-      # the "dev-non-local" profile flag -- so for a devspace dev command from the root of this repo
-      # you would do `devspace run dev --profile dev-non-local`
-      - op: replace
-        path: deployments.clabernetes.helm.values.manager.imagePullPolicy
-        value: IfNotPresent
       - op: add
         path: deployments.clabernetes.helm.values.manager.managerLogLevel
         value: debug
@@ -120,23 +114,21 @@ profiles:
         path: deployments.clabernetes.helm.values.manager.controllerLogLevel
         value: debug
       - op: add
+        path: deployments.clabernetes.helm.values.launcher.logLevel
+        value: debug
+
+  - name: single-manager
+    patches:
+      - op: add
         path: deployments.clabernetes.helm.values.manager.replicaCount
         value: 1
 
-      - op: add
-        path: deployments.clabernetes.helm.values.launcher
-        value:
-          image: ${LAUNCHER_IMAGE}
-          pullPolicy: IfNotPresent
-          logLevel: debug
-
-      # for testing clicker things we want to also replace that image, probably not necessary often
-      - op: add
-        path: deployments.clabernetes.helm.values.clicker
-        value:
-          image: ${MANAGER_IMAGE}
-
-  - name: dev-non-local
+  # for development using devspace on "non-local" clusters (meaning *not* kind/docker-desktop/
+  # minikube/maybe others) you will want to have Always for image pull so launcher and clicker pick
+  # up the new image -- you may even want always pull on manager so the manager dev image is pulled;
+  # conversely, for the "local" clusters you *don't* want this because you want to use the image
+  # that you loaded (i.e `kind load docker-image`) to the cluster.
+  - name: always-pull
     patches:
       - op: replace
         path: deployments.clabernetes.helm.values.manager.imagePullPolicy
@@ -144,16 +136,9 @@ profiles:
       - op: replace
         path: deployments.clabernetes.helm.values.launcher.imagePullPolicy
         value: Always
-
-  # for deployment in ci, crank up logging, but still roll w/ default (3) replicas
-  - name: ci
-    patches:
-      - op: add
-        path: deployments.clabernetes.helm.values.manager.managerLogLevel
-        value: debug
-      - op: add
-        path: deployments.clabernetes.helm.values.manager.controllerLogLevel
-        value: debug
+      - op: replace
+        path: deployments.clabernetes.helm.values.clicker.imagePullPolicy
+        value: Always
 
   - name: release
     patches:
