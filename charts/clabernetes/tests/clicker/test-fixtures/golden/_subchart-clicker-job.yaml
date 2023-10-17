@@ -3,15 +3,20 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: clabernetes-clicker
+  name: clabernetes-plus-clicker-clicker
   namespace: clabernetes
   labels:
     chart: "clicker-0.0.16"
     release: release-name
     heritage: Helm
-    clabernetes/app: clabernetes
-    clabernetes/name: "clabernetes-clicker"
+    clabernetes/app: clabernetes-plus-clicker
+    clabernetes/name: "clabernetes-plus-clicker-clicker"
     clabernetes/component: clicker
+    anotherlabel: anotherlabelvalue
+    somelabel: somelabelvalue
+  annotations:
+    annotherannotation: anotherannotationvalue
+    someannotation: someannotationvalue
 spec:
   template:
     metadata:
@@ -19,9 +24,14 @@ spec:
         chart: "clicker-0.0.16"
         release: release-name
         heritage: Helm
-        clabernetes/app: clabernetes
-        clabernetes/name: "clabernetes-clicker"
+        clabernetes/app: clabernetes-plus-clicker
+        clabernetes/name: "clabernetes-plus-clicker-clicker"
         clabernetes/component: clicker
+        anotherlabel: anotherlabelvalue
+        somelabel: somelabelvalue
+      annotations:
+        annotherannotation: anotherannotationvalue
+        someannotation: someannotationvalue
     spec:
       containers:
         - name: clicker
@@ -33,7 +43,7 @@ spec:
           ]
           env:
             - name: APP_NAME
-              value: clabernetes
+              value: clabernetes-plus-clicker
             - name: POD_NAME
               valueFrom:
                 fieldRef:
@@ -51,14 +61,14 @@ spec:
             - name: CLICKER_WORKER_RESOURCES
               value: "requests:\n  cpu: 50m\n  memory: 128Mi"
             - name: CLICKER_GLOBAL_ANNOTATIONS
-              value: "{}"
+              value: "annotherannotation: anotherannotationvalue\nsomeannotation: someannotationvalue"
             - name: CLICKER_GLOBAL_LABELS
-              value: "{}"
+              value: "anotherlabel: anotherlabelvalue\nsomelabel: somelabelvalue"
           resources:
             requests:
               memory: 128Mi
               cpu: 50m
       restartPolicy: Never
-      serviceAccountName: "clabernetes-clicker-service-account"
+      serviceAccountName: "clabernetes-plus-clicker-clicker-service-account"
   backoffLimit: 4
   ttlSecondsAfterFinished: 300

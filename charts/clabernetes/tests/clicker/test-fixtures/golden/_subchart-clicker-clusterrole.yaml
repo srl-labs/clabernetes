@@ -7,10 +7,15 @@ metadata:
     chart: "clicker-0.0.16"
     release: release-name
     heritage: Helm
-    clabernetes/app: clabernetes
-    clabernetes/name: "clabernetes-clicker-cluster-role"
+    clabernetes/app: clabernetes-plus-clicker
+    clabernetes/name: "clabernetes-plus-clicker-clicker-cluster-role"
     clabernetes/component: cluster-role
-  name: "clabernetes-clicker-cluster-role"
+    anotherlabel: anotherlabelvalue
+    somelabel: somelabelvalue
+  annotations:
+    annotherannotation: anotherannotationvalue
+    someannotation: someannotationvalue
+  name: "clabernetes-plus-clicker-clicker-cluster-role"
 rules:
   - apiGroups:
       - ""

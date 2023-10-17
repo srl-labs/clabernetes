@@ -1,6 +1,7 @@
 package default_vaules_test
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -21,5 +22,5 @@ func TestClickerEnabled(t *testing.T) {
 
 	testName := "clicker-enabled"
 
-	clabernetestesthelper.HelmTest(t, testName)
+	clabernetestesthelper.HelmTest(t, testName, fmt.Sprintf("%s-values.yaml", testName))
 }

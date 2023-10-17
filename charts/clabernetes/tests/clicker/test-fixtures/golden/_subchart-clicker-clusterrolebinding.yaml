@@ -8,16 +8,21 @@ metadata:
     chart: "clicker-0.0.16"
     release: release-name
     heritage: Helm
-    clabernetes/app: clabernetes
-    clabernetes/name: "clabernetes-clicker-cluster-role-binding"
+    clabernetes/app: clabernetes-plus-clicker
+    clabernetes/name: "clabernetes-plus-clicker-clicker-cluster-role-binding"
     clabernetes/component: cluster-role-binding
+    anotherlabel: anotherlabelvalue
+    somelabel: somelabelvalue
+  annotations:
+    annotherannotation: anotherannotationvalue
+    someannotation: someannotationvalue
 subjects:
   - kind: ServiceAccount
-    name: "clabernetes-clicker-service-account"
+    name: "clabernetes-plus-clicker-clicker-service-account"
     namespace: clabernetes
 roleRef:
   kind: ClusterRole
-  name: "clabernetes-cluster-role"
+  name: "clabernetes-plus-clicker-cluster-role"
   apiGroup: rbac.authorization.k8s.io
 ---
 # Source: clabernetes/charts/clicker/templates/clusterrolebinding.yaml
@@ -29,14 +34,14 @@ metadata:
     chart: "clicker-0.0.16"
     release: release-name
     heritage: Helm
-    clabernetes/app: clabernetes
-    clabernetes/name: "clabernetes-clicker-cluster-role-binding"
+    clabernetes/app: clabernetes-plus-clicker
+    clabernetes/name: "clabernetes-plus-clicker-clicker-cluster-role-binding"
     clabernetes/component: cluster-role-binding
 subjects:
   - kind: ServiceAccount
-    name: "clabernetes-clicker-service-account"
+    name: "clabernetes-plus-clicker-clicker-service-account"
     namespace: clabernetes
 roleRef:
   kind: ClusterRole
-  name: "clabernetes-clicker-cluster-role"
+  name: "clabernetes-plus-clicker-clicker-cluster-role"
   apiGroup: rbac.authorization.k8s.io

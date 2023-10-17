@@ -19,21 +19,27 @@ const (
 // HelmTest executes a test against a helm chart -- this is a very simple/dumb test meant only to
 // ensure that we don't accidentally screw up charts. We do this by storing the "golden" output of
 // a rendered chart (and subcharts if applicable) with a given values file.
-func HelmTest(t *testing.T, testName string) {
+func HelmTest(t *testing.T, testName, valuesFileName string) {
 	t.Helper()
 
 	// we have to make the chartname/templates dir too since thats where helm wants to write things
 	actualRootDir := fmt.Sprintf("test-fixtures/%s-actual", testName)
 	actualDir := fmt.Sprintf("%s/clabernetes/templates", actualRootDir)
 
-	valuesFile, err := filepath.Abs(fmt.Sprintf("test-fixtures/%s-values.yaml", testName))
-	if err != nil {
-		t.Fatalf(
-			"failed getting abspath for values file, error: %s", err,
-		)
+	var valuesFile string
+
+	if valuesFileName != "" {
+		var err error
+
+		valuesFile, err = filepath.Abs(fmt.Sprintf("test-fixtures/%s-values.yaml", testName))
+		if err != nil {
+			t.Fatalf(
+				"failed getting abspath for values file, error: %s", err,
+			)
+		}
 	}
 
-	err = os.MkdirAll(actualDir, clabernetesconstants.PermissionsEveryoneRead)
+	err := os.MkdirAll(actualDir, clabernetesconstants.PermissionsEveryoneRead)
 	if err != nil {
 		t.Fatalf(
 			"failed creating actual output directory %q, error: %s", actualDir, err,
@@ -49,14 +55,20 @@ func HelmTest(t *testing.T, testName string) {
 		}
 	}()
 
-	HelmCommand(
-		t,
+	args := []string{
 		"template",
 		"../../.",
 		"--output-dir",
 		actualRootDir,
-		"--values",
-		valuesFile,
+	}
+
+	if valuesFile != "" {
+		args = append(args, "--values", valuesFile)
+	}
+
+	HelmCommand(
+		t,
+		args...,
 	)
 
 	renderedTemplates := ReadAllRenderedTemplates(t, actualRootDir)

@@ -1,3 +1,19 @@
 ---
+# ensure that "global" values (not actually helm globals, but values we pass via yaml anchor)
+# are non-default and passed to the clicker cahrt and render properly
+appName: &_appName clabernetes-plus-clicker
+
+# extra labels/annotations that are added to all objects
+globalAnnotations: &_globalAnnotations
+  someannotation: someannotationvalue
+  annotherannotation: anotherannotationvalue
+globalLabels: &_globalLabels
+  somelabel: somelabelvalue
+  anotherlabel: anotherlabelvalue
+
+# ensure that when enabled clicker stuff is rendered
 clicker:
   enabled: true
+  appName: *_appName
+  globalAnnotations: *_globalAnnotations
+  globalLabels: *_globalLabels
