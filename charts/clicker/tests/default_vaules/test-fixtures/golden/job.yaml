@@ -1,0 +1,64 @@
+---
+# Source: clicker/templates/job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: clabernetes-clicker
+  namespace: clabernetes
+  labels:
+    chart: "clicker-0.0.16"
+    release: release-name
+    heritage: Helm
+    clabernetes/app: clabernetes
+    clabernetes/name: "clabernetes-clicker"
+    clabernetes/component: clicker
+spec:
+  template:
+    metadata:
+      labels:
+        chart: "clicker-0.0.16"
+        release: release-name
+        heritage: Helm
+        clabernetes/app: clabernetes
+        clabernetes/name: "clabernetes-clicker"
+        clabernetes/component: clicker
+    spec:
+      containers:
+        - name: clicker
+          image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:0.0.16"
+          imagePullPolicy: IfNotPresent
+          command: [
+            "/clabernetes/manager",
+             "clicker",
+          ]
+          env:
+            - name: APP_NAME
+              value: clabernetes
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: CLICKER_LOGGER_LEVEL
+              value: info
+            - name: CLICKER_WORKER_COMMAND
+              value: /bin/sh
+            - name: CLICKER_WORKER_SCRIPT
+              value: echo "hello, there"
+            - name: CLICKER_WORKER_RESOURCES
+              value: "requests:\n  cpu: 50m\n  memory: 128Mi"
+            - name: CLICKER_GLOBAL_ANNOTATIONS
+              value: "{}"
+            - name: CLICKER_GLOBAL_LABELS
+              value: "{}"
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 50m
+      restartPolicy: Never
+      serviceAccountName: "clabernetes-clicker-service-account"
+  backoffLimit: 4
+  ttlSecondsAfterFinished: 300

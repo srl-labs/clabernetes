@@ -1,0 +1,24 @@
+---
+# Source: clabernetes/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clabernetes-config
+  namespace: clabernetes
+  labels:
+    chart: "clabernetes-0.0.16"
+    release: release-name
+    heritage: Helm
+    clabernetes/app: clabernetes
+    clabernetes/name: "clabernetes-config"
+    clabernetes/component: config
+data:
+  globalAnnotations: |-
+    ---
+    {}
+  globalLabels: |-
+    ---
+    {}
+  defaultResources: |-
+    ---
+    {}

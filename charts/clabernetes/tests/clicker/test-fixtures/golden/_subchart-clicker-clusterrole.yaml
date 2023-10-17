@@ -1,0 +1,30 @@
+---
+# Source: clabernetes/charts/clicker/templates/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    chart: "clicker-0.0.16"
+    release: release-name
+    heritage: Helm
+    clabernetes/app: clabernetes
+    clabernetes/name: "clabernetes-clicker-cluster-role"
+    clabernetes/component: cluster-role
+  name: "clabernetes-clicker-cluster-role"
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - "*"
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - create
+      - watch
+      - delete

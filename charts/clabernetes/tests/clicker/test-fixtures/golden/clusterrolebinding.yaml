@@ -1,0 +1,21 @@
+---
+# Source: clabernetes/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: clabernetes-manager
+  labels:
+    chart: "clabernetes-0.0.16"
+    release: release-name
+    heritage: Helm
+    clabernetes/app: clabernetes
+    clabernetes/name: "clabernetes-cluster-role-binding"
+    clabernetes/component: cluster-role-binding
+subjects:
+  - kind: ServiceAccount
+    name: "clabernetes-service-account"
+    namespace: clabernetes
+roleRef:
+  kind: ClusterRole
+  name: "clabernetes-cluster-role"
+  apiGroup: rbac.authorization.k8s.io

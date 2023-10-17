@@ -16,6 +16,8 @@ fmt: ## Run formatters
 
 lint: fmt ## Run linters; runs with GOOS env var for linting on darwin
 	golangci-lint run
+	helm lint --quiet charts/clabernetes
+	helm lint --quiet charts/clicker
 
 test: ## Run unit tests
 	gotestsum --format testname --hide-summary=skipped -- -coverprofile=cover.out `go list ./... | grep -v e2e`

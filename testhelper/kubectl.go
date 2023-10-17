@@ -1,7 +1,6 @@
-package suite
+package testhelper
 
 import (
-	"fmt"
 	"os/exec"
 	"testing"
 )
@@ -10,19 +9,19 @@ const (
 	kubectl = "kubectl"
 )
 
-func execute(t *testing.T, cmd *exec.Cmd) []byte {
-	t.Helper()
+// Operation represents a kubectl operation type, i.e. apply or delete.
+type Operation string
 
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Logf("error executing command, error: %q", err)
-		t.Logf("errored command: %s", cmd.String())
-		t.Logf("errored command combined output: %s", output)
-		t.FailNow()
-	}
-
-	return output
-}
+const (
+	// Apply is the apply kubectl operation.
+	Apply Operation = "apply"
+	// Delete is the delete kubectl operation.
+	Delete Operation = "delete"
+	// Create is the create kubectl operation.
+	Create Operation = "create"
+	// Get is the get kubectl operation.
+	Get Operation = "get"
+)
 
 func kubectlNamespace(t *testing.T, operation Operation, namespace string) {
 	t.Helper()
@@ -62,7 +61,7 @@ func KubectlFileOp(t *testing.T, operation Operation, namespace, fileName string
 		fileName,
 	)
 
-	_ = execute(t, cmd)
+	_ = Execute(t, cmd)
 }
 
 // KubectlGetOp runs get on the given object, returning the yaml output.
@@ -80,21 +79,5 @@ func KubectlGetOp(t *testing.T, kind, namespace, name string) []byte {
 		"yaml",
 	)
 
-	return execute(t, cmd)
-}
-
-// YQCommand accepts some yaml content and returns it after executing the given yqPattern against
-// it.
-func YQCommand(t *testing.T, content []byte, yqPattern string) []byte {
-	t.Helper()
-
-	yqCmd := fmt.Sprintf("echo '%s' | yq '%s'", string(content), yqPattern)
-
-	cmd := exec.Command( //nolint:gosec
-		"bash",
-		"-c",
-		yqCmd,
-	)
-
-	return execute(t, cmd)
+	return Execute(t, cmd)
 }
