@@ -4,6 +4,8 @@ import (
 	"os"
 	"testing"
 
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+
 	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
 )
 
@@ -21,5 +23,5 @@ func TestDefaultValues(t *testing.T) {
 
 	testName := "default-values"
 
-	clabernetestesthelper.HelmTest(t, testName, "")
+	clabernetestesthelper.HelmTest(t, testName, clabernetesconstants.Clabernetes, "")
 }

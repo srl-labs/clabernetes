@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+
 	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
 )
 
@@ -22,5 +24,10 @@ func TestClickerEnabled(t *testing.T) {
 
 	testName := "clicker-enabled"
 
-	clabernetestesthelper.HelmTest(t, testName, fmt.Sprintf("%s-values.yaml", testName))
+	clabernetestesthelper.HelmTest(
+		t,
+		testName,
+		clabernetesconstants.Clabernetes,
+		fmt.Sprintf("%s-values.yaml", testName),
+	)
 }
