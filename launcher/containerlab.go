@@ -11,13 +11,13 @@ import (
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 )
 
-func (c *clabernetes) runClab() error {
-	clabLogFile, err := os.Create("clab.log")
+func (c *clabernetes) runContainerlab() error {
+	containerlabLogFile, err := os.Create("containerlab.log")
 	if err != nil {
 		return err
 	}
 
-	clabOutWriter := io.MultiWriter(c.logger, clabLogFile)
+	containerlabOutWriter := io.MultiWriter(c.containerlabLogger, containerlabLogFile)
 
 	args := []string{
 		"deploy",
@@ -31,8 +31,8 @@ func (c *clabernetes) runClab() error {
 
 	cmd := exec.Command("containerlab", args...)
 
-	cmd.Stdout = clabOutWriter
-	cmd.Stderr = clabOutWriter
+	cmd.Stdout = containerlabOutWriter
+	cmd.Stderr = containerlabOutWriter
 
 	err = cmd.Run()
 	if err != nil {
@@ -42,7 +42,7 @@ func (c *clabernetes) runClab() error {
 	return nil
 }
 
-func (c *clabernetes) runClabVxlanTools(
+func (c *clabernetes) runContainerlabVxlanTools(
 	localNodeName, cntLink, vxlanRemote string,
 	vxlanID int,
 ) error {

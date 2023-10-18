@@ -38,6 +38,16 @@ func StartClabernetes() {
 		),
 	)
 
+	containerlabLogger := logManager.MustRegisterAndGetLogger(
+		"containerlab",
+		clabernetesconstants.Info,
+	)
+
+	nodeLogger := logManager.MustRegisterAndGetLogger(
+		"node",
+		clabernetesconstants.Info,
+	)
+
 	ctx, _ := clabernetesutil.SignalHandledContext(clabernetesLogger.Criticalf)
 
 	clabernetesInstance = &clabernetes{
@@ -46,7 +56,9 @@ func StartClabernetes() {
 			clabernetesconstants.AppNameEnvVar,
 			clabernetesconstants.AppNameDefault,
 		),
-		logger: clabernetesLogger,
+		logger:             clabernetesLogger,
+		containerlabLogger: containerlabLogger,
+		nodeLogger:         nodeLogger,
 	}
 
 	clabernetesInstance.startup()
@@ -59,7 +71,9 @@ type clabernetes struct {
 
 	appName string
 
-	logger claberneteslogging.Instance
+	logger             claberneteslogging.Instance
+	containerlabLogger claberneteslogging.Instance
+	nodeLogger         claberneteslogging.Instance
 }
 
 func (c *clabernetes) startup() {
@@ -115,12 +129,15 @@ func (c *clabernetes) setup() {
 func (c *clabernetes) launch() {
 	c.logger.Debug("launching containerlab...")
 
-	err := c.runClab()
+	err := c.runContainerlab()
 	if err != nil {
 		c.logger.Criticalf("failed launching containerlab, err: %s", err)
 
 		clabernetesutil.Panic(err.Error())
 	}
+
+	containerIDs := c.getContainerIDs()
+	c.tailContainerLogs(containerIDs)
 
 	c.logger.Info("containerlab started, setting up any required tunnels...")
 
@@ -141,7 +158,7 @@ func (c *clabernetes) launch() {
 	}
 
 	for _, tunnel := range tunnelObj {
-		err = c.runClabVxlanTools(
+		err = c.runContainerlabVxlanTools(
 			tunnel.LocalNodeName,
 			tunnel.LocalLinkName,
 			tunnel.RemoteName,

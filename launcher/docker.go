@@ -3,6 +3,7 @@ package launcher
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -101,5 +102,60 @@ func (c *clabernetes) startDocker() error {
 		time.Sleep(time.Second)
 
 		attempts++
+	}
+}
+
+func (c *clabernetes) getContainerIDs() []string {
+	// return all the container ids running in the pod
+	psCmd := exec.Command("docker", "ps", "--quiet")
+
+	output, err := psCmd.Output()
+	if err != nil {
+		c.logger.Warnf(
+			"failed determining container ids will continue but will not log container output,"+
+				" err: %s",
+			err,
+		)
+
+		return nil
+	}
+
+	containerIDs := strings.Split(strings.TrimSpace(string(output)), "\n")
+
+	c.logger.Debugf("found container ids %q", containerIDs)
+
+	return containerIDs
+}
+
+func (c *clabernetes) tailContainerLogs(containerIDs []string) {
+	nodeLogFile, err := os.Create("node.log")
+	if err != nil {
+		c.logger.Warnf("failed creating node log file, err: %s", err)
+
+		return
+	}
+
+	nodeOutWriter := io.MultiWriter(c.nodeLogger, nodeLogFile)
+
+	for _, containerID := range containerIDs {
+		go func(containerID string, nodeOutWriter io.Writer) {
+			args := []string{
+				"logs",
+				"-f",
+				containerID,
+			}
+
+			cmd := exec.Command("docker", args...) //nolint:gosec
+
+			cmd.Stdout = nodeOutWriter
+			cmd.Stderr = nodeOutWriter
+
+			err = cmd.Run()
+			if err != nil {
+				c.logger.Warnf(
+					"tailing node logs for container id %q failed, err: %s", containerID, err,
+				)
+			}
+		}(containerID, nodeOutWriter)
 	}
 }
