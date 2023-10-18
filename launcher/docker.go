@@ -120,14 +120,22 @@ func (c *clabernetes) getContainerIDs() []string {
 		return nil
 	}
 
-	containerIDs := strings.Split(strings.TrimSpace(string(output)), "\n")
+	containerIDLines := strings.Split(string(output), "\n")
 
-	c.logger.Debugf("found container ids %q", containerIDs)
+	var containerIDs []string
+
+	for _, line := range containerIDLines {
+		trimmedLine := strings.TrimSpace(line)
+
+		if trimmedLine != "" {
+			containerIDs = append(containerIDs, trimmedLine)
+		}
+	}
 
 	return containerIDs
 }
 
-func (c *clabernetes) tailContainerLogs(containerIDs []string) {
+func (c *clabernetes) tailContainerLogs() {
 	nodeLogFile, err := os.Create("node.log")
 	if err != nil {
 		c.logger.Warnf("failed creating node log file, err: %s", err)
@@ -137,7 +145,7 @@ func (c *clabernetes) tailContainerLogs(containerIDs []string) {
 
 	nodeOutWriter := io.MultiWriter(c.nodeLogger, nodeLogFile)
 
-	for _, containerID := range containerIDs {
+	for _, containerID := range c.containerIDs {
 		go func(containerID string, nodeOutWriter io.Writer) {
 			args := []string{
 				"logs",
