@@ -74,7 +74,7 @@ delete-generated: ## Deletes all zz_*.go (generated) files, and crds
 	rm -rf generated/*
 
 build-manager: ## Builds the clabernetes manager container; typically built via devspace, but this is a handy shortcut for one offs.
-	docker build -t ghcr.io/srl-labs/clabernetes/clabernetes-launcher:latest -f ./build/manager.Dockerfile .
+	docker build -t ghcr.io/srl-labs/clabernetes/clabernetes-manager:latest -f ./build/manager.Dockerfile .
 
 build-launcher: ## Builds the clabernetes launcher container; typically built via devspace, but this is a handy shortcut for one offs.
 	docker build -t ghcr.io/srl-labs/clabernetes/clabernetes-launcher:latest -f ./build/launcher.Dockerfile .

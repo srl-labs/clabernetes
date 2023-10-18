@@ -82,7 +82,7 @@ deployments:
           image: ${MANAGER_IMAGE}
           imagePullPolicy: ${PULL_POLICY}
         launcher:
-          image: ${MANAGER_IMAGE}
+          image: ${LAUNCHER_IMAGE}
           imagePullPolicy: ${PULL_POLICY}
         clicker:
           image: ${MANAGER_IMAGE}
