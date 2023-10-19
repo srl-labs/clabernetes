@@ -268,17 +268,12 @@ func (r *Reconciler) restartDeploymentForNode(
 	return r.Client.Update(ctx, nodeDeployment)
 }
 
-func renderDeployment( //nolint:funlen
+func renderDeployment(
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	nodeName string,
 ) *k8sappsv1.Deployment {
-	configManager := clabernetesconfig.GetManager()
-	globalAnnotations, globalLabels := configManager.GetAllMetadata()
-
-	resources := configManager.GetResourcesForContainerlabKind(
-		clabernetesConfigs[nodeName].Topology.GetNodeKindType(nodeName),
-	)
+	globalAnnotations, globalLabels := clabernetesconfig.GetManager().GetAllMetadata()
 
 	name := obj.GetName()
 
@@ -404,10 +399,6 @@ func renderDeployment( //nolint:funlen
 		},
 	}
 
-	if resources != nil {
-		deployment.Spec.Template.Spec.Containers[0].Resources = *resources
-	}
-
 	if commonSpec.ContainerlabDebug {
 		deployment.Spec.Template.Spec.Containers[0].Env = append(
 			deployment.Spec.Template.Spec.Containers[0].Env,
@@ -421,6 +412,8 @@ func renderDeployment( //nolint:funlen
 	deployment = renderDeploymentAddFilesFromConfigMaps(nodeName, obj, deployment)
 
 	deployment = renderDeploymentAddInsecureRegistries(obj, deployment)
+
+	deployment = renderDeploymentAddResources(obj, clabernetesConfigs, nodeName, deployment)
 
 	return deployment
 }
@@ -497,6 +490,39 @@ func renderDeploymentAddInsecureRegistries(
 				Value: strings.Join(insecureRegistries, ","),
 			},
 		)
+	}
+
+	return deployment
+}
+
+func renderDeploymentAddResources(
+	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
+	nodeName string,
+	deployment *k8sappsv1.Deployment,
+) *k8sappsv1.Deployment {
+	commonSpec := obj.GetTopologyCommonSpec()
+
+	nodeResources, nodeResourcesOk := commonSpec.Resources[nodeName]
+	if nodeResourcesOk {
+		deployment.Spec.Template.Spec.Containers[0].Resources = nodeResources
+
+		return deployment
+	}
+
+	defaultResources, defaultResourcesOk := commonSpec.Resources[clabernetesconstants.Default]
+	if defaultResourcesOk {
+		deployment.Spec.Template.Spec.Containers[0].Resources = defaultResources
+
+		return deployment
+	}
+
+	resources := clabernetesconfig.GetManager().GetResourcesForContainerlabKind(
+		clabernetesConfigs[nodeName].Topology.GetNodeKindType(nodeName),
+	)
+
+	if resources != nil {
+		deployment.Spec.Template.Spec.Containers[0].Resources = *resources
 	}
 
 	return deployment

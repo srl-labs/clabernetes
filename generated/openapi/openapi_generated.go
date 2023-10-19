@@ -257,6 +257,21 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 							Format:      "",
 						},
 					},
+					"resources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resources is a mapping of nodeName (or \"default\") to kubernetes resource requirements -- any value set here overrides the \"global\" config resource definitions. If a key \"default\" is set, those resource values will be preferred over *all global settings* -- meaning, the \"global\" resource settings will never be looked up for this topology.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("k8s.io/api/core/v1.ResourceRequirements"),
+									},
+								},
+							},
+						},
+					},
 					"config": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Config is a \"normal\" containerlab configuration file.",
@@ -270,7 +285,7 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 			},
 		},
 		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap"},
+			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap", "k8s.io/api/core/v1.ResourceRequirements"},
 	}
 }
 
@@ -664,6 +679,21 @@ func schema_clabernetes_apis_topology_v1alpha1_KneSpec(
 							Format:      "",
 						},
 					},
+					"resources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resources is a mapping of nodeName (or \"default\") to kubernetes resource requirements -- any value set here overrides the \"global\" config resource definitions. If a key \"default\" is set, those resource values will be preferred over *all global settings* -- meaning, the \"global\" resource settings will never be looked up for this topology.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("k8s.io/api/core/v1.ResourceRequirements"),
+									},
+								},
+							},
+						},
+					},
 					"topology": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Topology is a \"normal\" kne topology proto file.",
@@ -677,7 +707,7 @@ func schema_clabernetes_apis_topology_v1alpha1_KneSpec(
 			},
 		},
 		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap"},
+			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap", "k8s.io/api/core/v1.ResourceRequirements"},
 	}
 }
 
@@ -885,11 +915,26 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 							Format:      "",
 						},
 					},
+					"resources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resources is a mapping of nodeName (or \"default\") to kubernetes resource requirements -- any value set here overrides the \"global\" config resource definitions. If a key \"default\" is set, those resource values will be preferred over *all global settings* -- meaning, the \"global\" resource settings will never be looked up for this topology.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("k8s.io/api/core/v1.ResourceRequirements"),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap"},
+			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap", "k8s.io/api/core/v1.ResourceRequirements"},
 	}
 }
 

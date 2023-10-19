@@ -1,6 +1,7 @@
 package config
 
 import (
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	k8scorev1 "k8s.io/api/core/v1"
 )
 
@@ -25,7 +26,7 @@ func (r *resources) resourcesForContainerlabKind(
 		return explicitTypeResources
 	}
 
-	defaultTypeResources, defaultTypeOk := kindResources["default"]
+	defaultTypeResources, defaultTypeOk := kindResources[clabernetesconstants.Default]
 
 	if defaultTypeOk {
 		return defaultTypeResources

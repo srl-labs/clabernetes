@@ -22,6 +22,7 @@
 package v1alpha1
 
 import (
+	v1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -305,6 +306,13 @@ func (in *TopologyCommonSpec) DeepCopyInto(out *TopologyCommonSpec) {
 		in, out := &in.FilesFromConfigMap, &out.FilesFromConfigMap
 		*out = make([]FileFromConfigMap, len(*in))
 		copy(*out, *in)
+	}
+	if in.Resources != nil {
+		in, out := &in.Resources, &out.Resources
+		*out = make(map[string]v1.ResourceRequirements, len(*in))
+		for key, val := range *in {
+			(*out)[key] = *val.DeepCopy()
+		}
 	}
 	return
 }

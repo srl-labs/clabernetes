@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	k8scorev1 "k8s.io/api/core/v1"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -90,6 +91,12 @@ type TopologyCommonSpec struct {
 	// +kubebuilder:validation:Enum=disabled;critical;warn;info;debug
 	// +optional
 	LauncherLogLevel string `json:"launcherLogLevel,omitempty"`
+	// Resources is a mapping of nodeName (or "default") to kubernetes resource requirements -- any
+	// value set here overrides the "global" config resource definitions. If a key "default" is set,
+	// those resource values will be preferred over *all global settings* -- meaning, the "global"
+	// resource settings will never be looked up for this topology.
+	// +optional
+	Resources map[string]k8scorev1.ResourceRequirements `json:"resources"`
 }
 
 // LinkEndpoint is a simple struct to hold node/interface name info for a given link.
