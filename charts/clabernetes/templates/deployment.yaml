@@ -25,11 +25,11 @@ spec:
     matchLabels:
       clabernetes/app: {{ .Values.appName }}
       release: {{ .Release.Name }}
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.manager.replicaCount }}
   strategy:
     rollingUpdate:
       maxSurge: 1
-      {{- if (eq (int .Values.replicaCount) 1) }}
+      {{- if (eq (int .Values.manager.replicaCount) 1) }}
       maxUnavailable: 0
       {{- else }}
       maxUnavailable: 1
@@ -138,10 +138,8 @@ spec:
                   fieldPath: metadata.namespace
             - name: CLIENT_OPERATION_TIMEOUT_MULTIPLIER
               value: "{{ .Values.manager.clientOperationTimeoutMultiplier }}"
-              {{- if .Values.manager.inClusterDNSSuffixOverride }}
-            - name:  IN_CLUSTER_DNS_SUFFIX_OVERRIDE
-              value: {{ .Values.manager.inClusterDNSSuffixOverride }}
-              {{- end }}
+            - name:  IN_CLUSTER_DNS_SUFFIX
+              value: {{ .Values.manager.inClusterDNSSuffix }}
             - name: MANAGER_LOGGER_LEVEL
               value: {{ .Values.manager.managerLogLevel }}
             - name: CONTROLLER_LOGGER_LEVEL

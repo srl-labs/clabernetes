@@ -18,9 +18,9 @@ const (
 	// operation timeout.
 	ClientOperationTimeoutMultiplierEnv = "CLIENT_OPERATION_TIMEOUT_MULTIPLIER"
 
-	// InClusterDNSSuffixOverrideEnv is the env var specifying an optional DNS suffix to replace the
-	// default value of 'svc.cluster.local".
-	InClusterDNSSuffixOverrideEnv = "IN_CLUSTER_DNS_SUFFIX_OVERRIDE"
+	// InClusterDNSSuffixEnv is the env var specifying the DNS suffix to use to resolve in cluster
+	// services, typically 'svc.cluster.local".
+	InClusterDNSSuffixEnv = "IN_CLUSTER_DNS_SUFFIX"
 )
 
 const (
