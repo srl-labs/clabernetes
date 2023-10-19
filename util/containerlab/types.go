@@ -18,6 +18,39 @@ type Topology struct {
 	Links    []*LinkDefinition          `yaml:"links,omitempty"`
 }
 
+// GetNodeKindType returns the kind and type of the given node name -- it cannot fail, it can only
+// return empty strings.
+func (t *Topology) GetNodeKindType(nodeName string) (
+	containerlabKind,
+	containerlabType string,
+) {
+	containerlabKind = t.Defaults.Kind
+	containerlabType = t.Defaults.Type
+
+	nodeDefinition, nodeDefinitionOk := t.Nodes[nodeName]
+	if nodeDefinitionOk {
+		if nodeDefinition.Kind != "" {
+			containerlabKind = nodeDefinition.Kind
+		}
+	}
+
+	kindDefinition, kindDefinitionOk := t.Kinds[nodeName]
+	if kindDefinitionOk {
+		if kindDefinition.Type != "" {
+			containerlabType = kindDefinition.Type
+		}
+	}
+
+	if nodeDefinitionOk {
+		// override type based on the node (most specific) lastly
+		if nodeDefinition.Type != "" {
+			containerlabType = nodeDefinition.Type
+		}
+	}
+
+	return containerlabKind, containerlabType
+}
+
 // NodeDefinition represents a configuration a given node can have in the lab definition file.
 type NodeDefinition struct {
 	Kind                 string            `yaml:"kind,omitempty"`

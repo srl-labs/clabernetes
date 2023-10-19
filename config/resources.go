@@ -10,7 +10,22 @@ type resources struct {
 func (r *resources) resourcesForContainerlabKind(
 	containerlabKind, containerlabType string,
 ) *k8scorev1.ResourceRequirements {
-	_, _ = containerlabKind, containerlabType
+	kindResources, kindOk := r.ByContainerlabKind[containerlabKind]
+	if !kindOk {
+		return r.Default
+	}
+
+	explicitTypeResources, explicitTypeOk := kindResources[containerlabType]
+
+	if explicitTypeOk {
+		return explicitTypeResources
+	}
+
+	defaultTypeResources, defaultTypeOk := kindResources["default"]
+
+	if defaultTypeOk {
+		return defaultTypeResources
+	}
 
 	return nil
 }

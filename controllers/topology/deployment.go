@@ -143,6 +143,7 @@ func (r *Reconciler) pruneDeployments(
 func (r *Reconciler) enforceDeployments(
 	ctx context.Context,
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	deployments *clabernetescontrollers.ResolvedDeployments,
 ) error {
 	// handle missing deployments
@@ -151,6 +152,7 @@ func (r *Reconciler) enforceDeployments(
 	for _, nodeName := range deployments.Missing {
 		deployment := renderDeployment(
 			obj,
+			clabernetesConfigs,
 			nodeName,
 		)
 
@@ -190,6 +192,7 @@ func (r *Reconciler) enforceDeployments(
 
 		expectedDeployment := renderDeployment(
 			obj,
+			clabernetesConfigs,
 			nodeName,
 		)
 
@@ -265,12 +268,17 @@ func (r *Reconciler) restartDeploymentForNode(
 	return r.Client.Update(ctx, nodeDeployment)
 }
 
-func renderDeployment(
+func renderDeployment( //nolint:funlen
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	nodeName string,
 ) *k8sappsv1.Deployment {
 	configManager := clabernetesconfig.GetManager()
 	globalAnnotations, globalLabels := configManager.GetAllMetadata()
+
+	resources := configManager.GetResourcesForContainerlabKind(
+		clabernetesConfigs[nodeName].Topology.GetNodeKindType(nodeName),
+	)
 
 	name := obj.GetName()
 
@@ -394,6 +402,10 @@ func renderDeployment(
 				},
 			},
 		},
+	}
+
+	if resources != nil {
+		deployment.Spec.Template.Spec.Containers[0].Resources = *resources
 	}
 
 	if commonSpec.ContainerlabDebug {
