@@ -55,8 +55,17 @@ launcher:
   logLevel: info
 
   # default resources is a mapping of containerlab kind/type -> k8s resources/requests to apply to
-  # the launcher pod(s)
-  defaultResources: {}
+  # the launcher pod(s); note that the "default" keyword under the parent "defaultResources" key
+  # specifies the default/fallthrough resources -- this expects a normal looking k8s requests/limits
+  # block. the "byContainerlabKind" key holds a map[string]map[string]k8sresource mapping -- the
+  # outer keys are the containerlab *kind* and the inner keys *type* -- you can specify a "default"
+  # key in the types level as well to just have default resources for a given kind.
+  defaultResources:
+    default:
+      requests:
+        memory: 512Mi
+        cpu: 200m
+    byContainerlabKind: {}
 
 #
 # clicker

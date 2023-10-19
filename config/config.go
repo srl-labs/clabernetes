@@ -5,6 +5,7 @@ import (
 
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 	"gopkg.in/yaml.v3"
+	sigsyaml "sigs.k8s.io/yaml"
 )
 
 const (
@@ -47,9 +48,9 @@ func configFromMap(inMap map[string]string) (*global, error) {
 		}
 	}
 
-	defaultResourcesData, defaultResourcesOk := inMap[defaultResourcesKey]
-	if defaultResourcesOk {
-		err := yaml.Unmarshal([]byte(defaultResourcesData), &out.defaultResources)
+	resourcesData, resourcesOk := inMap[defaultResourcesKey]
+	if resourcesOk {
+		err := sigsyaml.Unmarshal([]byte(resourcesData), &out.defaultResources)
 		if err != nil {
 			outErrors = append(outErrors, err.Error())
 		}
