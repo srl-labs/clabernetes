@@ -83,7 +83,7 @@ func serviceConforms(
 // override value.
 func GetServiceDNSSuffix() string {
 	return clabernetesutil.GetEnvStrOrDefault(
-		clabernetesconstants.InClusterDNSSuffixOverrideEnv,
+		clabernetesconstants.InClusterDNSSuffixEnv,
 		clabernetesconstants.DefaultInClusterDNSSuffix,
 	)
 }

@@ -9,7 +9,7 @@ import (
 // if casting fails or the environment variable is not set.
 func GetEnvStrOrDefault(k, d string) string {
 	v, ok := os.LookupEnv(k)
-	if ok {
+	if ok && v != "" {
 		return v
 	}
 
