@@ -17,7 +17,7 @@ spec:
     matchLabels:
       clabernetes/app: clabernetes
       release: release-name
-  replicas: 
+  replicas: 3
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -94,6 +94,8 @@ spec:
                   fieldPath: metadata.namespace
             - name: CLIENT_OPERATION_TIMEOUT_MULTIPLIER
               value: "1"
+            - name:  IN_CLUSTER_DNS_SUFFIX
+              value: svc.cluster.local
             - name: MANAGER_LOGGER_LEVEL
               value: info
             - name: CONTROLLER_LOGGER_LEVEL
