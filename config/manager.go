@@ -50,7 +50,6 @@ func InitManager(ctx context.Context, appName, namespace string, client *kuberne
 				globalAnnotations: make(map[string]string),
 				globalLabels:      make(map[string]string),
 				defaultResources: resources{
-					logger:             logger,
 					Default:            nil,
 					ByContainerlabKind: nil,
 				},
@@ -251,7 +250,7 @@ func (m *manager) GetResourcesForContainerlabKind(
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
-	return m.config.defaultResources.resourcesForContainerlabKind(
+	return m.resourcesForContainerlabKind(
 		containerlabKind,
 		containerlabType,
 	)
