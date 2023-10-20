@@ -50,6 +50,7 @@ func InitManager(ctx context.Context, appName, namespace string, client *kuberne
 				globalAnnotations: make(map[string]string),
 				globalLabels:      make(map[string]string),
 				defaultResources: resources{
+					logger:             logger,
 					Default:            nil,
 					ByContainerlabKind: nil,
 				},
@@ -110,6 +111,8 @@ type manager struct {
 }
 
 func (m *manager) load(configMap *k8scorev1.ConfigMap) {
+	m.logger.Debug("re-loading config contents...")
+
 	dataBytes, err := yaml.Marshal(configMap.Data)
 	if err != nil {
 		m.logger.Warnf("failed marshaling config contents to bytes, error: %s", err)
@@ -120,7 +123,8 @@ func (m *manager) load(configMap *k8scorev1.ConfigMap) {
 	newHash := clabernetesutil.HashBytes(dataBytes)
 
 	if m.lastHash == newHash {
-		// data was the same, nothing to do
+		m.logger.Debug("config contents hash matches last recorded hash, nothing to do")
+
 		return
 	}
 
@@ -185,6 +189,8 @@ func (m *manager) Start() error {
 	}
 
 	m.started = true
+
+	m.logger.Debug("starting config watch go routine and running forever or until sigint...")
 
 	go m.watchConfigMap()
 
@@ -265,7 +271,7 @@ func (m *manager) watchConfigMap() {
 	for event := range watch.ResultChan() {
 		switch event.Type { //nolint:exhaustive
 		case apimachinerywatch.Added, apimachinerywatch.Modified:
-			m.logger.Info("processing global config configmap add or modification")
+			m.logger.Info("processing global config configmap add or modification event")
 
 			configMap, ok := event.Object.(*k8scorev1.ConfigMap)
 			if !ok {
@@ -276,6 +282,10 @@ func (m *manager) watchConfigMap() {
 
 			m.load(configMap)
 		case apimachinerywatch.Deleted:
+			m.logger.Warn(
+				"global config configmap was *deleted*, will continue with empty config...",
+			)
+
 			m.load(&k8scorev1.ConfigMap{})
 		}
 	}
