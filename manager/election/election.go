@@ -15,7 +15,7 @@ func RunElection(
 	timers Timers,
 	startLeading func(c context.Context),
 	stopLeading func(),
-	newLeader func(leaderElectionIdentity string),
+	newLeader func(newLeaderIdentity string),
 ) {
 	leaderelection.RunOrDie(ctx, leaderelection.LeaderElectionConfig{
 		Name:            leaderElectionIdentity,
@@ -31,8 +31,8 @@ func RunElection(
 			OnStoppedLeading: func() {
 				stopLeading()
 			},
-			OnNewLeader: func(leaderElectionIdentity string) {
-				newLeader(leaderElectionIdentity)
+			OnNewLeader: func(newLeaderIdentity string) {
+				newLeader(newLeaderIdentity)
 			},
 		},
 	})

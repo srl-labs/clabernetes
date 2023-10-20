@@ -30,7 +30,7 @@ import (
 )
 
 func (c *clabernetes) startLeading() {
-	leaderElectionIdentity := clabernetesmanagerelection.GenerateLeaderIdentity()
+	c.leaderElectionIdentity = clabernetesmanagerelection.GenerateLeaderIdentity()
 	leaderElectionLockName := fmt.Sprintf("%s-manager", c.appName)
 
 	leaderElectionLock := clabernetesmanagerelection.GetLeaseLock(
@@ -38,13 +38,13 @@ func (c *clabernetes) startLeading() {
 		c.appName,
 		c.namespace,
 		leaderElectionLockName,
-		leaderElectionIdentity,
+		c.leaderElectionIdentity,
 	)
 
 	c.logger.Info("start leader election")
 	clabernetesmanagerelection.RunElection(
 		c.baseCtx,
-		leaderElectionIdentity,
+		c.leaderElectionIdentity,
 		leaderElectionLock,
 		clabernetesmanagerelection.Timers{
 			Duration:      electionDuration * time.Second,
@@ -63,8 +63,20 @@ func (c *clabernetes) stopLeading() {
 	c.Exit(clabernetesconstants.ExitCode)
 }
 
-func (c *clabernetes) newLeader(leaderElectionIdentity string) {
-	c.logger.Infof("new leader elected '%s'", leaderElectionIdentity)
+func (c *clabernetes) newLeader(newLeaderIdentity string) {
+	c.logger.Infof("new leader elected '%s'", newLeaderIdentity)
+
+	if newLeaderIdentity != c.leaderElectionIdentity {
+		c.logger.Debug(
+			"new leader is not us, nothing else for us to do. setting ready state to true",
+		)
+
+		c.ready = true
+	} else {
+		c.logger.Debug("new leader is us, resetting ready state to false")
+
+		c.ready = false
+	}
 }
 
 func mustNewManager(scheme *apimachineryruntime.Scheme, appName string) ctrlruntime.Manager {
@@ -195,6 +207,8 @@ func (c *clabernetes) start(ctx context.Context) {
 	}
 
 	c.logger.Debug("controllers registered...")
+
+	c.ready = true
 
 	c.logger.Debug("startup complete...")
 

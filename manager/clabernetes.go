@@ -86,6 +86,11 @@ type clabernetes struct {
 	kubeClient *kubernetes.Clientset
 
 	mgr ctrlruntime.Manager
+
+	leaderElectionIdentity string
+	// ready is set to true after controller-runtime caches have been synced and "startup" is
+	// complete
+	ready bool
 }
 
 func (c *clabernetes) GetContext() context.Context {
@@ -142,6 +147,10 @@ func (c *clabernetes) NewContextWithTimeout() (context.Context, context.CancelFu
 	}
 
 	return context.WithTimeout(c.leaderCtx, finalDur)
+}
+
+func (c *clabernetes) IsReady() bool {
+	return c.ready
 }
 
 func (c *clabernetes) startup() {
