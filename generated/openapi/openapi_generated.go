@@ -259,7 +259,7 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 					},
 					"resources": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Resources is a mapping of nodeName (or \"default\") to kubernetes resource requirements -- any value set here overrides the \"global\" config resource definitions. If a key \"default\" is set, those resource values will be preferred over *all global settings* -- meaning, the \"global\" resource settings will never be looked up for this topology.",
+							Description: "Resources is a mapping of nodeName (or \"default\") to kubernetes resource requirements -- any value set here overrides the \"global\" config resource definitions. If a key \"default\" is set, those resource values will be preferred over *all global settings* for this topology -- meaning, the \"global\" resource settings will never be looked up for this topology, and any kind/type that is *not* in this resources map will have the \"default\" resources from this mapping applied.",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
@@ -681,7 +681,7 @@ func schema_clabernetes_apis_topology_v1alpha1_KneSpec(
 					},
 					"resources": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Resources is a mapping of nodeName (or \"default\") to kubernetes resource requirements -- any value set here overrides the \"global\" config resource definitions. If a key \"default\" is set, those resource values will be preferred over *all global settings* -- meaning, the \"global\" resource settings will never be looked up for this topology.",
+							Description: "Resources is a mapping of nodeName (or \"default\") to kubernetes resource requirements -- any value set here overrides the \"global\" config resource definitions. If a key \"default\" is set, those resource values will be preferred over *all global settings* for this topology -- meaning, the \"global\" resource settings will never be looked up for this topology, and any kind/type that is *not* in this resources map will have the \"default\" resources from this mapping applied.",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
@@ -917,7 +917,7 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 					},
 					"resources": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Resources is a mapping of nodeName (or \"default\") to kubernetes resource requirements -- any value set here overrides the \"global\" config resource definitions. If a key \"default\" is set, those resource values will be preferred over *all global settings* -- meaning, the \"global\" resource settings will never be looked up for this topology.",
+							Description: "Resources is a mapping of nodeName (or \"default\") to kubernetes resource requirements -- any value set here overrides the \"global\" config resource definitions. If a key \"default\" is set, those resource values will be preferred over *all global settings* for this topology -- meaning, the \"global\" resource settings will never be looked up for this topology, and any kind/type that is *not* in this resources map will have the \"default\" resources from this mapping applied.",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,

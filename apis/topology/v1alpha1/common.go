@@ -93,8 +93,10 @@ type TopologyCommonSpec struct {
 	LauncherLogLevel string `json:"launcherLogLevel,omitempty"`
 	// Resources is a mapping of nodeName (or "default") to kubernetes resource requirements -- any
 	// value set here overrides the "global" config resource definitions. If a key "default" is set,
-	// those resource values will be preferred over *all global settings* -- meaning, the "global"
-	// resource settings will never be looked up for this topology.
+	// those resource values will be preferred over *all global settings* for this topology --
+	// meaning, the "global" resource settings will never be looked up for this topology, and any
+	// kind/type that is *not* in this resources map will have the "default" resources from this
+	// mapping applied.
 	// +optional
 	Resources map[string]k8scorev1.ResourceRequirements `json:"resources"`
 }
