@@ -16,6 +16,7 @@ import (
 
 const (
 	maxDockerLaunchAttempts = 10
+	containerCheckInterval  = 5 * time.Second
 )
 
 // StartClabernetes is a function that starts the clabernetes launcher.
@@ -38,15 +39,28 @@ func StartClabernetes() {
 		),
 	)
 
-	ctx, _ := clabernetesutil.SignalHandledContext(clabernetesLogger.Criticalf)
+	containerlabLogger := logManager.MustRegisterAndGetLogger(
+		"containerlab",
+		clabernetesconstants.Info,
+	)
+
+	nodeLogger := logManager.MustRegisterAndGetLogger(
+		"node",
+		clabernetesconstants.Info,
+	)
+
+	ctx, cancel := clabernetesutil.SignalHandledContext(clabernetesLogger.Criticalf)
 
 	clabernetesInstance = &clabernetes{
-		ctx: ctx,
+		ctx:    ctx,
+		cancel: cancel,
 		appName: clabernetesutil.GetEnvStrOrDefault(
 			clabernetesconstants.AppNameEnvVar,
 			clabernetesconstants.AppNameDefault,
 		),
-		logger: clabernetesLogger,
+		logger:             clabernetesLogger,
+		containerlabLogger: containerlabLogger,
+		nodeLogger:         nodeLogger,
 	}
 
 	clabernetesInstance.startup()
@@ -55,11 +69,16 @@ func StartClabernetes() {
 var clabernetesInstance *clabernetes //nolint:gochecknoglobals
 
 type clabernetes struct {
-	ctx context.Context
+	ctx    context.Context
+	cancel context.CancelFunc
 
 	appName string
 
-	logger claberneteslogging.Instance
+	logger             claberneteslogging.Instance
+	containerlabLogger claberneteslogging.Instance
+	nodeLogger         claberneteslogging.Instance
+
+	containerIDs []string
 }
 
 func (c *clabernetes) startup() {
@@ -70,9 +89,13 @@ func (c *clabernetes) startup() {
 	c.setup()
 	c.launch()
 
+	go c.watch()
+
 	c.logger.Info("running for forever or until sigint...")
 
 	<-c.ctx.Done()
+
+	claberneteslogging.GetManager().Flush()
 }
 
 func (c *clabernetes) setup() {
@@ -115,11 +138,24 @@ func (c *clabernetes) setup() {
 func (c *clabernetes) launch() {
 	c.logger.Debug("launching containerlab...")
 
-	err := c.runClab()
+	err := c.runContainerlab()
 	if err != nil {
 		c.logger.Criticalf("failed launching containerlab, err: %s", err)
 
 		clabernetesutil.Panic(err.Error())
+	}
+
+	c.containerIDs = c.getContainerIDs()
+
+	if len(c.containerIDs) > 0 {
+		c.logger.Debugf("found container ids %q", c.containerIDs)
+
+		c.tailContainerLogs()
+	} else {
+		c.logger.Warn(
+			"failed determining container ids, will continue but may not be in a working " +
+				"state and no container logs will be captured",
+		)
 	}
 
 	c.logger.Info("containerlab started, setting up any required tunnels...")
@@ -141,7 +177,7 @@ func (c *clabernetes) launch() {
 	}
 
 	for _, tunnel := range tunnelObj {
-		err = c.runClabVxlanTools(
+		err = c.runContainerlabVxlanTools(
 			tunnel.LocalNodeName,
 			tunnel.LocalLinkName,
 			tunnel.RemoteName,
@@ -156,6 +192,30 @@ func (c *clabernetes) launch() {
 			)
 
 			clabernetesutil.Panic(err.Error())
+		}
+	}
+}
+
+func (c *clabernetes) watch() {
+	if len(c.containerIDs) == 0 {
+		return
+	}
+
+	ticker := time.NewTicker(containerCheckInterval)
+
+	for range ticker.C {
+		currentContainerIDs := c.getContainerIDs()
+
+		if len(currentContainerIDs) != len(c.containerIDs) {
+			c.logger.Criticalf(
+				"expected %d running containers, but got %d, sending done signal",
+				len(c.containerIDs),
+				len(currentContainerIDs),
+			)
+
+			c.cancel()
+
+			return
 		}
 	}
 }
