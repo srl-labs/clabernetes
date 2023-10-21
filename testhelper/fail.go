@@ -20,7 +20,7 @@ func FailOutput(t *testing.T, actual, expected any) {
 			"\n%s"+
 			"\n\033[0;36m<<< actual   ***\033[0m"+
 			"\n\033[0;35m*** expected >>>\033[0m"+
-			"\n%s"+
+			"\n%s"+ //nolint:goconst
 			"\n\033[0;35m<<< expected ***\033[0m",
 			actual, expected,
 		)

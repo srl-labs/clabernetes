@@ -77,6 +77,7 @@ linters:
     - gocheckcompilerdirectives
     - gochecknoglobals
     - gochecknoinits
+    - gochecksumtype
     - gocognit
     - goconst
     - gocritic
@@ -95,6 +96,7 @@ linters:
     - grouper
     - importas
     - ineffassign
+    - inamedparam
     - lll
     - maintidx
     - makezero
@@ -106,7 +108,7 @@ linters:
     - nlreturn
     - noctx
     - nolintlint
-    - nolintlint
+    - perfsprint
     - prealloc
     - predeclared
     - reassign
@@ -163,7 +165,7 @@ issues:
       text: "package-comments"
 
 run:
-  go: '1.20'
+  go: '1.21'
   skip-dirs:
     - .private
   timeout: 5m
@@ -172,4 +174,4 @@ output:
   uniq-by-line: false
 
 service:
-  golangci-lint-version: 1.52.x
+  golangci-lint-version: 1.55.x

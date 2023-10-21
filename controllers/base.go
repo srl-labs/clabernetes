@@ -29,7 +29,10 @@ type Controller interface {
 	// SetupWithManager sets the given controller up with the controller-runtime manager.
 	SetupWithManager(mgr ctrlruntime.Manager) error
 	// Reconcile is the actual reconcile function of the controller.
-	Reconcile(context.Context, ctrlruntime.Request) (ctrlruntime.Result, error)
+	Reconcile(
+		ctx context.Context,
+		req ctrlruntime.Request,
+	) (ctrlruntime.Result, error)
 }
 
 // NewBaseController returns a new BaseController object to embed in clabernetes controllers.
