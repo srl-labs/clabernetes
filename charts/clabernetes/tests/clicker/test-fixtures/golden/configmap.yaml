@@ -28,4 +28,8 @@ data:
     somelabel: somelabelvalue
   defaultResources: |-
     ---
-    {}
+    byContainerlabKind: {}
+    default:
+      requests:
+        cpu: 200m
+        memory: 512Mi
