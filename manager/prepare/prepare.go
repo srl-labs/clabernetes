@@ -23,4 +23,10 @@ func Prepare(c clabernetesmanagertypes.Clabernetes) {
 	}
 
 	logger.Debug("preparing certificates complete...")
+
+	logger.Info("preparing http endpoints...")
+
+	endpoints(c)
+
+	logger.Debug("preparing http endpoints complete...")
 }

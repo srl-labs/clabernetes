@@ -79,7 +79,7 @@ func (r *Reconciler) ReconcileDeployments(
 		return err
 	}
 
-	err = r.enforceDeployments(ctx, obj, deployments)
+	err = r.enforceDeployments(ctx, obj, clabernetesConfigs, deployments)
 	if err != nil {
 		return err
 	}

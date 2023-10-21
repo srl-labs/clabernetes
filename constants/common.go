@@ -16,6 +16,9 @@ const (
 	// False is a constant representing the string "false".
 	False = "false"
 
+	// Default is a constant for the string default -- often used for keys in clabernetes maps.
+	Default = "default"
+
 	// AppNameDefault is the default name for the "app" (the helm value appName) -- "clabernetes".
 	AppNameDefault = "clabernetes"
 

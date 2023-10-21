@@ -49,6 +49,9 @@ type Clabernetes interface {
 	// context.
 	NewContextWithTimeout() (context.Context, context.CancelFunc)
 
+	// IsReady returns the readiness state of the manager.
+	IsReady() bool
+
 	// Exit flushes the logging manager and exits with the given exit code.
 	Exit(exitCode int)
 }

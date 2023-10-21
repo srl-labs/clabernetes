@@ -52,15 +52,15 @@ func (c *Controller) Reconcile(
 		}
 	}
 
-	// load the clab topo to make sure its all good
-	clabTopo, err := clabernetesutilcontainerlab.LoadContainerlabTopology(clab.Spec.Config)
+	// load the containerlab topo to make sure its all good
+	containerlabTopo, err := clabernetesutilcontainerlab.LoadContainerlabTopology(clab.Spec.Config)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed parsing containerlab config, error: ", err)
 
 		return ctrlruntime.Result{}, err
 	}
 
-	clabernetesConfigs, tunnels, configShouldUpdate, err := c.processConfig(clab, clabTopo)
+	clabernetesConfigs, tunnels, configShouldUpdate, err := c.processConfig(clab, containerlabTopo)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed processing containerlab config, error: %s", err)
 

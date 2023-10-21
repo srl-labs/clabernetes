@@ -42,4 +42,7 @@ const (
 
 	// PortGNMINokia is the Nokia default GNMI port number.
 	PortGNMINokia = 57400
+
+	// HealthProbePort is the port number for kubernetes health endpoints to run on.
+	HealthProbePort = 8080
 )

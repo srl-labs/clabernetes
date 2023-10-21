@@ -164,3 +164,11 @@ spec:
             limits:
               {{ toYaml .Values.manager.resources.limits | indent 14 }}
             {{- end }}
+          ports:
+          - name: readiness-port
+            containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: readiness-port
+            successThreshold: 1

@@ -84,13 +84,13 @@ jobs:
       - name: deploy clabernetes
         run: devspace run deploy --profile debug
 
-      - name: wait for clabernetes
-        run: |
-          kubectl rollout status deployment clabernetes-manager -n clabernetes
-
       - name: setup tmate session
         uses: mxschmitt/action-tmate@v3
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_e2e }}
+
+      - name: wait for clabernetes
+        run: |
+          kubectl rollout status deployment clabernetes-manager -n clabernetes
 
       - name: run the e2e tests
         id: run-the-e2e-tests
@@ -102,8 +102,12 @@ jobs:
         run: |
           set -x
           kubectl get pods -n clabernetes -o yaml
-          echo "\n********************************\n"
+          echo "********************************"
+          echo "****         events         ****
+          echo "********************************"
           kubectl get events -n clabernetes --sort-by='.lastTimestamp'
-          echo "\n********************************\n"
+          echo "********************************"
+          echo "****          logs          ****
+          echo "********************************"
           kubectl logs -l clabernetes/name=clabernetes-manager -n clabernetes --tail=-1
           exit 1
