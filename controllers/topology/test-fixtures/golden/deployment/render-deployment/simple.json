@@ -1,0 +1,96 @@
+{
+    "metadata": {
+        "name": "render-deployment-test-srl1",
+        "namespace": "clabernetes",
+        "creationTimestamp": null,
+        "labels": {
+            "clabernetes/app": "clabernetes",
+            "clabernetes/name": "render-deployment-test-srl1",
+            "clabernetes/topologyNode": "srl1",
+            "clabernetes/topologyOwner": "render-deployment-test"
+        }
+    },
+    "spec": {
+        "replicas": 1,
+        "selector": {
+            "matchLabels": {
+                "clabernetes/app": "clabernetes",
+                "clabernetes/name": "render-deployment-test-srl1",
+                "clabernetes/topologyNode": "srl1",
+                "clabernetes/topologyOwner": "render-deployment-test"
+            }
+        },
+        "template": {
+            "metadata": {
+                "creationTimestamp": null,
+                "labels": {
+                    "clabernetes/app": "clabernetes",
+                    "clabernetes/name": "render-deployment-test-srl1",
+                    "clabernetes/topologyNode": "srl1",
+                    "clabernetes/topologyOwner": "render-deployment-test"
+                }
+            },
+            "spec": {
+                "volumes": [
+                    {
+                        "name": "render-deployment-test-config",
+                        "configMap": {
+                            "name": "render-deployment-test"
+                        }
+                    }
+                ],
+                "containers": [
+                    {
+                        "name": "srl1",
+                        "image": "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:latest",
+                        "command": [
+                            "/clabernetes/manager",
+                            "launch"
+                        ],
+                        "workingDir": "/clabernetes",
+                        "ports": [
+                            {
+                                "name": "vxlan",
+                                "containerPort": 14789,
+                                "protocol": "UDP"
+                            }
+                        ],
+                        "env": [
+                            {
+                                "name": "LAUNCHER_LOGGER_LEVEL",
+                                "value": "info"
+                            }
+                        ],
+                        "resources": {},
+                        "volumeMounts": [
+                            {
+                                "name": "render-deployment-test-config",
+                                "readOnly": true,
+                                "mountPath": "/clabernetes/topo.clab.yaml",
+                                "subPath": "srl1"
+                            },
+                            {
+                                "name": "render-deployment-test-config",
+                                "readOnly": true,
+                                "mountPath": "/clabernetes/tunnels.yaml",
+                                "subPath": "srl1-tunnels"
+                            }
+                        ],
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "imagePullPolicy": "IfNotPresent",
+                        "securityContext": {
+                            "privileged": true,
+                            "runAsUser": 0
+                        }
+                    }
+                ],
+                "restartPolicy": "Always",
+                "serviceAccountName": "default"
+            }
+        },
+        "strategy": {},
+        "revisionHistoryLimit": 0
+    },
+    "status": {}
+}

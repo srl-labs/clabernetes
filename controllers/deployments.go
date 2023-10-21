@@ -36,6 +36,10 @@ func (r *ResolvedDeployments) CurrentDeploymentNames() []string {
 // ContainersEqual returns true if the existing container slice matches the rendered container slice
 // it ignores slice order.
 func ContainersEqual(existing, rendered []k8scorev1.Container) bool {
+	if len(existing) != len(rendered) {
+		return false
+	}
+
 	for existingIdx := range existing {
 		var matched bool
 

@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	clabernetesconfig "github.com/srl-labs/clabernetes/config"
-
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
@@ -150,7 +148,7 @@ func (r *Reconciler) enforceDeployments(
 	r.Log.Info("creating missing deployments")
 
 	for _, nodeName := range deployments.Missing {
-		deployment := renderDeployment(
+		deployment := r.RenderDeployment(
 			obj,
 			clabernetesConfigs,
 			nodeName,
@@ -190,7 +188,7 @@ func (r *Reconciler) enforceDeployments(
 			deployment.Name,
 		)
 
-		expectedDeployment := renderDeployment(
+		expectedDeployment := r.RenderDeployment(
 			obj,
 			clabernetesConfigs,
 			nodeName,
@@ -201,7 +199,7 @@ func (r *Reconciler) enforceDeployments(
 			return err
 		}
 
-		if !deploymentConforms(deployment, expectedDeployment, obj.GetUID()) {
+		if !DeploymentConforms(deployment, expectedDeployment, obj.GetUID()) {
 			r.Log.Debugf(
 				"comparing existing deployment '%s/%s' spec does not conform to desired state, "+
 					"updating",
@@ -268,12 +266,14 @@ func (r *Reconciler) restartDeploymentForNode(
 	return r.Client.Update(ctx, nodeDeployment)
 }
 
-func renderDeployment(
+// RenderDeployment renders a  k8sappsv1.Deployment object based on the given clabernetes topology
+// object and clabernetes config mapping (sub-topologies) for the given node name.
+func (r *Reconciler) RenderDeployment(
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	nodeName string,
 ) *k8sappsv1.Deployment {
-	globalAnnotations, globalLabels := clabernetesconfig.GetManager().GetAllMetadata()
+	globalAnnotations, globalLabels := r.ConfigManagerGetter().GetAllMetadata()
 
 	name := obj.GetName()
 
@@ -413,7 +413,7 @@ func renderDeployment(
 
 	deployment = renderDeploymentAddInsecureRegistries(obj, deployment)
 
-	deployment = renderDeploymentAddResources(obj, clabernetesConfigs, nodeName, deployment)
+	deployment = r.renderDeploymentAddResources(obj, clabernetesConfigs, nodeName, deployment)
 
 	return deployment
 }
@@ -495,7 +495,7 @@ func renderDeploymentAddInsecureRegistries(
 	return deployment
 }
 
-func renderDeploymentAddResources(
+func (r *Reconciler) renderDeploymentAddResources(
 	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	nodeName string,
@@ -517,7 +517,7 @@ func renderDeploymentAddResources(
 		return deployment
 	}
 
-	resources := clabernetesconfig.GetManager().GetResourcesForContainerlabKind(
+	resources := r.ConfigManagerGetter().GetResourcesForContainerlabKind(
 		clabernetesConfigs[nodeName].Topology.GetNodeKindType(nodeName),
 	)
 
@@ -528,7 +528,10 @@ func renderDeploymentAddResources(
 	return deployment
 }
 
-func deploymentConforms(
+// DeploymentConforms asserts if a given deployment conforms with a rendered deployment -- this
+// isn't checking if the services are exactly the same, just checking that the parts clabernetes
+// cares about are the same.
+func DeploymentConforms(
 	existingDeployment,
 	renderedDeployment *k8sappsv1.Deployment,
 	expectedOwnerUID apimachinerytypes.UID,
@@ -562,29 +565,6 @@ func deploymentConforms(
 		return false
 	}
 
-	// this and labels will probably be a future us problem -- maybe some mutating webhooks will be
-	// adding labels or annotations that will cause us to continually reconcile, that would be lame
-	// ... we'll cross that bridge when we get there :)
-	if !reflect.DeepEqual(
-		existingDeployment.Spec.Template.ObjectMeta.Annotations,
-		renderedDeployment.Spec.Template.ObjectMeta.Annotations,
-	) {
-		return false
-	}
-
-	if !reflect.DeepEqual(
-		existingDeployment.Spec.Template.ObjectMeta.Labels,
-		renderedDeployment.Spec.Template.ObjectMeta.Labels,
-	) {
-		return false
-	}
-
-	if existingDeployment.ObjectMeta.Annotations == nil &&
-		renderedDeployment.ObjectMeta.Annotations != nil {
-		// obviously our annotations don't exist, so we need to enforce that
-		return false
-	}
-
 	if !clabernetescontrollers.AnnotationsOrLabelsConform(
 		existingDeployment.ObjectMeta.Annotations,
 		renderedDeployment.ObjectMeta.Annotations,
@@ -595,6 +575,20 @@ func deploymentConforms(
 	if !clabernetescontrollers.AnnotationsOrLabelsConform(
 		existingDeployment.ObjectMeta.Labels,
 		renderedDeployment.ObjectMeta.Labels,
+	) {
+		return false
+	}
+
+	if !clabernetescontrollers.AnnotationsOrLabelsConform(
+		existingDeployment.Spec.Template.ObjectMeta.Annotations,
+		renderedDeployment.Spec.Template.ObjectMeta.Annotations,
+	) {
+		return false
+	}
+
+	if !clabernetescontrollers.AnnotationsOrLabelsConform(
+		existingDeployment.Spec.Template.ObjectMeta.Labels,
+		renderedDeployment.Spec.Template.ObjectMeta.Labels,
 	) {
 		return false
 	}

@@ -287,7 +287,7 @@ func TestServiceConforms(t *testing.T) {
 					},
 					OwnerReferences: []metav1.OwnerReference{
 						{
-							UID: apimachinerytypes.UID("evil-imposter"),
+							UID: apimachinerytypes.UID("clabernetes-testing"),
 						},
 					},
 				},
@@ -311,7 +311,7 @@ func TestServiceConforms(t *testing.T) {
 					},
 					OwnerReferences: []metav1.OwnerReference{
 						{
-							UID: apimachinerytypes.UID("evil-imposter"),
+							UID: apimachinerytypes.UID("clabernetes-testing"),
 						},
 					},
 				},
@@ -355,7 +355,7 @@ func TestServiceConforms(t *testing.T) {
 					},
 					OwnerReferences: []metav1.OwnerReference{
 						{
-							UID: apimachinerytypes.UID("evil-imposter"),
+							UID: apimachinerytypes.UID("clabernetes-testing"),
 						},
 					},
 				},
@@ -379,7 +379,7 @@ func TestServiceConforms(t *testing.T) {
 					},
 					OwnerReferences: []metav1.OwnerReference{
 						{
-							UID: apimachinerytypes.UID("evil-imposter"),
+							UID: apimachinerytypes.UID("clabernetes-testing"),
 						},
 					},
 				},
