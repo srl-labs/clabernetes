@@ -2,6 +2,11 @@
 #
 # global options
 #
+# note the yaml anchors, we use these to easily pass the same values to the clicker sub-chart (if
+# enabling); there is no magic here other than yaml anchor magic, if you expect the "global" things
+# to be really global and applied to the clicker (or any other future) dependency then use anchors
+# or pass things explicitly. this felt better than using actual helm "globals"
+#
 
 appName: &_appName clabernetes
 

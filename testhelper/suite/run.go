@@ -16,13 +16,13 @@ const (
 
 // Run executes a clabernetes e2e test.
 func Run(t *testing.T, steps []Step, testName string) { //nolint: thelper
-	namespace := NewTestNamespace(testName)
+	namespace := clabernetestesthelper.NewTestNamespace(testName)
 
-	KubectlCreateNamespace(t, namespace)
+	clabernetestesthelper.KubectlCreateNamespace(t, namespace)
 
 	defer func() {
 		if !*clabernetestesthelper.SkipCleanup {
-			KubectlDeleteNamespace(t, namespace)
+			clabernetestesthelper.KubectlDeleteNamespace(t, namespace)
 		}
 	}()
 
@@ -34,7 +34,7 @@ func Run(t *testing.T, steps []Step, testName string) { //nolint: thelper
 		for _, stepFixture := range stepFixtures {
 			stepFixtureOperationType := GetStepFixtureType(t, stepFixture)
 
-			KubectlFileOp(t, stepFixtureOperationType, namespace, stepFixture)
+			clabernetestesthelper.KubectlFileOp(t, stepFixtureOperationType, namespace, stepFixture)
 		}
 
 		if *clabernetestesthelper.Update {
@@ -77,10 +77,10 @@ func Run(t *testing.T, steps []Step, testName string) { //nolint: thelper
 func getter(t *testing.T, namespace, kind, objectName string, object AssertObject) []byte {
 	t.Helper()
 
-	objectData := KubectlGetOp(t, kind, namespace, objectName)
+	objectData := clabernetestesthelper.KubectlGetOp(t, kind, namespace, objectName)
 
 	if !object.SkipDefaultNormalize {
-		objectData = NormalizeKubernetesObject(t, objectData)
+		objectData = clabernetestesthelper.NormalizeKubernetesObject(t, objectData)
 	}
 
 	for _, normalizeF := range object.NormalizeFuncs {

@@ -4,20 +4,8 @@ import (
 	"regexp"
 	"sync"
 	"testing"
-)
 
-// Operation represents a kubectl operation type, i.e. apply or delete.
-type Operation string
-
-const (
-	// Apply is the apply kubectl operation.
-	Apply Operation = "apply"
-	// Delete is the delete kubectl operation.
-	Delete Operation = "delete"
-	// Create is the create kubectl operation.
-	Create Operation = "create"
-	// Get is the get kubectl operation.
-	Get Operation = "get"
+	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
 )
 
 // AssertObject represents an object that we are looking to assert the state of in a test -- the
@@ -59,7 +47,7 @@ func getStepPatterns() *stepPatterns {
 }
 
 // GetStepFixtureType returns the Operation type of the given test step fixture file.
-func GetStepFixtureType(t *testing.T, stepFixtureName string) Operation {
+func GetStepFixtureType(t *testing.T, stepFixtureName string) clabernetestesthelper.Operation {
 	t.Helper()
 
 	patterns := getStepPatterns()
@@ -67,10 +55,13 @@ func GetStepFixtureType(t *testing.T, stepFixtureName string) Operation {
 	matches := patterns.stepFixtureType.FindStringSubmatch(stepFixtureName)
 	opIndex := patterns.stepFixtureType.SubexpIndex("fixtureType")
 
-	resolved := Operation(matches[opIndex])
+	resolved := clabernetestesthelper.Operation(matches[opIndex])
 
 	switch resolved {
-	case Apply, Delete, Create, Get:
+	case clabernetestesthelper.Apply,
+		clabernetestesthelper.Delete,
+		clabernetestesthelper.Create,
+		clabernetestesthelper.Get:
 	default:
 		t.Fatalf("fixture type '%s' invalid", resolved)
 	}

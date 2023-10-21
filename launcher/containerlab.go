@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"strconv"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
@@ -70,11 +71,11 @@ func (c *clabernetes) runContainerlabVxlanTools(
 		"--remote",
 		resolvedVxlanRemote,
 		"--id",
-		fmt.Sprint(vxlanID),
+		strconv.Itoa(vxlanID),
 		"--link",
 		fmt.Sprintf("%s-%s", localNodeName, cntLink),
 		"--port",
-		fmt.Sprint(clabernetesconstants.VXLANServicePort),
+		strconv.Itoa(clabernetesconstants.VXLANServicePort),
 	)
 
 	_, err = cmd.Output()

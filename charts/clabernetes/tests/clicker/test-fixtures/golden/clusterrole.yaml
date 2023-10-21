@@ -1,0 +1,70 @@
+---
+# Source: clabernetes/templates/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    chart: "clabernetes-0.0.16"
+    release: release-name
+    heritage: Helm
+    clabernetes/app: clabernetes-plus-clicker
+    clabernetes/name: "clabernetes-plus-clicker-cluster-role"
+    clabernetes/component: cluster-role
+    anotherlabel: anotherlabelvalue
+    somelabel: somelabelvalue
+  annotations:
+    annotherannotation: anotherannotationvalue
+    someannotation: someannotationvalue
+  name: "clabernetes-plus-clicker-cluster-role"
+rules:
+  - apiGroups:
+      - topology.clabernetes
+    resources:
+      - "*"
+    verbs:
+      - "*"
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - "*"
+    verbs:
+      - "*"
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+      - secrets
+      - configmaps
+      - services
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - delete
+      - patch
+      - watch
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - delete
+      - patch
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - delete
+      - patch
+      - watch

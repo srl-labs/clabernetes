@@ -16,6 +16,8 @@ fmt: ## Run formatters
 
 lint: fmt ## Run linters; runs with GOOS env var for linting on darwin
 	golangci-lint run
+	helm lint --quiet charts/clabernetes
+	helm lint --quiet charts/clicker
 
 test: ## Run unit tests
 	gotestsum --format testname --hide-summary=skipped -- -coverprofile=cover.out `go list ./... | grep -v e2e`
@@ -28,6 +30,12 @@ test-e2e: ## Run e2e tests
 
 cov:  ## Produce html coverage report
 	go tool cover -html=cover.out
+
+install-tools: ## Install lint/test tools
+	go install mvdan.cc/gofumpt@latest
+	go install golang.org/x/tools/cmd/goimports@latest
+	go install github.com/segmentio/golines@latest
+	go install gotest.tools/gotestsum@latest
 
 install-code-generators: ## Install latest code-generator tools
 	go install k8s.io/code-generator/cmd/deepcopy-gen@latest

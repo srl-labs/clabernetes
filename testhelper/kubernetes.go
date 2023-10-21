@@ -1,4 +1,4 @@
-package suite
+package testhelper
 
 import (
 	"testing"
