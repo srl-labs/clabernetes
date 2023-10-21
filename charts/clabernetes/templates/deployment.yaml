@@ -167,7 +167,6 @@ spec:
           ports:
           - name: readiness-port
             containerPort: 8080
-            hostPort: 8080
           readinessProbe:
             httpGet:
               path: /ready
