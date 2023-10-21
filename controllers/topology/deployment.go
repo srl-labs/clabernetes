@@ -318,8 +318,8 @@ func renderDeployment(
 			Labels:      labels,
 		},
 		Spec: k8sappsv1.DeploymentSpec{
-			Replicas:             clabernetesutil.Int32ToPointer(1),
-			RevisionHistoryLimit: clabernetesutil.Int32ToPointer(0),
+			Replicas:             clabernetesutil.ToPointer(int32(1)),
+			RevisionHistoryLimit: clabernetesutil.ToPointer(int32(0)),
 			Selector: &metav1.LabelSelector{
 				MatchLabels: matchLabels,
 			},
@@ -369,8 +369,8 @@ func renderDeployment(
 							),
 							SecurityContext: &k8scorev1.SecurityContext{
 								// obviously we need privileged for dind setup
-								Privileged: clabernetesutil.BoolToPointer(true),
-								RunAsUser:  clabernetesutil.Int64ToPointer(0),
+								Privileged: clabernetesutil.ToPointer(true),
+								RunAsUser:  clabernetesutil.ToPointer(int64(0)),
 							},
 							Env: []k8scorev1.EnvVar{
 								{

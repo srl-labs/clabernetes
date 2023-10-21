@@ -82,7 +82,7 @@ func (c *Controller) processConfig( //nolint:funlen
 				},
 				Links: nil,
 			},
-			Prefix: clabernetesutil.StringToPointer(""),
+			Prefix: clabernetesutil.ToPointer(""),
 		}
 
 		if kneModel != "" {

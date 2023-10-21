@@ -196,7 +196,7 @@ func (r *Reconciler) enforceFabricServices(
 			return err
 		}
 
-		if !serviceConforms(service, expectedService, obj.GetUID()) {
+		if !ServiceConforms(service, expectedService, obj.GetUID()) {
 			r.Log.Debugf(
 				"comparing existing service '%s/%s' spec does not conform to desired state, "+
 					"updating",

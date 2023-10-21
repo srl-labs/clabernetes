@@ -309,7 +309,7 @@ func (c *Controller) processConfigForNode(
 		// what the user has provided *or* the default of "clab").
 		// since prefixes are only useful when multiple labs are scheduled on the same node, and
 		// that will never be the case with clabernetes, the prefix is unnecessary.
-		Prefix: clabernetesutil.StringToPointer(""),
+		Prefix: clabernetesutil.ToPointer(""),
 	}
 
 	for _, link := range clabTopo.Links {
