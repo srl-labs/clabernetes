@@ -25,6 +25,9 @@ var (
 	managerInstanceOnce sync.Once //nolint:gochecknoglobals
 )
 
+// ManagerGetterFunc returns an instance of the config manager.
+type ManagerGetterFunc func() Manager
+
 // InitManager initializes the config manager -- it does this once only, its a no-op if the manager
 // is already initialized.
 func InitManager(ctx context.Context, appName, namespace string, client *kubernetes.Clientset) {

@@ -4,6 +4,8 @@ import (
 	"context"
 	"slices"
 
+	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
@@ -18,6 +20,32 @@ import (
 	ctrlruntimereconcile "sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+// ResourceListerFunc represents a function that can list the objects that a topology controller
+// is responsible for.
+type ResourceListerFunc func(
+	ctx context.Context,
+	client ctrlruntimeclient.Client,
+) ([]ctrlruntimeclient.Object, error)
+
+// NewReconciler creates a new generic Reconciler (TopologyReconciler).
+func NewReconciler(
+	log claberneteslogging.Instance,
+	client ctrlruntimeclient.Client,
+	resourceKind string,
+	resourceLister ResourceListerFunc,
+	configManagerGetter clabernetesconfig.ManagerGetterFunc,
+) *Reconciler {
+	return &Reconciler{
+		Log:                 log,
+		Client:              client,
+		ResourceKind:        resourceKind,
+		ResourceLister:      resourceLister,
+		ConfigManagerGetter: configManagerGetter,
+
+		configMapReconciler: NewConfigMapReconciler(resourceKind, configManagerGetter),
+	}
+}
+
 // Reconciler (TopologyReconciler) is the base clabernetes topology reconciler that is embedded in
 // all clabernetes topology controllers, it provides common methods for reconciling the
 // common/standard resources that represent a clabernetes object (configmap, deployments,
@@ -26,40 +54,80 @@ type Reconciler struct {
 	Log            claberneteslogging.Instance
 	Client         ctrlruntimeclient.Client
 	ResourceKind   string
-	ResourceLister func(
-		ctx context.Context,
-		client ctrlruntimeclient.Client,
-	) ([]ctrlruntimeclient.Object, error)
+	ResourceLister ResourceListerFunc
+
+	// TODO this should be deleted once we make the sub reconcilers
 	ConfigManagerGetter func() clabernetesconfig.Manager
+
+	configMapReconciler  *ConfigMapReconciler
+	deploymentReconciler *deploymentReconciler
+	serviceReconciler    *serviceReconciler
+}
+
+type (
+	deploymentReconciler struct{}
+	serviceReconciler    struct{}
+)
+
+func (r *Reconciler) createObj(
+	ctx context.Context,
+	ownerObj,
+	renderedObj ctrlruntimeclient.Object,
+) error {
+	err := ctrlruntimeutil.SetOwnerReference(ownerObj, renderedObj, r.Client.Scheme())
+	if err != nil {
+		return err
+	}
+
+	return r.Client.Create(ctx, renderedObj)
 }
 
 // ReconcileConfigMap reconciles the primary configmap containing clabernetes configs and tunnel
 // information.
 func (r *Reconciler) ReconcileConfigMap(
 	ctx context.Context,
-	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
+	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 ) error {
-	configMap := &k8scorev1.ConfigMap{}
+	namespacedName := apimachinerytypes.NamespacedName{
+		Namespace: owningTopology.GetNamespace(),
+		Name:      owningTopology.GetName(),
+	}
 
-	err := r.Client.Get(
+	renderedConfigMap, err := r.configMapReconciler.Render(
+		namespacedName,
+		clabernetesConfigs,
+		tunnels,
+	)
+	if err != nil {
+		return err
+	}
+
+	existingConfigMap := &k8scorev1.ConfigMap{}
+
+	err = r.Client.Get(
 		ctx,
-		apimachinerytypes.NamespacedName{
-			Name:      obj.GetName(),
-			Namespace: obj.GetNamespace(),
-		},
-		configMap,
+		namespacedName,
+		existingConfigMap,
 	)
 	if err != nil {
 		if apimachineryerrors.IsNotFound(err) {
-			return r.createConfigMap(ctx, obj, clabernetesConfigs, tunnels)
+			return r.createObj(ctx, owningTopology, renderedConfigMap)
 		}
 
 		return err
 	}
 
-	return r.enforceConfigMap(ctx, obj, clabernetesConfigs, tunnels, configMap)
+	if r.configMapReconciler.Conforms(
+		existingConfigMap,
+		renderedConfigMap,
+		owningTopology.GetUID(),
+	) {
+		return nil
+	}
+
+	return r.Client.Update(ctx, renderedConfigMap)
 }
 
 // ReconcileDeployments reconciles the deployments that make up a clabernetes Topology.

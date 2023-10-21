@@ -41,11 +41,11 @@ func NewController(
 
 	c := &Controller{
 		BaseController: baseController,
-		TopologyReconciler: &clabernetescontrollerstopology.Reconciler{
-			Log:          baseController.Log,
-			Client:       baseController.Client,
-			ResourceKind: clabernetesapistopology.Containerlab,
-			ResourceLister: func(
+		TopologyReconciler: clabernetescontrollerstopology.NewReconciler(
+			baseController.Log,
+			baseController.Client,
+			clabernetesapistopology.Containerlab,
+			func(
 				ctx context.Context,
 				client ctrlruntimeclient.Client,
 			) ([]ctrlruntimeclient.Object, error) {
@@ -67,8 +67,8 @@ func NewController(
 
 				return out, nil
 			},
-			ConfigManagerGetter: clabernetesconfig.GetManager,
-		},
+			clabernetesconfig.GetManager,
+		),
 	}
 
 	return c

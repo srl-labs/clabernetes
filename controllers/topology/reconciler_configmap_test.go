@@ -6,6 +6,9 @@ import (
 	"reflect"
 	"testing"
 
+	clabernetesapistopology "github.com/srl-labs/clabernetes/apis/topology"
+	apimachinerytypes "k8s.io/apimachinery/pkg/types"
+
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 
 	k8scorev1 "k8s.io/api/core/v1"
@@ -15,9 +18,6 @@ import (
 	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var defaultPorts = []string{
@@ -44,17 +44,15 @@ const renderConfigMapTestName = "configmap/render-config-map"
 func TestRenderConfigMap(t *testing.T) {
 	cases := []struct {
 		name               string
-		obj                ctrlruntimeclient.Object
+		namespacedName     apimachinerytypes.NamespacedName
 		clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config
 		tunnels            map[string][]*clabernetesapistopologyv1alpha1.Tunnel
 	}{
 		{
 			name: "basic-two-node-with-links",
-			obj: &clabernetesapistopologyv1alpha1.Containerlab{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-configmap",
-					Namespace: "nowhere",
-				},
+			namespacedName: apimachinerytypes.NamespacedName{
+				Name:      "test-configmap",
+				Namespace: "nowhere",
 			},
 			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
 				"srl1": {
@@ -133,11 +131,9 @@ func TestRenderConfigMap(t *testing.T) {
 		},
 		{
 			name: "basic-two-node-no-links",
-			obj: &clabernetesapistopologyv1alpha1.Containerlab{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-configmap",
-					Namespace: "nowhere",
-				},
+			namespacedName: apimachinerytypes.NamespacedName{
+				Name:      "test-configmap",
+				Namespace: "nowhere",
 			},
 			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
 				"srl1": {
@@ -186,13 +182,13 @@ func TestRenderConfigMap(t *testing.T) {
 			func(t *testing.T) {
 				t.Logf("%s: starting", testCase.name)
 
-				reconciler := clabernetescontrollerstopology.Reconciler{
-					ResourceKind:        "containerlab",
-					ConfigManagerGetter: clabernetesconfig.GetFakeManager,
-				}
+				reconciler := clabernetescontrollerstopology.NewConfigMapReconciler(
+					clabernetesapistopology.Containerlab,
+					clabernetesconfig.GetFakeManager,
+				)
 
-				got, err := reconciler.RenderConfigMap(
-					testCase.obj,
+				got, err := reconciler.Render(
+					testCase.namespacedName,
 					testCase.clabernetesConfigs,
 					testCase.tunnels,
 				)
