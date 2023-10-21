@@ -396,8 +396,8 @@ func (c *clabernetes) buildPods(
 							ImagePullPolicy:          selfPod.Spec.Containers[0].ImagePullPolicy,
 							SecurityContext: &k8scorev1.SecurityContext{
 								// we need privileged for setting syscalls and such
-								Privileged: clabernetesutil.BoolToPointer(true),
-								RunAsUser:  clabernetesutil.Int64ToPointer(0),
+								Privileged: clabernetesutil.ToPointer(true),
+								RunAsUser:  clabernetesutil.ToPointer(int64(0)),
 							},
 							Env: []k8scorev1.EnvVar{
 								{

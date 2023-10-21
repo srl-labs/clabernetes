@@ -18,7 +18,7 @@ const testAllocateTunnelIdsTestName = "tunnels/allocate-tunnel-ids"
 // parts in play to ensure that we use the tunnel IDs consistently and also obviously don't stomp
 // on any existing tunnel IDs.
 func TestAllocateTunnelIds(t *testing.T) {
-	testCases := []struct {
+	cases := []struct {
 		name             string
 		statusTunnels    map[string][]*clabernetesapistopologyv1alpha1.Tunnel
 		processedTunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel
@@ -286,7 +286,7 @@ func TestAllocateTunnelIds(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range testCases {
+	for _, testCase := range cases {
 		t.Run(
 			testCase.name,
 			func(t *testing.T) {

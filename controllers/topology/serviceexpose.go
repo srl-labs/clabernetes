@@ -221,7 +221,7 @@ func (r *Reconciler) enforceExposeServices(
 			return err
 		}
 
-		if !serviceConforms(service, expectedService, obj.GetUID()) {
+		if !ServiceConforms(service, expectedService, obj.GetUID()) {
 			r.Log.Debugf(
 				"comparing existing expose service '%s/%s' spec does not conform to desired "+
 					"state, updating",

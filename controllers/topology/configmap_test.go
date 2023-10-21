@@ -42,7 +42,7 @@ const renderConfigMapTestName = "configmap/render-config-map"
 // TestRenderConfigMap ensures that we properly render the main tunnel/config configmap for a given
 // c9s deployment (containerlab CR).
 func TestRenderConfigMap(t *testing.T) {
-	testCases := []struct {
+	cases := []struct {
 		name               string
 		obj                ctrlruntimeclient.Object
 		clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config
@@ -59,7 +59,7 @@ func TestRenderConfigMap(t *testing.T) {
 			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
 				"srl1": {
 					Name:   "clabernetes-srl1",
-					Prefix: clabernetesutil.StringToPointer(""),
+					Prefix: clabernetesutil.ToPointer(""),
 					Topology: &clabernetesutilcontainerlab.Topology{
 						Defaults: &clabernetesutilcontainerlab.NodeDefinition{
 							Ports: defaultPorts,
@@ -84,7 +84,7 @@ func TestRenderConfigMap(t *testing.T) {
 				},
 				"srl2": {
 					Name:   "clabernetes-srl2",
-					Prefix: clabernetesutil.StringToPointer(""),
+					Prefix: clabernetesutil.ToPointer(""),
 					Topology: &clabernetesutilcontainerlab.Topology{
 						Defaults: &clabernetesutilcontainerlab.NodeDefinition{
 							Ports: defaultPorts,
@@ -142,7 +142,7 @@ func TestRenderConfigMap(t *testing.T) {
 			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
 				"srl1": {
 					Name:   "clabernetes-srl1",
-					Prefix: clabernetesutil.StringToPointer(""),
+					Prefix: clabernetesutil.ToPointer(""),
 					Topology: &clabernetesutilcontainerlab.Topology{
 						Defaults: &clabernetesutilcontainerlab.NodeDefinition{
 							Ports: defaultPorts,
@@ -158,7 +158,7 @@ func TestRenderConfigMap(t *testing.T) {
 				},
 				"srl2": {
 					Name:   "clabernetes-srl2",
-					Prefix: clabernetesutil.StringToPointer(""),
+					Prefix: clabernetesutil.ToPointer(""),
 					Topology: &clabernetesutilcontainerlab.Topology{
 						Defaults: &clabernetesutilcontainerlab.NodeDefinition{
 							Ports: defaultPorts,
@@ -180,10 +180,12 @@ func TestRenderConfigMap(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range testCases {
+	for _, testCase := range cases {
 		t.Run(
 			testCase.name,
 			func(t *testing.T) {
+				t.Logf("%s: starting", testCase.name)
+
 				reconciler := clabernetescontrollerstopology.Reconciler{
 					ResourceKind:        "containerlab",
 					ConfigManagerGetter: clabernetesconfig.GetFakeManager,

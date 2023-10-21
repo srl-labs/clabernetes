@@ -1,13 +1,6 @@
 package util
 
-// Int32ToPointer returns i as a pointer.
-func Int32ToPointer(i int32) *int32 { return &i }
-
-// Int64ToPointer returns i as a pointer.
-func Int64ToPointer(i int64) *int64 { return &i }
-
-// BoolToPointer returns a pointer to b.
-func BoolToPointer(b bool) *bool { return &b }
-
-// StringToPointer returns a pointer to s.
-func StringToPointer(s string) *string { return &s }
+// ToPointer accepts an object T and returns a pointer to it.
+func ToPointer[T any](t T) *T {
+	return &t
+}

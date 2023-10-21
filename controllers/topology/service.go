@@ -12,7 +12,10 @@ import (
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 )
 
-func serviceConforms(
+// ServiceConforms asserts if a given service conforms with a rendered service -- this isn't
+// checking if the services are exactly the same, just checking that the parts clabernetes cares
+// about are the same.
+func ServiceConforms(
 	existingService,
 	renderedService *k8scorev1.Service,
 	expectedOwnerUID apimachinerytypes.UID,
