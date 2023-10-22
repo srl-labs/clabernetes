@@ -51,8 +51,8 @@ func (r *DeploymentReconciler) Resolve(
 	ownedDeployments *k8sappsv1.DeploymentList,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	_ clabernetesapistopologyv1alpha1.TopologyCommonObject,
-) (*clabernetesutilkubernetes.ObjectDiffer[*k8sappsv1.Deployment], error) {
-	deployments := &clabernetesutilkubernetes.ObjectDiffer[*k8sappsv1.Deployment]{
+) (*clabernetesutil.ObjectDiffer[*k8sappsv1.Deployment], error) {
+	deployments := &clabernetesutil.ObjectDiffer[*k8sappsv1.Deployment]{
 		Current: map[string]*k8sappsv1.Deployment{},
 	}
 
@@ -307,8 +307,8 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 	}
 
 	if len(owningTopologyCommonSpec.InsecureRegistries) > 0 {
-		deployment.Spec.Template.Spec.Containers[0].Env = append(
-			deployment.Spec.Template.Spec.Containers[0].Env,
+		envs = append(
+			envs,
 			k8scorev1.EnvVar{
 				Name:  clabernetesconstants.LauncherInsecureRegistries,
 				Value: strings.Join(owningTopologyCommonSpec.InsecureRegistries, ","),

@@ -35,13 +35,17 @@ func TestSafeConcatNameKubernetes(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Logf("%s: starting", tc.name)
+	for _, testCase := range cases {
+		t.Run(
+			testCase.name,
+			func(t *testing.T) {
+				t.Logf("%s: starting", testCase.name)
 
-		actual := clabernetesutilkubernetes.SafeConcatNameKubernetes(tc.in...)
-		if actual != tc.expected {
-			clabernetestesthelper.FailOutput(t, actual, tc.expected)
-		}
+				actual := clabernetesutilkubernetes.SafeConcatNameKubernetes(testCase.in...)
+				if actual != testCase.expected {
+					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
+				}
+			})
 	}
 }
 
@@ -77,12 +81,16 @@ func TestSafeConcatNameMax(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Logf("%s: starting", tc.name)
+	for _, testCase := range cases {
+		t.Run(
+			testCase.name,
+			func(t *testing.T) {
+				t.Logf("%s: starting", testCase.name)
 
-		actual := clabernetesutilkubernetes.SafeConcatNameMax(tc.in, tc.max)
-		if actual != tc.expected {
-			clabernetestesthelper.FailOutput(t, actual, tc.expected)
-		}
+				actual := clabernetesutilkubernetes.SafeConcatNameMax(testCase.in, testCase.max)
+				if actual != testCase.expected {
+					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
+				}
+			})
 	}
 }

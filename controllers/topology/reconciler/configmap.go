@@ -45,44 +45,37 @@ type ConfigMapReconciler struct {
 // the configmap that will ultimately be referenced when mounting sub-topologies and tunnel data in
 // the clabernetes launcher pod(s) for a given topology.
 func (r *ConfigMapReconciler) Render(
-	namespacedName apimachinerytypes.NamespacedName,
+	owningTopologyNamespacedName apimachinerytypes.NamespacedName,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 ) (*k8scorev1.ConfigMap, error) {
-	configManager := r.configManagerGetter()
-	globalAnnotations, globalLabels := configManager.GetAllMetadata()
+	annotations, globalLabels := r.configManagerGetter().GetAllMetadata()
 
-	configMap := &k8scorev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        namespacedName.Name,
-			Namespace:   namespacedName.Namespace,
-			Annotations: globalAnnotations,
-			Labels: map[string]string{
-				clabernetesconstants.LabelApp:           clabernetesconstants.Clabernetes,
-				clabernetesconstants.LabelName:          namespacedName.Name,
-				clabernetesconstants.LabelTopologyOwner: namespacedName.Name,
-				clabernetesconstants.LabelTopologyKind:  r.owningTopologyKind,
-			},
-		},
-		Data: map[string]string{},
+	labels := map[string]string{
+		clabernetesconstants.LabelApp:           clabernetesconstants.Clabernetes,
+		clabernetesconstants.LabelName:          owningTopologyNamespacedName.Name,
+		clabernetesconstants.LabelTopologyOwner: owningTopologyNamespacedName.Name,
+		clabernetesconstants.LabelTopologyKind:  r.owningTopologyKind,
 	}
 
 	for k, v := range globalLabels {
-		configMap.Labels[k] = v
+		labels[k] = v
 	}
+
+	data := make(map[string]string)
 
 	for nodeName, nodeTopo := range clabernetesConfigs {
 		// always initialize the tunnels keys in the configmap, this way we don't have to have any
 		// special handling for no tunnels and things always look consistent; we'll override this
 		// down below if the node has tunnels of course!
-		configMap.Data[fmt.Sprintf("%s-tunnels", nodeName)] = ""
+		data[fmt.Sprintf("%s-tunnels", nodeName)] = ""
 
 		yamlNodeTopo, err := yaml.Marshal(nodeTopo)
 		if err != nil {
 			return nil, err
 		}
 
-		configMap.Data[nodeName] = string(yamlNodeTopo)
+		data[nodeName] = string(yamlNodeTopo)
 	}
 
 	for nodeName, nodeTunnels := range tunnels {
@@ -91,10 +84,18 @@ func (r *ConfigMapReconciler) Render(
 			return nil, err
 		}
 
-		configMap.Data[fmt.Sprintf("%s-tunnels", nodeName)] = string(yamlNodeTunnels)
+		data[fmt.Sprintf("%s-tunnels", nodeName)] = string(yamlNodeTunnels)
 	}
 
-	return configMap, nil
+	return &k8scorev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        owningTopologyNamespacedName.Name,
+			Namespace:   owningTopologyNamespacedName.Namespace,
+			Annotations: annotations,
+			Labels:      labels,
+		},
+		Data: data,
+	}, nil
 }
 
 // Conforms checks if the existingConfigMap conforms with the renderedConfigMap.

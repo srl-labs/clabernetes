@@ -6,8 +6,6 @@ import (
 	"slices"
 	"time"
 
-	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
-
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	k8sappsv1 "k8s.io/api/apps/v1"
 
@@ -145,7 +143,7 @@ func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	previousClabernetesConfigs,
 	currentClabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
-	deployments *clabernetesutilkubernetes.ObjectDiffer[*k8sappsv1.Deployment],
+	deployments *clabernetesutil.ObjectDiffer[*k8sappsv1.Deployment],
 ) error {
 	r.Log.Info("determining nodes needing restart")
 

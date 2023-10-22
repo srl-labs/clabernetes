@@ -16,7 +16,6 @@ import (
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
-	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
 	k8scorev1 "k8s.io/api/core/v1"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 )
@@ -50,8 +49,8 @@ func (r *ServiceExposeReconciler) Resolve(
 	ownedServices *k8scorev1.ServiceList,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
-) (*clabernetesutilkubernetes.ObjectDiffer[*k8scorev1.Service], error) {
-	services := &clabernetesutilkubernetes.ObjectDiffer[*k8scorev1.Service]{
+) (*clabernetesutil.ObjectDiffer[*k8scorev1.Service], error) {
+	services := &clabernetesutil.ObjectDiffer[*k8scorev1.Service]{
 		Current: map[string]*k8scorev1.Service{},
 	}
 

@@ -3,9 +3,9 @@ package reconciler
 import (
 	"context"
 
-	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 
-	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
@@ -24,8 +24,8 @@ func reconcileResolve[T ctrlruntimeclient.Object, TL ctrlruntimeclient.ObjectLis
 		ownedObject TL,
 		currentClabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 		owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
-	) (*clabernetesutilkubernetes.ObjectDiffer[T], error),
-) (*clabernetesutilkubernetes.ObjectDiffer[T], error) {
+	) (*clabernetesutil.ObjectDiffer[T], error),
+) (*clabernetesutil.ObjectDiffer[T], error) {
 	// strictly passed for typing reasons
 	_ = ownedType
 

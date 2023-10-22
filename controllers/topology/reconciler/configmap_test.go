@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"testing"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 
 	clabernetescontrollerstopologyreconciler "github.com/srl-labs/clabernetes/controllers/topology/reconciler"
@@ -232,5 +234,269 @@ func TestRenderConfigMap(t *testing.T) {
 				}
 			},
 		)
+	}
+}
+
+func TestConfigMapConforms(t *testing.T) {
+	cases := []struct {
+		name     string
+		existing *k8scorev1.ConfigMap
+		rendered *k8scorev1.ConfigMap
+		ownerUID apimachinerytypes.UID
+		conforms bool
+	}{
+		{
+			name: "simple",
+			existing: &k8scorev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							UID: apimachinerytypes.UID("clabernetes-testing"),
+						},
+					},
+				},
+			},
+			rendered: &k8scorev1.ConfigMap{},
+			ownerUID: apimachinerytypes.UID("clabernetes-testing"),
+			conforms: true,
+		},
+		{
+			name: "bad-data-extra-stuff",
+			existing: &k8scorev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							UID: apimachinerytypes.UID("clabernetes-testing"),
+						},
+					},
+				},
+				Data: map[string]string{
+					"something": "not in the expected",
+				},
+			},
+			rendered: &k8scorev1.ConfigMap{},
+			ownerUID: apimachinerytypes.UID("clabernetes-testing"),
+			conforms: false,
+		},
+		{
+			name: "bad-data-missing-stuff",
+			existing: &k8scorev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							UID: apimachinerytypes.UID("clabernetes-testing"),
+						},
+					},
+				},
+			},
+			rendered: &k8scorev1.ConfigMap{
+				Data: map[string]string{
+					"something": "we expect expected",
+				},
+			},
+			ownerUID: apimachinerytypes.UID("clabernetes-testing"),
+			conforms: false,
+		},
+
+		// annotations
+
+		{
+			name: "missing-clabernetes-global-annotations",
+			existing: &k8scorev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"somethingelse": "xyz",
+					},
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							UID: apimachinerytypes.UID("clabernetes-testing"),
+						},
+					},
+				},
+			},
+			rendered: &k8scorev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"user-provided-global-annotation": "expected-value",
+					},
+				},
+			},
+			ownerUID: apimachinerytypes.UID("clabernetes-testing"),
+			conforms: false,
+		},
+		{
+			name: "clabernetes-global-annotations-wrong-value",
+			existing: &k8scorev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"user-provided-global-annotation": "xyz",
+					},
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							UID: apimachinerytypes.UID("clabernetes-testing"),
+						},
+					},
+				},
+			},
+			rendered: &k8scorev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"user-provided-global-annotation": "expected-value",
+					},
+				},
+			},
+			ownerUID: apimachinerytypes.UID("clabernetes-testing"),
+			conforms: false,
+		},
+		{
+			name: "extra-annotations-ok",
+			existing: &k8scorev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"somethingelseentirely": "thisisok",
+					},
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							UID: apimachinerytypes.UID("clabernetes-testing"),
+						},
+					},
+				},
+			},
+			rendered: &k8scorev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{},
+			},
+			ownerUID: apimachinerytypes.UID("clabernetes-testing"),
+			conforms: true,
+		},
+
+		// labels
+
+		{
+			name: "missing-clabernetes-global-annotations",
+			existing: &k8scorev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"somethingelse": "xyz",
+					},
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							UID: apimachinerytypes.UID("clabernetes-testing"),
+						},
+					},
+				},
+			},
+			rendered: &k8scorev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"user-provided-global-label": "expected-value",
+					},
+				},
+			},
+			ownerUID: apimachinerytypes.UID("clabernetes-testing"),
+			conforms: false,
+		},
+		{
+			name: "clabernetes-global-labels-wrong-value",
+			existing: &k8scorev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"user-provided-global-label": "xyz",
+					},
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							UID: apimachinerytypes.UID("clabernetes-testing"),
+						},
+					},
+				},
+			},
+			rendered: &k8scorev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"user-provided-global-label": "expected-value",
+					},
+				},
+			},
+			ownerUID: apimachinerytypes.UID("clabernetes-testing"),
+			conforms: false,
+		},
+		{
+			name: "extra-labels-ok",
+			existing: &k8scorev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"somethingelseentirely": "thisisok",
+					},
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							UID: apimachinerytypes.UID("clabernetes-testing"),
+						},
+					},
+				},
+			},
+			rendered: &k8scorev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{},
+			},
+			ownerUID: apimachinerytypes.UID("clabernetes-testing"),
+			conforms: true,
+		},
+
+		// owner
+
+		{
+			name: "bad-owner",
+			existing: &k8scorev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							UID: apimachinerytypes.UID("evil-imposter"),
+						},
+					},
+				},
+			},
+			rendered: &k8scorev1.ConfigMap{},
+			ownerUID: apimachinerytypes.UID("clabernetes-testing"),
+			conforms: false,
+		},
+		{
+			name: "multiple-owner",
+			existing: &k8scorev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							UID: apimachinerytypes.UID("evil-imposter"),
+						},
+						{
+							UID: apimachinerytypes.UID("clabernetes-testing"),
+						},
+					},
+				},
+			},
+			rendered: &k8scorev1.ConfigMap{},
+			ownerUID: apimachinerytypes.UID("clabernetes-testing"),
+			conforms: false,
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(
+			testCase.name,
+			func(t *testing.T) {
+				t.Logf("%s: starting", testCase.name)
+
+				reconciler := clabernetescontrollerstopologyreconciler.NewConfigMapReconciler(
+					&claberneteslogging.FakeInstance{},
+					clabernetesapistopology.Containerlab,
+					clabernetesconfig.GetFakeManager,
+				)
+
+				actual := reconciler.Conforms(
+					testCase.existing,
+					testCase.rendered,
+					testCase.ownerUID,
+				)
+				if actual != testCase.conforms {
+					clabernetestesthelper.FailOutput(t, testCase.existing, testCase.rendered)
+				}
+			})
 	}
 }

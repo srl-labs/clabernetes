@@ -27,6 +27,297 @@ import (
 
 const renderDeploymentTestName = "deployment/render-deployment"
 
+func TestRenderDeployment(t *testing.T) {
+	cases := []struct {
+		name                 string
+		owningTopologyObject clabernetesapistopologyv1alpha1.TopologyCommonObject
+		clabernetesConfigs   map[string]*clabernetesutilcontainerlab.Config
+		nodeName             string
+	}{
+		{
+			name: "simple",
+			owningTopologyObject: &clabernetesapistopologyv1alpha1.Containerlab{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "render-deployment-test",
+					Namespace: "clabernetes",
+				},
+				Spec: clabernetesapistopologyv1alpha1.ContainerlabSpec{
+					TopologyCommonSpec: clabernetesapistopologyv1alpha1.TopologyCommonSpec{},
+					Config: `---
+    name: test
+    topology:
+      nodes:
+        srl1:
+          kind: srl
+          image: ghcr.io/nokia/srlinux
+`,
+				},
+			},
+			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
+				"srl1": {
+					Name:   "srl1",
+					Prefix: clabernetesutil.ToPointer(""),
+					Topology: &clabernetesutilcontainerlab.Topology{
+						Defaults: &clabernetesutilcontainerlab.NodeDefinition{
+							Ports: []string{
+								"21022:22/tcp",
+								"21023:23/tcp",
+								"21161:161/udp",
+								"33333:57400/tcp",
+								"60000:21/tcp",
+								"60001:80/tcp",
+								"60002:443/tcp",
+								"60003:830/tcp",
+								"60004:5000/tcp",
+								"60005:5900/tcp",
+								"60006:6030/tcp",
+								"60007:9339/tcp",
+								"60008:9340/tcp",
+								"60009:9559/tcp",
+							},
+						},
+						Kinds: nil,
+						Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
+							"srl1": {
+								Kind:  "srl",
+								Image: "ghcr.io/nokia/srlinux",
+							},
+						},
+						Links: nil,
+					},
+					Debug: false,
+				},
+			},
+			nodeName: "srl1",
+		},
+		{
+			name: "containerlab-debug",
+			owningTopologyObject: &clabernetesapistopologyv1alpha1.Containerlab{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "render-deployment-test",
+					Namespace: "clabernetes",
+				},
+				Spec: clabernetesapistopologyv1alpha1.ContainerlabSpec{
+					TopologyCommonSpec: clabernetesapistopologyv1alpha1.TopologyCommonSpec{
+						ContainerlabDebug: true,
+					},
+					Config: `---
+    name: test
+    topology:
+      nodes:
+        srl1:
+          kind: srl
+          image: ghcr.io/nokia/srlinux
+`,
+				},
+			},
+			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
+				"srl1": {
+					Name:   "srl1",
+					Prefix: clabernetesutil.ToPointer(""),
+					Topology: &clabernetesutilcontainerlab.Topology{
+						Defaults: &clabernetesutilcontainerlab.NodeDefinition{
+							Ports: []string{
+								"21022:22/tcp",
+								"21023:23/tcp",
+								"21161:161/udp",
+								"33333:57400/tcp",
+								"60000:21/tcp",
+								"60001:80/tcp",
+								"60002:443/tcp",
+								"60003:830/tcp",
+								"60004:5000/tcp",
+								"60005:5900/tcp",
+								"60006:6030/tcp",
+								"60007:9339/tcp",
+								"60008:9340/tcp",
+								"60009:9559/tcp",
+							},
+						},
+						Kinds: nil,
+						Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
+							"srl1": {
+								Kind:  "srl",
+								Image: "ghcr.io/nokia/srlinux",
+							},
+						},
+						Links: nil,
+					},
+					Debug: false,
+				},
+			},
+			nodeName: "srl1",
+		},
+		{
+			name: "launcher-log-level",
+			owningTopologyObject: &clabernetesapistopologyv1alpha1.Containerlab{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "render-deployment-test",
+					Namespace: "clabernetes",
+				},
+				Spec: clabernetesapistopologyv1alpha1.ContainerlabSpec{
+					TopologyCommonSpec: clabernetesapistopologyv1alpha1.TopologyCommonSpec{
+						LauncherLogLevel: "debug",
+					},
+					Config: `---
+		   name: test
+		   topology:
+		     nodes:
+		       srl1:
+		         kind: srl
+		         image: ghcr.io/nokia/srlinux
+		`,
+				},
+			},
+			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
+				"srl1": {
+					Name:   "srl1",
+					Prefix: clabernetesutil.ToPointer(""),
+					Topology: &clabernetesutilcontainerlab.Topology{
+						Defaults: &clabernetesutilcontainerlab.NodeDefinition{
+							Ports: []string{
+								"21022:22/tcp",
+								"21023:23/tcp",
+								"21161:161/udp",
+								"33333:57400/tcp",
+								"60000:21/tcp",
+								"60001:80/tcp",
+								"60002:443/tcp",
+								"60003:830/tcp",
+								"60004:5000/tcp",
+								"60005:5900/tcp",
+								"60006:6030/tcp",
+								"60007:9339/tcp",
+								"60008:9340/tcp",
+								"60009:9559/tcp",
+							},
+						},
+						Kinds: nil,
+						Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
+							"srl1": {
+								Kind:  "srl",
+								Image: "ghcr.io/nokia/srlinux",
+							},
+						},
+						Links: nil,
+					},
+					Debug: false,
+				},
+			},
+			nodeName: "srl1",
+		},
+		{
+			name: "insecure-registries",
+			owningTopologyObject: &clabernetesapistopologyv1alpha1.Containerlab{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "render-deployment-test",
+					Namespace: "clabernetes",
+				},
+				Spec: clabernetesapistopologyv1alpha1.ContainerlabSpec{
+					TopologyCommonSpec: clabernetesapistopologyv1alpha1.TopologyCommonSpec{
+						InsecureRegistries: []string{"1.2.3.4", "potato.com"},
+					},
+					Config: `---
+		   name: test
+		   topology:
+		     nodes:
+		       srl1:
+		         kind: srl
+		         image: ghcr.io/nokia/srlinux
+		`,
+				},
+			},
+			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
+				"srl1": {
+					Name:   "srl1",
+					Prefix: clabernetesutil.ToPointer(""),
+					Topology: &clabernetesutilcontainerlab.Topology{
+						Defaults: &clabernetesutilcontainerlab.NodeDefinition{
+							Ports: []string{
+								"21022:22/tcp",
+								"21023:23/tcp",
+								"21161:161/udp",
+								"33333:57400/tcp",
+								"60000:21/tcp",
+								"60001:80/tcp",
+								"60002:443/tcp",
+								"60003:830/tcp",
+								"60004:5000/tcp",
+								"60005:5900/tcp",
+								"60006:6030/tcp",
+								"60007:9339/tcp",
+								"60008:9340/tcp",
+								"60009:9559/tcp",
+							},
+						},
+						Kinds: nil,
+						Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
+							"srl1": {
+								Kind:  "srl",
+								Image: "ghcr.io/nokia/srlinux",
+							},
+						},
+						Links: nil,
+					},
+					Debug: false,
+				},
+			},
+			nodeName: "srl1",
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(
+			testCase.name,
+			func(t *testing.T) {
+				t.Logf("%s: starting", testCase.name)
+
+				reconciler := clabernetescontrollerstopologyreconciler.NewDeploymentReconciler(
+					&claberneteslogging.FakeInstance{},
+					clabernetesapistopology.Containerlab,
+					clabernetesconfig.GetFakeManager,
+				)
+
+				got := reconciler.Render(
+					testCase.owningTopologyObject,
+					testCase.clabernetesConfigs,
+					testCase.nodeName,
+				)
+
+				if *clabernetestesthelper.Update {
+					clabernetestesthelper.WriteTestFixtureJSON(
+						t,
+						fmt.Sprintf("golden/%s/%s.json", renderDeploymentTestName, testCase.name),
+						got,
+					)
+				}
+
+				var want k8sappsv1.Deployment
+
+				err := json.Unmarshal(
+					clabernetestesthelper.ReadTestFixtureFile(
+						t,
+						fmt.Sprintf("golden/%s/%s.json", renderDeploymentTestName, testCase.name),
+					),
+					&want,
+				)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if !reflect.DeepEqual(got.Annotations, want.Annotations) {
+					clabernetestesthelper.FailOutput(t, got.Annotations, want.Annotations)
+				}
+				if !reflect.DeepEqual(got.Labels, want.Labels) {
+					clabernetestesthelper.FailOutput(t, got.Labels, want.Labels)
+				}
+				if !reflect.DeepEqual(got.Spec, want.Spec) {
+					clabernetestesthelper.FailOutput(t, got.Spec, want.Spec)
+				}
+			})
+	}
+}
+
 func TestDeploymentConforms(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -581,123 +872,6 @@ func TestDeploymentConforms(t *testing.T) {
 				)
 				if actual != testCase.conforms {
 					clabernetestesthelper.FailOutput(t, testCase.existing, testCase.rendered)
-				}
-			})
-	}
-}
-
-func TestRenderDeployment(t *testing.T) {
-	cases := []struct {
-		name               string
-		obj                clabernetesapistopologyv1alpha1.TopologyCommonObject
-		clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config
-		nodeName           string
-	}{
-		{
-			name: "simple",
-			obj: &clabernetesapistopologyv1alpha1.Containerlab{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "render-deployment-test",
-					Namespace: "clabernetes",
-				},
-				Spec: clabernetesapistopologyv1alpha1.ContainerlabSpec{
-					TopologyCommonSpec: clabernetesapistopologyv1alpha1.TopologyCommonSpec{},
-					Config: `---
-    name: test
-    topology:
-      nodes:
-        srl1:
-          kind: srl
-          image: ghcr.io/nokia/srlinux
-`,
-				},
-			},
-			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
-				"srl1": {
-					Name:   "srl1",
-					Prefix: clabernetesutil.ToPointer(""),
-					Topology: &clabernetesutilcontainerlab.Topology{
-						Defaults: &clabernetesutilcontainerlab.NodeDefinition{
-							Ports: []string{
-								"21022:22/tcp",
-								"21023:23/tcp",
-								"21161:161/udp",
-								"33333:57400/tcp",
-								"60000:21/tcp",
-								"60001:80/tcp",
-								"60002:443/tcp",
-								"60003:830/tcp",
-								"60004:5000/tcp",
-								"60005:5900/tcp",
-								"60006:6030/tcp",
-								"60007:9339/tcp",
-								"60008:9340/tcp",
-								"60009:9559/tcp",
-							},
-						},
-						Kinds: nil,
-						Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
-							"srl1": {
-								Kind:  "srl",
-								Image: "ghcr.io/nokia/srlinux",
-							},
-						},
-						Links: nil,
-					},
-					Debug: false,
-				},
-			},
-			nodeName: "srl1",
-		},
-	}
-
-	for _, testCase := range cases {
-		t.Run(
-			testCase.name,
-			func(t *testing.T) {
-				t.Logf("%s: starting", testCase.name)
-
-				reconciler := clabernetescontrollerstopologyreconciler.NewDeploymentReconciler(
-					&claberneteslogging.FakeInstance{},
-					clabernetesapistopology.Containerlab,
-					clabernetesconfig.GetFakeManager,
-				)
-
-				got := reconciler.Render(
-					testCase.obj,
-					testCase.clabernetesConfigs,
-					testCase.nodeName,
-				)
-
-				if *clabernetestesthelper.Update {
-					clabernetestesthelper.WriteTestFixtureJSON(
-						t,
-						fmt.Sprintf("golden/%s/%s.json", renderDeploymentTestName, testCase.name),
-						got,
-					)
-				}
-
-				var want k8sappsv1.Deployment
-
-				err := json.Unmarshal(
-					clabernetestesthelper.ReadTestFixtureFile(
-						t,
-						fmt.Sprintf("golden/%s/%s.json", renderDeploymentTestName, testCase.name),
-					),
-					&want,
-				)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				if !reflect.DeepEqual(got.Annotations, want.Annotations) {
-					clabernetestesthelper.FailOutput(t, got.Annotations, want.Annotations)
-				}
-				if !reflect.DeepEqual(got.Labels, want.Labels) {
-					clabernetestesthelper.FailOutput(t, got.Labels, want.Labels)
-				}
-				if !reflect.DeepEqual(got.Spec, want.Spec) {
-					clabernetestesthelper.FailOutput(t, got.Spec, want.Spec)
 				}
 			})
 	}
