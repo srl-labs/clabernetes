@@ -1,16 +1,19 @@
-package topology
+package reconciler
 
 import (
 	"fmt"
 	"reflect"
 	"strings"
 
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
+
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
-	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
@@ -21,11 +24,13 @@ import (
 
 // NewDeploymentReconciler returns an instance of DeploymentReconciler.
 func NewDeploymentReconciler(
-	resourceKind string,
+	log claberneteslogging.Instance,
+	owningTopologyKind string,
 	configManagerGetter clabernetesconfig.ManagerGetterFunc,
 ) *DeploymentReconciler {
 	return &DeploymentReconciler{
-		resourceKind:        resourceKind,
+		log:                 log,
+		owningTopologyKind:  owningTopologyKind,
 		configManagerGetter: configManagerGetter,
 	}
 }
@@ -34,18 +39,20 @@ func NewDeploymentReconciler(
 // purposes. This is the component responsible for rendering/validating deployments for a
 // clabernetes topology resource.
 type DeploymentReconciler struct {
-	resourceKind        string
+	log                 claberneteslogging.Instance
+	owningTopologyKind  string
 	configManagerGetter clabernetesconfig.ManagerGetterFunc
 }
 
 // Resolve accepts a mapping of clabernetes configs and a list of deployments that are -- by owner
-// reference and/or labels -- associated with the topology. It returns a ResolvedDeployments object
+// reference and/or labels -- associated with the topology. It returns a ObjectDiffer object
 // that contains the missing, extra, and current deployments for the topology.
 func (r *DeploymentReconciler) Resolve(
 	ownedDeployments *k8sappsv1.DeploymentList,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
-) (*clabernetescontrollers.ResolvedDeployments, error) {
-	deployments := &clabernetescontrollers.ResolvedDeployments{
+	_ clabernetesapistopologyv1alpha1.TopologyCommonObject,
+) (*clabernetesutilkubernetes.ObjectDiffer[*k8sappsv1.Deployment], error) {
+	deployments := &clabernetesutilkubernetes.ObjectDiffer[*k8sappsv1.Deployment]{
 		Current: map[string]*k8sappsv1.Deployment{},
 	}
 
@@ -80,21 +87,8 @@ func (r *DeploymentReconciler) Resolve(
 		nodeIdx++
 	}
 
-	deployments.Missing = clabernetesutil.StringSliceDifference(
-		deployments.CurrentDeploymentNames(),
-		allNodes,
-	)
-
-	extraEndpointDeployments := clabernetesutil.StringSliceDifference(
-		allNodes,
-		deployments.CurrentDeploymentNames(),
-	)
-
-	deployments.Extra = make([]*k8sappsv1.Deployment, len(extraEndpointDeployments))
-
-	for idx, endpoint := range extraEndpointDeployments {
-		deployments.Extra[idx] = deployments.Current[endpoint]
-	}
+	deployments.SetMissing(allNodes)
+	deployments.SetExtra(allNodes)
 
 	return deployments, nil
 }
@@ -116,7 +110,9 @@ func (r *DeploymentReconciler) renderDeploymentBase(
 		clabernetesconstants.LabelTopologyNode:  nodeName,
 	}
 
-	labels := make(map[string]string)
+	labels := map[string]string{
+		clabernetesconstants.LabelTopologyKind: r.owningTopologyKind,
+	}
 
 	for k, v := range selectorLabels {
 		labels[k] = v
@@ -188,7 +184,7 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 	}
 
 	for _, podVolume := range volumesFromConfigMaps {
-		if !clabernetescontrollers.VolumeAlreadyMounted(
+		if !clabernetesutilkubernetes.VolumeAlreadyMounted(
 			podVolume.ConfigMapName,
 			deployment.Spec.Template.Spec.Volumes,
 		) {
@@ -352,8 +348,8 @@ func (r *DeploymentReconciler) renderDeploymentContainerResources(
 	}
 }
 
-// Render accepts an object (just for name/namespace reasons) a mapping of clabernetes
-// sub-topology configs and a node name and renders the final deployment for this node.
+// Render accepts the owning topology a mapping of clabernetes sub-topology configs and a node name
+// and renders the final deployment for this node.
 func (r *DeploymentReconciler) Render(
 	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
@@ -402,9 +398,8 @@ func (r *DeploymentReconciler) Render(
 	return deployment
 }
 
-// RenderAll accepts an object (just for name/namespace reasons) a mapping of clabernetes
-// sub-topology configs and a list of node names and renders the final deployment for the given
-// nodes.
+// RenderAll accepts the owning topology a mapping of clabernetes sub-topology configs and a
+// list of node names and renders the final deployments for the given nodes.
 func (r *DeploymentReconciler) RenderAll(
 	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
@@ -437,7 +432,7 @@ func (r *DeploymentReconciler) Conforms(
 		return false
 	}
 
-	if !clabernetescontrollers.ContainersEqual(
+	if !clabernetesutilkubernetes.ContainersEqual(
 		existingDeployment.Spec.Template.Spec.Containers,
 		renderedDeployment.Spec.Template.Spec.Containers,
 	) {
@@ -458,28 +453,28 @@ func (r *DeploymentReconciler) Conforms(
 		return false
 	}
 
-	if !clabernetescontrollers.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
 		existingDeployment.ObjectMeta.Annotations,
 		renderedDeployment.ObjectMeta.Annotations,
 	) {
 		return false
 	}
 
-	if !clabernetescontrollers.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
 		existingDeployment.ObjectMeta.Labels,
 		renderedDeployment.ObjectMeta.Labels,
 	) {
 		return false
 	}
 
-	if !clabernetescontrollers.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
 		existingDeployment.Spec.Template.ObjectMeta.Annotations,
 		renderedDeployment.Spec.Template.ObjectMeta.Annotations,
 	) {
 		return false
 	}
 
-	if !clabernetescontrollers.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
 		existingDeployment.Spec.Template.ObjectMeta.Labels,
 		renderedDeployment.Spec.Template.ObjectMeta.Labels,
 	) {

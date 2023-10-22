@@ -1,11 +1,12 @@
-package topology_test
+package reconciler_test
 
 import (
 	"testing"
 
+	clabernetescontrollerstopologyreconciler "github.com/srl-labs/clabernetes/controllers/topology/reconciler"
+
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
 	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -455,7 +456,7 @@ func TestServiceConforms(t *testing.T) {
 			func(t *testing.T) {
 				t.Logf("%s: starting", testCase.name)
 
-				actual := clabernetescontrollerstopology.ServiceConforms(
+				actual := clabernetescontrollerstopologyreconciler.ServiceConforms(
 					testCase.existing,
 					testCase.rendered,
 					testCase.ownerUID,

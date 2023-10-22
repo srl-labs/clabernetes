@@ -14,7 +14,7 @@ import (
 	clabernetesapistopology "github.com/srl-labs/clabernetes/apis/topology"
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
-	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
+	clabernetescontrollerstopologyreconciler "github.com/srl-labs/clabernetes/controllers/topology/reconciler"
 	"k8s.io/client-go/rest"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -41,7 +41,7 @@ func NewController(
 
 	c := &Controller{
 		BaseController: baseController,
-		TopologyReconciler: clabernetescontrollerstopology.NewReconciler(
+		TopologyReconciler: clabernetescontrollerstopologyreconciler.NewReconciler(
 			baseController.Log,
 			baseController.Client,
 			clabernetesapistopology.Containerlab,
@@ -77,7 +77,7 @@ func NewController(
 // Controller is the Containerlab topology controller object.
 type Controller struct {
 	*clabernetescontrollers.BaseController
-	TopologyReconciler *clabernetescontrollerstopology.Reconciler
+	TopologyReconciler *clabernetescontrollerstopologyreconciler.Reconciler
 }
 
 // SetupWithManager sets up the controller with the Manager.

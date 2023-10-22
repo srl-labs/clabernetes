@@ -9,4 +9,10 @@ const (
 
 	// KubernetesDeployment is a const to use for "deployment".
 	KubernetesDeployment = "deployment"
+
+	// KubernetesServiceClusterIPType is a const to use for "ClusterIP".
+	KubernetesServiceClusterIPType = "ClusterIP"
+
+	// KubernetesServiceLoadBalancerType is a const to use for "LoadBalancer".
+	KubernetesServiceLoadBalancerType = "LoadBalancer"
 )

@@ -1,13 +1,16 @@
-package topology
+package reconciler
 
 import (
 	"fmt"
 	"reflect"
 
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
+
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
-	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	"gopkg.in/yaml.v3"
 	k8scorev1 "k8s.io/api/core/v1"
@@ -17,11 +20,13 @@ import (
 
 // NewConfigMapReconciler returns an instance of ConfigMapReconciler.
 func NewConfigMapReconciler(
-	resourceKind string,
+	log claberneteslogging.Instance,
+	owningTopologyKind string,
 	configManagerGetter clabernetesconfig.ManagerGetterFunc,
 ) *ConfigMapReconciler {
 	return &ConfigMapReconciler{
-		resourceKind:        resourceKind,
+		log:                 log,
+		owningTopologyKind:  owningTopologyKind,
 		configManagerGetter: configManagerGetter,
 	}
 }
@@ -30,7 +35,8 @@ func NewConfigMapReconciler(
 // purposes. This is the component responsible for rendering/validating configmaps for a
 // clabernetes topology resource.
 type ConfigMapReconciler struct {
-	resourceKind        string
+	log                 claberneteslogging.Instance
+	owningTopologyKind  string
 	configManagerGetter clabernetesconfig.ManagerGetterFunc
 }
 
@@ -55,7 +61,7 @@ func (r *ConfigMapReconciler) Render(
 				clabernetesconstants.LabelApp:           clabernetesconstants.Clabernetes,
 				clabernetesconstants.LabelName:          namespacedName.Name,
 				clabernetesconstants.LabelTopologyOwner: namespacedName.Name,
-				clabernetesconstants.LabelTopologyKind:  r.resourceKind,
+				clabernetesconstants.LabelTopologyKind:  r.owningTopologyKind,
 			},
 		},
 		Data: map[string]string{},
@@ -101,14 +107,14 @@ func (r *ConfigMapReconciler) Conforms(
 		return false
 	}
 
-	if !clabernetescontrollers.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
 		existingConfigMap.ObjectMeta.Annotations,
 		renderedConfigMap.ObjectMeta.Annotations,
 	) {
 		return false
 	}
 
-	if !clabernetescontrollers.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
 		existingConfigMap.ObjectMeta.Labels,
 		renderedConfigMap.ObjectMeta.Labels,
 	) {

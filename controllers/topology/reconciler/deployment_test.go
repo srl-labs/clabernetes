@@ -1,10 +1,14 @@
-package topology_test
+package reconciler_test
 
 import (
 	"encoding/json"
 	"fmt"
 	"reflect"
 	"testing"
+
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
+
+	clabernetescontrollerstopologyreconciler "github.com/srl-labs/clabernetes/controllers/topology/reconciler"
 
 	clabernetesapistopology "github.com/srl-labs/clabernetes/apis/topology"
 
@@ -13,7 +17,6 @@ import (
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 
-	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
 	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	k8sappsv1 "k8s.io/api/apps/v1"
@@ -565,7 +568,8 @@ func TestDeploymentConforms(t *testing.T) {
 			func(t *testing.T) {
 				t.Logf("%s: starting", testCase.name)
 
-				reconciler := clabernetescontrollerstopology.NewDeploymentReconciler(
+				reconciler := clabernetescontrollerstopologyreconciler.NewDeploymentReconciler(
+					&claberneteslogging.FakeInstance{},
 					clabernetesapistopology.Containerlab,
 					clabernetesconfig.GetFakeManager,
 				)
@@ -653,7 +657,8 @@ func TestRenderDeployment(t *testing.T) {
 			func(t *testing.T) {
 				t.Logf("%s: starting", testCase.name)
 
-				reconciler := clabernetescontrollerstopology.NewDeploymentReconciler(
+				reconciler := clabernetescontrollerstopologyreconciler.NewDeploymentReconciler(
+					&claberneteslogging.FakeInstance{},
 					clabernetesapistopology.Containerlab,
 					clabernetesconfig.GetFakeManager,
 				)

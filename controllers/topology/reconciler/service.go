@@ -1,12 +1,9 @@
-package topology
+package reconciler
 
 import (
 	"reflect"
 
-	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
-
-	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
-	clabernetesutil "github.com/srl-labs/clabernetes/util"
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
 
 	k8scorev1 "k8s.io/api/core/v1"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
@@ -55,14 +52,14 @@ func ServiceConforms(
 		}
 	}
 
-	if !clabernetescontrollers.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
 		existingService.ObjectMeta.Annotations,
 		renderedService.ObjectMeta.Annotations,
 	) {
 		return false
 	}
 
-	if !clabernetescontrollers.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
 		existingService.ObjectMeta.Labels,
 		renderedService.ObjectMeta.Labels,
 	) {
@@ -80,13 +77,4 @@ func ServiceConforms(
 	}
 
 	return true
-}
-
-// GetServiceDNSSuffix returns the default "svc.cluster.local" dns suffix, or the user's provided
-// override value.
-func GetServiceDNSSuffix() string {
-	return clabernetesutil.GetEnvStrOrDefault(
-		clabernetesconstants.InClusterDNSSuffixEnv,
-		clabernetesconstants.DefaultInClusterDNSSuffix,
-	)
 }

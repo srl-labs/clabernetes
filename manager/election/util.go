@@ -3,6 +3,8 @@ package election
 import (
 	"os"
 
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
 
@@ -16,14 +18,14 @@ const (
 func GenerateLeaderIdentity() string {
 	hostname, err := os.Hostname()
 	if err == nil {
-		return clabernetesutil.SafeConcatNameKubernetes(
+		return clabernetesutilkubernetes.SafeConcatNameKubernetes(
 			"clabernetes",
 			hostname,
 			clabernetesutil.RandomString(unknownHostnameRandomNameLen),
 		)
 	}
 
-	return clabernetesutil.SafeConcatNameKubernetes(
+	return clabernetesutilkubernetes.SafeConcatNameKubernetes(
 		"clabernetes",
 		clabernetesutil.RandomString(unknownHostnameRandomNameLen),
 	)

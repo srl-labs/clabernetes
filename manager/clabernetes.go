@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
@@ -160,7 +162,7 @@ func (c *clabernetes) startup() {
 
 	var err error
 
-	c.namespace, err = clabernetesutil.CurrentNamespace()
+	c.namespace, err = clabernetesutilkubernetes.CurrentNamespace()
 	if err != nil {
 		c.logger.Criticalf("failed getting current namespace, err: %s", err)
 

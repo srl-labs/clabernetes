@@ -160,7 +160,7 @@ func (c *Controller) processConfig( //nolint:funlen
 						kne.Name,
 						uninterestingEndpoint.NodeName,
 						kne.Namespace,
-						clabernetescontrollerstopology.GetServiceDNSSuffix(),
+						c.BaseController.GetServiceDNSSuffix(),
 					),
 					LocalLinkName:  interestingEndpoint.InterfaceName,
 					RemoteLinkName: uninterestingEndpoint.InterfaceName,

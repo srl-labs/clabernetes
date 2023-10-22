@@ -1,4 +1,4 @@
-package topology
+package reconciler
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"slices"
 	"time"
 
-	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	k8sappsv1 "k8s.io/api/apps/v1"
@@ -38,19 +38,36 @@ type ResourceListerFunc func(
 func NewReconciler(
 	log claberneteslogging.Instance,
 	client ctrlruntimeclient.Client,
-	resourceKind string,
+	owningTopologyKind string,
 	resourceLister ResourceListerFunc,
 	configManagerGetter clabernetesconfig.ManagerGetterFunc,
 ) *Reconciler {
 	return &Reconciler{
-		Log:                 log,
-		Client:              client,
-		ResourceKind:        resourceKind,
-		ResourceLister:      resourceLister,
-		ConfigManagerGetter: configManagerGetter,
+		Log:            log,
+		Client:         client,
+		ResourceKind:   owningTopologyKind,
+		ResourceLister: resourceLister,
 
-		configMapReconciler:  NewConfigMapReconciler(resourceKind, configManagerGetter),
-		deploymentReconciler: NewDeploymentReconciler(resourceKind, configManagerGetter),
+		configMapReconciler: NewConfigMapReconciler(
+			log,
+			owningTopologyKind,
+			configManagerGetter,
+		),
+		deploymentReconciler: NewDeploymentReconciler(
+			log,
+			owningTopologyKind,
+			configManagerGetter,
+		),
+		serviceFabricReconciler: NewServiceFabricReconciler(
+			log,
+			owningTopologyKind,
+			configManagerGetter,
+		),
+		serviceExposeReconciler: NewServiceExposeReconciler(
+			log,
+			owningTopologyKind,
+			configManagerGetter,
+		),
 	}
 }
 
@@ -64,11 +81,10 @@ type Reconciler struct {
 	ResourceKind   string
 	ResourceLister ResourceListerFunc
 
-	// TODO this should be deleted once we make the sub reconcilers
-	ConfigManagerGetter func() clabernetesconfig.Manager
-
-	configMapReconciler  *ConfigMapReconciler
-	deploymentReconciler *DeploymentReconciler
+	configMapReconciler     *ConfigMapReconciler
+	deploymentReconciler    *DeploymentReconciler
+	serviceFabricReconciler *ServiceFabricReconciler
+	serviceExposeReconciler *ServiceExposeReconciler
 }
 
 // ReconcileConfigMap reconciles the primary configmap containing clabernetes configs and tunnel
@@ -124,53 +140,12 @@ func (r *Reconciler) ReconcileConfigMap(
 	return r.updateObj(ctx, renderedConfigMap, clabernetesconstants.KubernetesConfigMap)
 }
 
-func (r *Reconciler) reconcileDeploymentsResolve(
-	ctx context.Context,
-	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
-	currentClabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
-) (*clabernetescontrollers.ResolvedDeployments, error) {
-	ownedDeployments := &k8sappsv1.DeploymentList{}
-
-	err := r.Client.List(
-		ctx,
-		ownedDeployments,
-		ctrlruntimeclient.InNamespace(owningTopology.GetNamespace()),
-		ctrlruntimeclient.MatchingLabels{
-			clabernetesconstants.LabelTopologyOwner: owningTopology.GetName(),
-		},
-	)
-	if err != nil {
-		r.Log.Criticalf("failed fetching owned deployments, error: '%s'", err)
-
-		return nil, err
-	}
-
-	deployments, err := r.deploymentReconciler.Resolve(ownedDeployments, currentClabernetesConfigs)
-	if err != nil {
-		r.Log.Criticalf("failed resolving owned deployments, error: '%s'", err)
-
-		return nil, err
-	}
-
-	r.Log.Debugf(
-		"deployments are missing for the following nodes: %s",
-		deployments.Missing,
-	)
-
-	r.Log.Debugf(
-		"extraneous deployments exist for following nodes: %s",
-		deployments.Extra,
-	)
-
-	return deployments, nil
-}
-
 func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 	ctx context.Context,
 	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	previousClabernetesConfigs,
 	currentClabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
-	deployments *clabernetescontrollers.ResolvedDeployments,
+	deployments *clabernetesutilkubernetes.ObjectDiffer[*k8sappsv1.Deployment],
 ) error {
 	r.Log.Info("determining nodes needing restart")
 
@@ -244,10 +219,15 @@ func (r *Reconciler) ReconcileDeployments(
 	previousClabernetesConfigs,
 	currentClabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 ) error {
-	deployments, err := r.reconcileDeploymentsResolve(
+	deployments, err := reconcileResolve(
 		ctx,
+		r,
+		&k8sappsv1.Deployment{},
+		&k8sappsv1.DeploymentList{},
+		clabernetesconstants.KubernetesDeployment,
 		owningTopology,
 		currentClabernetesConfigs,
+		r.deploymentReconciler.Resolve,
 	)
 	if err != nil {
 		return err
@@ -328,22 +308,88 @@ func (r *Reconciler) ReconcileDeployments(
 // ReconcileServiceFabric reconciles the service used for "fabric" (inter node) connectivity.
 func (r *Reconciler) ReconcileServiceFabric(
 	ctx context.Context,
-	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
-	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
+	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
+	currentClabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 ) error {
-	services, err := r.resolveFabricServices(ctx, obj, clabernetesConfigs)
+	serviceTypeName := fmt.Sprintf("fabric %s", clabernetesconstants.KubernetesService)
+
+	services, err := reconcileResolve(
+		ctx,
+		r,
+		&k8scorev1.Service{},
+		&k8scorev1.ServiceList{},
+		serviceTypeName,
+		owningTopology,
+		currentClabernetesConfigs,
+		r.serviceExposeReconciler.Resolve,
+	)
 	if err != nil {
 		return err
 	}
 
-	err = r.pruneFabricServices(ctx, services)
-	if err != nil {
-		return err
+	r.Log.Info("pruning extraneous fabric services")
+
+	for _, extraService := range services.Extra {
+		err = r.deleteObj(
+			ctx,
+			extraService,
+			serviceTypeName,
+		)
+		if err != nil {
+			return err
+		}
 	}
 
-	err = r.enforceFabricServices(ctx, obj, services)
-	if err != nil {
-		return err
+	r.Log.Info("creating missing fabric services")
+
+	renderedMissingServices := r.serviceFabricReconciler.RenderAll(
+		owningTopology,
+		services.Missing,
+	)
+
+	for _, renderedMissingService := range renderedMissingServices {
+		err = r.createObj(
+			ctx,
+			owningTopology,
+			renderedMissingService,
+			serviceTypeName,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	r.Log.Info("enforcing desired state on fabric services")
+
+	for existingCurrentServiceNodeName, existingCurrentService := range services.Current {
+		renderedCurrentService := r.serviceFabricReconciler.Render(
+			owningTopology,
+			existingCurrentServiceNodeName,
+		)
+
+		err = ctrlruntimeutil.SetOwnerReference(
+			owningTopology,
+			renderedCurrentService,
+			r.Client.Scheme(),
+		)
+		if err != nil {
+			return err
+		}
+
+		if !r.serviceFabricReconciler.Conforms(
+			existingCurrentService,
+			renderedCurrentService,
+			owningTopology.GetUID(),
+		) {
+			err = r.updateObj(
+				ctx,
+				renderedCurrentService,
+				serviceTypeName,
+			)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -352,45 +398,121 @@ func (r *Reconciler) ReconcileServiceFabric(
 // ReconcileServicesExpose reconciles the service(s) used for exposing nodes.
 func (r *Reconciler) ReconcileServicesExpose(
 	ctx context.Context,
-	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
-	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
+	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
+	currentClabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 ) (bool, error) {
+	serviceTypeName := fmt.Sprintf("expose %s", clabernetesconstants.KubernetesService)
+
 	var shouldUpdate bool
 
-	objTopologyStatus := obj.GetTopologyStatus()
+	owningTopologyStatus := owningTopology.GetTopologyStatus()
 
-	if objTopologyStatus.NodeExposedPorts == nil {
-		objTopologyStatus.NodeExposedPorts = map[string]*clabernetesapistopologyv1alpha1.ExposedPorts{} //nolint:lll
+	if owningTopologyStatus.NodeExposedPorts == nil {
+		owningTopologyStatus.NodeExposedPorts = map[string]*clabernetesapistopologyv1alpha1.ExposedPorts{} //nolint:lll
 
 		shouldUpdate = true
 	}
 
-	services, err := r.resolveExposeServices(ctx, obj, clabernetesConfigs)
+	services, err := reconcileResolve(
+		ctx,
+		r,
+		&k8scorev1.Service{},
+		&k8scorev1.ServiceList{},
+		serviceTypeName,
+		owningTopology,
+		currentClabernetesConfigs,
+		r.serviceExposeReconciler.Resolve,
+	)
 	if err != nil {
 		return shouldUpdate, err
 	}
 
-	err = r.pruneExposeServices(ctx, services)
-	if err != nil {
-		return shouldUpdate, err
+	r.Log.Info("pruning extraneous services")
+
+	for _, extraDeployment := range services.Extra {
+		err = r.deleteObj(
+			ctx,
+			extraDeployment,
+			serviceTypeName,
+		)
+		if err != nil {
+			return shouldUpdate, err
+		}
 	}
 
-	err = r.enforceExposeServices(ctx, obj, &objTopologyStatus, clabernetesConfigs, services)
-	if err != nil {
-		return shouldUpdate, err
+	r.Log.Info("creating missing services")
+
+	renderedMissingServices := r.serviceExposeReconciler.RenderAll(
+		owningTopology,
+		&owningTopologyStatus,
+		currentClabernetesConfigs,
+		services.Missing,
+	)
+
+	for _, renderedMissingService := range renderedMissingServices {
+		err = r.createObj(
+			ctx,
+			owningTopology,
+			renderedMissingService,
+			serviceTypeName,
+		)
+		if err != nil {
+			return shouldUpdate, err
+		}
 	}
 
-	nodeExposedPortsBytes, err := yaml.Marshal(objTopologyStatus.NodeExposedPorts)
+	for existingCurrentServiceNodeName, existingCurrentService := range services.Current {
+		renderedCurrentService := r.serviceExposeReconciler.Render(
+			owningTopology,
+			&owningTopologyStatus,
+			currentClabernetesConfigs,
+			existingCurrentServiceNodeName,
+		)
+
+		if len(existingCurrentService.Status.LoadBalancer.Ingress) == 1 {
+			// can/would this ever be more than 1? i dunno?
+			address := existingCurrentService.Status.LoadBalancer.Ingress[0].IP
+			if address != "" {
+				owningTopologyStatus.NodeExposedPorts[existingCurrentServiceNodeName].LoadBalancerAddress = address //nolint:lll
+			}
+		}
+
+		err = ctrlruntimeutil.SetOwnerReference(
+			owningTopology,
+			renderedCurrentService,
+			r.Client.Scheme(),
+		)
+		if err != nil {
+			return shouldUpdate, err
+		}
+
+		if !r.serviceExposeReconciler.Conforms(
+			existingCurrentService,
+			renderedCurrentService,
+			owningTopology.GetUID(),
+		) {
+			err = r.updateObj(
+				ctx,
+				renderedCurrentService,
+				serviceTypeName,
+			)
+			if err != nil {
+				return shouldUpdate, err
+			}
+		}
+	}
+
+	nodeExposedPortsBytes, err := yaml.Marshal(owningTopologyStatus.NodeExposedPorts)
 	if err != nil {
 		return shouldUpdate, err
 	}
 
 	newNodeExposedPortsHash := clabernetesutil.HashBytes(nodeExposedPortsBytes)
 
-	if objTopologyStatus.NodeExposedPortsHash != newNodeExposedPortsHash {
-		objTopologyStatus.NodeExposedPortsHash = newNodeExposedPortsHash
+	if owningTopologyStatus.NodeExposedPortsHash != newNodeExposedPortsHash {
+		owningTopologyStatus.NodeExposedPortsHash = newNodeExposedPortsHash
 
-		obj.SetTopologyStatus(objTopologyStatus)
+		owningTopology.SetTopologyStatus(owningTopologyStatus)
 
 		shouldUpdate = true
 	}
