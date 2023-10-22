@@ -51,8 +51,8 @@ func (r *Reconciler) getObj(
 	r.Log.Debugf(
 		"getting %s '%s/%s'",
 		getObjKind,
-		getObj.GetNamespace(),
-		getObj.GetName(),
+		namespacedName.Namespace,
+		namespacedName.Name,
 	)
 
 	return r.Client.Get(ctx, namespacedName, getObj)

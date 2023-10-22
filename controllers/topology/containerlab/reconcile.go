@@ -55,7 +55,7 @@ func (c *Controller) Reconcile(
 	// load the containerlab topo to make sure its all good
 	containerlabTopo, err := clabernetesutilcontainerlab.LoadContainerlabTopology(clab.Spec.Config)
 	if err != nil {
-		c.BaseController.Log.Criticalf("failed parsing containerlab config, error: ", err)
+		c.BaseController.Log.Criticalf("failed parsing containerlab config, error: %s", err)
 
 		return ctrlruntime.Result{}, err
 	}
