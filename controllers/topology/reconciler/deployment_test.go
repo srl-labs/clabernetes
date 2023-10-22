@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"testing"
 
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 
 	clabernetescontrollerstopologyreconciler "github.com/srl-labs/clabernetes/controllers/topology/reconciler"
@@ -26,6 +28,110 @@ import (
 )
 
 const renderDeploymentTestName = "deployment/render-deployment"
+
+func TestResolveDeployment(t *testing.T) {
+	cases := []struct {
+		name               string
+		ownedDeployments   *k8sappsv1.DeploymentList
+		clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config
+		expectedCurrent    []string
+		expectedMissing    []string
+		expectedExtra      []*k8sappsv1.Deployment
+	}{
+		{
+			name:               "simple",
+			ownedDeployments:   &k8sappsv1.DeploymentList{},
+			clabernetesConfigs: nil,
+			expectedCurrent:    nil,
+			expectedMissing:    nil,
+			expectedExtra:      []*k8sappsv1.Deployment{},
+		},
+		{
+			name:             "missing-nodes",
+			ownedDeployments: &k8sappsv1.DeploymentList{},
+			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
+				"node1": nil,
+				"node2": nil,
+			},
+			expectedCurrent: nil,
+			expectedMissing: []string{"node1", "node2"},
+			expectedExtra:   []*k8sappsv1.Deployment{},
+		},
+		{
+			name: "extra-nodes",
+			ownedDeployments: &k8sappsv1.DeploymentList{
+				Items: []k8sappsv1.Deployment{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "resolve-deployment-test",
+							Namespace: "clabernetes",
+							Labels: map[string]string{
+								clabernetesconstants.LabelTopologyNode: "node2",
+							},
+						},
+					},
+				},
+			},
+			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
+				"node1": nil,
+			},
+			expectedCurrent: nil,
+			expectedMissing: nil,
+			expectedExtra: []*k8sappsv1.Deployment{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "resolve-deployment-test",
+						Namespace: "clabernetes",
+						Labels: map[string]string{
+							clabernetesconstants.LabelTopologyNode: "node2",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(
+			testCase.name,
+			func(t *testing.T) {
+				t.Logf("%s: starting", testCase.name)
+
+				reconciler := clabernetescontrollerstopologyreconciler.NewDeploymentReconciler(
+					&claberneteslogging.FakeInstance{},
+					clabernetesapistopology.Containerlab,
+					clabernetesconfig.GetFakeManager,
+				)
+
+				got, err := reconciler.Resolve(
+					testCase.ownedDeployments,
+					testCase.clabernetesConfigs,
+					nil,
+				)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				var gotCurrent []string
+
+				for current := range got.Current {
+					gotCurrent = append(gotCurrent, current)
+				}
+
+				if !clabernetesutil.StringSliceContainsAll(gotCurrent, testCase.expectedCurrent) {
+					clabernetestesthelper.FailOutput(t, gotCurrent, testCase.expectedCurrent)
+				}
+
+				if !clabernetesutil.StringSliceContainsAll(got.Missing, testCase.expectedMissing) {
+					clabernetestesthelper.FailOutput(t, got.Missing, testCase.expectedMissing)
+				}
+
+				if !reflect.DeepEqual(got.Extra, testCase.expectedExtra) {
+					clabernetestesthelper.FailOutput(t, got.Extra, testCase.expectedExtra)
+				}
+			})
+	}
+}
 
 func TestRenderDeployment(t *testing.T) {
 	cases := []struct {
