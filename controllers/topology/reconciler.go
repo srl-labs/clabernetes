@@ -102,7 +102,12 @@ func (r *Reconciler) ReconcileConfigMap(
 	)
 	if err != nil {
 		if apimachineryerrors.IsNotFound(err) {
-			return r.createObj(ctx, owningTopology, renderedConfigMap)
+			return r.createObj(
+				ctx,
+				owningTopology,
+				renderedConfigMap,
+				clabernetesconstants.KubernetesConfigMap,
+			)
 		}
 
 		return err
@@ -116,7 +121,7 @@ func (r *Reconciler) ReconcileConfigMap(
 		return nil
 	}
 
-	return r.updateObj(ctx, renderedConfigMap)
+	return r.updateObj(ctx, renderedConfigMap, clabernetesconstants.KubernetesConfigMap)
 }
 
 func (r *Reconciler) reconcileDeploymentsResolve(
@@ -199,6 +204,7 @@ func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 				Namespace: owningTopology.GetNamespace(),
 				Name:      deploymentName,
 			},
+			clabernetesconstants.KubernetesDeployment,
 		)
 		if err != nil {
 			if apimachineryerrors.IsNotFound(err) {
@@ -222,7 +228,7 @@ func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 
 		nodeDeployment.Spec.Template.ObjectMeta.Annotations["kubectl.kubernetes.io/restartedAt"] = now //nolint:lll
 
-		err = r.updateObj(ctx, nodeDeployment)
+		err = r.updateObj(ctx, nodeDeployment, clabernetesconstants.KubernetesDeployment)
 		if err != nil {
 			return err
 		}
@@ -250,7 +256,7 @@ func (r *Reconciler) ReconcileDeployments(
 	r.Log.Info("pruning extraneous deployments")
 
 	for _, extraDeployment := range deployments.Extra {
-		err = r.deleteObj(ctx, extraDeployment)
+		err = r.deleteObj(ctx, extraDeployment, clabernetesconstants.KubernetesDeployment)
 		if err != nil {
 			return err
 		}
@@ -265,7 +271,12 @@ func (r *Reconciler) ReconcileDeployments(
 	)
 
 	for _, renderedMissingDeployment := range renderedMissingDeployments {
-		err = r.createObj(ctx, owningTopology, renderedMissingDeployment)
+		err = r.createObj(
+			ctx,
+			owningTopology,
+			renderedMissingDeployment,
+			clabernetesconstants.KubernetesDeployment,
+		)
 		if err != nil {
 			return err
 		}
@@ -294,7 +305,11 @@ func (r *Reconciler) ReconcileDeployments(
 			renderedCurrentDeployment,
 			owningTopology.GetUID(),
 		) {
-			err = r.updateObj(ctx, renderedCurrentDeployment)
+			err = r.updateObj(
+				ctx,
+				renderedCurrentDeployment,
+				clabernetesconstants.KubernetesDeployment,
+			)
 			if err != nil {
 				return err
 			}

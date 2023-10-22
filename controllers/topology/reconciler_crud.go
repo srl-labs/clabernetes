@@ -11,27 +11,28 @@ import (
 func (r *Reconciler) createObj(
 	ctx context.Context,
 	ownerObj,
-	renderedObj ctrlruntimeclient.Object,
+	createObj ctrlruntimeclient.Object,
+	createObjKind string,
 ) error {
-	err := ctrlruntimeutil.SetOwnerReference(ownerObj, renderedObj, r.Client.Scheme())
+	err := ctrlruntimeutil.SetOwnerReference(ownerObj, createObj, r.Client.Scheme())
 	if err != nil {
 		return err
 	}
 
 	r.Log.Debugf(
 		"creating %s '%s/%s'",
-		renderedObj.GetObjectKind().GroupVersionKind().Kind,
-		renderedObj.GetNamespace(),
-		renderedObj.GetName(),
+		createObjKind,
+		createObj.GetNamespace(),
+		createObj.GetName(),
 	)
 
-	err = r.Client.Create(ctx, renderedObj)
+	err = r.Client.Create(ctx, createObj)
 	if err != nil {
 		r.Log.Criticalf(
 			"failed creating %s '%s/%s' error: %s",
-			renderedObj.GetObjectKind().GroupVersionKind().Kind,
-			renderedObj.GetNamespace(),
-			renderedObj.GetName(),
+			createObjKind,
+			createObj.GetNamespace(),
+			createObj.GetName(),
 			err,
 		)
 
@@ -45,10 +46,11 @@ func (r *Reconciler) getObj(
 	ctx context.Context,
 	getObj ctrlruntimeclient.Object,
 	namespacedName apimachinerytypes.NamespacedName,
+	getObjKind string,
 ) error {
 	r.Log.Debugf(
 		"getting %s '%s/%s'",
-		getObj.GetObjectKind().GroupVersionKind().Kind,
+		getObjKind,
 		getObj.GetNamespace(),
 		getObj.GetName(),
 	)
@@ -59,10 +61,11 @@ func (r *Reconciler) getObj(
 func (r *Reconciler) updateObj(
 	ctx context.Context,
 	updateObj ctrlruntimeclient.Object,
+	updateObjKind string,
 ) error {
 	r.Log.Debugf(
 		"updating %s '%s/%s'",
-		updateObj.GetObjectKind().GroupVersionKind().Kind,
+		updateObjKind,
 		updateObj.GetNamespace(),
 		updateObj.GetName(),
 	)
@@ -71,7 +74,7 @@ func (r *Reconciler) updateObj(
 	if err != nil {
 		r.Log.Criticalf(
 			"failed updating %s '%s/%s' error: %s",
-			updateObj.GetObjectKind().GroupVersionKind().Kind,
+			updateObjKind,
 			updateObj.GetNamespace(),
 			updateObj.GetName(),
 			err,
@@ -86,10 +89,11 @@ func (r *Reconciler) updateObj(
 func (r *Reconciler) deleteObj(
 	ctx context.Context,
 	deleteObj ctrlruntimeclient.Object,
+	deleteObjKind string,
 ) error {
 	r.Log.Debugf(
 		"deleting %s '%s/%s'",
-		deleteObj.GetObjectKind().GroupVersionKind().Kind,
+		deleteObjKind,
 		deleteObj.GetNamespace(),
 		deleteObj.GetName(),
 	)
@@ -98,7 +102,7 @@ func (r *Reconciler) deleteObj(
 	if err != nil {
 		r.Log.Criticalf(
 			"failed deleting %s '%s/%s' error: %s",
-			deleteObj.GetObjectKind().GroupVersionKind().Kind,
+			deleteObjKind,
 			deleteObj.GetNamespace(),
 			deleteObj.GetName(),
 			err,
