@@ -58,3 +58,14 @@ func ContainersEqual(existing, rendered []k8scorev1.Container) bool {
 
 	return true
 }
+
+// VolumeAlreadyMounted checks if the given volumeName is already in the existingVolumes.
+func VolumeAlreadyMounted(volumeName string, existingVolumes []k8scorev1.Volume) bool {
+	for idx := range existingVolumes {
+		if volumeName == existingVolumes[idx].Name {
+			return true
+		}
+	}
+
+	return false
+}

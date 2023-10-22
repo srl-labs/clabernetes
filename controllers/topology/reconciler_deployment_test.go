@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"testing"
 
+	clabernetesapistopology "github.com/srl-labs/clabernetes/apis/topology"
+
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
@@ -563,7 +565,12 @@ func TestDeploymentConforms(t *testing.T) {
 			func(t *testing.T) {
 				t.Logf("%s: starting", testCase.name)
 
-				actual := clabernetescontrollerstopology.DeploymentConforms(
+				reconciler := clabernetescontrollerstopology.NewDeploymentReconciler(
+					clabernetesapistopology.Containerlab,
+					clabernetesconfig.GetFakeManager,
+				)
+
+				actual := reconciler.Conforms(
 					testCase.existing,
 					testCase.rendered,
 					testCase.ownerUID,
@@ -646,12 +653,12 @@ func TestRenderDeployment(t *testing.T) {
 			func(t *testing.T) {
 				t.Logf("%s: starting", testCase.name)
 
-				reconciler := clabernetescontrollerstopology.Reconciler{
-					ResourceKind:        "containerlab",
-					ConfigManagerGetter: clabernetesconfig.GetFakeManager,
-				}
+				reconciler := clabernetescontrollerstopology.NewDeploymentReconciler(
+					clabernetesapistopology.Containerlab,
+					clabernetesconfig.GetFakeManager,
+				)
 
-				got := reconciler.RenderDeployment(
+				got := reconciler.Render(
 					testCase.obj,
 					testCase.clabernetesConfigs,
 					testCase.nodeName,

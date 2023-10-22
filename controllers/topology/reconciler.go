@@ -2,7 +2,14 @@ package topology
 
 import (
 	"context"
+	"fmt"
 	"slices"
+	"time"
+
+	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
+
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	k8sappsv1 "k8s.io/api/apps/v1"
 
 	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -42,7 +49,8 @@ func NewReconciler(
 		ResourceLister:      resourceLister,
 		ConfigManagerGetter: configManagerGetter,
 
-		configMapReconciler: NewConfigMapReconciler(resourceKind, configManagerGetter),
+		configMapReconciler:  NewConfigMapReconciler(resourceKind, configManagerGetter),
+		deploymentReconciler: NewDeploymentReconciler(resourceKind, configManagerGetter),
 	}
 }
 
@@ -60,26 +68,7 @@ type Reconciler struct {
 	ConfigManagerGetter func() clabernetesconfig.Manager
 
 	configMapReconciler  *ConfigMapReconciler
-	deploymentReconciler *deploymentReconciler
-	serviceReconciler    *serviceReconciler
-}
-
-type (
-	deploymentReconciler struct{}
-	serviceReconciler    struct{}
-)
-
-func (r *Reconciler) createObj(
-	ctx context.Context,
-	ownerObj,
-	renderedObj ctrlruntimeclient.Object,
-) error {
-	err := ctrlruntimeutil.SetOwnerReference(ownerObj, renderedObj, r.Client.Scheme())
-	if err != nil {
-		return err
-	}
-
-	return r.Client.Create(ctx, renderedObj)
+	deploymentReconciler *DeploymentReconciler
 }
 
 // ReconcileConfigMap reconciles the primary configmap containing clabernetes configs and tunnel
@@ -127,32 +116,63 @@ func (r *Reconciler) ReconcileConfigMap(
 		return nil
 	}
 
-	return r.Client.Update(ctx, renderedConfigMap)
+	return r.updateObj(ctx, renderedConfigMap)
 }
 
-// ReconcileDeployments reconciles the deployments that make up a clabernetes Topology.
-func (r *Reconciler) ReconcileDeployments(
+func (r *Reconciler) reconcileDeploymentsResolve(
 	ctx context.Context,
-	obj clabernetesapistopologyv1alpha1.TopologyCommonObject,
-	preReconcileConfigs,
-	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
+	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
+	currentClabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
+) (*clabernetescontrollers.ResolvedDeployments, error) {
+	ownedDeployments := &k8sappsv1.DeploymentList{}
+
+	err := r.Client.List(
+		ctx,
+		ownedDeployments,
+		ctrlruntimeclient.InNamespace(owningTopology.GetNamespace()),
+		ctrlruntimeclient.MatchingLabels{
+			clabernetesconstants.LabelTopologyOwner: owningTopology.GetName(),
+		},
+	)
+	if err != nil {
+		r.Log.Criticalf("failed fetching owned deployments, error: '%s'", err)
+
+		return nil, err
+	}
+
+	deployments, err := r.deploymentReconciler.Resolve(ownedDeployments, currentClabernetesConfigs)
+	if err != nil {
+		r.Log.Criticalf("failed resolving owned deployments, error: '%s'", err)
+
+		return nil, err
+	}
+
+	r.Log.Debugf(
+		"deployments are missing for the following nodes: %s",
+		deployments.Missing,
+	)
+
+	r.Log.Debugf(
+		"extraneous deployments exist for following nodes: %s",
+		deployments.Extra,
+	)
+
+	return deployments, nil
+}
+
+func (r *Reconciler) reconcileDeploymentsHandleRestarts(
+	ctx context.Context,
+	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
+	previousClabernetesConfigs,
+	currentClabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
+	deployments *clabernetescontrollers.ResolvedDeployments,
 ) error {
-	deployments, err := r.resolveDeployments(ctx, obj, clabernetesConfigs)
-	if err != nil {
-		return err
-	}
+	r.Log.Info("determining nodes needing restart")
 
-	err = r.pruneDeployments(ctx, deployments)
-	if err != nil {
-		return err
-	}
-
-	err = r.enforceDeployments(ctx, obj, clabernetesConfigs, deployments)
-	if err != nil {
-		return err
-	}
-
-	nodesNeedingRestart := determineNodesNeedingRestart(preReconcileConfigs, clabernetesConfigs)
+	nodesNeedingRestart := r.deploymentReconciler.DetermineNodesNeedingRestart(
+		previousClabernetesConfigs,
+		currentClabernetesConfigs,
+	)
 	if len(nodesNeedingRestart) == 0 {
 		return nil
 	}
@@ -168,13 +188,126 @@ func (r *Reconciler) ReconcileDeployments(
 			nodesNeedingRestart,
 		)
 
-		err = r.restartDeploymentForNode(ctx, obj, nodeName)
+		deploymentName := fmt.Sprintf("%s-%s", owningTopology.GetName(), nodeName)
+
+		nodeDeployment := &k8sappsv1.Deployment{}
+
+		err := r.getObj(
+			ctx,
+			nodeDeployment,
+			apimachinerytypes.NamespacedName{
+				Namespace: owningTopology.GetNamespace(),
+				Name:      deploymentName,
+			},
+		)
+		if err != nil {
+			if apimachineryerrors.IsNotFound(err) {
+				r.Log.Warnf(
+					"could not find deployment '%s', cannot restart after config change,"+
+						" this should not happen",
+					deploymentName,
+				)
+
+				return nil
+			}
+
+			return err
+		}
+
+		if nodeDeployment.Spec.Template.ObjectMeta.Annotations == nil {
+			nodeDeployment.Spec.Template.ObjectMeta.Annotations = map[string]string{}
+		}
+
+		now := time.Now().Format(time.RFC3339)
+
+		nodeDeployment.Spec.Template.ObjectMeta.Annotations["kubectl.kubernetes.io/restartedAt"] = now //nolint:lll
+
+		err = r.updateObj(ctx, nodeDeployment)
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// ReconcileDeployments reconciles the deployments that make up a clabernetes Topology.
+func (r *Reconciler) ReconcileDeployments(
+	ctx context.Context,
+	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
+	previousClabernetesConfigs,
+	currentClabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
+) error {
+	deployments, err := r.reconcileDeploymentsResolve(
+		ctx,
+		owningTopology,
+		currentClabernetesConfigs,
+	)
+	if err != nil {
+		return err
+	}
+
+	r.Log.Info("pruning extraneous deployments")
+
+	for _, extraDeployment := range deployments.Extra {
+		err = r.deleteObj(ctx, extraDeployment)
+		if err != nil {
+			return err
+		}
+	}
+
+	r.Log.Info("creating missing deployments")
+
+	renderedMissingDeployments := r.deploymentReconciler.RenderAll(
+		owningTopology,
+		currentClabernetesConfigs,
+		deployments.Missing,
+	)
+
+	for _, renderedMissingDeployment := range renderedMissingDeployments {
+		err = r.createObj(ctx, owningTopology, renderedMissingDeployment)
+		if err != nil {
+			return err
+		}
+	}
+
+	r.Log.Info("enforcing desired state on existing deployments")
+
+	for existingCurrentDeploymentNodeName, existingCurrentDeployment := range deployments.Current {
+		renderedCurrentDeployment := r.deploymentReconciler.Render(
+			owningTopology,
+			currentClabernetesConfigs,
+			existingCurrentDeploymentNodeName,
+		)
+
+		err = ctrlruntimeutil.SetOwnerReference(
+			owningTopology,
+			renderedCurrentDeployment,
+			r.Client.Scheme(),
+		)
+		if err != nil {
+			return err
+		}
+
+		if !r.deploymentReconciler.Conforms(
+			existingCurrentDeployment,
+			renderedCurrentDeployment,
+			owningTopology.GetUID(),
+		) {
+			err = r.updateObj(ctx, renderedCurrentDeployment)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return r.reconcileDeploymentsHandleRestarts(
+		ctx,
+		owningTopology,
+		previousClabernetesConfigs,
+		currentClabernetesConfigs,
+		deployments,
+	)
 }
 
 // ReconcileServiceFabric reconciles the service used for "fabric" (inter node) connectivity.
