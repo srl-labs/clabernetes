@@ -1,4 +1,4 @@
-package controllers
+package kubernetes
 
 // AnnotationsOrLabelsConform returns false if the existing labels/annotations (or really just map)
 // does *not* have all the keys/values from the expected/rendered labels/annotations.

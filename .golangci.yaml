@@ -145,6 +145,10 @@ issues:
         - funlen
         - gochecknoglobals
 
+    - path: logging/fake.go
+      linters:
+        - revive
+
     # ignore globals for standard k8s things
     - linters:
         - gochecknoglobals

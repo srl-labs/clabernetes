@@ -79,6 +79,8 @@ spec:
       protocol: TCP
       targetPort: 60012
   selector:
+    clabernetes/app: clabernetes
+    clabernetes/name: containerlab-basic-srl1
     clabernetes/topologyNode: srl1
     clabernetes/topologyOwner: containerlab-basic
   sessionAffinity: None

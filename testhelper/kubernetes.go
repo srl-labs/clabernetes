@@ -3,6 +3,8 @@ package testhelper
 import (
 	"testing"
 
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
 
@@ -48,7 +50,7 @@ func NormalizeKubernetesObject(t *testing.T, object []byte) []byte {
 
 // NewTestNamespace generates a namespace for a test.
 func NewTestNamespace(testName string) string {
-	return clabernetesutil.SafeConcatNameKubernetes(
+	return clabernetesutilkubernetes.SafeConcatNameKubernetes(
 		"e2e",
 		testName,
 		clabernetesutil.RandomString(namespaceRandomPad),

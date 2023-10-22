@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+
 	"gopkg.in/yaml.v3"
 
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
@@ -203,7 +205,7 @@ func (c *clabernetes) run() error {
 func (c *clabernetes) setup() error {
 	var err error
 
-	c.namespace, err = clabernetesutil.CurrentNamespace()
+	c.namespace, err = clabernetesutilkubernetes.CurrentNamespace()
 	if err != nil {
 		c.logger.Criticalf("failed getting current namespace, err: %s", err)
 
@@ -318,7 +320,7 @@ func envToResources() (k8scorev1.ResourceRequirements, error) {
 		return out, nil
 	}
 
-	parsedOut, err := clabernetesutil.YAMLToK8sResourceRequirements(asStr)
+	parsedOut, err := clabernetesutilkubernetes.YAMLToK8sResourceRequirements(asStr)
 	if err != nil {
 		return out, err
 	}

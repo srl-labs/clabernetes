@@ -403,7 +403,7 @@ func (c *Controller) processConfigForNode(
 					clab.Name,
 					uninterestingEndpoint.NodeName,
 					clab.Namespace,
-					clabernetescontrollerstopology.GetServiceDNSSuffix(),
+					c.BaseController.GetServiceDNSSuffix(),
 				),
 				LocalLinkName:  interestingEndpoint.InterfaceName,
 				RemoteLinkName: uninterestingEndpoint.InterfaceName,

@@ -1,0 +1,30 @@
+{
+    "configs": "",
+    "configsHash": "",
+    "tunnels": {},
+    "tunnelsHash": "",
+    "nodeExposedPorts": {
+        "srl1": {
+            "loadBalancerAddress": "",
+            "tcpPorts": [
+                22,
+                23,
+                57400,
+                21,
+                80,
+                443,
+                830,
+                5000,
+                5900,
+                6030,
+                9339,
+                9340,
+                9559
+            ],
+            "udpPorts": [
+                161
+            ]
+        }
+    },
+    "nodeExposedPortsHash": ""
+}

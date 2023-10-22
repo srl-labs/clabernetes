@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+
 	ctrlruntimeevent "sigs.k8s.io/controller-runtime/pkg/event"
 	ctrlruntimepredicate "sigs.k8s.io/controller-runtime/pkg/predicate"
 
@@ -58,7 +60,7 @@ func NewBaseController(
 	return &BaseController{
 		Ctx:                 ctx,
 		AppName:             appName,
-		ControllerNamespace: clabernetesutil.MustCurrentNamespace(),
+		ControllerNamespace: clabernetesutilkubernetes.MustCurrentNamespace(),
 		Log:                 logger,
 		Config:              config,
 		Client:              client,
@@ -126,4 +128,13 @@ func (c *BaseController) LogReconcileCompleteObjectNotExist(_ ctrlruntime.Reques
 // to get the object under reconciliation.
 func (c *BaseController) LogReconcileFailedGettingObject(req ctrlruntime.Request, err error) {
 	c.Log.Criticalf("failed fetching '%s/%s', error: %s", req.Namespace, req.Name, err)
+}
+
+// GetServiceDNSSuffix returns the default "svc.cluster.local" dns suffix, or the user's provided
+// override value.
+func (c *BaseController) GetServiceDNSSuffix() string {
+	return clabernetesutil.GetEnvStrOrDefault(
+		clabernetesconstants.InClusterDNSSuffixEnv,
+		clabernetesconstants.DefaultInClusterDNSSuffix,
+	)
 }

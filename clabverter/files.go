@@ -6,6 +6,8 @@ import (
 	"strings"
 	"text/template"
 
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 )
@@ -262,7 +264,7 @@ func (c *Clabverter) handleExtraFiles() error {
 		c.extraFilesConfigMaps[nodeName] = make([]topologyConfigMapTemplateVars, 0)
 
 		for extraFilePath, extraFileContent := range nodeExtraFiles {
-			safeFileName := clabernetesutil.SafeConcatNameKubernetes(
+			safeFileName := clabernetesutilkubernetes.SafeConcatNameKubernetes(
 				strings.Split(extraFilePath, "/")...)
 
 			safeFileName = strings.TrimPrefix(safeFileName, "-")
