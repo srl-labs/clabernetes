@@ -6,7 +6,7 @@ metadata:
   name: clabernetes-plus-clicker-manager
   namespace: clabernetes
   labels:
-    chart: "clabernetes-0.0.16"
+    chart: "clabernetes-0.0.0"
     release: release-name
     heritage: Helm
     clabernetes/app: clabernetes-plus-clicker
@@ -31,7 +31,7 @@ spec:
   template:
     metadata:
       labels:
-        chart: "clabernetes-0.0.16"
+        chart: "clabernetes-0.0.0"
         release: release-name
         heritage: Helm
         clabernetes/app: clabernetes-plus-clicker
@@ -66,7 +66,7 @@ spec:
       serviceAccountName: "clabernetes-plus-clicker-service-account"
       initContainers:
         - name: init
-          image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:0.0.16"
+          image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:dev-latest"
           imagePullPolicy: IfNotPresent
           command: ["/clabernetes/manager", "run", "--initializer"]
           env:
@@ -88,7 +88,7 @@ spec:
               cpu: 50m
       containers:
         - name: manager
-          image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:0.0.16"
+          image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:dev-latest"
           imagePullPolicy: IfNotPresent
           command: ["/clabernetes/manager", "run"]
           env:
@@ -115,7 +115,7 @@ spec:
             - name: LAUNCHER_PULL_POLICY
               value: "IfNotPresent"
             - name: LAUNCHER_IMAGE
-              value: "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:0.0.16"
+              value: "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:dev-latest"
           resources:
             requests:
               memory: 128Mi

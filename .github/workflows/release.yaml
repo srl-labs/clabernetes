@@ -27,11 +27,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: set up go
-        uses: actions/setup-go@v4
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
       - name: install devspace
         run: |
           curl -L -o devspace \
@@ -65,12 +60,10 @@ jobs:
         run: |
           helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
 
+          make set-chart-versions $RELEASE_VERSION
+
           helm package charts/clicker --version $RELEASE_VERSION
           helm push clicker-$RELEASE_VERSION.tgz oci://ghcr.io/srl-labs/clabernetes
           
-          # patch clicker dep version so its always same as c9s
-          sed -i \
-            "s|    version: (.*)|    version: ${RELEASE_VERSION}|g" \
-            charts/clabernetes/Chart.yaml
           helm package charts/clabernetes --version $RELEASE_VERSION
           helm push clabernetes-$RELEASE_VERSION.tgz oci://ghcr.io/srl-labs/clabernetes

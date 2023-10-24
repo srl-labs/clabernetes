@@ -20,11 +20,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: set up go
-        uses: actions/setup-go@v4
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
       - name: install devspace
         run: |
           curl -L -o devspace \
@@ -45,20 +40,28 @@ jobs:
 
       # packaging charts but *not* uploading them to ghcr, only to artifacts repo; mostly this is
       # so we can have a process for testing ci bits w/out actually cutting a release and/or being
-      # on main
+      # on main. note that we also update the values files (only the stuff that gets packaged, we
+      # don't commit this back to the repo or anything silly like that) to the release hash so that
+      # when using the chart(s) in the artifacts the images are already set to the associated hash.
       - name: package charts
         run: |
           RELEASE_VERSION=0.0.0
           
-          helm package charts/clicker --version $RELEASE_VERSION
-          helm push clicker-$RELEASE_VERSION.tgz oci://ghcr.io/srl-labs/clabernetes
+          make set-chart-versions $RELEASE_VERSION
 
-          # patch clicker dep version so its always same as c9s
-          sed -i \
-            "s|    version: (.*)|    version: ${RELEASE_VERSION}|g" \
-            charts/clabernetes/Chart.yaml
+          export CLICKER_IMAGE="ghcr.io/srl-labs/clabernetes/clabernetes-clicker:${{ github.event.inputs.version }}"
+          echo "clicker image->" $CLICKER_IMAGE
+          yq -i eval '.image = strenv(CLICKER_IMAGE)' charts/clicker/values.yaml
+          
+          export MANAGER_IMAGE="ghcr.io/srl-labs/clabernetes/clabernetes-manager:${{ github.event.inputs.version }}"
+          export LAUNCHER_IMAGE="ghcr.io/srl-labs/clabernetes/clabernetes-launcher:${{ github.event.inputs.version }}"
+          echo "manager image->" $MANAGER_IMAGE
+          echo "launcher image->" $LAUNCHER_IMAGE
+          yq -i eval '.manager.image = strenv(MANAGER_IMAGE)' charts/clabernetes/values.yaml
+          yq -i eval '.launcher.image = strenv(LAUNCHER_IMAGE)' charts/clabernetes/values.yaml
+          
+          helm package charts/clicker --version $RELEASE_VERSION
           helm package charts/clabernetes --version $RELEASE_VERSION
-          helm push clabernetes-$RELEASE_VERSION.tgz oci://ghcr.io/srl-labs/clabernetes
 
       - name: archive packaged helm clicker chart
         uses: actions/upload-artifact@v3

@@ -6,7 +6,7 @@ metadata:
   name: clabernetes-plus-clicker-config
   namespace: clabernetes
   labels:
-    chart: "clabernetes-0.0.16"
+    chart: "clabernetes-0.0.0"
     release: release-name
     heritage: Helm
     clabernetes/app: clabernetes-plus-clicker

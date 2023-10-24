@@ -6,7 +6,7 @@ metadata:
   name: clabernetes-plus-clicker-clicker
   namespace: clabernetes
   labels:
-    chart: "clicker-0.0.16"
+    chart: "clicker-0.0.0"
     release: release-name
     heritage: Helm
     clabernetes/app: clabernetes-plus-clicker
@@ -21,7 +21,7 @@ spec:
   template:
     metadata:
       labels:
-        chart: "clicker-0.0.16"
+        chart: "clicker-0.0.0"
         release: release-name
         heritage: Helm
         clabernetes/app: clabernetes-plus-clicker
@@ -35,7 +35,7 @@ spec:
     spec:
       containers:
         - name: clicker
-          image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:0.0.16"
+          image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:dev-latest"
           imagePullPolicy: IfNotPresent
           command: [
             "/clabernetes/manager",
