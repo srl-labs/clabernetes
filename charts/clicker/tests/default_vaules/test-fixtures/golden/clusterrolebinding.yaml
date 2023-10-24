@@ -5,7 +5,7 @@ kind: ClusterRoleBinding
 metadata:
   name: clabernetes-clicker
   labels:
-    chart: "clicker-0.0.16"
+    chart: "clicker-0.0.0"
     release: release-name
     heritage: Helm
     clabernetes/app: clabernetes
@@ -26,7 +26,7 @@ kind: ClusterRoleBinding
 metadata:
   name: clabernetes-clicker-nodes
   labels:
-    chart: "clicker-0.0.16"
+    chart: "clicker-0.0.0"
     release: release-name
     heritage: Helm
     clabernetes/app: clabernetes
