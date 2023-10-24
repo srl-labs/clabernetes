@@ -7,9 +7,15 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"time"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
+)
+
+const (
+	resolveServiceMaxAttempts = 5
+	resolveServiceSleep       = 10 * time.Second
 )
 
 func (c *clabernetes) runContainerlab() error {
@@ -47,9 +53,30 @@ func (c *clabernetes) runContainerlabVxlanTools(
 	localNodeName, cntLink, vxlanRemote string,
 	vxlanID int,
 ) error {
-	resolvedVxlanRemotes, err := net.LookupIP(vxlanRemote)
-	if err != nil {
-		return err
+	var resolvedVxlanRemotes []net.IP
+
+	var err error
+
+	for attempt := 0; attempt < resolveServiceMaxAttempts; attempt++ {
+		resolvedVxlanRemotes, err = net.LookupIP(vxlanRemote)
+		if err != nil {
+			if attempt < resolveServiceMaxAttempts {
+				c.logger.Warnf(
+					"failed resolving remote vxlan endpoint but under max attempts will try"+
+						" again in %s. error: %s",
+					resolveServiceSleep,
+					err,
+				)
+
+				time.Sleep(resolveServiceSleep)
+
+				continue
+			}
+
+			return err
+		}
+
+		break
 	}
 
 	if len(resolvedVxlanRemotes) != 1 {
