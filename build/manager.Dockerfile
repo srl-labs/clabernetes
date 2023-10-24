@@ -4,7 +4,14 @@ ARG VERSION
 
 WORKDIR /clabernetes
 
-RUN mkdir certificates build
+RUN mkdir build
+
+# certificates and subdirs need to be owned by root group for openshift reasons -- otherwise we
+# get permission denied issues when the controller tries to create ca/client subdirs
+RUN mkdir -p certificates/ca \
+RUN mkdir -p mkdir certificates/client
+RUN chgrp -R root /clabernetes/certificates && \
+    chmod -R 0770 /clabernetes/certificates
 
 COPY cmd/clabernetes/main.go main.go
 
