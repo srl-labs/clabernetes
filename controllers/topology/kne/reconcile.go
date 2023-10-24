@@ -80,18 +80,6 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, err
 	}
 
-	err = c.TopologyReconciler.ReconcileDeployments(
-		ctx,
-		kne,
-		preReconcileConfigs,
-		clabernetesConfigs,
-	)
-	if err != nil {
-		c.BaseController.Log.Criticalf("failed reconciling clabernetes deployments, error: %s", err)
-
-		return ctrlruntime.Result{}, err
-	}
-
 	err = c.TopologyReconciler.ReconcileServiceFabric(ctx, kne, clabernetesConfigs)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed reconciling clabernetes services, error: %s", err)
@@ -114,6 +102,18 @@ func (c *Controller) Reconcile(
 
 			return ctrlruntime.Result{}, err
 		}
+	}
+
+	err = c.TopologyReconciler.ReconcileDeployments(
+		ctx,
+		kne,
+		preReconcileConfigs,
+		clabernetesConfigs,
+	)
+	if err != nil {
+		c.BaseController.Log.Criticalf("failed reconciling clabernetes deployments, error: %s", err)
+
+		return ctrlruntime.Result{}, err
 	}
 
 	if clabernetesutil.AnyBoolTrue(configShouldUpdate, exposeServicesShouldUpdate) {
