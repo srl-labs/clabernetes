@@ -15,7 +15,7 @@ import (
 )
 
 // Reconcile handles reconciliation for this controller.
-func (c *Controller) Reconcile(
+func (c *Controller) Reconcile( //nolint:gocyclo
 	ctx context.Context,
 	req ctrlruntime.Request,
 ) (ctrlruntime.Result, error) {
@@ -68,16 +68,22 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, err
 	}
 
-	err = c.TopologyReconciler.ReconcileConfigMap(
-		ctx,
-		kne,
-		clabernetesConfigs,
-		tunnels,
-	)
-	if err != nil {
-		c.BaseController.Log.Criticalf("failed reconciling clabernetes config map, error: %s", err)
+	if configShouldUpdate {
+		// only reconcile the configmap if the config or tunnels changed
+		err = c.TopologyReconciler.ReconcileConfigMap(
+			ctx,
+			kne,
+			clabernetesConfigs,
+			tunnels,
+		)
+		if err != nil {
+			c.BaseController.Log.Criticalf(
+				"failed reconciling clabernetes config map, error: %s",
+				err,
+			)
 
-		return ctrlruntime.Result{}, err
+			return ctrlruntime.Result{}, err
+		}
 	}
 
 	err = c.TopologyReconciler.ReconcileServiceFabric(ctx, kne, clabernetesConfigs)

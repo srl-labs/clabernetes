@@ -112,7 +112,7 @@ type LinkEndpoint struct {
 // Tunnel represents a VXLAN tunnel between clabernetes nodes (as configured by containerlab).
 type Tunnel struct {
 	// ID is the VXLAN ID (vnid) for the tunnel.
-	ID int `json:"id"`
+	ID int `json:"id"             yaml:"id"`
 	// LocalNodeName is the name of the local node for this tunnel.
 	LocalNodeName string `json:"localNodeName"  yaml:"localNodeName"`
 	// RemoteName is the name of the service to contact the remote end of the tunnel.
