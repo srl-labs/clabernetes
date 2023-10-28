@@ -6,15 +6,12 @@ import (
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 
-	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
-
-	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
-
-	"gopkg.in/yaml.v3"
-
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
+	clabernetescontrollerstopologyreconciler "github.com/srl-labs/clabernetes/controllers/topology/reconciler"
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
+	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
+	"gopkg.in/yaml.v3"
 )
 
 func getDefaultPorts() []*clabernetesutilcontainerlab.TypedPort {
@@ -276,8 +273,7 @@ func (c *Controller) processConfigForNode(
 	nodeName string,
 	nodeDefinition *clabernetesutilcontainerlab.NodeDefinition,
 	defaultsYAML []byte,
-	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
-	clabernetesTunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
+	reconcileData *clabernetescontrollerstopologyreconciler.ReconcileData,
 ) error {
 	deepCopiedDefaults := &clabernetesutilcontainerlab.NodeDefinition{}
 
@@ -296,7 +292,7 @@ func (c *Controller) processConfigForNode(
 		nodeDefinition.Ports = nodePorts
 	}
 
-	clabernetesConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
+	reconcileData.PostReconcileConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
 		Name: fmt.Sprintf("clabernetes-%s", nodeName),
 		Topology: &clabernetesutilcontainerlab.Topology{
 			Defaults: deepCopiedDefaults,
@@ -357,8 +353,8 @@ func (c *Controller) processConfigForNode(
 
 		if endpointA.NodeName == nodeName && endpointB.NodeName == nodeName {
 			// link loops back to ourselves, no need to do overlay things just append the link
-			clabernetesConfigs[nodeName].Topology.Links = append(
-				clabernetesConfigs[nodeName].Topology.Links,
+			reconcileData.PostReconcileConfigs[nodeName].Topology.Links = append(
+				reconcileData.PostReconcileConfigs[nodeName].Topology.Links,
 				link,
 			)
 
@@ -373,8 +369,8 @@ func (c *Controller) processConfigForNode(
 			uninterestingEndpoint = endpointA
 		}
 
-		clabernetesConfigs[nodeName].Topology.Links = append(
-			clabernetesConfigs[nodeName].Topology.Links,
+		reconcileData.PostReconcileConfigs[nodeName].Topology.Links = append(
+			reconcileData.PostReconcileConfigs[nodeName].Topology.Links,
 			&clabernetesutilcontainerlab.LinkDefinition{
 				LinkConfig: clabernetesutilcontainerlab.LinkConfig{
 					Endpoints: []string{
@@ -393,8 +389,8 @@ func (c *Controller) processConfigForNode(
 			},
 		)
 
-		clabernetesTunnels[nodeName] = append(
-			clabernetesTunnels[nodeName],
+		reconcileData.PostReconcileTunnels[nodeName] = append(
+			reconcileData.PostReconcileTunnels[nodeName],
 			&clabernetesapistopologyv1alpha1.Tunnel{
 				LocalNodeName:  nodeName,
 				RemoteNodeName: uninterestingEndpoint.NodeName,
@@ -417,21 +413,15 @@ func (c *Controller) processConfigForNode(
 func (c *Controller) processConfig(
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
 	clabTopo *clabernetesutilcontainerlab.Topology,
+	reconcileData *clabernetescontrollerstopologyreconciler.ReconcileData,
 ) (
-	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
-	clabernetesTunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
-	shouldUpdate bool,
 	err error,
 ) {
-	clabernetesConfigs = make(map[string]*clabernetesutilcontainerlab.Config)
-
-	clabernetesTunnels = make(map[string][]*clabernetesapistopologyv1alpha1.Tunnel)
-
 	// we may have *different defaults per "sub-topology" so we do a cheater "deep copy" by just
 	// marshalling/unmarshalling :)
 	defaultsYAML, err := yaml.Marshal(clabTopo.Defaults)
 	if err != nil {
-		return clabernetesConfigs, clabernetesTunnels, false, err
+		return err
 	}
 
 	for nodeName, nodeDefinition := range clabTopo.Nodes {
@@ -441,47 +431,12 @@ func (c *Controller) processConfig(
 			nodeName,
 			nodeDefinition,
 			defaultsYAML,
-			clabernetesConfigs,
-			clabernetesTunnels,
+			reconcileData,
 		)
 		if err != nil {
-			return nil, nil, false, err
+			return err
 		}
 	}
 
-	clabernetesConfigsBytes, err := yaml.Marshal(clabernetesConfigs)
-	if err != nil {
-		return nil, nil, false, err
-	}
-
-	tunnelsBytes, err := yaml.Marshal(clabernetesTunnels)
-	if err != nil {
-		return nil, nil, false, err
-	}
-
-	newConfigsHash := clabernetesutil.HashBytes(clabernetesConfigsBytes)
-
-	newTunnelsHash := clabernetesutil.HashBytes(tunnelsBytes)
-
-	if clab.Status.ConfigsHash == newConfigsHash && clab.Status.TunnelsHash == newTunnelsHash {
-		// the configs hashes match, nothing to do, should reconcile is false, and no error
-		return clabernetesConfigs, clabernetesTunnels, false, nil
-	}
-
-	// if we got here we know we need to re-reconcile as the hash has changed, set the config and
-	// config hash, and then return "true" (yes we should reconcile/update the object). before we
-	// can do that though, we need to handle setting tunnel ids. so first we go over and re-use
-	// all the existing tunnel ids by assigning matching node/interface pairs from the previous
-	// status to the new tunnels... when doing so we record the allocated ids...
-	clabernetescontrollerstopology.AllocateTunnelIDs(
-		clab.Status.TopologyStatus.Tunnels,
-		clabernetesTunnels,
-	)
-
-	clab.Status.Configs = string(clabernetesConfigsBytes)
-	clab.Status.ConfigsHash = newConfigsHash
-	clab.Status.Tunnels = clabernetesTunnels
-	clab.Status.TunnelsHash = newTunnelsHash
-
-	return clabernetesConfigs, clabernetesTunnels, true, nil
+	return nil
 }

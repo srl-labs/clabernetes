@@ -3,30 +3,24 @@ package kne
 import (
 	"fmt"
 
+	clabernetescontrollerstopologyreconciler "github.com/srl-labs/clabernetes/controllers/topology/reconciler"
+
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 
 	knetopologyproto "github.com/openconfig/kne/proto/topo"
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
-	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilkne "github.com/srl-labs/clabernetes/util/kne"
-	"gopkg.in/yaml.v3"
 )
 
-func (c *Controller) processConfig( //nolint:funlen
+func (c *Controller) processConfig(
 	kne *clabernetesapistopologyv1alpha1.Kne,
 	kneTopo *knetopologyproto.Topology,
+	reconcileData *clabernetescontrollerstopologyreconciler.ReconcileData,
 ) (
-	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
-	clabernetesTunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
-	shouldUpdate bool,
 	err error,
 ) {
-	clabernetesConfigs = make(map[string]*clabernetesutilcontainerlab.Config)
-
-	tunnels := make(map[string][]*clabernetesapistopologyv1alpha1.Tunnel)
-
 	// making many assumptions that things that are pointers are not going to be nil... since
 	// basically everything in the kne topology obj is pointers
 	for _, nodeDefinition := range kneTopo.Nodes {
@@ -45,7 +39,7 @@ func (c *Controller) processConfig( //nolint:funlen
 
 			c.BaseController.Log.Critical(msg)
 
-			return nil, nil, false, fmt.Errorf(
+			return fmt.Errorf(
 				"%w: %s", claberneteserrors.ErrParse, msg,
 			)
 		}
@@ -64,13 +58,13 @@ func (c *Controller) processConfig( //nolint:funlen
 
 				c.BaseController.Log.Critical(msg)
 
-				return nil, nil, false, fmt.Errorf(
+				return fmt.Errorf(
 					"%w: %s", claberneteserrors.ErrParse, msg,
 				)
 			}
 		}
 
-		clabernetesConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
+		reconcileData.PostReconcileConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
 			Name: fmt.Sprintf("clabernetes-%s", nodeName),
 			Topology: &clabernetesutilcontainerlab.Topology{
 				Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
@@ -86,7 +80,7 @@ func (c *Controller) processConfig( //nolint:funlen
 		}
 
 		if kneModel != "" {
-			clabernetesConfigs[nodeName].Topology.Nodes[nodeName].Type = kneModel
+			reconcileData.PostReconcileConfigs[nodeName].Topology.Nodes[nodeName].Type = kneModel
 		}
 
 		for _, link := range kneTopo.Links {
@@ -107,8 +101,8 @@ func (c *Controller) processConfig( //nolint:funlen
 			if endpointA.NodeName == nodeName && endpointB.NodeName == nodeName {
 				// link loops back to ourselves, no need to do overlay things just create the normal
 				// clab link setup here
-				clabernetesConfigs[nodeName].Topology.Links = append(
-					clabernetesConfigs[nodeName].Topology.Links,
+				reconcileData.PostReconcileConfigs[nodeName].Topology.Links = append(
+					reconcileData.PostReconcileConfigs[nodeName].Topology.Links,
 					&clabernetesutilcontainerlab.LinkDefinition{
 						LinkConfig: clabernetesutilcontainerlab.LinkConfig{
 							Endpoints: []string{
@@ -130,8 +124,8 @@ func (c *Controller) processConfig( //nolint:funlen
 				uninterestingEndpoint = endpointA
 			}
 
-			clabernetesConfigs[nodeName].Topology.Links = append(
-				clabernetesConfigs[nodeName].Topology.Links,
+			reconcileData.PostReconcileConfigs[nodeName].Topology.Links = append(
+				reconcileData.PostReconcileConfigs[nodeName].Topology.Links,
 				&clabernetesutilcontainerlab.LinkDefinition{
 					LinkConfig: clabernetesutilcontainerlab.LinkConfig{
 						Endpoints: []string{
@@ -150,8 +144,8 @@ func (c *Controller) processConfig( //nolint:funlen
 				},
 			)
 
-			tunnels[nodeName] = append(
-				tunnels[nodeName],
+			reconcileData.PostReconcileTunnels[nodeName] = append(
+				reconcileData.PostReconcileTunnels[nodeName],
 				&clabernetesapistopologyv1alpha1.Tunnel{
 					LocalNodeName:  nodeName,
 					RemoteNodeName: uninterestingEndpoint.NodeName,
@@ -169,28 +163,5 @@ func (c *Controller) processConfig( //nolint:funlen
 		}
 	}
 
-	clabernetesConfigsBytes, err := yaml.Marshal(clabernetesConfigs)
-	if err != nil {
-		return nil, nil, false, err
-	}
-
-	newConfigsHash := clabernetesutil.HashBytes(clabernetesConfigsBytes)
-
-	if kne.Status.ConfigsHash == newConfigsHash {
-		// the configs hash matches, nothing to do, should reconcile is false, and no error
-		return clabernetesConfigs, tunnels, false, nil
-	}
-
-	// if we got here we know we need to re-reconcile as the hash has changed, set the config and
-	// config hash, and then return "true" (yes we should reconcile/update the object). before we
-	// can do that though, we need to handle setting tunnel ids. so first we go over and re-use
-	// all the existing tunnel ids by assigning matching node/interface pairs from the previous
-	// status to the new tunnels... when doing so we record the allocated ids...
-	clabernetescontrollerstopology.AllocateTunnelIDs(kne.Status.TopologyStatus.Tunnels, tunnels)
-
-	kne.Status.Configs = string(clabernetesConfigsBytes)
-	kne.Status.ConfigsHash = newConfigsHash
-	kne.Status.Tunnels = tunnels
-
-	return clabernetesConfigs, tunnels, true, nil
+	return nil
 }

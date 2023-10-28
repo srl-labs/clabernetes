@@ -3,19 +3,14 @@ package kne
 import (
 	"context"
 
-	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
-
-	clabernetesutil "github.com/srl-labs/clabernetes/util"
-
+	clabernetescontrollerstopologyreconciler "github.com/srl-labs/clabernetes/controllers/topology/reconciler"
 	clabernetesutilkne "github.com/srl-labs/clabernetes/util/kne"
-	"gopkg.in/yaml.v3"
-
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
 )
 
 // Reconcile handles reconciliation for this controller.
-func (c *Controller) Reconcile( //nolint:gocyclo
+func (c *Controller) Reconcile(
 	ctx context.Context,
 	req ctrlruntime.Request,
 ) (ctrlruntime.Result, error) {
@@ -40,17 +35,13 @@ func (c *Controller) Reconcile( //nolint:gocyclo
 		return ctrlruntime.Result{}, nil
 	}
 
-	preReconcileConfigs := make(map[string]*clabernetesutilcontainerlab.Config)
+	reconcileData, err := clabernetescontrollerstopologyreconciler.NewReconcileData(kne)
+	if err != nil {
+		c.BaseController.Log.Criticalf(
+			"failed processing previously stored kne resource, error: %s", err,
+		)
 
-	if kne.Status.Configs != "" {
-		err = yaml.Unmarshal([]byte(kne.Status.Configs), &preReconcileConfigs)
-		if err != nil {
-			c.BaseController.Log.Criticalf(
-				"failed parsing unmarshalling previously stored config, error: %s", err,
-			)
-
-			return ctrlruntime.Result{}, err
-		}
+		return ctrlruntime.Result{}, err
 	}
 
 	// load the kne topo to make sure its all good
@@ -61,60 +52,51 @@ func (c *Controller) Reconcile( //nolint:gocyclo
 		return ctrlruntime.Result{}, err
 	}
 
-	clabernetesConfigs, tunnels, configShouldUpdate, err := c.processConfig(kne, kneTopo)
+	err = c.processConfig(kne, kneTopo, reconcileData)
 	if err != nil {
-		c.BaseController.Log.Criticalf("failed processing kne topology, error: %s", err)
+		c.BaseController.Log.Criticalf("failed processing kne config, error: %s", err)
 
 		return ctrlruntime.Result{}, err
 	}
 
-	if configShouldUpdate {
-		// only reconcile the configmap if the config or tunnels changed
-		err = c.TopologyReconciler.ReconcileConfigMap(
-			ctx,
-			kne,
-			clabernetesConfigs,
-			tunnels,
+	err = c.TopologyReconciler.ReconcileConfigMap(
+		ctx,
+		kne,
+		reconcileData,
+	)
+	if err != nil {
+		c.BaseController.Log.Criticalf(
+			"failed reconciling clabernetes config map, error: %s",
+			err,
 		)
-		if err != nil {
-			c.BaseController.Log.Criticalf(
-				"failed reconciling clabernetes config map, error: %s",
-				err,
-			)
 
-			return ctrlruntime.Result{}, err
-		}
+		return ctrlruntime.Result{}, err
 	}
 
-	err = c.TopologyReconciler.ReconcileServiceFabric(ctx, kne, clabernetesConfigs)
+	err = c.TopologyReconciler.ReconcileServiceFabric(ctx, kne, reconcileData)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed reconciling clabernetes services, error: %s", err)
 
 		return ctrlruntime.Result{}, err
 	}
 
-	var exposeServicesShouldUpdate bool
-
-	if !kne.Spec.DisableExpose {
-		exposeServicesShouldUpdate, err = c.TopologyReconciler.ReconcileServicesExpose(
-			ctx,
-			kne,
-			clabernetesConfigs,
+	err = c.TopologyReconciler.ReconcileServicesExpose(
+		ctx,
+		kne,
+		reconcileData,
+	)
+	if err != nil {
+		c.BaseController.Log.Criticalf(
+			"failed reconciling clabernetes expose services, error: %s", err,
 		)
-		if err != nil {
-			c.BaseController.Log.Criticalf(
-				"failed reconciling clabernetes expose services, error: %s", err,
-			)
 
-			return ctrlruntime.Result{}, err
-		}
+		return ctrlruntime.Result{}, err
 	}
 
 	err = c.TopologyReconciler.ReconcileDeployments(
 		ctx,
 		kne,
-		preReconcileConfigs,
-		clabernetesConfigs,
+		reconcileData,
 	)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed reconciling clabernetes deployments, error: %s", err)
@@ -122,8 +104,14 @@ func (c *Controller) Reconcile( //nolint:gocyclo
 		return ctrlruntime.Result{}, err
 	}
 
-	if clabernetesutil.AnyBoolTrue(configShouldUpdate, exposeServicesShouldUpdate) {
-		// we should update because config hash or something changed, so push update to the object
+	if reconcileData.ShouldUpdateResource {
+		// we should update because config hash or something changed, so snag the updated status
+		// data out of the reconcile data, put it in the resource, and push the update
+		kne.Status.Configs = string(reconcileData.PostReconcileConfigsBytes)
+		kne.Status.ConfigsHash = reconcileData.PostReconcileConfigsHash
+		kne.Status.Tunnels = reconcileData.PostReconcileTunnels
+		kne.Status.TunnelsHash = reconcileData.PostReconcileTunnelsHash
+
 		err = c.BaseController.Client.Update(ctx, kne)
 		if err != nil {
 			c.BaseController.Log.Criticalf(
