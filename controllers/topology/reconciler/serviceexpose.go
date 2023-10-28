@@ -85,9 +85,17 @@ func (r *ServiceExposeReconciler) Resolve(
 
 	exposedNodes := make([]string, 0)
 
-	disableAutoExpose := owningTopology.GetTopologyCommonSpec().DisableAutoExpose
+	commonSpec := owningTopology.GetTopologyCommonSpec()
+	disableExpose := commonSpec.DisableExpose
+	disableAutoExpose := commonSpec.DisableAutoExpose
 
 	for nodeName, nodeData := range clabernetesConfigs {
+		// disable expose is set to true for the whole spec, nothing should be exposed, so skip
+		// every node
+		if disableExpose {
+			continue
+		}
+
 		// if disable auto expose is true *and* there are no ports defined for the node *and*
 		// there are no default ports defined for the topology we can skip the node from an expose
 		// perspective.

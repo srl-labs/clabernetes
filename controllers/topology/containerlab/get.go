@@ -8,12 +8,12 @@ import (
 	ctrlruntime "sigs.k8s.io/controller-runtime"
 )
 
-// getClabFromReq fetches the reconcile target Containerlab topology from the Request.
-func (c *Controller) getClabFromReq(
+// getContainerlabFromReq fetches the reconcile target Containerlab topology from the Request.
+func (c *Controller) getContainerlabFromReq(
 	ctx context.Context,
 	req ctrlruntime.Request,
 ) (*clabernetesapistopologyv1alpha1.Containerlab, error) {
-	clab := &clabernetesapistopologyv1alpha1.Containerlab{}
+	containerlab := &clabernetesapistopologyv1alpha1.Containerlab{}
 
 	err := c.BaseController.Client.Get(
 		ctx,
@@ -21,8 +21,8 @@ func (c *Controller) getClabFromReq(
 			Namespace: req.Namespace,
 			Name:      req.Name,
 		},
-		clab,
+		containerlab,
 	)
 
-	return clab, err
+	return containerlab, err
 }

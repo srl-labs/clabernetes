@@ -27,6 +27,10 @@ func ServiceConforms(
 		return false
 	}
 
+	if len(renderedService.Spec.Ports) != len(existingService.Spec.Ports) {
+		return false
+	}
+
 	for _, expectedPort := range renderedService.Spec.Ports {
 		var expectedPortExists bool
 

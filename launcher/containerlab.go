@@ -105,7 +105,14 @@ func (c *clabernetes) runContainerlabVxlanTools(
 		strconv.Itoa(clabernetesconstants.VXLANServicePort),
 	)
 
-	_, err = cmd.Output()
+	c.logger.Debugf(
+		"using following args for vxlan tunnel creation (via containerlab) '%s'", cmd.Args,
+	)
+
+	cmd.Stdout = c.containerlabLogger
+	cmd.Stderr = c.containerlabLogger
+
+	err = cmd.Run()
 	if err != nil {
 		return err
 	}
