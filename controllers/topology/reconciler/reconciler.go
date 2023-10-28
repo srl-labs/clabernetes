@@ -498,6 +498,8 @@ func (r *Reconciler) ReconcileServicesExpose(
 		}
 	}
 
+	r.Log.Info("enforcing desired state on expose services")
+
 	for existingCurrentServiceNodeName, existingCurrentService := range services.Current {
 		renderedCurrentService := r.serviceExposeReconciler.Render(
 			owningTopology,
