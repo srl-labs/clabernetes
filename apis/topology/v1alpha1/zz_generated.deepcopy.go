@@ -336,8 +336,18 @@ func (in *TopologyCommonSpec) DeepCopyInto(out *TopologyCommonSpec) {
 	}
 	if in.FilesFromConfigMap != nil {
 		in, out := &in.FilesFromConfigMap, &out.FilesFromConfigMap
-		*out = make([]FileFromConfigMap, len(*in))
-		copy(*out, *in)
+		*out = make(map[string][]FileFromConfigMap, len(*in))
+		for key, val := range *in {
+			var outVal []FileFromConfigMap
+			if val == nil {
+				(*out)[key] = nil
+			} else {
+				in, out := &val, &outVal
+				*out = make([]FileFromConfigMap, len(*in))
+				copy(*out, *in)
+			}
+			(*out)[key] = outVal
+		}
 	}
 	if in.FilesFromURL != nil {
 		in, out := &in.FilesFromURL, &out.FilesFromURL

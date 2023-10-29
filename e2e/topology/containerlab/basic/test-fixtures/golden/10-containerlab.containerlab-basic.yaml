@@ -16,6 +16,10 @@ spec:
   containerlabDebug: false
   disableAutoExpose: false
   disableExpose: false
+  persistence:
+    claimSize: ""
+    enabled: false
+    storageClassName: ""
 status:
   configs: |
     srl1:
@@ -45,6 +49,7 @@ status:
                     ports: []
         debug: false
   configsHash: 420183e825ce8790275e3d08f0d8c4fedf4557d1cd227bf25d9be78b23803438
+  filesFromURLHashes: {}
   nodeExposedPorts:
     srl1:
       tcpPorts:
@@ -64,4 +69,4 @@ status:
       udpPorts:
         - 161
   tunnels: {}
-  tunnelsHash: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
+  tunnelsHash: 420183e825ce8790275e3d08f0d8c4fedf4557d1cd227bf25d9be78b23803438

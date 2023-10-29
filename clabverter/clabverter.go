@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -175,19 +176,19 @@ func (c *Clabverter) resolveContentAtPath(path string) ([]byte, error) {
 			fmt.Sprintf("%s/%s", c.topologyPathParent, path),
 		)
 	default:
-		fullyQualifiedStartupConfigPath := path
+		fullyQualifiedConfigPath := path
 
 		if !strings.HasPrefix(path, c.topologyPathParent) {
 			// we may have already set this while processing bind mounts, so don't blindly add the
 			// parent path unless we need to!
-			fullyQualifiedStartupConfigPath = fmt.Sprintf(
+			fullyQualifiedConfigPath = fmt.Sprintf(
 				"%s/%s",
 				c.topologyPathParent,
 				path,
 			)
 		}
 
-		content, err = os.ReadFile(fullyQualifiedStartupConfigPath) //nolint:gosec
+		content, err = os.ReadFile(fullyQualifiedConfigPath) //nolint:gosec
 	}
 
 	return content, err
@@ -299,20 +300,21 @@ func (c *Clabverter) handleManifest() error {
 		return err
 	}
 
-	startupConfigs := make([]topologyConfigMapTemplateVars, len(c.startupConfigConfigMaps))
+	files := map[string][]topologyConfigMapTemplateVars{}
 
-	var startupConfigsIdx int
-
-	for _, startupConfig := range c.startupConfigConfigMaps {
-		startupConfigs[startupConfigsIdx] = startupConfig
-
-		startupConfigsIdx++
+	for nodeName, startupConfig := range c.startupConfigConfigMaps {
+		files[nodeName] = append(files[nodeName], startupConfig)
 	}
 
-	extraFiles := make([]topologyConfigMapTemplateVars, 0)
+	for nodeName, nodeExtraFiles := range c.extraFilesConfigMaps {
+		files[nodeName] = append(files[nodeName], nodeExtraFiles...)
+	}
 
-	for _, nodeExtraFiles := range c.extraFilesConfigMaps {
-		extraFiles = append(extraFiles, nodeExtraFiles...)
+	// sort the files in the filesFromConfigMap section for more sanity and easier testing :p
+	for nodeName := range files {
+		sort.Slice(files[nodeName], func(i, j int) bool {
+			return files[nodeName][i].FileName < files[nodeName][j].FileName
+		})
 	}
 
 	var rendered bytes.Buffer
@@ -324,8 +326,7 @@ func (c *Clabverter) handleManifest() error {
 			Namespace: c.destinationNamespace,
 			// pad w/ a newline so the template can look prettier :)
 			ClabConfig:         "\n" + clabernetesutil.Indent(c.rawClabConfig, specIndentSpaces),
-			StartupConfigs:     startupConfigs,
-			ExtraFiles:         extraFiles,
+			Files:              files,
 			InsecureRegistries: c.insecureRegistries,
 		},
 	)

@@ -18,7 +18,6 @@ import (
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
-	"gopkg.in/yaml.v3"
 	k8scorev1 "k8s.io/api/core/v1"
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
@@ -95,24 +94,47 @@ func (r *Reconciler) ReconcileConfigMap(
 ) error {
 	var err error
 
-	reconcileData.ResolvedConfigsBytes, err = yaml.Marshal(reconcileData.ResolvedConfigs)
-	if err != nil {
-		return err
-	}
-
-	tunnelsBytes, err := yaml.Marshal(reconcileData.ResolvedTunnels)
-	if err != nil {
-		return err
-	}
-
-	reconcileData.ResolvedConfigsHash = clabernetesutil.HashBytes(
-		reconcileData.ResolvedConfigsBytes,
+	configBytes, configHash, err := clabernetesutil.HashObjectYAML(
+		reconcileData.ResolvedConfigs,
 	)
+	if err != nil {
+		return err
+	}
 
-	reconcileData.ResolvedTunnelsHash = clabernetesutil.HashBytes(tunnelsBytes)
+	reconcileData.ResolvedConfigsBytes = configBytes
+	reconcileData.ResolvedConfigsHash = configHash
+
+	_, tunnelHash, err := clabernetesutil.HashObjectYAML(
+		reconcileData.ResolvedConfigs,
+	)
+	if err != nil {
+		return err
+	}
+
+	reconcileData.ResolvedTunnelsHash = tunnelHash
+
+	filesFromURL := owningTopology.GetTopologyCommonSpec().FilesFromURL
+
+	for nodeName, nodeFilesFromURL := range filesFromURL {
+		var nodeFilesFromURLHash string
+
+		_, nodeFilesFromURLHash, err = clabernetesutil.HashObject(nodeFilesFromURL)
+		if err != nil {
+			return err
+		}
+
+		reconcileData.ResolvedFilesFromURLHashes[nodeName] = nodeFilesFromURLHash
+
+		if reconcileData.PreviousFilesFromURLHashes[nodeName] != nodeFilesFromURLHash {
+			// files from url hash has changed, need to smack the node so the configmap update
+			// gets realized
+			reconcileData.NodesNeedingReboot.Add(nodeName)
+		}
+	}
 
 	if reconcileData.PreviousConfigsHash == reconcileData.ResolvedConfigsHash &&
-		reconcileData.PreviousTunnelsHash == reconcileData.ResolvedTunnelsHash {
+		reconcileData.PreviousTunnelsHash == reconcileData.ResolvedTunnelsHash &&
+		reconcileData.NodesNeedingReboot.Len() == 0 {
 		// the configs hashes match, nothing to do, should reconcile is false, and no error, *but*
 		// because the services may force us to update the cr we are reconciling, and we haven't
 		// processed the tunnel ids yet (because its slow and we are lazy), we need to copy the
@@ -141,6 +163,7 @@ func (r *Reconciler) ReconcileConfigMap(
 		namespacedName,
 		reconcileData.ResolvedConfigs,
 		reconcileData.ResolvedTunnels,
+		filesFromURL,
 	)
 	if err != nil {
 		return err
@@ -544,9 +567,7 @@ func (r *Reconciler) ReconcileServicesExpose(
 	}
 
 	if owningTopologyStatus.NodeExposedPortsHash != newNodeExposedPortsHash {
-		owningTopologyStatus.NodeExposedPortsHash = newNodeExposedPortsHash
-
-		owningTopology.SetTopologyStatus(owningTopologyStatus)
+		reconcileData.ResolvedNodeExposedPortsHash = newNodeExposedPortsHash
 
 		// our exposed hash stuff changed, we need to update the cr status
 		reconcileData.ShouldUpdateResource = true

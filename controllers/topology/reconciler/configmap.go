@@ -48,6 +48,7 @@ func (r *ConfigMapReconciler) Render(
 	owningTopologyNamespacedName apimachinerytypes.NamespacedName,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
+	filesFromURL map[string][]clabernetesapistopologyv1alpha1.FileFromURL,
 ) (*k8scorev1.ConfigMap, error) {
 	annotations, globalLabels := r.configManagerGetter().GetAllMetadata()
 
@@ -65,10 +66,11 @@ func (r *ConfigMapReconciler) Render(
 	data := make(map[string]string)
 
 	for nodeName, nodeTopo := range clabernetesConfigs {
-		// always initialize the tunnels keys in the configmap, this way we don't have to have any
-		// special handling for no tunnels and things always look consistent; we'll override this
-		// down below if the node has tunnels of course!
+		// always initialize the tunnels and files from url keys in the configmap, this way we don't
+		// have to have any special handling for no tunnels and things always look consistent;
+		// we'll override this down below if the node has tunnels of course!
 		data[fmt.Sprintf("%s-tunnels", nodeName)] = ""
+		data[fmt.Sprintf("%s-files-from-url", nodeName)] = ""
 
 		yamlNodeTopo, err := yaml.Marshal(nodeTopo)
 		if err != nil {
@@ -85,6 +87,21 @@ func (r *ConfigMapReconciler) Render(
 		}
 
 		data[fmt.Sprintf("%s-tunnels", nodeName)] = string(yamlNodeTunnels)
+	}
+
+	for nodeName, nodeFilesFromURL := range filesFromURL {
+		// ignore bad node names
+		_, nodeOk := clabernetesConfigs[nodeName]
+		if !nodeOk {
+			continue
+		}
+
+		yamlNodeFilesFromURL, err := yaml.Marshal(nodeFilesFromURL)
+		if err != nil {
+			return nil, err
+		}
+
+		data[fmt.Sprintf("%s-files-from-url", nodeName)] = string(yamlNodeFilesFromURL)
 	}
 
 	return &k8scorev1.ConfigMap{

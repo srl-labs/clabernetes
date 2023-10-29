@@ -64,49 +64,43 @@ spec:
                   topology will be exposed.
                 type: boolean
               filesFromConfigMap:
+                additionalProperties:
+                  items:
+                    description: FileFromConfigMap represents a file that you would
+                      like to mount (from a configmap) in the launcher pod for a given
+                      node.
+                    properties:
+                      configMapName:
+                        description: ConfigMapName is the name of the configmap to
+                          mount.
+                        type: string
+                      configMapPath:
+                        description: ConfigMapPath is the path/key in the configmap
+                          to mount, if not specified the configmap will be mounted
+                          without a sub-path.
+                        type: string
+                      filePath:
+                        description: FilePath is the path to mount the file.
+                        type: string
+                    required:
+                    - configMapName
+                    - filePath
+                    type: object
+                  type: array
                 description: FilesFromConfigMap is a slice of FileFromConfigMap that
                   define the configmap/path and node and path on a launcher node that
                   the file should be mounted to. If the path is not provided the configmap
                   is mounted in its entirety (like normal k8s things), so you *probably*
                   want to specify the sub path unless you are sure what you're doing!
-                items:
-                  description: FileFromConfigMap represents a file that you would
-                    like to mount (from a configmap) in the launcher pod for a given
-                    node.
-                  properties:
-                    configMapName:
-                      description: ConfigMapName is the name of the configmap to mount.
-                      type: string
-                    configMapPath:
-                      description: ConfigMapPath is the path/key in the configmap
-                        to mount, if not specified the configmap will be mounted without
-                        a sub-path.
-                      type: string
-                    filePath:
-                      description: FilePath is the path to mount the file.
-                      type: string
-                    nodeName:
-                      description: NodeName is the name of the node (as in node from
-                        the clab topology) that the file should be mounted for.
-                      type: string
-                  required:
-                  - configMapName
-                  - filePath
-                  - nodeName
-                  type: object
-                type: array
-                x-kubernetes-list-type: atomic
+                type: object
               filesFromURL:
                 additionalProperties:
                   items:
+                    description: FileFromURL represents a file that you would like
+                      to mount from a URL in the launcher pod for a given node.
                     properties:
                       filePath:
                         description: FilePath is the path to mount the file.
-                        type: string
-                      nodeName:
-                        description: NodeName is the name of the node (as in node
-                          from the clab topology) that the file should be mounted
-                          for.
                         type: string
                       url:
                         description: URL is the url to fetch and mount at the provided
@@ -114,7 +108,6 @@ spec:
                         type: string
                     required:
                     - filePath
-                    - nodeName
                     - url
                     type: object
                   type: array

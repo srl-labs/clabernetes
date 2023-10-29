@@ -3,6 +3,8 @@ package clabverter
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -24,7 +26,10 @@ func parseBindString(bind, nodeName, topologyPathParent string) (sourceDestinati
 
 	bindParts := strings.Split(bind, bindSeperator)
 
-	if len(bindParts) != bindPartsLen {
+	// we may split on a trailing ro/rw -- we'll ignore it in clabernetes case since this will be
+	// mounted as the pods own configmap anyway and not something we need to care about not getting
+	// overwritten locally like in the normal containerlab case
+	if len(bindParts) < bindPartsLen {
 		return parsedBind, fmt.Errorf("%w: bind string %q could not be parsed", ErrClabvert, bind)
 	}
 
@@ -187,12 +192,90 @@ func (c *Clabverter) handleStartupConfigs() error {
 			NodeName:      nodeName,
 			ConfigMapName: configMapName,
 			FilePath:      c.clabConfig.Topology.Nodes[nodeName].StartupConfig,
+			FileName:      "startup-config",
 		}
 	}
 
 	c.logger.Debug("handling startup configs complete")
 
 	return nil
+}
+
+// TODO move me to files.
+func resolveExtraFiles(
+	extraFilePaths,
+	resolvedExtraFilePaths []sourceDestinationPathPair,
+	topologyPathParent string,
+) ([]sourceDestinationPathPair, error) {
+	for _, extraFilePath := range extraFilePaths {
+		switch {
+		case isURL(extraFilePath.sourcePath):
+			// TODO need to do it like:
+			//  curl https://api.github.com/repos/srl-labs/srl-telemetry-lab/contents/configs/client3
+			panic("notimplemented")
+		default:
+			fullyQualifiedPath := extraFilePath.sourcePath
+
+			if !strings.HasPrefix(extraFilePath.sourcePath, topologyPathParent) {
+				// we may have already set this while processing bind mounts, so don't blindly add
+				// the parent path unless we need to!
+				fullyQualifiedPath = fmt.Sprintf(
+					"%s/%s",
+					topologyPathParent,
+					extraFilePath.sourcePath,
+				)
+			}
+
+			fileInfo, err := os.Stat(fullyQualifiedPath)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"%w: failed stat'ing file or directory, err: %w", ErrClabvert, err,
+				)
+			}
+
+			if !fileInfo.IsDir() {
+				resolvedExtraFilePaths = append(
+					resolvedExtraFilePaths,
+					sourceDestinationPathPair{
+						sourcePath:      fullyQualifiedPath,
+						destinationPath: extraFilePath.destinationPath,
+					},
+				)
+
+				continue
+			}
+
+			extraFileSubPaths, err := filepath.Glob(fmt.Sprintf("%s/*", fullyQualifiedPath))
+			if err != nil {
+				return nil, fmt.Errorf(
+					"%w: failed glob'ing directory, err: %w", ErrClabvert, err,
+				)
+			}
+
+			for _, subExtraFileSubPath := range extraFileSubPaths {
+				resolvedExtraFilePaths, err = resolveExtraFiles(
+					[]sourceDestinationPathPair{
+						{
+							sourcePath: subExtraFileSubPath,
+							destinationPath: strings.TrimPrefix(
+								subExtraFileSubPath,
+								topologyPathParent,
+							),
+						},
+					},
+					resolvedExtraFilePaths,
+					topologyPathParent,
+				)
+				if err != nil {
+					return nil, fmt.Errorf(
+						"%w: error recursively loading extra files, err: %w", ErrClabvert, err,
+					)
+				}
+			}
+		}
+	}
+
+	return resolvedExtraFilePaths, nil
 }
 
 // handleExtraFiles deals with parsing/loading/rendering "extra" files for a containerlab topology.
@@ -219,10 +302,31 @@ func (c *Clabverter) handleExtraFiles() error {
 			continue
 		}
 
+		resolvedExtraFiles, err := resolveExtraFiles(extraFilePaths, nil, c.topologyPathParent)
+		if err != nil {
+			c.logger.Criticalf(
+				"failed resolving extra file paths for node '%s', error: %s",
+				nodeName,
+				err,
+			)
+
+			return err
+		}
+
+		// TODO -- here we should check if any of the files are > 1Mb then act accordingly --
+		//  which means make this file a "FileFromURL" instead of stuffing it in a configmap. yes
+		//  this means the cluster needs access to the thing and stuff, btu at least we have a way
+		//  to deal with it... and we dont require a PVC or any weird shit there.
+
 		extraFiles[nodeName] = make(map[string][]byte)
 
-		for _, extraFilePath := range extraFilePaths {
-			c.logger.Debugf("loading node '%s' extra file '%s'...", nodeName, extraFilePath)
+		for _, extraFilePath := range resolvedExtraFiles {
+			c.logger.Debugf(
+				"loading node '%s' extra file '%s' for destination '%s'...",
+				nodeName,
+				extraFilePath.sourcePath,
+				extraFilePath.destinationPath,
+			)
 
 			var extraFileContent []byte
 

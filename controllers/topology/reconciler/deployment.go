@@ -175,13 +175,10 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 
 	volumeMountsFromCommonSpec := make([]k8scorev1.VolumeMount, 0)
 
-	for _, fileFromConfigMap := range owningTopologyCommonSpec.FilesFromConfigMap {
-		if fileFromConfigMap.NodeName != nodeName {
-			continue
-		}
-
-		volumesFromConfigMaps = append(volumesFromConfigMaps, fileFromConfigMap)
-	}
+	volumesFromConfigMaps = append(
+		volumesFromConfigMaps,
+		owningTopologyCommonSpec.FilesFromConfigMap[nodeName]...,
+	)
 
 	for _, podVolume := range volumesFromConfigMaps {
 		if !clabernetesutilkubernetes.VolumeAlreadyMounted(
@@ -254,6 +251,12 @@ func (r *DeploymentReconciler) renderDeploymentContainer(
 				ReadOnly:  true,
 				MountPath: "/clabernetes/tunnels.yaml",
 				SubPath:   fmt.Sprintf("%s-tunnels", nodeName),
+			},
+			{
+				Name:      configVolumeName,
+				ReadOnly:  true,
+				MountPath: "/clabernetes/files-from-url.yaml",
+				SubPath:   fmt.Sprintf("%s-files-from-url", nodeName),
 			},
 		},
 		TerminationMessagePath:   "/dev/termination-log",

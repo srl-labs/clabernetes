@@ -13,7 +13,6 @@ type TopologyCommonObject interface {
 	ctrlruntimeclient.Object
 	GetTopologyCommonSpec() TopologyCommonSpec
 	GetTopologyStatus() TopologyStatus
-	SetTopologyStatus(s TopologyStatus)
 }
 
 // InsecureRegistries is a slice of strings of insecure registries to configure in the launcher
@@ -26,9 +25,6 @@ const LinkEndpointElementCount = 2
 // FileFromConfigMap represents a file that you would like to mount (from a configmap) in the
 // launcher pod for a given node.
 type FileFromConfigMap struct {
-	// NodeName is the name of the node (as in node from the clab topology) that the file should
-	// be mounted for.
-	NodeName string `json:"nodeName"`
 	// FilePath is the path to mount the file.
 	FilePath string `json:"filePath"`
 	// ConfigMapName is the name of the configmap to mount.
@@ -44,7 +40,9 @@ type FileFromConfigMap struct {
 type FileFromURL struct {
 	// FilePath is the path to mount the file.
 	FilePath string `json:"filePath"`
-	// URL is the url to fetch and mount at the provided FilePath.
+	// URL is the url to fetch and mount at the provided FilePath. This URL must be a url that can
+	// be simply downloaded and dumped to disk -- meaning a normal file server type endpoint or if
+	// using GitHub or similar a "raw" path.
 	URL string `json:"url"`
 }
 
@@ -103,9 +101,8 @@ type TopologyCommonSpec struct {
 	// and path on a launcher node that the file should be mounted to. If the path is not provided
 	// the configmap is mounted in its entirety (like normal k8s things), so you *probably* want
 	// to specify the sub path unless you are sure what you're doing!
-	// +listType=atomic
 	// +optional
-	FilesFromConfigMap []FileFromConfigMap `json:"filesFromConfigMap"` // TODO - change to map[string][]FileFromConfigMap; this means updating clabverter too
+	FilesFromConfigMap map[string][]FileFromConfigMap `json:"filesFromConfigMap"`
 	// FilesFromURL is a mapping of FileFromURL that define a URL at which to fetch a file, and path
 	// on a launcher node that the file should be downloaded to. This is useful for configs that are
 	// larger than the ConfigMap (etcd) 1Mb size limit.

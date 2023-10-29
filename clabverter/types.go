@@ -23,8 +23,7 @@ type containerlabTemplateVars struct {
 	Name               string
 	Namespace          string
 	ClabConfig         string
-	StartupConfigs     []topologyConfigMapTemplateVars
-	ExtraFiles         []topologyConfigMapTemplateVars
+	Files              map[string][]topologyConfigMapTemplateVars
 	InsecureRegistries []string
 }
 

@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: srl02-srl2-files
+  namespace:  notclabernetes
+data:
+  nodedir-potato.txt: |-
+    this is a good potato
+  potato.txt: |-
+    this is a good potato
+  srl2.license: |-
+    very sneaky and important license

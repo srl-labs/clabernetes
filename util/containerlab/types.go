@@ -4,7 +4,7 @@ package containerlab
 type Config struct {
 	Name     string    `json:"name,omitempty"`
 	Prefix   *string   `json:"prefix,omitempty"`
-	Topology *Topology `json:"topology,omitempty"`
+	Topology *Topology `yaml:"topology,omitempty"`
 	// the debug flag value as passed via cli
 	// may be used by other packages to enable debug logging
 	Debug bool `json:"debug"`

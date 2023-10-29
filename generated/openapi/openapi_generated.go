@@ -228,21 +228,24 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 						},
 					},
 					"filesFromConfigMap": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "atomic",
-							},
-						},
 						SchemaProps: spec.SchemaProps{
 							Description: "FilesFromConfigMap is a slice of FileFromConfigMap that define the configmap/path and node and path on a launcher node that the file should be mounted to. If the path is not provided the configmap is mounted in its entirety (like normal k8s things), so you *probably* want to specify the sub path unless you are sure what you're doing!",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref: ref(
-											"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap",
-										),
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Default: map[string]interface{}{},
+													Ref: ref(
+														"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap",
+													),
+												},
+											},
+										},
 									},
 								},
 							},
@@ -514,14 +517,6 @@ func schema_clabernetes_apis_topology_v1alpha1_FileFromConfigMap(
 				Description: "FileFromConfigMap represents a file that you would like to mount (from a configmap) in the launcher pod for a given node.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"nodeName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "NodeName is the name of the node (as in node from the clab topology) that the file should be mounted for.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"filePath": {
 						SchemaProps: spec.SchemaProps{
 							Description: "FilePath is the path to mount the file.",
@@ -547,7 +542,7 @@ func schema_clabernetes_apis_topology_v1alpha1_FileFromConfigMap(
 						},
 					},
 				},
-				Required: []string{"nodeName", "filePath", "configMapName"},
+				Required: []string{"filePath", "configMapName"},
 			},
 		},
 	}
@@ -559,16 +554,9 @@ func schema_clabernetes_apis_topology_v1alpha1_FileFromURL(
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "FileFromURL represents a file that you would like to mount from a URL in the launcher pod for a given node.",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"nodeName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "NodeName is the name of the node (as in node from the clab topology) that the file should be mounted for.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"filePath": {
 						SchemaProps: spec.SchemaProps{
 							Description: "FilePath is the path to mount the file.",
@@ -586,7 +574,7 @@ func schema_clabernetes_apis_topology_v1alpha1_FileFromURL(
 						},
 					},
 				},
-				Required: []string{"nodeName", "filePath", "url"},
+				Required: []string{"filePath", "url"},
 			},
 		},
 	}
@@ -739,21 +727,24 @@ func schema_clabernetes_apis_topology_v1alpha1_KneSpec(
 						},
 					},
 					"filesFromConfigMap": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "atomic",
-							},
-						},
 						SchemaProps: spec.SchemaProps{
 							Description: "FilesFromConfigMap is a slice of FileFromConfigMap that define the configmap/path and node and path on a launcher node that the file should be mounted to. If the path is not provided the configmap is mounted in its entirety (like normal k8s things), so you *probably* want to specify the sub path unless you are sure what you're doing!",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref: ref(
-											"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap",
-										),
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Default: map[string]interface{}{},
+													Ref: ref(
+														"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap",
+													),
+												},
+											},
+										},
 									},
 								},
 							},
@@ -1065,21 +1056,24 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 						},
 					},
 					"filesFromConfigMap": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "atomic",
-							},
-						},
 						SchemaProps: spec.SchemaProps{
 							Description: "FilesFromConfigMap is a slice of FileFromConfigMap that define the configmap/path and node and path on a launcher node that the file should be mounted to. If the path is not provided the configmap is mounted in its entirety (like normal k8s things), so you *probably* want to specify the sub path unless you are sure what you're doing!",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref: ref(
-											"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap",
-										),
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Default: map[string]interface{}{},
+													Ref: ref(
+														"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap",
+													),
+												},
+											},
+										},
 									},
 								},
 							},
