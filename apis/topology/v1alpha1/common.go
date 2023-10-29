@@ -39,6 +39,31 @@ type FileFromConfigMap struct {
 	ConfigMapPath string `json:"configMapPath"`
 }
 
+// FileFromURL represents a file that you would like to mount from a URL in the launcher pod for
+// a given node.
+type FileFromURL struct {
+	// FilePath is the path to mount the file.
+	FilePath string `json:"filePath"`
+	// URL is the url to fetch and mount at the provided FilePath.
+	URL string `json:"url"`
+}
+
+// Persistence holds information about how to persist the containlerab lab directory for each node
+// in a topology.
+type Persistence struct {
+	// Enabled indicates if persistence of hte containerlab lab/working directory will be placed in
+	// a mounted PVC.
+	Enabled bool `json:"enabled"`
+	// ClaimSize is the size of the PVC for this topology -- if not provided this defaults to 5Gi.
+	// If provided, the string value must be a valid kubernetes storage requests style string.
+	// +optional
+	ClaimSize string `json:"claimSize"`
+	// StorageClassName is the storage class to set in the PVC -- if not provided this will be left
+	// empty which will end up using your default storage class.
+	// +optional
+	StorageClassName string `json:"storageClassName"`
+}
+
 // TopologyCommonSpec holds fields that are common across different CR types for their spec.
 type TopologyCommonSpec struct {
 	// DisableExpose indicates if exposing nodes via LoadBalancer service should be disabled, by
@@ -80,7 +105,16 @@ type TopologyCommonSpec struct {
 	// to specify the sub path unless you are sure what you're doing!
 	// +listType=atomic
 	// +optional
-	FilesFromConfigMap []FileFromConfigMap `json:"filesFromConfigMap"`
+	FilesFromConfigMap []FileFromConfigMap `json:"filesFromConfigMap"` // TODO - change to map[string][]FileFromConfigMap; this means updating clabverter too
+	// FilesFromURL is a mapping of FileFromURL that define a URL at which to fetch a file, and path
+	// on a launcher node that the file should be downloaded to. This is useful for configs that are
+	// larger than the ConfigMap (etcd) 1Mb size limit.
+	// +optional
+	FilesFromURL map[string][]FileFromURL `json:"filesFromURL"`
+	// Persistence holds configurations relating to persisting each nodes working containerlab
+	// directory.
+	// +optional
+	Persistence Persistence `json:"persistence"`
 	// ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods.
 	// This is disabled by default.
 	// +optional
@@ -149,9 +183,12 @@ type TopologyStatus struct {
 	ConfigsHash string `json:"configsHash"`
 	// Tunnels is a mapping of tunnels that need to be configured between nodes (nodes:[]tunnels).
 	Tunnels map[string][]*Tunnel `json:"tunnels"`
-	// TunnelsHash is a hash of hte last stored Tunnels data. As this can change due to the dns
+	// TunnelsHash is a hash of the last stored Tunnels data. As this can change due to the dns
 	// suffix changing and not just the config changing we need to independently track this state.
 	TunnelsHash string `json:"tunnelsHash"`
+	// FilesFromURLHashes is a mapping of node FilesFromURL hashes stored so we can easily identify
+	// which nodes had changes in their FilesFromURL data so we can know to restart them.
+	FilesFromURLHashes map[string]string `json:"filesFromURLHashes"`
 	// NodeExposedPorts holds a map of (containerlab) nodes and their exposed ports
 	// (via load balancer).
 	NodeExposedPorts map[string]*ExposedPorts `json:"nodeExposedPorts"`

@@ -494,28 +494,20 @@ func (r *DeploymentReconciler) Conforms(
 	return true
 }
 
-// DetermineNodesNeedingRestart accepts a mapping of the previously stored clabernetes
-// sub-topologies and the current reconcile loops rendered topologies and returns a slice of node
-// names whose deployments need restarting due to configuration changes.
+// DetermineNodesNeedingRestart accepts reconcile data (which contains the previous and current
+// rendered sub-topologies) and updates the reconcile data NodesNeedingReboot set with each node
+// that needs restarting due to configuration changes.
 func (r *DeploymentReconciler) DetermineNodesNeedingRestart(
-	previousClabernetesConfigs,
-	currentClabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
-) []string {
-	var nodesNeedingRestart []string
-
-	for nodeName, nodeConfig := range currentClabernetesConfigs {
-		_, nodeExistedBefore := previousClabernetesConfigs[nodeName]
+	reconcileData *ReconcileData,
+) {
+	for nodeName, nodeConfig := range reconcileData.ResolvedConfigs {
+		_, nodeExistedBefore := reconcileData.PreviousConfigs[nodeName]
 		if !nodeExistedBefore {
 			continue
 		}
 
-		if !reflect.DeepEqual(nodeConfig, previousClabernetesConfigs[nodeName]) {
-			nodesNeedingRestart = append(
-				nodesNeedingRestart,
-				nodeName,
-			)
+		if !reflect.DeepEqual(nodeConfig, reconcileData.PreviousConfigs[nodeName]) {
+			reconcileData.NodesNeedingReboot.Add(nodeName)
 		}
 	}
-
-	return nodesNeedingRestart
 }

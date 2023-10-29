@@ -64,7 +64,7 @@ func (c *Controller) processConfig(
 			}
 		}
 
-		reconcileData.PostReconcileConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
+		reconcileData.ResolvedConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
 			Name: fmt.Sprintf("clabernetes-%s", nodeName),
 			Topology: &clabernetesutilcontainerlab.Topology{
 				Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
@@ -80,7 +80,7 @@ func (c *Controller) processConfig(
 		}
 
 		if kneModel != "" {
-			reconcileData.PostReconcileConfigs[nodeName].Topology.Nodes[nodeName].Type = kneModel
+			reconcileData.ResolvedConfigs[nodeName].Topology.Nodes[nodeName].Type = kneModel
 		}
 
 		for _, link := range kneTopo.Links {
@@ -101,8 +101,8 @@ func (c *Controller) processConfig(
 			if endpointA.NodeName == nodeName && endpointB.NodeName == nodeName {
 				// link loops back to ourselves, no need to do overlay things just create the normal
 				// clab link setup here
-				reconcileData.PostReconcileConfigs[nodeName].Topology.Links = append(
-					reconcileData.PostReconcileConfigs[nodeName].Topology.Links,
+				reconcileData.ResolvedConfigs[nodeName].Topology.Links = append(
+					reconcileData.ResolvedConfigs[nodeName].Topology.Links,
 					&clabernetesutilcontainerlab.LinkDefinition{
 						LinkConfig: clabernetesutilcontainerlab.LinkConfig{
 							Endpoints: []string{
@@ -124,8 +124,8 @@ func (c *Controller) processConfig(
 				uninterestingEndpoint = endpointA
 			}
 
-			reconcileData.PostReconcileConfigs[nodeName].Topology.Links = append(
-				reconcileData.PostReconcileConfigs[nodeName].Topology.Links,
+			reconcileData.ResolvedConfigs[nodeName].Topology.Links = append(
+				reconcileData.ResolvedConfigs[nodeName].Topology.Links,
 				&clabernetesutilcontainerlab.LinkDefinition{
 					LinkConfig: clabernetesutilcontainerlab.LinkConfig{
 						Endpoints: []string{
@@ -144,8 +144,8 @@ func (c *Controller) processConfig(
 				},
 			)
 
-			reconcileData.PostReconcileTunnels[nodeName] = append(
-				reconcileData.PostReconcileTunnels[nodeName],
+			reconcileData.ResolvedTunnels[nodeName] = append(
+				reconcileData.ResolvedTunnels[nodeName],
 				&clabernetesapistopologyv1alpha1.Tunnel{
 					LocalNodeName:  nodeName,
 					RemoteNodeName: uninterestingEndpoint.NodeName,

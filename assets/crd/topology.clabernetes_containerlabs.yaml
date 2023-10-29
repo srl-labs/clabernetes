@@ -96,6 +96,33 @@ spec:
                   type: object
                 type: array
                 x-kubernetes-list-type: atomic
+              filesFromURL:
+                additionalProperties:
+                  items:
+                    properties:
+                      filePath:
+                        description: FilePath is the path to mount the file.
+                        type: string
+                      nodeName:
+                        description: NodeName is the name of the node (as in node
+                          from the clab topology) that the file should be mounted
+                          for.
+                        type: string
+                      url:
+                        description: URL is the url to fetch and mount at the provided
+                          FilePath.
+                        type: string
+                    required:
+                    - filePath
+                    - nodeName
+                    - url
+                    type: object
+                  type: array
+                description: FilesFromURL is a mapping of FileFromURL that define
+                  a URL at which to fetch a file, and path on a launcher node that
+                  the file should be downloaded to. This is useful for configs that
+                  are larger than the ConfigMap (etcd) 1Mb size limit.
+                type: object
               insecureRegistries:
                 description: InsecureRegistries is a slice of strings of insecure
                   registries to configure in the launcher pods.
@@ -114,6 +141,27 @@ spec:
                 - info
                 - debug
                 type: string
+              persistence:
+                description: Persistence holds configurations relating to persisting
+                  each nodes working containerlab directory.
+                properties:
+                  claimSize:
+                    description: ClaimSize is the size of the PVC for this topology
+                      -- if not provided this defaults to 5Gi. If provided, the string
+                      value must be a valid kubernetes storage requests style string.
+                    type: string
+                  enabled:
+                    description: Enabled indicates if persistence of hte containerlab
+                      lab/working directory will be placed in a mounted PVC.
+                    type: boolean
+                  storageClassName:
+                    description: StorageClassName is the storage class to set in the
+                      PVC -- if not provided this will be left empty which will end
+                      up using your default storage class.
+                    type: string
+                required:
+                - enabled
+                type: object
               resources:
                 additionalProperties:
                   description: ResourceRequirements describes the compute resource
@@ -191,6 +239,13 @@ spec:
               configsHash:
                 description: ConfigsHash is a hash of the last stored Configs data.
                 type: string
+              filesFromURLHashes:
+                additionalProperties:
+                  type: string
+                description: FilesFromURLHashes is a mapping of node FilesFromURL
+                  hashes stored so we can easily identify which nodes had changes
+                  in their FilesFromURL data so we can know to restart them.
+                type: object
               nodeExposedPorts:
                 additionalProperties:
                   description: ExposedPorts holds information about exposed ports.
@@ -266,13 +321,14 @@ spec:
                   between nodes (nodes:[]tunnels).
                 type: object
               tunnelsHash:
-                description: TunnelsHash is a hash of hte last stored Tunnels data.
+                description: TunnelsHash is a hash of the last stored Tunnels data.
                   As this can change due to the dns suffix changing and not just the
                   config changing we need to independently track this state.
                 type: string
             required:
             - configs
             - configsHash
+            - filesFromURLHashes
             - nodeExposedPorts
             - nodeExposedPortsHash
             - tunnels

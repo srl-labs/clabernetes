@@ -182,12 +182,11 @@ func (r *ServiceExposeReconciler) parseContainerlabTopologyPortsSection(
 }
 
 func (r *ServiceExposeReconciler) renderServicePorts(
+	reconcileData *ReconcileData,
 	service *k8scorev1.Service,
-	owningTopologyStatus *clabernetesapistopologyv1alpha1.TopologyStatus,
-	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	nodeName string,
 ) {
-	owningTopologyStatus.NodeExposedPorts[nodeName] = &clabernetesapistopologyv1alpha1.ExposedPorts{
+	reconcileData.ResolvedNodeExposedPorts[nodeName] = &clabernetesapistopologyv1alpha1.ExposedPorts{ //nolint:lll
 		TCPPorts: make([]int, 0),
 		UDPPorts: make([]int, 0),
 	}
@@ -201,9 +200,11 @@ func (r *ServiceExposeReconciler) renderServicePorts(
 	// definitions.
 	allContainerlabPorts := clabernetesutil.NewStringSet()
 
-	allContainerlabPorts.Extend(clabernetesConfigs[nodeName].Topology.Nodes[nodeName].Ports)
+	allContainerlabPorts.Extend(
+		reconcileData.ResolvedConfigs[nodeName].Topology.Nodes[nodeName].Ports,
+	)
 
-	allContainerlabPorts.Extend(clabernetesConfigs[nodeName].Topology.Defaults.Ports)
+	allContainerlabPorts.Extend(reconcileData.ResolvedConfigs[nodeName].Topology.Defaults.Ports)
 
 	allContainerlabPortsItems := allContainerlabPorts.Items()
 	sort.Strings(allContainerlabPortsItems)
@@ -219,13 +220,13 @@ func (r *ServiceExposeReconciler) renderServicePorts(
 
 		// dont forget to update the exposed ports status bits
 		if port.Protocol == clabernetesconstants.TCP {
-			owningTopologyStatus.NodeExposedPorts[nodeName].TCPPorts = append(
-				owningTopologyStatus.NodeExposedPorts[nodeName].TCPPorts,
+			reconcileData.ResolvedNodeExposedPorts[nodeName].TCPPorts = append(
+				reconcileData.ResolvedNodeExposedPorts[nodeName].TCPPorts,
 				int(port.Port),
 			)
 		} else {
-			owningTopologyStatus.NodeExposedPorts[nodeName].UDPPorts = append(
-				owningTopologyStatus.NodeExposedPorts[nodeName].UDPPorts,
+			reconcileData.ResolvedNodeExposedPorts[nodeName].UDPPorts = append(
+				reconcileData.ResolvedNodeExposedPorts[nodeName].UDPPorts,
 				int(port.Port),
 			)
 		}
@@ -238,8 +239,7 @@ func (r *ServiceExposeReconciler) renderServicePorts(
 // and renders the final expose service for this node.
 func (r *ServiceExposeReconciler) Render(
 	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
-	owningTopologyStatus *clabernetesapistopologyv1alpha1.TopologyStatus,
-	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
+	reconcileData *ReconcileData,
 	nodeName string,
 ) *k8scorev1.Service {
 	owningTopologyName := owningTopology.GetName()
@@ -252,9 +252,8 @@ func (r *ServiceExposeReconciler) Render(
 	)
 
 	r.renderServicePorts(
+		reconcileData,
 		service,
-		owningTopologyStatus,
-		clabernetesConfigs,
 		nodeName,
 	)
 
@@ -265,8 +264,7 @@ func (r *ServiceExposeReconciler) Render(
 // list of node names and renders the final expose services for the given nodes.
 func (r *ServiceExposeReconciler) RenderAll(
 	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
-	owningTopologyStatus *clabernetesapistopologyv1alpha1.TopologyStatus,
-	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
+	reconcileData *ReconcileData,
 	nodeNames []string,
 ) []*k8scorev1.Service {
 	services := make([]*k8scorev1.Service, len(nodeNames))
@@ -274,8 +272,7 @@ func (r *ServiceExposeReconciler) RenderAll(
 	for idx, nodeName := range nodeNames {
 		services[idx] = r.Render(
 			owningTopology,
-			owningTopologyStatus,
-			clabernetesConfigs,
+			reconcileData,
 			nodeName,
 		)
 	}

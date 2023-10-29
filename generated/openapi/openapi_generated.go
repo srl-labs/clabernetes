@@ -48,6 +48,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap": schema_clabernetes_apis_topology_v1alpha1_FileFromConfigMap(
 			ref,
 		),
+		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromURL": schema_clabernetes_apis_topology_v1alpha1_FileFromURL(
+			ref,
+		),
 		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Kne": schema_clabernetes_apis_topology_v1alpha1_Kne(
 			ref,
 		),
@@ -61,6 +64,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 			ref,
 		),
 		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.LinkEndpoint": schema_clabernetes_apis_topology_v1alpha1_LinkEndpoint(
+			ref,
+		),
+		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Persistence": schema_clabernetes_apis_topology_v1alpha1_Persistence(
 			ref,
 		),
 		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.TopologyCommonSpec": schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
@@ -242,6 +248,39 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 							},
 						},
 					},
+					"filesFromURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FilesFromURL is a mapping of FileFromURL that define a URL at which to fetch a file, and path on a launcher node that the file should be downloaded to. This is useful for configs that are larger than the ConfigMap (etcd) 1Mb size limit.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Default: map[string]interface{}{},
+													Ref: ref(
+														"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromURL",
+													),
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"persistence": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Persistence holds configurations relating to persisting each nodes working containerlab directory.",
+							Default:     map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Persistence",
+							),
+						},
+					},
 					"containerlabDebug": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods. This is disabled by default.",
@@ -285,7 +324,7 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 			},
 		},
 		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap", "k8s.io/api/core/v1.ResourceRequirements"},
+			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromURL", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Persistence", "k8s.io/api/core/v1.ResourceRequirements"},
 	}
 }
 
@@ -339,10 +378,26 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
 					},
 					"tunnelsHash": {
 						SchemaProps: spec.SchemaProps{
-							Description: "TunnelsHash is a hash of hte last stored Tunnels data. As this can change due to the dns suffix changing and not just the config changing we need to independently track this state.",
+							Description: "TunnelsHash is a hash of the last stored Tunnels data. As this can change due to the dns suffix changing and not just the config changing we need to independently track this state.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"filesFromURLHashes": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FilesFromURLHashes is a mapping of node FilesFromURL hashes stored so we can easily identify which nodes had changes in their FilesFromURL data so we can know to restart them.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
 						},
 					},
 					"nodeExposedPorts": {
@@ -375,6 +430,7 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
 					"configsHash",
 					"tunnels",
 					"tunnelsHash",
+					"filesFromURLHashes",
 					"nodeExposedPorts",
 					"nodeExposedPortsHash",
 				},
@@ -492,6 +548,45 @@ func schema_clabernetes_apis_topology_v1alpha1_FileFromConfigMap(
 					},
 				},
 				Required: []string{"nodeName", "filePath", "configMapName"},
+			},
+		},
+	}
+}
+
+func schema_clabernetes_apis_topology_v1alpha1_FileFromURL(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"nodeName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NodeName is the name of the node (as in node from the clab topology) that the file should be mounted for.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"filePath": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FilePath is the path to mount the file.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "URL is the url to fetch and mount at the provided FilePath.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"nodeName", "filePath", "url"},
 			},
 		},
 	}
@@ -664,6 +759,39 @@ func schema_clabernetes_apis_topology_v1alpha1_KneSpec(
 							},
 						},
 					},
+					"filesFromURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FilesFromURL is a mapping of FileFromURL that define a URL at which to fetch a file, and path on a launcher node that the file should be downloaded to. This is useful for configs that are larger than the ConfigMap (etcd) 1Mb size limit.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Default: map[string]interface{}{},
+													Ref: ref(
+														"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromURL",
+													),
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"persistence": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Persistence holds configurations relating to persisting each nodes working containerlab directory.",
+							Default:     map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Persistence",
+							),
+						},
+					},
 					"containerlabDebug": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods. This is disabled by default.",
@@ -707,7 +835,7 @@ func schema_clabernetes_apis_topology_v1alpha1_KneSpec(
 			},
 		},
 		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap", "k8s.io/api/core/v1.ResourceRequirements"},
+			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromURL", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Persistence", "k8s.io/api/core/v1.ResourceRequirements"},
 	}
 }
 
@@ -761,10 +889,26 @@ func schema_clabernetes_apis_topology_v1alpha1_KneStatus(
 					},
 					"tunnelsHash": {
 						SchemaProps: spec.SchemaProps{
-							Description: "TunnelsHash is a hash of hte last stored Tunnels data. As this can change due to the dns suffix changing and not just the config changing we need to independently track this state.",
+							Description: "TunnelsHash is a hash of the last stored Tunnels data. As this can change due to the dns suffix changing and not just the config changing we need to independently track this state.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"filesFromURLHashes": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FilesFromURLHashes is a mapping of node FilesFromURL hashes stored so we can easily identify which nodes had changes in their FilesFromURL data so we can know to restart them.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
 						},
 					},
 					"nodeExposedPorts": {
@@ -797,6 +941,7 @@ func schema_clabernetes_apis_topology_v1alpha1_KneStatus(
 					"configsHash",
 					"tunnels",
 					"tunnelsHash",
+					"filesFromURLHashes",
 					"nodeExposedPorts",
 					"nodeExposedPortsHash",
 				},
@@ -834,6 +979,46 @@ func schema_clabernetes_apis_topology_v1alpha1_LinkEndpoint(
 					},
 				},
 				Required: []string{"nodeName", "interfaceName"},
+			},
+		},
+	}
+}
+
+func schema_clabernetes_apis_topology_v1alpha1_Persistence(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Persistence holds information about how to persist the containlerab lab directory for each node in a topology.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"enabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Enabled indicates if persistence of hte containerlab lab/working directory will be placed in a mounted PVC.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"claimSize": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ClaimSize is the size of the PVC for this topology -- if not provided this defaults to 5Gi. If provided, the string value must be a valid kubernetes storage requests style string.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"storageClassName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "StorageClassName is the storage class to set in the PVC -- if not provided this will be left empty which will end up using your default storage class.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"enabled"},
 			},
 		},
 	}
@@ -900,6 +1085,39 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 							},
 						},
 					},
+					"filesFromURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FilesFromURL is a mapping of FileFromURL that define a URL at which to fetch a file, and path on a launcher node that the file should be downloaded to. This is useful for configs that are larger than the ConfigMap (etcd) 1Mb size limit.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Default: map[string]interface{}{},
+													Ref: ref(
+														"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromURL",
+													),
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"persistence": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Persistence holds configurations relating to persisting each nodes working containerlab directory.",
+							Default:     map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Persistence",
+							),
+						},
+					},
 					"containerlabDebug": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods. This is disabled by default.",
@@ -934,7 +1152,7 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 			},
 		},
 		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap", "k8s.io/api/core/v1.ResourceRequirements"},
+			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromURL", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Persistence", "k8s.io/api/core/v1.ResourceRequirements"},
 	}
 }
 
@@ -988,10 +1206,26 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyStatus(
 					},
 					"tunnelsHash": {
 						SchemaProps: spec.SchemaProps{
-							Description: "TunnelsHash is a hash of hte last stored Tunnels data. As this can change due to the dns suffix changing and not just the config changing we need to independently track this state.",
+							Description: "TunnelsHash is a hash of the last stored Tunnels data. As this can change due to the dns suffix changing and not just the config changing we need to independently track this state.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"filesFromURLHashes": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FilesFromURLHashes is a mapping of node FilesFromURL hashes stored so we can easily identify which nodes had changes in their FilesFromURL data so we can know to restart them.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
 						},
 					},
 					"nodeExposedPorts": {
@@ -1024,6 +1258,7 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyStatus(
 					"configsHash",
 					"tunnels",
 					"tunnelsHash",
+					"filesFromURLHashes",
 					"nodeExposedPorts",
 					"nodeExposedPortsHash",
 				},

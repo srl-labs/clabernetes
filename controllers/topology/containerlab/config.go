@@ -292,7 +292,7 @@ func (c *Controller) processConfigForNode(
 		nodeDefinition.Ports = nodePorts
 	}
 
-	reconcileData.PostReconcileConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
+	reconcileData.ResolvedConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
 		Name: fmt.Sprintf("clabernetes-%s", nodeName),
 		Topology: &clabernetesutilcontainerlab.Topology{
 			Defaults: deepCopiedDefaults,
@@ -353,8 +353,8 @@ func (c *Controller) processConfigForNode(
 
 		if endpointA.NodeName == nodeName && endpointB.NodeName == nodeName {
 			// link loops back to ourselves, no need to do overlay things just append the link
-			reconcileData.PostReconcileConfigs[nodeName].Topology.Links = append(
-				reconcileData.PostReconcileConfigs[nodeName].Topology.Links,
+			reconcileData.ResolvedConfigs[nodeName].Topology.Links = append(
+				reconcileData.ResolvedConfigs[nodeName].Topology.Links,
 				link,
 			)
 
@@ -369,8 +369,8 @@ func (c *Controller) processConfigForNode(
 			uninterestingEndpoint = endpointA
 		}
 
-		reconcileData.PostReconcileConfigs[nodeName].Topology.Links = append(
-			reconcileData.PostReconcileConfigs[nodeName].Topology.Links,
+		reconcileData.ResolvedConfigs[nodeName].Topology.Links = append(
+			reconcileData.ResolvedConfigs[nodeName].Topology.Links,
 			&clabernetesutilcontainerlab.LinkDefinition{
 				LinkConfig: clabernetesutilcontainerlab.LinkConfig{
 					Endpoints: []string{
@@ -389,8 +389,8 @@ func (c *Controller) processConfigForNode(
 			},
 		)
 
-		reconcileData.PostReconcileTunnels[nodeName] = append(
-			reconcileData.PostReconcileTunnels[nodeName],
+		reconcileData.ResolvedTunnels[nodeName] = append(
+			reconcileData.ResolvedTunnels[nodeName],
 			&clabernetesapistopologyv1alpha1.Tunnel{
 				LocalNodeName:  nodeName,
 				RemoteNodeName: uninterestingEndpoint.NodeName,
