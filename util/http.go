@@ -15,10 +15,9 @@ func IsURL(path string) bool {
 	return strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://")
 }
 
-// WriteHTTPContentsFromPath writes content at the http path `path` into the writer w. This function
-// always tries to convert "normal" github links to raw links.
+// WriteHTTPContentsFromPath writes content at the http path `path` into the writer w.
 func WriteHTTPContentsFromPath(path string, w io.Writer) error {
-	resp, err := http.Get(GitHubNormalToRawLink(path)) //nolint:noctx
+	resp, err := http.Get(path) //nolint:noctx,gosec
 	if err != nil {
 		return err
 	}
@@ -61,4 +60,20 @@ func GitHubNormalToRawLink(path string) string {
 	return fmt.Sprintf(
 		"https://raw.githubusercontent.com/%s/%s", paramsMap["GroupRepo"], paramsMap["Path"],
 	)
+}
+
+// GitHubGroupAndRepoFromURL attempts to return the GitHub group/user and repository from a GitHub
+// URL.
+func GitHubGroupAndRepoFromURL(path string) (group, repo string) {
+	if !strings.Contains(path, "github.com") {
+		return group, repo
+	}
+
+	p := regexp.MustCompile(
+		`(?mi).*.\.com/(?P<Group>.*?)/(?P<Repo>.*?)/`,
+	)
+
+	paramsMap := RegexStringSubMatchToMap(p, path)
+
+	return paramsMap["Group"], paramsMap["Repo"]
 }

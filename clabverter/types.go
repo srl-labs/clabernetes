@@ -43,3 +43,8 @@ type sourceDestinationPathPair struct {
 	sourcePath      string
 	destinationPath string
 }
+
+type gitHubPathInfo struct {
+	Path string `json:"path"`
+	Type string `json:"type"`
+}

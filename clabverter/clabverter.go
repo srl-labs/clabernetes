@@ -90,6 +90,8 @@ type Clabverter struct {
 	topologyPath       string
 	topologyPathParent string
 	isRemotePath       bool
+	githubGroup        string
+	githubRepo         string
 
 	rawClabConfig string
 	clabConfig    *clabernetesutilcontainerlab.Config
@@ -117,6 +119,12 @@ func (c *Clabverter) Clabvert() error {
 
 	if clabernetesutil.IsURL(c.topologyFile) {
 		c.isRemotePath = true
+
+		c.githubGroup, c.githubRepo = clabernetesutil.GitHubGroupAndRepoFromURL(c.topologyFile)
+
+		if c.githubGroup == "" || c.githubRepo == "" {
+			c.logger.Warn("topology file is remote but could not parse github group/repo")
+		}
 	}
 
 	var err error
@@ -187,7 +195,8 @@ func (c *Clabverter) resolveContentAtPath(path string) ([]byte, error) {
 		w := &bytes.Buffer{}
 
 		err = clabernetesutil.WriteHTTPContentsFromPath(
-			fmt.Sprintf("%s/%s", c.topologyPathParent, path), w,
+			clabernetesutil.GitHubNormalToRawLink(fmt.Sprintf("%s/%s", c.topologyPathParent, path)),
+			w,
 		)
 
 		content = w.Bytes()
@@ -254,7 +263,7 @@ func (c *Clabverter) load() error {
 		w := &bytes.Buffer{}
 
 		err = clabernetesutil.WriteHTTPContentsFromPath(
-			c.topologyFile, w,
+			clabernetesutil.GitHubNormalToRawLink(c.topologyFile), w,
 		)
 
 		rawClabConfigBytes = w.Bytes()

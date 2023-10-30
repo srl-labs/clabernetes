@@ -2,6 +2,7 @@ package clabverter
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -205,78 +206,185 @@ func (c *Clabverter) handleStartupConfigs() error {
 	return nil
 }
 
-// TODO move me to files.
-func (c *Clabverter) resolveExtraFiles(
+func (c *Clabverter) resolveExtraFilesRemote(
 	extraFilePaths,
 	resolvedExtraFilePaths []sourceDestinationPathPair,
 ) ([]sourceDestinationPathPair, error) {
 	for _, extraFilePath := range extraFilePaths {
-		if c.isRemotePath {
-			// TODO need to do it like curl the shit below:
-			//  https://api.github.com/repos/srl-labs/srl-telemetry-lab/contents/configs/client3
-			panic("notimplemented")
-		} else {
-			fullyQualifiedPath := extraFilePath.sourcePath
+		if c.githubGroup == "" || c.githubRepo == "" {
+			c.logger.Warn(
+				"attempting to resolve remote file but remote is not a github repo, " +
+					"will attempt to load files without recursing, things may fail",
+			)
 
-			if !strings.HasPrefix(extraFilePath.sourcePath, c.topologyPathParent) {
-				// we may have already set this while processing bind mounts, so don't blindly add
-				// the parent path unless we need to!
-				fullyQualifiedPath = fmt.Sprintf(
-					"%s/%s",
-					c.topologyPathParent,
-					extraFilePath.sourcePath,
-				)
-			}
+			resolvedExtraFilePaths = append(
+				resolvedExtraFilePaths,
+				extraFilePath,
+			)
 
-			fileInfo, err := os.Stat(fullyQualifiedPath)
+			continue
+		}
+
+		w := &bytes.Buffer{}
+
+		url := fmt.Sprintf(
+			"https://api.github.com/repos/%s/%s/contents/%s",
+			c.githubGroup,
+			c.githubRepo,
+			extraFilePath.sourcePath,
+		)
+
+		err := clabernetesutil.WriteHTTPContentsFromPath(
+			url,
+			w,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"%w: couldn't query github api at path %q, err: %w",
+				ErrClabvert,
+				url,
+				err,
+			)
+		}
+
+		var pathInfos []gitHubPathInfo
+
+		err = json.Unmarshal(w.Bytes(), &pathInfos)
+		if err != nil {
+			// github stupidly returns an object (not in an array) if its a single object, so... we
+			// cant really know because pretty sure you could have a directory like "foo.yaml" so...
+			// we just have to fail to parse into a slice and then deal w/ checking if its an obj
+			err = json.Unmarshal(w.Bytes(), &gitHubPathInfo{})
 			if err != nil {
 				return nil, fmt.Errorf(
-					"%w: failed stat'ing file or directory, err: %w", ErrClabvert, err,
+					"%w: couldn't determine if path %q was a file or a directory, err: %w",
+					ErrClabvert,
+					extraFilePath.sourcePath,
+					err,
 				)
 			}
 
-			if !fileInfo.IsDir() {
-				resolvedExtraFilePaths = append(
-					resolvedExtraFilePaths,
-					sourceDestinationPathPair{
-						sourcePath:      fullyQualifiedPath,
+			resolvedExtraFilePaths = append(
+				resolvedExtraFilePaths,
+				extraFilePath,
+			)
+
+			continue
+		}
+
+		for _, pathInfo := range pathInfos {
+			resolvedExtraFilePaths, err = c.resolveExtraFilesRemote(
+				[]sourceDestinationPathPair{
+					{
+						sourcePath:      pathInfo.Path,
 						destinationPath: extraFilePath.destinationPath,
 					},
-				)
-
-				continue
-			}
-
-			extraFileSubPaths, err := filepath.Glob(fmt.Sprintf("%s/*", fullyQualifiedPath))
+				},
+				resolvedExtraFilePaths,
+			)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"%w: failed glob'ing directory, err: %w", ErrClabvert, err,
+					"%w: error recursively loading extra files, err: %w", ErrClabvert, err,
 				)
-			}
-
-			for _, subExtraFileSubPath := range extraFileSubPaths {
-				resolvedExtraFilePaths, err = c.resolveExtraFiles(
-					[]sourceDestinationPathPair{
-						{
-							sourcePath: subExtraFileSubPath,
-							destinationPath: strings.TrimPrefix(
-								subExtraFileSubPath,
-								c.topologyPathParent,
-							),
-						},
-					},
-					resolvedExtraFilePaths,
-				)
-				if err != nil {
-					return nil, fmt.Errorf(
-						"%w: error recursively loading extra files, err: %w", ErrClabvert, err,
-					)
-				}
 			}
 		}
 	}
 
 	return resolvedExtraFilePaths, nil
+}
+
+func (c *Clabverter) resolveExtraFilesLocal(
+	extraFilePaths,
+	resolvedExtraFilePaths []sourceDestinationPathPair,
+) ([]sourceDestinationPathPair, error) {
+	for _, extraFilePath := range extraFilePaths {
+		fullyQualifiedPath := extraFilePath.sourcePath
+
+		if !strings.HasPrefix(extraFilePath.sourcePath, c.topologyPathParent) {
+			// we may have already set this while processing bind mounts, so don't blindly add
+			// the parent path unless we need to!
+			fullyQualifiedPath = fmt.Sprintf(
+				"%s/%s",
+				c.topologyPathParent,
+				extraFilePath.sourcePath,
+			)
+		}
+
+		fileInfo, err := os.Stat(fullyQualifiedPath)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"%w: failed stat'ing file or directory, err: %w", ErrClabvert, err,
+			)
+		}
+
+		if !fileInfo.IsDir() {
+			resolvedExtraFilePaths = append(
+				resolvedExtraFilePaths,
+				sourceDestinationPathPair{
+					sourcePath:      fullyQualifiedPath,
+					destinationPath: extraFilePath.destinationPath,
+				},
+			)
+
+			continue
+		}
+
+		extraFileSubPaths, err := filepath.Glob(fmt.Sprintf("%s/*", fullyQualifiedPath))
+		if err != nil {
+			return nil, fmt.Errorf(
+				"%w: failed glob'ing directory, err: %w", ErrClabvert, err,
+			)
+		}
+
+		for _, subExtraFileSubPath := range extraFileSubPaths {
+			resolvedExtraFilePaths, err = c.resolveExtraFilesLocal(
+				[]sourceDestinationPathPair{
+					{
+						sourcePath: subExtraFileSubPath,
+						destinationPath: strings.TrimPrefix(
+							subExtraFileSubPath,
+							c.topologyPathParent,
+						),
+					},
+				},
+				resolvedExtraFilePaths,
+			)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"%w: error recursively loading extra files, err: %w", ErrClabvert, err,
+				)
+			}
+		}
+	}
+
+	return resolvedExtraFilePaths, nil
+}
+
+func (c *Clabverter) handleExtraFileTooLarge(
+	nodeName string,
+	pathPair sourceDestinationPathPair,
+) {
+	if c.isRemotePath {
+		_, ok := c.extraFilesFromURL[nodeName]
+		if !ok {
+			c.extraFilesFromURL[nodeName] = make([]topologyFileFromURLTemplateVars, 0)
+		}
+
+		c.extraFilesFromURL[nodeName] = append(
+			c.extraFilesFromURL[nodeName],
+			topologyFileFromURLTemplateVars{
+				URL:      pathPair.sourcePath,
+				FilePath: pathPair.destinationPath,
+			},
+		)
+	} else {
+		c.logger.Criticalf(
+			"file at path %q is too large to be mounted in a config map, and "+
+				"topology is not remote (hosted on github), cannot mount this file,"+
+				" will continue but your topology is not complete",
+			pathPair.sourcePath,
+		)
+	}
 }
 
 // handleExtraFiles deals with parsing/loading/rendering "extra" files for a containerlab topology.
@@ -303,7 +411,14 @@ func (c *Clabverter) handleExtraFiles() error {
 			continue
 		}
 
-		resolvedExtraFiles, err := c.resolveExtraFiles(extraFilePaths, nil)
+		var resolvedExtraFiles []sourceDestinationPathPair
+
+		if c.isRemotePath {
+			resolvedExtraFiles, err = c.resolveExtraFilesRemote(extraFilePaths, nil)
+		} else {
+			resolvedExtraFiles, err = c.resolveExtraFilesLocal(extraFilePaths, nil)
+		}
+
 		if err != nil {
 			c.logger.Criticalf(
 				"failed resolving extra file paths for node '%s', error: %s",
@@ -339,24 +454,7 @@ func (c *Clabverter) handleExtraFiles() error {
 			}
 
 			if len(extraFileContent) > maxBytesForConfigMap {
-				// file is too big for a configmap
-
-				if c.isRemotePath {
-					_, ok := c.extraFilesFromURL[nodeName]
-					if !ok {
-						c.extraFilesFromURL[nodeName] = make([]topologyFileFromURLTemplateVars, 0)
-					}
-
-					c.extraFilesFromURL[nodeName] = append(
-						c.extraFilesFromURL[nodeName],
-						topologyFileFromURLTemplateVars{
-							URL:      extraFilePath.sourcePath,
-							FilePath: extraFilePath.destinationPath,
-						},
-					)
-				} else {
-					panic("NOT REMOTE PATH BUT FILE IS TOO BIG FOR CONFIGMAP")
-				}
+				c.handleExtraFileTooLarge(nodeName, extraFilePath)
 			} else {
 				extraFiles[nodeName][extraFilePath.destinationPath] = extraFileContent
 			}
