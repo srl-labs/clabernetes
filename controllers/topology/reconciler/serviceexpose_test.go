@@ -94,7 +94,7 @@ func TestResolveServiceExpose(t *testing.T) {
 							Name:      "resolve-servicefabric-test",
 							Namespace: "clabernetes",
 							Labels: map[string]string{
-								clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeExpose, //nolint:lll
+								clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeExpose,
 								clabernetesconstants.LabelTopologyNode:        "node2",
 							},
 						},
@@ -129,7 +129,7 @@ func TestResolveServiceExpose(t *testing.T) {
 						Name:      "resolve-servicefabric-test",
 						Namespace: "clabernetes",
 						Labels: map[string]string{
-							clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeExpose, //nolint:lll
+							clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeExpose,
 							clabernetesconstants.LabelTopologyNode:        "node2",
 						},
 					},

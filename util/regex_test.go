@@ -18,7 +18,7 @@ func TestRegexStringSubmatchToMap(t *testing.T) {
 		{
 			name: "bool",
 			p: regexp.MustCompile(
-				`(?mi)https?:\/\/(?:www\.)?github\.com\/(?P<GroupRepo>.*?\/.*?)\/(?:(blob)|(tree))(?P<Path>.*)`, //nolint:lll
+				`(?mi)https?:\/\/(?:www\.)?github\.com\/(?P<GroupRepo>.*?\/.*?)\/(?:(blob)|(tree))(?P<Path>.*)`,
 			),
 			in: "https://github.com/srl-labs/containerlab/tree/main/lab-examples/srl02",
 			expected: map[string]string{

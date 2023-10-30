@@ -5,7 +5,7 @@ metadata:
   name: {{ .Name }}
   namespace: {{ .Namespace }}
 spec:
-  {{- if eq (len .InsecureRegistries) 0 }}
+  {{- if gt (len .InsecureRegistries) 0 }}
   insecureRegistries:
     {{- range $registry := .InsecureRegistries }}
     - {{ $registry }}
@@ -19,6 +19,16 @@ spec:
         - filePath: {{ $nodeFile.FilePath }}
           configMapName: {{ $nodeFile.ConfigMapName }}
           configMapPath: {{ $nodeFile.FileName }}
+        {{- end }}
+    {{- end }}
+  {{- end }}
+  {{- if (gt (len .FilesFromURL) 0) }}
+    filesFromURL:
+    {{- range $nodeName, $nodeFiles := .FilesFromURL }}
+      {{ $nodeName }}:
+        {{- range $nodeFile := $nodeFiles }}
+          - filePath: {{ $nodeFile.FilePath }}
+            url: {{ $nodeFile.URL }}
         {{- end }}
     {{- end }}
   {{- end }}

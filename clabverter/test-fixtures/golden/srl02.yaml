@@ -5,6 +5,8 @@ metadata:
   name: srl02
   namespace: notclabernetes
 spec:
+  insecureRegistries:
+    - 1.2.3.4
   filesFromConfigMap:
       srl1:
         - filePath: srl1.cfg

@@ -144,6 +144,7 @@ issues:
         - maintidx
         - funlen
         - gochecknoglobals
+        - lll
 
     - path: logging/fake.go
       linters:

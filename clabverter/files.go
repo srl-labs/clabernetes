@@ -138,6 +138,10 @@ func (c *Clabverter) handleStartupConfigs() error {
 			return err
 		}
 
+		if len(startupConfigContents) > maxBytesForConfigMap {
+			panic("STARTUP CONFIG TOO LARGE, REMOTE STARTUP CONFIG NOT IMPLEMENTED YET")
+		}
+
 		startupConfigs[nodeName] = startupConfigContents
 	}
 
@@ -202,26 +206,24 @@ func (c *Clabverter) handleStartupConfigs() error {
 }
 
 // TODO move me to files.
-func resolveExtraFiles(
+func (c *Clabverter) resolveExtraFiles(
 	extraFilePaths,
 	resolvedExtraFilePaths []sourceDestinationPathPair,
-	topologyPathParent string,
 ) ([]sourceDestinationPathPair, error) {
 	for _, extraFilePath := range extraFilePaths {
-		switch {
-		case isURL(extraFilePath.sourcePath):
-			// TODO need to do it like:
-			//  curl https://api.github.com/repos/srl-labs/srl-telemetry-lab/contents/configs/client3
+		if c.isRemotePath {
+			// TODO need to do it like curl the shit below:
+			//  https://api.github.com/repos/srl-labs/srl-telemetry-lab/contents/configs/client3
 			panic("notimplemented")
-		default:
+		} else {
 			fullyQualifiedPath := extraFilePath.sourcePath
 
-			if !strings.HasPrefix(extraFilePath.sourcePath, topologyPathParent) {
+			if !strings.HasPrefix(extraFilePath.sourcePath, c.topologyPathParent) {
 				// we may have already set this while processing bind mounts, so don't blindly add
 				// the parent path unless we need to!
 				fullyQualifiedPath = fmt.Sprintf(
 					"%s/%s",
-					topologyPathParent,
+					c.topologyPathParent,
 					extraFilePath.sourcePath,
 				)
 			}
@@ -253,18 +255,17 @@ func resolveExtraFiles(
 			}
 
 			for _, subExtraFileSubPath := range extraFileSubPaths {
-				resolvedExtraFilePaths, err = resolveExtraFiles(
+				resolvedExtraFilePaths, err = c.resolveExtraFiles(
 					[]sourceDestinationPathPair{
 						{
 							sourcePath: subExtraFileSubPath,
 							destinationPath: strings.TrimPrefix(
 								subExtraFileSubPath,
-								topologyPathParent,
+								c.topologyPathParent,
 							),
 						},
 					},
 					resolvedExtraFilePaths,
-					topologyPathParent,
 				)
 				if err != nil {
 					return nil, fmt.Errorf(
@@ -302,7 +303,7 @@ func (c *Clabverter) handleExtraFiles() error {
 			continue
 		}
 
-		resolvedExtraFiles, err := resolveExtraFiles(extraFilePaths, nil, c.topologyPathParent)
+		resolvedExtraFiles, err := c.resolveExtraFiles(extraFilePaths, nil)
 		if err != nil {
 			c.logger.Criticalf(
 				"failed resolving extra file paths for node '%s', error: %s",
@@ -312,11 +313,6 @@ func (c *Clabverter) handleExtraFiles() error {
 
 			return err
 		}
-
-		// TODO -- here we should check if any of the files are > 1Mb then act accordingly --
-		//  which means make this file a "FileFromURL" instead of stuffing it in a configmap. yes
-		//  this means the cluster needs access to the thing and stuff, btu at least we have a way
-		//  to deal with it... and we dont require a PVC or any weird shit there.
 
 		extraFiles[nodeName] = make(map[string][]byte)
 
@@ -342,7 +338,28 @@ func (c *Clabverter) handleExtraFiles() error {
 				return err
 			}
 
-			extraFiles[nodeName][extraFilePath.destinationPath] = extraFileContent
+			if len(extraFileContent) > maxBytesForConfigMap {
+				// file is too big for a configmap
+
+				if c.isRemotePath {
+					_, ok := c.extraFilesFromURL[nodeName]
+					if !ok {
+						c.extraFilesFromURL[nodeName] = make([]topologyFileFromURLTemplateVars, 0)
+					}
+
+					c.extraFilesFromURL[nodeName] = append(
+						c.extraFilesFromURL[nodeName],
+						topologyFileFromURLTemplateVars{
+							URL:      extraFilePath.sourcePath,
+							FilePath: extraFilePath.destinationPath,
+						},
+					)
+				} else {
+					panic("NOT REMOTE PATH BUT FILE IS TOO BIG FOR CONFIGMAP")
+				}
+			} else {
+				extraFiles[nodeName][extraFilePath.destinationPath] = extraFileContent
+			}
 		}
 	}
 

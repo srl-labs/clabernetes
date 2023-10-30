@@ -19,11 +19,17 @@ type topologyConfigMapTemplateVars struct {
 	FileName      string
 }
 
+type topologyFileFromURLTemplateVars struct {
+	URL      string
+	FilePath string
+}
+
 type containerlabTemplateVars struct {
 	Name               string
 	Namespace          string
 	ClabConfig         string
 	Files              map[string][]topologyConfigMapTemplateVars
+	FilesFromURL       map[string][]topologyFileFromURLTemplateVars
 	InsecureRegistries []string
 }
 

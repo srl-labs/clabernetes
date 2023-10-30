@@ -17,7 +17,10 @@ import (
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 )
 
-const specIndentSpaces = 4
+const (
+	specIndentSpaces     = 4
+	maxBytesForConfigMap = 950_000
+)
 
 // MustNewClabverter returns an instance of Clabverter or panics.
 func MustNewClabverter(
@@ -65,6 +68,7 @@ func MustNewClabverter(
 		insecureRegistries:      insecureRegistriesArr,
 		startupConfigConfigMaps: make(map[string]topologyConfigMapTemplateVars),
 		extraFilesConfigMaps:    make(map[string][]topologyConfigMapTemplateVars),
+		extraFilesFromURL:       make(map[string][]topologyFileFromURLTemplateVars),
 		renderedFiles:           []renderedContent{},
 	}
 }
@@ -85,6 +89,7 @@ type Clabverter struct {
 
 	topologyPath       string
 	topologyPathParent string
+	isRemotePath       bool
 
 	rawClabConfig string
 	clabConfig    *clabernetesutilcontainerlab.Config
@@ -98,6 +103,10 @@ type Clabverter struct {
 	// all other config files associated to the node(s) -- for example license file(s).
 	extraFilesConfigMaps map[string][]topologyConfigMapTemplateVars
 
+	// any files that are too big for configmaps can be mounted as fileFromURL (if we are "remote"
+	// topology at least).
+	extraFilesFromURL map[string][]topologyFileFromURLTemplateVars
+
 	// filenames -> content of all rendered files we need to either print to stdout or write to disk
 	renderedFiles []renderedContent
 }
@@ -105,6 +114,10 @@ type Clabverter struct {
 // Clabvert is the main (only) entrypoint that kicks off the "clabversion" process.
 func (c *Clabverter) Clabvert() error {
 	c.logger.Info("starting clabversion!")
+
+	if clabernetesutil.IsURL(c.topologyFile) {
+		c.isRemotePath = true
+	}
 
 	var err error
 
@@ -170,12 +183,15 @@ func (c *Clabverter) resolveContentAtPath(path string) ([]byte, error) {
 
 	var err error
 
-	switch {
-	case isURL(c.topologyFile):
-		content, err = loadContentAtURL(
-			fmt.Sprintf("%s/%s", c.topologyPathParent, path),
+	if c.isRemotePath {
+		w := &bytes.Buffer{}
+
+		err = clabernetesutil.WriteHTTPContentsFromPath(
+			fmt.Sprintf("%s/%s", c.topologyPathParent, path), w,
 		)
-	default:
+
+		content = w.Bytes()
+	} else {
 		fullyQualifiedConfigPath := path
 
 		if !strings.HasPrefix(path, c.topologyPathParent) {
@@ -200,15 +216,15 @@ func (c *Clabverter) load() error {
 
 	c.logger.Info("loading and validating provided containerlab topology file...")
 
-	switch {
-	case isURL(c.topologyFile):
-		if strings.Contains(c.topologyFile, "github.com") &&
-			!strings.Contains(c.topologyFile, "githubusercontent") {
-			c.logger.Info("converting github link to raw style...")
+	if c.isRemotePath {
+		rawLink := clabernetesutil.GitHubNormalToRawLink(c.topologyFile)
 
-			c.topologyFile = gitHubNormalToRawLink(c.topologyFile)
+		if rawLink != c.topologyFile {
+			c.logger.Info("converted github link to raw style...")
+
+			c.topologyFile = rawLink
 		}
-	default:
+	} else {
 		c.topologyPath, err = filepath.Abs(c.topologyFile)
 		if err != nil {
 			c.logger.Criticalf("failed determining absolute path of topology file, error: %s", err)
@@ -222,12 +238,11 @@ func (c *Clabverter) load() error {
 	)
 
 	// make sure we set working dir to the dir of the topo file, or the "parent" folder if its a url
-	switch {
-	case isURL(c.topologyFile):
+	if c.isRemotePath {
 		pathParts := strings.Split(c.topologyFile, "/")
 
 		c.topologyPathParent = strings.Join(pathParts[:len(pathParts)-1], "/")
-	default:
+	} else {
 		c.topologyPathParent = filepath.Dir(c.topologyPath)
 	}
 
@@ -235,10 +250,15 @@ func (c *Clabverter) load() error {
 
 	var rawClabConfigBytes []byte
 
-	switch {
-	case isURL(c.topologyFile):
-		rawClabConfigBytes, err = loadContentAtURL(c.topologyFile)
-	default:
+	if c.isRemotePath {
+		w := &bytes.Buffer{}
+
+		err = clabernetesutil.WriteHTTPContentsFromPath(
+			c.topologyFile, w,
+		)
+
+		rawClabConfigBytes = w.Bytes()
+	} else {
 		rawClabConfigBytes, err = os.ReadFile(c.topologyFile)
 	}
 
@@ -327,6 +347,7 @@ func (c *Clabverter) handleManifest() error {
 			// pad w/ a newline so the template can look prettier :)
 			ClabConfig:         "\n" + clabernetesutil.Indent(c.rawClabConfig, specIndentSpaces),
 			Files:              files,
+			FilesFromURL:       c.extraFilesFromURL,
 			InsecureRegistries: c.insecureRegistries,
 		},
 	)
