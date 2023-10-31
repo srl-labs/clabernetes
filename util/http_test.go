@@ -58,13 +58,13 @@ func TestGitHubNormalLinkToRawLink(t *testing.T) {
 		},
 		{
 			name:     "github-normal-link",
-			in:       "https://github.com/srl-labs/srl-telemetry-lab/blob/main/configs/grafana/dashboards.yml",
-			expected: "https://raw.githubusercontent.com/srl-labs/srl-telemetry-lab//main/configs/grafana/dashboards.yml",
+			in:       "https://github.com/srl-labs/srl-telemetry-lab/blob/main/st.clab.yml",
+			expected: "https://raw.githubusercontent.com/srl-labs/srl-telemetry-lab/main/st.clab.yml",
 		},
 		{
 			name:     "gitub-already-raw-link",
-			in:       "https://raw.githubusercontent.com/srl-labs/srl-telemetry-lab/main/configs/grafana/dashboards.yml",
-			expected: "https://raw.githubusercontent.com/srl-labs/srl-telemetry-lab/main/configs/grafana/dashboards.yml",
+			in:       "https://raw.githubusercontent.com/srl-labs/srl-telemetry-lab/main/st.clab.yml",
+			expected: "https://raw.githubusercontent.com/srl-labs/srl-telemetry-lab/main/st.clab.yml",
 		},
 	}
 

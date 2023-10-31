@@ -276,8 +276,12 @@ func (c *Clabverter) resolveExtraFilesRemote(
 			resolvedExtraFilePaths, err = c.resolveExtraFilesRemote(
 				[]sourceDestinationPathPair{
 					{
-						sourcePath:      pathInfo.Path,
-						destinationPath: extraFilePath.destinationPath,
+						sourcePath: pathInfo.Path,
+						destinationPath: fmt.Sprintf(
+							"%s/%s",
+							extraFilePath.destinationPath,
+							filepath.Base(pathInfo.Path),
+						),
 					},
 				},
 				resolvedExtraFilePaths,
@@ -373,7 +377,7 @@ func (c *Clabverter) handleExtraFileTooLarge(
 		c.extraFilesFromURL[nodeName] = append(
 			c.extraFilesFromURL[nodeName],
 			topologyFileFromURLTemplateVars{
-				URL:      pathPair.sourcePath,
+				URL:      fmt.Sprintf("%s/%s", c.topologyPathParent, pathPair.sourcePath),
 				FilePath: pathPair.destinationPath,
 			},
 		)

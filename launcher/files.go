@@ -25,6 +25,8 @@ func (c *clabernetes) getFilesFromURL() error {
 	for _, fileFromURL := range filesFromURL {
 		var f *os.File
 
+		// TODO -- does os.Create create the path structure if it doesnt exist? prolly no? test that
+
 		f, err = os.Create(fmt.Sprintf("/clabernetes/%s", fileFromURL.FilePath))
 		if err != nil {
 			return err

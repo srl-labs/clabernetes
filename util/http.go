@@ -52,7 +52,7 @@ func GitHubNormalToRawLink(path string) string {
 	}
 
 	p := regexp.MustCompile(
-		`(?mi)https?:\/\/(?:www\.)?github\.com\/(?P<GroupRepo>.*?\/.*?)\/(?:(blob)|(tree))(?P<Path>.*)`, //nolint:lll
+		`(?mi)https?:\/\/(?:www\.)?github\.com\/(?P<GroupRepo>.*?)(?:\/(?:blob\/)|(?:tree\/))(?P<Path>.*)`, //nolint:lll
 	)
 
 	paramsMap := RegexStringSubMatchToMap(p, path)
