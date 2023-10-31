@@ -186,10 +186,10 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 	for _, podVolume := range volumesFromConfigMaps {
 		if !clabernetesutilkubernetes.VolumeAlreadyMounted(
 			podVolume.ConfigMapName,
-			deployment.Spec.Template.Spec.Volumes,
+			volumes,
 		) {
-			deployment.Spec.Template.Spec.Volumes = append(
-				deployment.Spec.Template.Spec.Volumes,
+			volumes = append(
+				volumes,
 				k8scorev1.Volume{
 					Name: podVolume.ConfigMapName,
 					VolumeSource: k8scorev1.VolumeSource{
