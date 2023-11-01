@@ -3,6 +3,9 @@ package launcher
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
@@ -25,7 +28,13 @@ func (c *clabernetes) getFilesFromURL() error {
 	for _, fileFromURL := range filesFromURL {
 		var f *os.File
 
-		// TODO -- does os.Create create the path structure if it doesnt exist? prolly no? test that
+		err = os.MkdirAll(
+			filepath.Dir(fileFromURL.FilePath),
+			clabernetesconstants.PermissionsEveryoneReadWrite,
+		)
+		if err != nil {
+			return err
+		}
 
 		f, err = os.Create(fmt.Sprintf("/clabernetes/%s", fileFromURL.FilePath))
 		if err != nil {
@@ -33,8 +42,10 @@ func (c *clabernetes) getFilesFromURL() error {
 		}
 
 		err = clabernetesutil.WriteHTTPContentsFromPath(
+			c.ctx,
 			fileFromURL.URL,
 			f,
+			nil,
 		)
 		if err != nil {
 			return err

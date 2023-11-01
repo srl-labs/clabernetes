@@ -1,6 +1,7 @@
 package util
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,8 +17,24 @@ func IsURL(path string) bool {
 }
 
 // WriteHTTPContentsFromPath writes content at the http path `path` into the writer w.
-func WriteHTTPContentsFromPath(path string, w io.Writer) error {
-	resp, err := http.Get(path) //nolint:noctx,gosec
+func WriteHTTPContentsFromPath(
+	ctx context.Context,
+	path string,
+	w io.Writer,
+	headerData map[string]string,
+) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path, http.NoBody)
+	if err != nil {
+		return err
+	}
+
+	for k, v := range headerData {
+		req.Header.Set(k, v)
+	}
+
+	client := http.Client{}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}

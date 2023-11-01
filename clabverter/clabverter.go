@@ -2,6 +2,7 @@ package clabverter
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -59,9 +60,12 @@ func MustNewClabverter(
 		insecureRegistriesArr = strings.Split(insecureRegistries, ",")
 	}
 
+	githubToken := os.Getenv(clabernetesconstants.GitHubTokenEnv)
+
 	return &Clabverter{
 		logger:                  clabverterLogger,
 		topologyFile:            topologyFile,
+		githubToken:             githubToken,
 		outputDirectory:         outputDirectory,
 		stdout:                  stdout,
 		destinationNamespace:    destinationNamespace,
@@ -92,6 +96,7 @@ type Clabverter struct {
 	isRemotePath       bool
 	githubGroup        string
 	githubRepo         string
+	githubToken        string
 
 	rawClabConfig string
 	clabConfig    *clabernetesutilcontainerlab.Config
@@ -195,8 +200,10 @@ func (c *Clabverter) resolveContentAtPath(path string) ([]byte, error) {
 		w := &bytes.Buffer{}
 
 		err = clabernetesutil.WriteHTTPContentsFromPath(
+			context.Background(),
 			clabernetesutil.GitHubNormalToRawLink(fmt.Sprintf("%s/%s", c.topologyPathParent, path)),
 			w,
+			c.getGitHubHeaders(),
 		)
 
 		content = w.Bytes()
@@ -263,7 +270,10 @@ func (c *Clabverter) load() error {
 		w := &bytes.Buffer{}
 
 		err = clabernetesutil.WriteHTTPContentsFromPath(
-			clabernetesutil.GitHubNormalToRawLink(c.topologyFile), w,
+			context.Background(),
+			clabernetesutil.GitHubNormalToRawLink(c.topologyFile),
+			w,
+			c.getGitHubHeaders(),
 		)
 
 		rawClabConfigBytes = w.Bytes()
@@ -438,4 +448,14 @@ func (c *Clabverter) findClabTopologyFile() error {
 	c.topologyFile = files[0]
 
 	return nil
+}
+
+func (c *Clabverter) getGitHubHeaders() map[string]string {
+	if c.githubToken == "" {
+		return nil
+	}
+
+	return map[string]string{
+		"Authorization": fmt.Sprintf("Bearer %s", c.githubToken),
+	}
 }

@@ -2,6 +2,7 @@ package clabverter
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -235,8 +236,10 @@ func (c *Clabverter) resolveExtraFilesRemote(
 		)
 
 		err := clabernetesutil.WriteHTTPContentsFromPath(
+			context.Background(),
 			url,
 			w,
+			c.getGitHubHeaders(),
 		)
 		if err != nil {
 			return nil, fmt.Errorf(

@@ -23,12 +23,12 @@ spec:
     {{- end }}
   {{- end }}
   {{- if (gt (len .FilesFromURL) 0) }}
-    filesFromURL:
+  filesFromURL:
     {{- range $nodeName, $nodeFiles := .FilesFromURL }}
       {{ $nodeName }}:
         {{- range $nodeFile := $nodeFiles }}
-          - filePath: {{ $nodeFile.FilePath }}
-            url: {{ $nodeFile.URL }}
+        - filePath: {{ $nodeFile.FilePath }}
+          url: {{ $nodeFile.URL }}
         {{- end }}
     {{- end }}
   {{- end }}
