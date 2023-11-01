@@ -16,12 +16,12 @@ spec:
           configMapName: srl02-srl1-files
           configMapPath: taco-srl1.license
       srl2:
-        - filePath: /nodedir-potato.txt
+        - filePath: /Users/carl/dev/github/clabernetes/clabverter/test-fixtures/clabversiontest/srl2/potato.txt
           configMapName: srl02-srl2-files
-          configMapPath: nodedir-potato.txt
-        - filePath: /potato.txt
+          configMapPath: Users-carl-dev-github-clabernetes-clabverter-test-fixt-812fc54
+        - filePath: /Users/carl/dev/github/clabernetes/clabverter/test-fixtures/clabversiontest/potato.txt
           configMapName: srl02-srl2-files
-          configMapPath: potato.txt
+          configMapPath: Users-carl-dev-github-clabernetes-clabverter-test-fixt-d1c1dd8
         - filePath: srl2.license
           configMapName: srl02-srl2-files
           configMapPath: srl2.license

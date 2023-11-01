@@ -328,7 +328,7 @@ func (c *Clabverter) resolveExtraFilesLocal(
 			resolvedExtraFilePaths = append(
 				resolvedExtraFilePaths,
 				sourceDestinationPathPair{
-					sourcePath:      fullyQualifiedPath,
+					sourcePath:      extraFilePath.sourcePath,
 					destinationPath: extraFilePath.destinationPath,
 				},
 			)
@@ -463,7 +463,7 @@ func (c *Clabverter) handleExtraFiles() error {
 			if len(extraFileContent) > maxBytesForConfigMap {
 				c.handleExtraFileTooLarge(nodeName, extraFilePath)
 			} else {
-				extraFiles[nodeName][extraFilePath.destinationPath] = extraFileContent
+				extraFiles[nodeName][extraFilePath.sourcePath] = extraFileContent
 			}
 		}
 	}
