@@ -281,7 +281,16 @@ func getKindsForNode(
 	if nodeKind != "" {
 		nodeTopoKind, ok := clabTopo.Kinds[nodeKind]
 		if ok {
-			return map[string]*clabernetesutilcontainerlab.NodeDefinition{nodeKind: nodeTopoKind}
+			kindForNode := map[string]*clabernetesutilcontainerlab.NodeDefinition{
+				nodeKind: nodeTopoKind,
+			}
+
+			if kindForNode[nodeKind].Ports == nil {
+				// see util/containerlab/types; we dont want nil ports for now at least.
+				kindForNode[nodeKind].Ports = []string{}
+			}
+
+			return kindForNode
 		}
 	}
 
@@ -312,6 +321,12 @@ func (c *Controller) processConfigForNode(
 		deepCopiedDefaults.Ports = defaultPorts
 		nodeDefinition.Ports = nodePorts
 	}
+
+	// we dont care about the node ips like we would in normal containerlab, remove them. also, we
+	// arent copying the mgmt config section from the normal containerlab definition anyway so these
+	// would just be wrong/bad regardless
+	nodeDefinition.MgmtIPv4 = ""
+	nodeDefinition.MgmtIPv6 = ""
 
 	reconcileData.ResolvedConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
 		Name: fmt.Sprintf("clabernetes-%s", nodeName),
