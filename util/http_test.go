@@ -62,7 +62,7 @@ func TestGitHubNormalLinkToRawLink(t *testing.T) {
 			expected: "https://raw.githubusercontent.com/srl-labs/srl-telemetry-lab/main/st.clab.yml",
 		},
 		{
-			name:     "gitub-already-raw-link",
+			name:     "github-already-raw-link",
 			in:       "https://raw.githubusercontent.com/srl-labs/srl-telemetry-lab/main/st.clab.yml",
 			expected: "https://raw.githubusercontent.com/srl-labs/srl-telemetry-lab/main/st.clab.yml",
 		},

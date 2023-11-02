@@ -381,7 +381,7 @@ func (c *Clabverter) handleExtraFileTooLarge(
 			c.extraFilesFromURL[nodeName],
 			topologyFileFromURLTemplateVars{
 				URL:      fmt.Sprintf("%s/%s", c.topologyPathParent, pathPair.sourcePath),
-				FilePath: pathPair.destinationPath,
+				FilePath: pathPair.sourcePath,
 			},
 		)
 	} else {

@@ -267,6 +267,27 @@ func processPorts(
 	return defaultPortsAsString, nodePortsAsString
 }
 
+func getKindsForNode(
+	clabTopo *clabernetesutilcontainerlab.Topology,
+	nodeName string,
+) map[string]*clabernetesutilcontainerlab.NodeDefinition {
+	nodeKind := clabTopo.Defaults.Kind
+	if clabTopo.Nodes[nodeName].Kind != "" {
+		nodeKind = clabTopo.Nodes[nodeName].Kind
+	}
+
+	// we only want to snag our "sub topology" specific kind, otherwise we can just put nil
+	// for the "kinds" part.
+	if nodeKind != "" {
+		nodeTopoKind, ok := clabTopo.Kinds[nodeKind]
+		if ok {
+			return map[string]*clabernetesutilcontainerlab.NodeDefinition{nodeKind: nodeTopoKind}
+		}
+	}
+
+	return nil
+}
+
 func (c *Controller) processConfigForNode(
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
 	clabTopo *clabernetesutilcontainerlab.Topology,
@@ -296,6 +317,7 @@ func (c *Controller) processConfigForNode(
 		Name: fmt.Sprintf("clabernetes-%s", nodeName),
 		Topology: &clabernetesutilcontainerlab.Topology{
 			Defaults: deepCopiedDefaults,
+			Kinds:    getKindsForNode(clabTopo, nodeName),
 			Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
 				nodeName: nodeDefinition,
 			},

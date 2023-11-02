@@ -227,6 +227,22 @@ func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 			nodeName,
 		)
 
+		if r.Log.GetLevel() == clabernetesconstants.Debug {
+			diff, err := clabernetesutil.UnifiedDiff(
+				reconcileData.ResolvedConfigs[nodeName],
+				reconcileData.PreviousConfigs[nodeName],
+			)
+			if err != nil {
+				r.Log.Warnf(
+					"failed generating diff of deployment. this only happened because logging"+
+						" is at debug level, ignoring the error. err: %s",
+					err,
+				)
+			} else {
+				r.Log.Debugf("deployment diff: %s", diff)
+			}
+		}
+
 		deploymentName := fmt.Sprintf("%s-%s", owningTopology.GetName(), nodeName)
 
 		nodeDeployment := &k8sappsv1.Deployment{}
