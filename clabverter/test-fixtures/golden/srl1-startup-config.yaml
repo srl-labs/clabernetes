@@ -5,7 +5,7 @@ metadata:
     name: srl02-srl1-startup-config
     namespace:  notclabernetes
 data:
-  startup-config: |-
+  REPLACED: |-
     set / interface ethernet-1/1
     set / interface ethernet-1/1 subinterface 0
     set / interface ethernet-1/1 subinterface 0 ipv4

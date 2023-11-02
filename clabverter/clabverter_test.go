@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"testing"
 
 	clabernetesclabverter "github.com/srl-labs/clabernetes/clabverter"
@@ -75,6 +76,8 @@ func TestClabvert(t *testing.T) {
 
 				if *clabernetestesthelper.Update {
 					for expectedFileName, expectedFileContent := range renderedTemplates {
+						expectedFileContent = normalizeManifest(t, expectedFileContent)
+
 						clabernetestesthelper.WriteTestFixtureFile(
 							t,
 							fmt.Sprintf("golden/%s", filepath.Base(expectedFileName)),
@@ -91,6 +94,8 @@ func TestClabvert(t *testing.T) {
 						t,
 						fmt.Sprintf("golden/%s", expectedFileName),
 					)
+
+					actualContents = normalizeManifest(t, actualContents)
 
 					if !bytes.Equal(
 						actualContents,
@@ -129,4 +134,60 @@ func readAllManifests(t *testing.T, actualDir string) map[string][]byte {
 	}
 
 	return manifests
+}
+
+func normalizeManifest(t *testing.T, b []byte) []byte {
+	t.Helper()
+
+	switch {
+	case bytes.Contains(b, []byte("kind: ConfigMap")):
+		return normalizeConfigMapPaths(t, b)
+	case bytes.Contains(b, []byte("kind: Containerlab")):
+		return normalizeFromFileFilePaths(t, b)
+	default:
+		return b
+	}
+}
+
+func normalizeFromFileFilePaths(t *testing.T, b []byte) []byte {
+	t.Helper()
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed getting working dir, err: %s", err)
+	}
+
+	originalPathPattern := regexp.MustCompile(fmt.Sprintf(`(?:filePath: )(%s)`, cwd))
+
+	foundPathSubMatch := originalPathPattern.FindSubmatch(b)
+	if len(foundPathSubMatch) != 2 {
+		return b
+	}
+
+	foundPath := string(foundPathSubMatch[1])
+
+	pathPattern := regexp.MustCompile(fmt.Sprintf(`filePath: %s`, foundPath))
+
+	b = pathPattern.ReplaceAll(b, []byte("filePath: /some/dir/clabernetes/clabverter"))
+
+	// above is just replacing the filePath parts, below we just pave over configmap paths because
+	// its not worth the effort to try to ensure that they are the same since they can change based
+	// on path of where the test is ran and then the safe concat name hash comes into play etc
+
+	configMapPathsPattern := regexp.MustCompile(`(?m)^\s+configMapPath: .*$`)
+
+	b = configMapPathsPattern.ReplaceAll(b, []byte("          configMapPath: REPLACED"))
+
+	return b
+}
+
+func normalizeConfigMapPaths(t *testing.T, b []byte) []byte {
+	t.Helper()
+
+	// see also normalize file paths, not worth fighting with paths and hashes
+	pathPattern := regexp.MustCompile(`(?m)^ {2}.*?: \|-$`)
+
+	b = pathPattern.ReplaceAll(b, []byte("  REPLACED: |-"))
+
+	return b
 }

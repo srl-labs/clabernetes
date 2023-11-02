@@ -5,9 +5,9 @@ metadata:
   name: srl02-srl2-files
   namespace:  notclabernetes
 data:
-  Users-carl-dev-github-clabernetes-clabverter-test-fixt-812fc54: |-
+  REPLACED: |-
     this is a good potato
-  Users-carl-dev-github-clabernetes-clabverter-test-fixt-d1c1dd8: |-
+  REPLACED: |-
     this is a good potato
-  srl2.license: |-
+  REPLACED: |-
     very sneaky and important license

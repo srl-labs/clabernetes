@@ -5,5 +5,5 @@ metadata:
   name: srl02-srl1-files
   namespace:  notclabernetes
 data:
-  taco-srl1.license: |-
+  REPLACED: |-
     very sneaky and important license

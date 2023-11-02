@@ -11,23 +11,23 @@ spec:
       srl1:
         - filePath: srl1.cfg
           configMapName: srl02-srl1-startup-config
-          configMapPath: startup-config
+          configMapPath: REPLACED
         - filePath: taco/srl1.license
           configMapName: srl02-srl1-files
-          configMapPath: taco-srl1.license
+          configMapPath: REPLACED
       srl2:
-        - filePath: /Users/carl/dev/github/clabernetes/clabverter/test-fixtures/clabversiontest/srl2/potato.txt
+        - filePath: /some/dir/clabernetes/clabverter/test-fixtures/clabversiontest/srl2/potato.txt
           configMapName: srl02-srl2-files
-          configMapPath: Users-carl-dev-github-clabernetes-clabverter-test-fixt-812fc54
-        - filePath: /Users/carl/dev/github/clabernetes/clabverter/test-fixtures/clabversiontest/potato.txt
+          configMapPath: REPLACED
+        - filePath: /some/dir/clabernetes/clabverter/test-fixtures/clabversiontest/potato.txt
           configMapName: srl02-srl2-files
-          configMapPath: Users-carl-dev-github-clabernetes-clabverter-test-fixt-d1c1dd8
+          configMapPath: REPLACED
         - filePath: srl2.license
           configMapName: srl02-srl2-files
-          configMapPath: srl2.license
+          configMapPath: REPLACED
         - filePath: srl2.cfg
           configMapName: srl02-srl2-startup-config
-          configMapPath: startup-config
+          configMapPath: REPLACED
 
   config: |-
     name: srl02
