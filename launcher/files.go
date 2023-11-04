@@ -30,7 +30,7 @@ func (c *clabernetes) getFilesFromURL() error {
 
 		err = os.MkdirAll(
 			filepath.Dir(fileFromURL.FilePath),
-			clabernetesconstants.PermissionsEveryoneReadWrite,
+			clabernetesconstants.PermissionsEveryoneAllPermissions,
 		)
 		if err != nil {
 			return err
