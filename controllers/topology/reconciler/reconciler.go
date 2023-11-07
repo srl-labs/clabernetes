@@ -206,13 +206,15 @@ func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 	deployments *clabernetesutil.ObjectDiffer[*k8sappsv1.Deployment],
 	reconcileData *ReconcileData,
 ) error {
-	r.Log.Info("determining nodes needing restart")
+	r.Log.Debug("determining nodes needing restart")
 
 	r.deploymentReconciler.DetermineNodesNeedingRestart(
 		reconcileData,
 	)
 
 	if reconcileData.NodesNeedingReboot.Len() == 0 {
+		r.Log.Debug("all nodes are up to date, no restarts required")
+
 		return nil
 	}
 
