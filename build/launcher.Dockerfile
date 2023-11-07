@@ -40,7 +40,9 @@ RUN apt-get update && \
         iproute2 \
         tcpdump \
         procps \
-        openssh-client
+        openssh-client \
+        inetutils-ping \
+        traceroute
 
 RUN echo "deb [trusted=yes] https://apt.fury.io/netdevops/ /" | \
     tee -a /etc/apt/sources.list.d/netdevops.list
