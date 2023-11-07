@@ -94,7 +94,8 @@
                     }
                 ],
                 "restartPolicy": "Always",
-                "serviceAccountName": "default"
+                "serviceAccountName": "default",
+                "hostname": "srl1"
             }
         },
         "strategy": {},

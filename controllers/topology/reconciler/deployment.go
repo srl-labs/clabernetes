@@ -145,6 +145,7 @@ func (r *DeploymentReconciler) renderDeploymentBase(
 					RestartPolicy:      "Always",
 					ServiceAccountName: "default",
 					Volumes:            []k8scorev1.Volume{},
+					Hostname:           nodeName,
 				},
 			},
 		},
@@ -432,6 +433,11 @@ func (r *DeploymentReconciler) Conforms(
 	}
 
 	if !reflect.DeepEqual(existingDeployment.Spec.Selector, renderedDeployment.Spec.Selector) {
+		return false
+	}
+
+	if renderedDeployment.Spec.Template.Spec.Hostname !=
+		existingDeployment.Spec.Template.Spec.Hostname {
 		return false
 	}
 
