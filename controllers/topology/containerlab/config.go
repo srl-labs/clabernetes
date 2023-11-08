@@ -436,7 +436,10 @@ func (c *Controller) processConfigForNode(
 					clab.Name,
 					uninterestingEndpoint.NodeName,
 					clab.Namespace,
-					c.BaseController.GetServiceDNSSuffix(),
+					clabernetesutil.GetEnvStrOrDefault(
+						clabernetesconstants.InClusterDNSSuffixEnv,
+						clabernetesconstants.DefaultInClusterDNSSuffix,
+					),
 				),
 				LocalLinkName:  interestingEndpoint.InterfaceName,
 				RemoteLinkName: uninterestingEndpoint.InterfaceName,

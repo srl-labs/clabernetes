@@ -196,6 +196,14 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 				Description: "ContainerlabSpec is the spec for a Containerlab topology resource.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"disableNodeAliasService": {
+						SchemaProps: spec.SchemaProps{
+							Description: "DisableNodeAliasService indicates if headless services for each node in a containerlab topology should *not* be created. By default, clabernetes creates these headless services for each node so that \"normal\" docker and containerlab service discovery works -- this means you can simply resolve \"my-neat-node\" from within the namespace of a topology like you would in docker locally. You may wish to disable this feature though if you have no need of it and just don't want the extra services around. Additionally, you may want to disable this feature if you are running multiple labs in the same namespace (which is not generally recommended by the way!) as you may end up in a situation where a name (i.e. \"leaf1\") is duplicated in more than one topology -- this will cause some problems for clabernetes!",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"disableExpose": {
 						SchemaProps: spec.SchemaProps{
 							Description: "DisableExpose indicates if exposing nodes via LoadBalancer service should be disabled, by default any mapped ports in a containerlab topology will be exposed.",
@@ -567,7 +575,7 @@ func schema_clabernetes_apis_topology_v1alpha1_FileFromURL(
 					},
 					"url": {
 						SchemaProps: spec.SchemaProps{
-							Description: "URL is the url to fetch and mount at the provided FilePath.",
+							Description: "URL is the url to fetch and mount at the provided FilePath. This URL must be a url that can be simply downloaded and dumped to disk -- meaning a normal file server type endpoint or if using GitHub or similar a \"raw\" path.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -695,6 +703,14 @@ func schema_clabernetes_apis_topology_v1alpha1_KneSpec(
 				Description: "KneSpec is the spec for a Kne topology resource.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"disableNodeAliasService": {
+						SchemaProps: spec.SchemaProps{
+							Description: "DisableNodeAliasService indicates if headless services for each node in a containerlab topology should *not* be created. By default, clabernetes creates these headless services for each node so that \"normal\" docker and containerlab service discovery works -- this means you can simply resolve \"my-neat-node\" from within the namespace of a topology like you would in docker locally. You may wish to disable this feature though if you have no need of it and just don't want the extra services around. Additionally, you may want to disable this feature if you are running multiple labs in the same namespace (which is not generally recommended by the way!) as you may end up in a situation where a name (i.e. \"leaf1\") is duplicated in more than one topology -- this will cause some problems for clabernetes!",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"disableExpose": {
 						SchemaProps: spec.SchemaProps{
 							Description: "DisableExpose indicates if exposing nodes via LoadBalancer service should be disabled, by default any mapped ports in a containerlab topology will be exposed.",
@@ -1024,6 +1040,14 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 				Description: "TopologyCommonSpec holds fields that are common across different CR types for their spec.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"disableNodeAliasService": {
+						SchemaProps: spec.SchemaProps{
+							Description: "DisableNodeAliasService indicates if headless services for each node in a containerlab topology should *not* be created. By default, clabernetes creates these headless services for each node so that \"normal\" docker and containerlab service discovery works -- this means you can simply resolve \"my-neat-node\" from within the namespace of a topology like you would in docker locally. You may wish to disable this feature though if you have no need of it and just don't want the extra services around. Additionally, you may want to disable this feature if you are running multiple labs in the same namespace (which is not generally recommended by the way!) as you may end up in a situation where a name (i.e. \"leaf1\") is duplicated in more than one topology -- this will cause some problems for clabernetes!",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"disableExpose": {
 						SchemaProps: spec.SchemaProps{
 							Description: "DisableExpose indicates if exposing nodes via LoadBalancer service should be disabled, by default any mapped ports in a containerlab topology will be exposed.",

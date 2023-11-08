@@ -75,27 +75,12 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, err
 	}
 
-	err = c.TopologyReconciler.ReconcileServiceFabric(
+	err = c.TopologyReconciler.ReconcileServices(
 		ctx,
 		containerlab,
 		reconcileData,
 	)
 	if err != nil {
-		c.BaseController.Log.Criticalf("failed reconciling clabernetes services, error: %s", err)
-
-		return ctrlruntime.Result{}, err
-	}
-
-	err = c.TopologyReconciler.ReconcileServicesExpose(
-		ctx,
-		containerlab,
-		reconcileData,
-	)
-	if err != nil {
-		c.BaseController.Log.Criticalf(
-			"failed reconciling clabernetes expose services, error: %s", err,
-		)
-
 		return ctrlruntime.Result{}, err
 	}
 

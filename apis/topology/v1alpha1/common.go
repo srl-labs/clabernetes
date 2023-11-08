@@ -64,6 +64,17 @@ type Persistence struct {
 
 // TopologyCommonSpec holds fields that are common across different CR types for their spec.
 type TopologyCommonSpec struct {
+	// DisableNodeAliasService indicates if headless services for each node in a containerlab
+	// topology should *not* be created. By default, clabernetes creates these headless services for
+	// each node so that "normal" docker and containerlab service discovery works -- this means you
+	// can simply resolve "my-neat-node" from within the namespace of a topology like you would in
+	// docker locally. You may wish to disable this feature though if you have no need of it and
+	// just don't want the extra services around. Additionally, you may want to disable this feature
+	// if you are running multiple labs in the same namespace (which is not generally recommended by
+	// the way!) as you may end up in a situation where a name (i.e. "leaf1") is duplicated in more
+	// than one topology -- this will cause some problems for clabernetes!
+	// +optional
+	DisableNodeAliasService bool `json:"disableNodeAliasService"`
 	// DisableExpose indicates if exposing nodes via LoadBalancer service should be disabled, by
 	// default any mapped ports in a containerlab topology will be exposed.
 	// +optional

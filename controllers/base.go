@@ -129,12 +129,3 @@ func (c *BaseController) LogReconcileCompleteObjectNotExist(_ ctrlruntime.Reques
 func (c *BaseController) LogReconcileFailedGettingObject(req ctrlruntime.Request, err error) {
 	c.Log.Criticalf("failed fetching '%s/%s', error: %s", req.Namespace, req.Name, err)
 }
-
-// GetServiceDNSSuffix returns the default "svc.cluster.local" dns suffix, or the user's provided
-// override value.
-func (c *BaseController) GetServiceDNSSuffix() string {
-	return clabernetesutil.GetEnvStrOrDefault(
-		clabernetesconstants.InClusterDNSSuffixEnv,
-		clabernetesconstants.DefaultInClusterDNSSuffix,
-	)
-}
