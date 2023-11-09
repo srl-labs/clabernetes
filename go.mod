@@ -3,7 +3,7 @@ module github.com/srl-labs/clabernetes
 go 1.21
 
 require (
-	github.com/carlmontanari/difflibgo v0.0.0-20210718194309-31b9e131c298
+	github.com/carlmontanari/difflibgo v0.0.0-20231101235608-20f26fe20f37
 	github.com/openconfig/kne v0.1.15
 	github.com/urfave/cli/v2 v2.25.7
 	google.golang.org/protobuf v1.31.0

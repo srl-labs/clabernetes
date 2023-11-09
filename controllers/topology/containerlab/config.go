@@ -267,6 +267,36 @@ func processPorts(
 	return defaultPortsAsString, nodePortsAsString
 }
 
+func getKindsForNode(
+	clabTopo *clabernetesutilcontainerlab.Topology,
+	nodeName string,
+) map[string]*clabernetesutilcontainerlab.NodeDefinition {
+	nodeKind := clabTopo.Defaults.Kind
+	if clabTopo.Nodes[nodeName].Kind != "" {
+		nodeKind = clabTopo.Nodes[nodeName].Kind
+	}
+
+	// we only want to snag our "sub topology" specific kind, otherwise we can just put nil
+	// for the "kinds" part.
+	if nodeKind != "" {
+		nodeTopoKind, ok := clabTopo.Kinds[nodeKind]
+		if ok {
+			kindForNode := map[string]*clabernetesutilcontainerlab.NodeDefinition{
+				nodeKind: nodeTopoKind,
+			}
+
+			if kindForNode[nodeKind].Ports == nil {
+				// see util/containerlab/types; we dont want nil ports for now at least.
+				kindForNode[nodeKind].Ports = []string{}
+			}
+
+			return kindForNode
+		}
+	}
+
+	return nil
+}
+
 func (c *Controller) processConfigForNode(
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
 	clabTopo *clabernetesutilcontainerlab.Topology,
@@ -292,10 +322,17 @@ func (c *Controller) processConfigForNode(
 		nodeDefinition.Ports = nodePorts
 	}
 
-	reconcileData.PostReconcileConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
+	// we dont care about the node ips like we would in normal containerlab, remove them. also, we
+	// arent copying the mgmt config section from the normal containerlab definition anyway so these
+	// would just be wrong/bad regardless
+	nodeDefinition.MgmtIPv4 = ""
+	nodeDefinition.MgmtIPv6 = ""
+
+	reconcileData.ResolvedConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
 		Name: fmt.Sprintf("clabernetes-%s", nodeName),
 		Topology: &clabernetesutilcontainerlab.Topology{
 			Defaults: deepCopiedDefaults,
+			Kinds:    getKindsForNode(clabTopo, nodeName),
 			Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
 				nodeName: nodeDefinition,
 			},
@@ -353,8 +390,8 @@ func (c *Controller) processConfigForNode(
 
 		if endpointA.NodeName == nodeName && endpointB.NodeName == nodeName {
 			// link loops back to ourselves, no need to do overlay things just append the link
-			reconcileData.PostReconcileConfigs[nodeName].Topology.Links = append(
-				reconcileData.PostReconcileConfigs[nodeName].Topology.Links,
+			reconcileData.ResolvedConfigs[nodeName].Topology.Links = append(
+				reconcileData.ResolvedConfigs[nodeName].Topology.Links,
 				link,
 			)
 
@@ -369,8 +406,8 @@ func (c *Controller) processConfigForNode(
 			uninterestingEndpoint = endpointA
 		}
 
-		reconcileData.PostReconcileConfigs[nodeName].Topology.Links = append(
-			reconcileData.PostReconcileConfigs[nodeName].Topology.Links,
+		reconcileData.ResolvedConfigs[nodeName].Topology.Links = append(
+			reconcileData.ResolvedConfigs[nodeName].Topology.Links,
 			&clabernetesutilcontainerlab.LinkDefinition{
 				LinkConfig: clabernetesutilcontainerlab.LinkConfig{
 					Endpoints: []string{
@@ -389,8 +426,8 @@ func (c *Controller) processConfigForNode(
 			},
 		)
 
-		reconcileData.PostReconcileTunnels[nodeName] = append(
-			reconcileData.PostReconcileTunnels[nodeName],
+		reconcileData.ResolvedTunnels[nodeName] = append(
+			reconcileData.ResolvedTunnels[nodeName],
 			&clabernetesapistopologyv1alpha1.Tunnel{
 				LocalNodeName:  nodeName,
 				RemoteNodeName: uninterestingEndpoint.NodeName,
@@ -399,7 +436,10 @@ func (c *Controller) processConfigForNode(
 					clab.Name,
 					uninterestingEndpoint.NodeName,
 					clab.Namespace,
-					c.BaseController.GetServiceDNSSuffix(),
+					clabernetesutil.GetEnvStrOrDefault(
+						clabernetesconstants.InClusterDNSSuffixEnv,
+						clabernetesconstants.DefaultInClusterDNSSuffix,
+					),
 				),
 				LocalLinkName:  interestingEndpoint.InterfaceName,
 				RemoteLinkName: uninterestingEndpoint.InterfaceName,

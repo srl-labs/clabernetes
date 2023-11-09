@@ -2,9 +2,11 @@ package clabverter
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -16,7 +18,10 @@ import (
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 )
 
-const specIndentSpaces = 4
+const (
+	specIndentSpaces     = 4
+	maxBytesForConfigMap = 950_000
+)
 
 // MustNewClabverter returns an instance of Clabverter or panics.
 func MustNewClabverter(
@@ -55,15 +60,19 @@ func MustNewClabverter(
 		insecureRegistriesArr = strings.Split(insecureRegistries, ",")
 	}
 
+	githubToken := os.Getenv(clabernetesconstants.GitHubTokenEnv)
+
 	return &Clabverter{
 		logger:                  clabverterLogger,
 		topologyFile:            topologyFile,
+		githubToken:             githubToken,
 		outputDirectory:         outputDirectory,
 		stdout:                  stdout,
 		destinationNamespace:    destinationNamespace,
 		insecureRegistries:      insecureRegistriesArr,
 		startupConfigConfigMaps: make(map[string]topologyConfigMapTemplateVars),
 		extraFilesConfigMaps:    make(map[string][]topologyConfigMapTemplateVars),
+		extraFilesFromURL:       make(map[string][]topologyFileFromURLTemplateVars),
 		renderedFiles:           []renderedContent{},
 	}
 }
@@ -84,6 +93,10 @@ type Clabverter struct {
 
 	topologyPath       string
 	topologyPathParent string
+	isRemotePath       bool
+	githubGroup        string
+	githubRepo         string
+	githubToken        string
 
 	rawClabConfig string
 	clabConfig    *clabernetesutilcontainerlab.Config
@@ -97,6 +110,10 @@ type Clabverter struct {
 	// all other config files associated to the node(s) -- for example license file(s).
 	extraFilesConfigMaps map[string][]topologyConfigMapTemplateVars
 
+	// any files that are too big for configmaps can be mounted as fileFromURL (if we are "remote"
+	// topology at least).
+	extraFilesFromURL map[string][]topologyFileFromURLTemplateVars
+
 	// filenames -> content of all rendered files we need to either print to stdout or write to disk
 	renderedFiles []renderedContent
 }
@@ -104,6 +121,16 @@ type Clabverter struct {
 // Clabvert is the main (only) entrypoint that kicks off the "clabversion" process.
 func (c *Clabverter) Clabvert() error {
 	c.logger.Info("starting clabversion!")
+
+	if clabernetesutil.IsURL(c.topologyFile) {
+		c.isRemotePath = true
+
+		c.githubGroup, c.githubRepo = clabernetesutil.GitHubGroupAndRepoFromURL(c.topologyFile)
+
+		if c.githubGroup == "" || c.githubRepo == "" {
+			c.logger.Warn("topology file is remote but could not parse github group/repo")
+		}
+	}
 
 	var err error
 
@@ -169,25 +196,31 @@ func (c *Clabverter) resolveContentAtPath(path string) ([]byte, error) {
 
 	var err error
 
-	switch {
-	case isURL(c.topologyFile):
-		content, err = loadContentAtURL(
-			fmt.Sprintf("%s/%s", c.topologyPathParent, path),
+	if c.isRemotePath {
+		w := &bytes.Buffer{}
+
+		err = clabernetesutil.WriteHTTPContentsFromPath(
+			context.Background(),
+			clabernetesutil.GitHubNormalToRawLink(fmt.Sprintf("%s/%s", c.topologyPathParent, path)),
+			w,
+			c.getGitHubHeaders(),
 		)
-	default:
-		fullyQualifiedStartupConfigPath := path
+
+		content = w.Bytes()
+	} else {
+		fullyQualifiedConfigPath := path
 
 		if !strings.HasPrefix(path, c.topologyPathParent) {
 			// we may have already set this while processing bind mounts, so don't blindly add the
 			// parent path unless we need to!
-			fullyQualifiedStartupConfigPath = fmt.Sprintf(
+			fullyQualifiedConfigPath = fmt.Sprintf(
 				"%s/%s",
 				c.topologyPathParent,
 				path,
 			)
 		}
 
-		content, err = os.ReadFile(fullyQualifiedStartupConfigPath) //nolint:gosec
+		content, err = os.ReadFile(fullyQualifiedConfigPath) //nolint:gosec
 	}
 
 	return content, err
@@ -199,15 +232,15 @@ func (c *Clabverter) load() error {
 
 	c.logger.Info("loading and validating provided containerlab topology file...")
 
-	switch {
-	case isURL(c.topologyFile):
-		if strings.Contains(c.topologyFile, "github.com") &&
-			!strings.Contains(c.topologyFile, "githubusercontent") {
-			c.logger.Info("converting github link to raw style...")
+	if c.isRemotePath {
+		rawLink := clabernetesutil.GitHubNormalToRawLink(c.topologyFile)
 
-			c.topologyFile = gitHubNormalToRawLink(c.topologyFile)
+		if rawLink != c.topologyFile {
+			c.logger.Info("converted github link to raw style...")
+
+			c.topologyFile = rawLink
 		}
-	default:
+	} else {
 		c.topologyPath, err = filepath.Abs(c.topologyFile)
 		if err != nil {
 			c.logger.Criticalf("failed determining absolute path of topology file, error: %s", err)
@@ -221,12 +254,11 @@ func (c *Clabverter) load() error {
 	)
 
 	// make sure we set working dir to the dir of the topo file, or the "parent" folder if its a url
-	switch {
-	case isURL(c.topologyFile):
+	if c.isRemotePath {
 		pathParts := strings.Split(c.topologyFile, "/")
 
 		c.topologyPathParent = strings.Join(pathParts[:len(pathParts)-1], "/")
-	default:
+	} else {
 		c.topologyPathParent = filepath.Dir(c.topologyPath)
 	}
 
@@ -234,10 +266,18 @@ func (c *Clabverter) load() error {
 
 	var rawClabConfigBytes []byte
 
-	switch {
-	case isURL(c.topologyFile):
-		rawClabConfigBytes, err = loadContentAtURL(c.topologyFile)
-	default:
+	if c.isRemotePath {
+		w := &bytes.Buffer{}
+
+		err = clabernetesutil.WriteHTTPContentsFromPath(
+			context.Background(),
+			clabernetesutil.GitHubNormalToRawLink(c.topologyFile),
+			w,
+			c.getGitHubHeaders(),
+		)
+
+		rawClabConfigBytes = w.Bytes()
+	} else {
 		rawClabConfigBytes, err = os.ReadFile(c.topologyFile)
 	}
 
@@ -299,20 +339,21 @@ func (c *Clabverter) handleManifest() error {
 		return err
 	}
 
-	startupConfigs := make([]topologyConfigMapTemplateVars, len(c.startupConfigConfigMaps))
+	files := map[string][]topologyConfigMapTemplateVars{}
 
-	var startupConfigsIdx int
-
-	for _, startupConfig := range c.startupConfigConfigMaps {
-		startupConfigs[startupConfigsIdx] = startupConfig
-
-		startupConfigsIdx++
+	for nodeName, startupConfig := range c.startupConfigConfigMaps {
+		files[nodeName] = append(files[nodeName], startupConfig)
 	}
 
-	extraFiles := make([]topologyConfigMapTemplateVars, 0)
+	for nodeName, nodeExtraFiles := range c.extraFilesConfigMaps {
+		files[nodeName] = append(files[nodeName], nodeExtraFiles...)
+	}
 
-	for _, nodeExtraFiles := range c.extraFilesConfigMaps {
-		extraFiles = append(extraFiles, nodeExtraFiles...)
+	// sort the files in the filesFromConfigMap section for more sanity and easier testing :p
+	for nodeName := range files {
+		sort.Slice(files[nodeName], func(i, j int) bool {
+			return files[nodeName][i].FileName < files[nodeName][j].FileName
+		})
 	}
 
 	var rendered bytes.Buffer
@@ -324,8 +365,8 @@ func (c *Clabverter) handleManifest() error {
 			Namespace: c.destinationNamespace,
 			// pad w/ a newline so the template can look prettier :)
 			ClabConfig:         "\n" + clabernetesutil.Indent(c.rawClabConfig, specIndentSpaces),
-			StartupConfigs:     startupConfigs,
-			ExtraFiles:         extraFiles,
+			Files:              files,
+			FilesFromURL:       c.extraFilesFromURL,
 			InsecureRegistries: c.insecureRegistries,
 		},
 	)
@@ -407,4 +448,14 @@ func (c *Clabverter) findClabTopologyFile() error {
 	c.topologyFile = files[0]
 
 	return nil
+}
+
+func (c *Clabverter) getGitHubHeaders() map[string]string {
+	if c.githubToken == "" {
+		return nil
+	}
+
+	return map[string]string{
+		"Authorization": fmt.Sprintf("Bearer %s", c.githubToken),
+	}
 }

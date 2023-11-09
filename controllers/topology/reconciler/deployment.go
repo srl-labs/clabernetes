@@ -145,6 +145,7 @@ func (r *DeploymentReconciler) renderDeploymentBase(
 					RestartPolicy:      "Always",
 					ServiceAccountName: "default",
 					Volumes:            []k8scorev1.Volume{},
+					Hostname:           nodeName,
 				},
 			},
 		},
@@ -175,13 +176,10 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 
 	volumeMountsFromCommonSpec := make([]k8scorev1.VolumeMount, 0)
 
-	for _, fileFromConfigMap := range owningTopologyCommonSpec.FilesFromConfigMap {
-		if fileFromConfigMap.NodeName != nodeName {
-			continue
-		}
-
-		volumesFromConfigMaps = append(volumesFromConfigMaps, fileFromConfigMap)
-	}
+	volumesFromConfigMaps = append(
+		volumesFromConfigMaps,
+		owningTopologyCommonSpec.FilesFromConfigMap[nodeName]...,
+	)
 
 	for _, podVolume := range volumesFromConfigMaps {
 		if !clabernetesutilkubernetes.VolumeAlreadyMounted(
@@ -254,6 +252,12 @@ func (r *DeploymentReconciler) renderDeploymentContainer(
 				ReadOnly:  true,
 				MountPath: "/clabernetes/tunnels.yaml",
 				SubPath:   fmt.Sprintf("%s-tunnels", nodeName),
+			},
+			{
+				Name:      configVolumeName,
+				ReadOnly:  true,
+				MountPath: "/clabernetes/files-from-url.yaml",
+				SubPath:   fmt.Sprintf("%s-files-from-url", nodeName),
 			},
 		},
 		TerminationMessagePath:   "/dev/termination-log",
@@ -432,6 +436,11 @@ func (r *DeploymentReconciler) Conforms(
 		return false
 	}
 
+	if renderedDeployment.Spec.Template.Spec.Hostname !=
+		existingDeployment.Spec.Template.Spec.Hostname {
+		return false
+	}
+
 	if !clabernetesutilkubernetes.ContainersEqual(
 		existingDeployment.Spec.Template.Spec.Containers,
 		renderedDeployment.Spec.Template.Spec.Containers,
@@ -494,28 +503,20 @@ func (r *DeploymentReconciler) Conforms(
 	return true
 }
 
-// DetermineNodesNeedingRestart accepts a mapping of the previously stored clabernetes
-// sub-topologies and the current reconcile loops rendered topologies and returns a slice of node
-// names whose deployments need restarting due to configuration changes.
+// DetermineNodesNeedingRestart accepts reconcile data (which contains the previous and current
+// rendered sub-topologies) and updates the reconcile data NodesNeedingReboot set with each node
+// that needs restarting due to configuration changes.
 func (r *DeploymentReconciler) DetermineNodesNeedingRestart(
-	previousClabernetesConfigs,
-	currentClabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
-) []string {
-	var nodesNeedingRestart []string
-
-	for nodeName, nodeConfig := range currentClabernetesConfigs {
-		_, nodeExistedBefore := previousClabernetesConfigs[nodeName]
+	reconcileData *ReconcileData,
+) {
+	for nodeName, nodeConfig := range reconcileData.ResolvedConfigs {
+		_, nodeExistedBefore := reconcileData.PreviousConfigs[nodeName]
 		if !nodeExistedBefore {
 			continue
 		}
 
-		if !reflect.DeepEqual(nodeConfig, previousClabernetesConfigs[nodeName]) {
-			nodesNeedingRestart = append(
-				nodesNeedingRestart,
-				nodeName,
-			)
+		if !reflect.DeepEqual(nodeConfig, reconcileData.PreviousConfigs[nodeName]) {
+			reconcileData.NodesNeedingReboot.Add(nodeName)
 		}
 	}
-
-	return nodesNeedingRestart
 }

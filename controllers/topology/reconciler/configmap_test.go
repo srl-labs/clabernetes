@@ -52,6 +52,7 @@ func TestRenderConfigMap(t *testing.T) {
 		namespacedName     apimachinerytypes.NamespacedName
 		clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config
 		tunnels            map[string][]*clabernetesapistopologyv1alpha1.Tunnel
+		filesFromURL       map[string][]clabernetesapistopologyv1alpha1.FileFromURL
 	}{
 		{
 			name: "basic-two-node-with-links",
@@ -133,6 +134,7 @@ func TestRenderConfigMap(t *testing.T) {
 					},
 				},
 			},
+			filesFromURL: map[string][]clabernetesapistopologyv1alpha1.FileFromURL{},
 		},
 		{
 			name: "basic-two-node-no-links",
@@ -178,6 +180,7 @@ func TestRenderConfigMap(t *testing.T) {
 				"srl1": {},
 				"srl2": {},
 			},
+			filesFromURL: map[string][]clabernetesapistopologyv1alpha1.FileFromURL{},
 		},
 	}
 
@@ -197,6 +200,7 @@ func TestRenderConfigMap(t *testing.T) {
 					testCase.namespacedName,
 					testCase.clabernetesConfigs,
 					testCase.tunnels,
+					testCase.filesFromURL,
 				)
 				if err != nil {
 					t.Fatal(err)

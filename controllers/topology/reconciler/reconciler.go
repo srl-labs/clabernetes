@@ -18,8 +18,6 @@ import (
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
-	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
-	"gopkg.in/yaml.v3"
 	k8scorev1 "k8s.io/api/core/v1"
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
@@ -53,7 +51,7 @@ func NewReconciler(
 			owningTopologyKind,
 			configManagerGetter,
 		),
-		deploymentReconciler: NewDeploymentReconciler(
+		serviceNodeAliasReconciler: NewServiceNodeAliasReconciler(
 			log,
 			owningTopologyKind,
 			configManagerGetter,
@@ -64,6 +62,11 @@ func NewReconciler(
 			configManagerGetter,
 		),
 		serviceExposeReconciler: NewServiceExposeReconciler(
+			log,
+			owningTopologyKind,
+			configManagerGetter,
+		),
+		deploymentReconciler: NewDeploymentReconciler(
 			log,
 			owningTopologyKind,
 			configManagerGetter,
@@ -81,10 +84,11 @@ type Reconciler struct {
 	ResourceKind   string
 	ResourceLister ResourceListerFunc
 
-	configMapReconciler     *ConfigMapReconciler
-	deploymentReconciler    *DeploymentReconciler
-	serviceFabricReconciler *ServiceFabricReconciler
-	serviceExposeReconciler *ServiceExposeReconciler
+	configMapReconciler        *ConfigMapReconciler
+	serviceNodeAliasReconciler *ServiceNodeAliasReconciler
+	serviceFabricReconciler    *ServiceFabricReconciler
+	serviceExposeReconciler    *ServiceExposeReconciler
+	deploymentReconciler       *DeploymentReconciler
 }
 
 // ReconcileConfigMap reconciles the primary configmap containing clabernetes configs and tunnel
@@ -96,37 +100,60 @@ func (r *Reconciler) ReconcileConfigMap(
 ) error {
 	var err error
 
-	reconcileData.PostReconcileConfigsBytes, err = yaml.Marshal(reconcileData.PostReconcileConfigs)
-	if err != nil {
-		return err
-	}
-
-	tunnelsBytes, err := yaml.Marshal(reconcileData.PostReconcileTunnels)
-	if err != nil {
-		return err
-	}
-
-	reconcileData.PostReconcileConfigsHash = clabernetesutil.HashBytes(
-		reconcileData.PostReconcileConfigsBytes,
+	configBytes, configHash, err := clabernetesutil.HashObjectYAML(
+		reconcileData.ResolvedConfigs,
 	)
+	if err != nil {
+		return err
+	}
 
-	reconcileData.PostReconcileTunnelsHash = clabernetesutil.HashBytes(tunnelsBytes)
+	reconcileData.ResolvedConfigsBytes = configBytes
+	reconcileData.ResolvedConfigsHash = configHash
 
-	if reconcileData.PreReconcileConfigsHash == reconcileData.PostReconcileConfigsHash &&
-		reconcileData.PreReconcileTunnelsHash == reconcileData.PostReconcileTunnelsHash {
+	_, tunnelHash, err := clabernetesutil.HashObjectYAML(
+		reconcileData.ResolvedConfigs,
+	)
+	if err != nil {
+		return err
+	}
+
+	reconcileData.ResolvedTunnelsHash = tunnelHash
+
+	filesFromURL := owningTopology.GetTopologyCommonSpec().FilesFromURL
+
+	for nodeName, nodeFilesFromURL := range filesFromURL {
+		var nodeFilesFromURLHash string
+
+		_, nodeFilesFromURLHash, err = clabernetesutil.HashObject(nodeFilesFromURL)
+		if err != nil {
+			return err
+		}
+
+		reconcileData.ResolvedFilesFromURLHashes[nodeName] = nodeFilesFromURLHash
+
+		if reconcileData.PreviousFilesFromURLHashes[nodeName] != nodeFilesFromURLHash {
+			// files from url hash has changed, need to smack the node so the configmap update
+			// gets realized
+			reconcileData.NodesNeedingReboot.Add(nodeName)
+		}
+	}
+
+	if reconcileData.PreviousConfigsHash == reconcileData.ResolvedConfigsHash &&
+		reconcileData.PreviousTunnelsHash == reconcileData.ResolvedTunnelsHash &&
+		reconcileData.NodesNeedingReboot.Len() == 0 {
 		// the configs hashes match, nothing to do, should reconcile is false, and no error, *but*
 		// because the services may force us to update the cr we are reconciling, and we haven't
 		// processed the tunnel ids yet (because its slow and we are lazy), we need to copy the
 		// *previous* tunnel data into our "current" tunnel data so we make sure to not update the
 		// cr status with tunnel data with all zero for the tunnel ids
-		reconcileData.PostReconcileTunnels = reconcileData.PreReconcileTunnels
+		reconcileData.ResolvedTunnels = reconcileData.PreviousTunnels
 
 		return nil
 	}
 
 	clabernetescontrollerstopology.AllocateTunnelIDs(
-		reconcileData.PreReconcileTunnels,
-		reconcileData.PostReconcileTunnels,
+		reconcileData.PreviousTunnels,
+		reconcileData.ResolvedTunnels,
 	)
 
 	// we need to tell the controller to update the originating CR because obviously our hashes
@@ -140,8 +167,9 @@ func (r *Reconciler) ReconcileConfigMap(
 
 	renderedConfigMap, err := r.configMapReconciler.Render(
 		namespacedName,
-		reconcileData.PostReconcileConfigs,
-		reconcileData.PostReconcileTunnels,
+		reconcileData.ResolvedConfigs,
+		reconcileData.ResolvedTunnels,
+		filesFromURL,
 	)
 	if err != nil {
 		return err
@@ -181,30 +209,47 @@ func (r *Reconciler) ReconcileConfigMap(
 func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 	ctx context.Context,
 	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
-	previousClabernetesConfigs,
-	currentClabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	deployments *clabernetesutil.ObjectDiffer[*k8sappsv1.Deployment],
+	reconcileData *ReconcileData,
 ) error {
-	r.Log.Info("determining nodes needing restart")
+	r.Log.Debug("determining nodes needing restart")
 
-	nodesNeedingRestart := r.deploymentReconciler.DetermineNodesNeedingRestart(
-		previousClabernetesConfigs,
-		currentClabernetesConfigs,
+	r.deploymentReconciler.DetermineNodesNeedingRestart(
+		reconcileData,
 	)
-	if len(nodesNeedingRestart) == 0 {
+
+	if reconcileData.NodesNeedingReboot.Len() == 0 {
+		r.Log.Debug("all nodes are up to date, no restarts required")
+
 		return nil
 	}
 
-	for _, nodeName := range nodesNeedingRestart {
+	for _, nodeName := range reconcileData.NodesNeedingReboot.Items() {
 		if slices.Contains(deployments.Missing, nodeName) {
 			// is a new node, don't restart, we'll deploy it soon
 			continue
 		}
 
 		r.Log.Infof(
-			"restarting the nodes '%s' as configurations have changed",
-			nodesNeedingRestart,
+			"restarting the node '%s' as configurations have changed",
+			nodeName,
 		)
+
+		if r.Log.GetLevel() == clabernetesconstants.Debug {
+			diff, err := clabernetesutil.UnifiedDiff(
+				reconcileData.ResolvedConfigs[nodeName],
+				reconcileData.PreviousConfigs[nodeName],
+			)
+			if err != nil {
+				r.Log.Warnf(
+					"failed generating diff of deployment. this only happened because logging"+
+						" is at debug level, ignoring the error. err: %s",
+					err,
+				)
+			} else {
+				r.Log.Debugf("deployment diff: %s", diff)
+			}
+		}
 
 		deploymentName := fmt.Sprintf("%s-%s", owningTopology.GetName(), nodeName)
 
@@ -263,7 +308,7 @@ func (r *Reconciler) ReconcileDeployments(
 		&k8sappsv1.DeploymentList{},
 		clabernetesconstants.KubernetesDeployment,
 		owningTopology,
-		reconcileData.PostReconcileConfigs,
+		reconcileData.ResolvedConfigs,
 		r.deploymentReconciler.Resolve,
 	)
 	if err != nil {
@@ -283,7 +328,7 @@ func (r *Reconciler) ReconcileDeployments(
 
 	renderedMissingDeployments := r.deploymentReconciler.RenderAll(
 		owningTopology,
-		reconcileData.PostReconcileConfigs,
+		reconcileData.ResolvedConfigs,
 		deployments.Missing,
 	)
 
@@ -304,7 +349,7 @@ func (r *Reconciler) ReconcileDeployments(
 	for existingCurrentDeploymentNodeName, existingCurrentDeployment := range deployments.Current {
 		renderedCurrentDeployment := r.deploymentReconciler.Render(
 			owningTopology,
-			reconcileData.PostReconcileConfigs,
+			reconcileData.ResolvedConfigs,
 			existingCurrentDeploymentNodeName,
 		)
 
@@ -336,14 +381,153 @@ func (r *Reconciler) ReconcileDeployments(
 	return r.reconcileDeploymentsHandleRestarts(
 		ctx,
 		owningTopology,
-		reconcileData.PreReconcileConfigs,
-		reconcileData.PostReconcileConfigs,
 		deployments,
+		reconcileData,
 	)
 }
 
+// ReconcileServices reconciles all the services for a clabernetes Topology.
+func (r *Reconciler) ReconcileServices(
+	ctx context.Context,
+	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
+	reconcileData *ReconcileData,
+) error {
+	err := r.ReconcileServiceNodeAlias(
+		ctx,
+		owningTopology,
+		reconcileData,
+	)
+	if err != nil {
+		r.Log.Criticalf(
+			"failed reconciling clabernetes node alias services, error: %s", err,
+		)
+
+		return err
+	}
+
+	err = r.ReconcileServiceFabric(
+		ctx,
+		owningTopology,
+		reconcileData,
+	)
+	if err != nil {
+		r.Log.Criticalf(
+			"failed reconciling clabernetes fabric services, error: %s", err,
+		)
+
+		return err
+	}
+
+	err = r.ReconcileServicesExpose(
+		ctx,
+		owningTopology,
+		reconcileData,
+	)
+	if err != nil {
+		r.Log.Criticalf(
+			"failed reconciling clabernetes expose services, error: %s", err,
+		)
+
+		return err
+	}
+
+	return nil
+}
+
+// ReconcileServiceNodeAlias reconciles the service used for "node alias" -- that is,
+// making it so that resolution in c9s is more or less the same as with "normal" containerlab in
+// docker.
+func (r *Reconciler) ReconcileServiceNodeAlias( //nolint: dupl
+	ctx context.Context,
+	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
+	reconcileData *ReconcileData,
+) error {
+	serviceTypeName := fmt.Sprintf("nodeAlias %s", clabernetesconstants.KubernetesService)
+
+	services, err := reconcileResolve(
+		ctx,
+		r,
+		&k8scorev1.Service{},
+		&k8scorev1.ServiceList{},
+		serviceTypeName,
+		owningTopology,
+		reconcileData.ResolvedConfigs,
+		r.serviceNodeAliasReconciler.Resolve,
+	)
+	if err != nil {
+		return err
+	}
+
+	r.Log.Info("pruning extraneous nodeAlias services")
+
+	for _, extraService := range services.Extra {
+		err = r.deleteObj(
+			ctx,
+			extraService,
+			serviceTypeName,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	r.Log.Info("creating missing nodeAlias services")
+
+	renderedMissingServices := r.serviceNodeAliasReconciler.RenderAll(
+		owningTopology,
+		services.Missing,
+	)
+
+	for _, renderedMissingService := range renderedMissingServices {
+		err = r.createObj(
+			ctx,
+			owningTopology,
+			renderedMissingService,
+			serviceTypeName,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	r.Log.Info("enforcing desired state on nodeAlias services")
+
+	for existingCurrentServiceNodeName, existingCurrentService := range services.Current {
+		renderedCurrentService := r.serviceNodeAliasReconciler.Render(
+			owningTopology,
+			existingCurrentServiceNodeName,
+		)
+
+		err = ctrlruntimeutil.SetOwnerReference(
+			owningTopology,
+			renderedCurrentService,
+			r.Client.Scheme(),
+		)
+		if err != nil {
+			return err
+		}
+
+		if !r.serviceNodeAliasReconciler.Conforms(
+			existingCurrentService,
+			renderedCurrentService,
+			owningTopology.GetUID(),
+		) {
+			err = r.updateObj(
+				ctx,
+				renderedCurrentService,
+				serviceTypeName,
+			)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // ReconcileServiceFabric reconciles the service used for "fabric" (inter node) connectivity.
-func (r *Reconciler) ReconcileServiceFabric(
+func (r *Reconciler) ReconcileServiceFabric( //nolint: dupl
 	ctx context.Context,
 	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	reconcileData *ReconcileData,
@@ -357,7 +541,7 @@ func (r *Reconciler) ReconcileServiceFabric(
 		&k8scorev1.ServiceList{},
 		serviceTypeName,
 		owningTopology,
-		reconcileData.PostReconcileConfigs,
+		reconcileData.ResolvedConfigs,
 		r.serviceFabricReconciler.Resolve,
 	)
 	if err != nil {
@@ -457,7 +641,7 @@ func (r *Reconciler) ReconcileServicesExpose(
 		&k8scorev1.ServiceList{},
 		serviceTypeName,
 		owningTopology,
-		reconcileData.PostReconcileConfigs,
+		reconcileData.ResolvedConfigs,
 		r.serviceExposeReconciler.Resolve,
 	)
 	if err != nil {
@@ -481,8 +665,7 @@ func (r *Reconciler) ReconcileServicesExpose(
 
 	renderedMissingServices := r.serviceExposeReconciler.RenderAll(
 		owningTopology,
-		&owningTopologyStatus,
-		reconcileData.PostReconcileConfigs,
+		reconcileData,
 		services.Missing,
 	)
 
@@ -503,8 +686,7 @@ func (r *Reconciler) ReconcileServicesExpose(
 	for existingCurrentServiceNodeName, existingCurrentService := range services.Current {
 		renderedCurrentService := r.serviceExposeReconciler.Render(
 			owningTopology,
-			&owningTopologyStatus,
-			reconcileData.PostReconcileConfigs,
+			reconcileData,
 			existingCurrentServiceNodeName,
 		)
 
@@ -512,7 +694,7 @@ func (r *Reconciler) ReconcileServicesExpose(
 			// can/would this ever be more than 1? i dunno?
 			address := existingCurrentService.Status.LoadBalancer.Ingress[0].IP
 			if address != "" {
-				owningTopologyStatus.NodeExposedPorts[existingCurrentServiceNodeName].LoadBalancerAddress = address //nolint:lll
+				reconcileData.ResolvedNodeExposedPorts[existingCurrentServiceNodeName].LoadBalancerAddress = address //nolint:lll
 			}
 		}
 
@@ -541,17 +723,15 @@ func (r *Reconciler) ReconcileServicesExpose(
 		}
 	}
 
-	nodeExposedPortsBytes, err := yaml.Marshal(owningTopologyStatus.NodeExposedPorts)
+	_, newNodeExposedPortsHash, err := clabernetesutil.HashObject(
+		owningTopologyStatus.NodeExposedPorts,
+	)
 	if err != nil {
 		return err
 	}
 
-	newNodeExposedPortsHash := clabernetesutil.HashBytes(nodeExposedPortsBytes)
-
 	if owningTopologyStatus.NodeExposedPortsHash != newNodeExposedPortsHash {
-		owningTopologyStatus.NodeExposedPortsHash = newNodeExposedPortsHash
-
-		owningTopology.SetTopologyStatus(owningTopologyStatus)
+		reconcileData.ResolvedNodeExposedPortsHash = newNodeExposedPortsHash
 
 		// our exposed hash stuff changed, we need to update the cr status
 		reconcileData.ShouldUpdateResource = true

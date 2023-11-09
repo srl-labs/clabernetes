@@ -73,23 +73,12 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, err
 	}
 
-	err = c.TopologyReconciler.ReconcileServiceFabric(ctx, kne, reconcileData)
-	if err != nil {
-		c.BaseController.Log.Criticalf("failed reconciling clabernetes services, error: %s", err)
-
-		return ctrlruntime.Result{}, err
-	}
-
-	err = c.TopologyReconciler.ReconcileServicesExpose(
+	err = c.TopologyReconciler.ReconcileServices(
 		ctx,
 		kne,
 		reconcileData,
 	)
 	if err != nil {
-		c.BaseController.Log.Criticalf(
-			"failed reconciling clabernetes expose services, error: %s", err,
-		)
-
 		return ctrlruntime.Result{}, err
 	}
 
@@ -107,10 +96,7 @@ func (c *Controller) Reconcile(
 	if reconcileData.ShouldUpdateResource {
 		// we should update because config hash or something changed, so snag the updated status
 		// data out of the reconcile data, put it in the resource, and push the update
-		kne.Status.Configs = string(reconcileData.PostReconcileConfigsBytes)
-		kne.Status.ConfigsHash = reconcileData.PostReconcileConfigsHash
-		kne.Status.Tunnels = reconcileData.PostReconcileTunnels
-		kne.Status.TunnelsHash = reconcileData.PostReconcileTunnelsHash
+		reconcileData.SetStatus(&kne.Status.TopologyStatus)
 
 		err = c.BaseController.Client.Update(ctx, kne)
 		if err != nil {

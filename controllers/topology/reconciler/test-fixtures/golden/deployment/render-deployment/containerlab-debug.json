@@ -80,6 +80,12 @@
                                 "readOnly": true,
                                 "mountPath": "/clabernetes/tunnels.yaml",
                                 "subPath": "srl1-tunnels"
+                            },
+                            {
+                                "name": "render-deployment-test-config",
+                                "readOnly": true,
+                                "mountPath": "/clabernetes/files-from-url.yaml",
+                                "subPath": "srl1-files-from-url"
                             }
                         ],
                         "terminationMessagePath": "/dev/termination-log",
@@ -92,7 +98,8 @@
                     }
                 ],
                 "restartPolicy": "Always",
-                "serviceAccountName": "default"
+                "serviceAccountName": "default",
+                "hostname": "srl1"
             }
         },
         "strategy": {},

@@ -94,7 +94,7 @@ func TestResolveServiceExpose(t *testing.T) {
 							Name:      "resolve-servicefabric-test",
 							Namespace: "clabernetes",
 							Labels: map[string]string{
-								clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeExpose, //nolint:lll
+								clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeExpose,
 								clabernetesconstants.LabelTopologyNode:        "node2",
 							},
 						},
@@ -129,7 +129,7 @@ func TestResolveServiceExpose(t *testing.T) {
 						Name:      "resolve-servicefabric-test",
 						Namespace: "clabernetes",
 						Labels: map[string]string{
-							clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeExpose, //nolint:lll
+							clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeExpose,
 							clabernetesconstants.LabelTopologyNode:        "node2",
 						},
 					},
@@ -262,10 +262,18 @@ func TestRenderServiceExpose(t *testing.T) {
 					clabernetesconfig.GetFakeManager,
 				)
 
+				reconcileData, err := clabernetescontrollerstopologyreconciler.NewReconcileData(
+					testCase.owningTopologyObject,
+				)
+				if err != nil {
+					t.Fatalf("error creating ReconcileData, err: %s", err)
+				}
+
+				reconcileData.ResolvedConfigs = testCase.clabernetesConfigs
+
 				got := reconciler.Render(
 					testCase.owningTopologyObject,
-					testCase.owningTopologyStatus,
-					testCase.clabernetesConfigs,
+					reconcileData,
 					testCase.nodeName,
 				)
 
@@ -287,13 +295,13 @@ func TestRenderServiceExpose(t *testing.T) {
 							renderServiceExposeTestName,
 							testCase.name,
 						),
-						testCase.owningTopologyStatus,
+						reconcileData.ResolvedNodeExposedPorts,
 					)
 				}
 
 				var want k8scorev1.Service
 
-				err := json.Unmarshal(
+				err = json.Unmarshal(
 					clabernetestesthelper.ReadTestFixtureFile(
 						t,
 						fmt.Sprintf(
@@ -308,7 +316,7 @@ func TestRenderServiceExpose(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				var wantStatus *clabernetesapistopologyv1alpha1.TopologyStatus
+				var wantExposePortsStatus map[string]*clabernetesapistopologyv1alpha1.ExposedPorts
 
 				err = json.Unmarshal(
 					clabernetestesthelper.ReadTestFixtureFile(
@@ -319,7 +327,7 @@ func TestRenderServiceExpose(t *testing.T) {
 							testCase.name,
 						),
 					),
-					&wantStatus,
+					&wantExposePortsStatus,
 				)
 				if err != nil {
 					t.Fatal(err)
@@ -336,7 +344,10 @@ func TestRenderServiceExpose(t *testing.T) {
 				}
 
 				// also check that the status got updated properly
-				if !reflect.DeepEqual(testCase.owningTopologyStatus, wantStatus) {
+				if !reflect.DeepEqual(
+					reconcileData.ResolvedNodeExposedPorts,
+					wantExposePortsStatus,
+				) {
 					clabernetestesthelper.FailOutput(t, got.Spec, want.Spec)
 				}
 			})

@@ -19,12 +19,17 @@ type topologyConfigMapTemplateVars struct {
 	FileName      string
 }
 
+type topologyFileFromURLTemplateVars struct {
+	URL      string
+	FilePath string
+}
+
 type containerlabTemplateVars struct {
 	Name               string
 	Namespace          string
 	ClabConfig         string
-	StartupConfigs     []topologyConfigMapTemplateVars
-	ExtraFiles         []topologyConfigMapTemplateVars
+	Files              map[string][]topologyConfigMapTemplateVars
+	FilesFromURL       map[string][]topologyFileFromURLTemplateVars
 	InsecureRegistries []string
 }
 
@@ -37,4 +42,9 @@ type renderedContent struct {
 type sourceDestinationPathPair struct {
 	sourcePath      string
 	destinationPath string
+}
+
+type gitHubPathInfo struct {
+	Path string `json:"path"`
+	Type string `json:"type"`
 }

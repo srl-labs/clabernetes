@@ -2,10 +2,9 @@ package testhelper
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
-	"github.com/carlmontanari/difflibgo/difflibgo"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
 
 // FailOutput is a simple func to nicely print actual vs expected output when a test fails.
@@ -55,62 +54,13 @@ func FailOutput(t *testing.T, actual, expected any) {
 	}
 }
 
-const (
-	diffSubtraction = "- "
-	diffAddition    = "+ "
-	diffUnknown     = "? "
-	yellow          = "\033[93m"
-	red             = "\033[91m"
-	green           = "\033[92m"
-	end             = "\033[0m"
-)
-
 func unifiedDiff(t *testing.T, actual, expected any) string {
 	t.Helper()
 
-	var actualString string
-
-	var expectedString string
-
-	switch s := actual.(type) {
-	case string:
-		actualString = s
-	case []byte:
-		actualString = string(s)
+	diff, err := clabernetesutil.UnifiedDiff(actual, expected)
+	if err != nil {
+		t.Fatalf("failed generating diff, err: %s", err)
 	}
 
-	switch s := expected.(type) {
-	case string:
-		expectedString = s
-	case []byte:
-		expectedString = string(s)
-	}
-
-	d := difflibgo.Differ{}
-
-	diffLines := d.Compare(
-		strings.Split(actualString, "\n"),
-		strings.Split(expectedString, "\n"),
-	)
-
-	unifiedDiffLines := make([]string, 0)
-
-	for _, line := range diffLines {
-		var diffLine string
-
-		switch line[:2] {
-		case diffUnknown:
-			diffLine = yellow + line[2:] + end
-		case diffSubtraction:
-			diffLine = red + line[2:] + end
-		case diffAddition:
-			diffLine = green + line[2:] + end
-		default:
-			diffLine = line[2:]
-		}
-
-		unifiedDiffLines = append(unifiedDiffLines, diffLine)
-	}
-
-	return strings.Join(unifiedDiffLines, "\n")
+	return diff
 }

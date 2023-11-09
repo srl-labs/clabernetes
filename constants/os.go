@@ -10,6 +10,10 @@ const (
 	// ExitCodeSigint is the exit code used when the program is interrupted by a SIGINT/SIGTERM.
 	ExitCodeSigint = 130
 
+	// PermissionsEveryoneAllPermissions is 0777 permissions for files/directories -- everyone has
+	// read, write, and execute permissions.
+	PermissionsEveryoneAllPermissions = 0o777
+
 	// PermissionsEveryoneRead is 0755 permissions for files/directories -- everyone can read, and
 	// execute, and owner can write.
 	PermissionsEveryoneRead = 0o755

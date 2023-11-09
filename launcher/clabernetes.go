@@ -133,6 +133,15 @@ func (c *clabernetes) setup() {
 
 		c.logger.Warn("docker started, but using legacy ip tables")
 	}
+
+	c.logger.Debug("getting files from url if requested...")
+
+	err = c.getFilesFromURL()
+	if err != nil {
+		c.logger.Criticalf("failed getting file(s) from remote url, err: %s", err)
+
+		clabernetesutil.Panic(err.Error())
+	}
 }
 
 func (c *clabernetes) launch() {
