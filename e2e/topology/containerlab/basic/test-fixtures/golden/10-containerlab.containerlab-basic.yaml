@@ -16,6 +16,7 @@ spec:
   containerlabDebug: false
   disableAutoExpose: false
   disableExpose: false
+  disableNodeAliasService: false
   persistence:
     claimSize: ""
     enabled: false
