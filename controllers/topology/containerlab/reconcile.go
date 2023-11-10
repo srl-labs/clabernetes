@@ -45,7 +45,7 @@ func (c *Controller) Reconcile(
 	}
 
 	// load the containerlab topo from the CR to make sure its all good
-	containerlabTopo, err := clabernetesutilcontainerlab.LoadContainerlabTopology(
+	containerlabConfig, err := clabernetesutilcontainerlab.LoadContainerlabConfig(
 		containerlab.Spec.Config,
 	)
 	if err != nil {
@@ -54,7 +54,7 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, err
 	}
 
-	err = c.processConfig(containerlab, containerlabTopo, reconcileData)
+	err = c.processConfig(containerlab, containerlabConfig, reconcileData)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed processing containerlab config, error: %s", err)
 

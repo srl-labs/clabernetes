@@ -299,9 +299,8 @@ func getKindsForNode(
 
 func (c *Controller) processConfigForNode(
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	clabTopo *clabernetesutilcontainerlab.Topology,
+	containerlabConfig *clabernetesutilcontainerlab.Config,
 	nodeName string,
-	nodeDefinition *clabernetesutilcontainerlab.NodeDefinition,
 	defaultsYAML []byte,
 	reconcileData *clabernetescontrollerstopologyreconciler.ReconcileData,
 ) error {
@@ -312,27 +311,27 @@ func (c *Controller) processConfigForNode(
 		return err
 	}
 
+	nodeDefinition := containerlabConfig.Topology.Nodes[nodeName]
+
 	if !clab.Spec.DisableExpose && !clab.Spec.DisableAutoExpose {
 		// disable expose is *not* set and disable auto expose is *not* set, so we want to
 		// automagically add our default expose ports to the topo. we'll simply tack this onto
 		// the clab defaults ports list since that will get merged w/ any user defined ports
-		defaultPorts, nodePorts := processPorts(clabTopo.Defaults.Ports, nodeDefinition.Ports)
+		defaultPorts, nodePorts := processPorts(
+			containerlabConfig.Topology.Defaults.Ports,
+			nodeDefinition.Ports,
+		)
 
 		deepCopiedDefaults.Ports = defaultPorts
 		nodeDefinition.Ports = nodePorts
 	}
 
-	// we dont care about the node ips like we would in normal containerlab, remove them. also, we
-	// arent copying the mgmt config section from the normal containerlab definition anyway so these
-	// would just be wrong/bad regardless
-	nodeDefinition.MgmtIPv4 = ""
-	nodeDefinition.MgmtIPv6 = ""
-
 	reconcileData.ResolvedConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
 		Name: fmt.Sprintf("clabernetes-%s", nodeName),
+		Mgmt: containerlabConfig.Mgmt,
 		Topology: &clabernetesutilcontainerlab.Topology{
 			Defaults: deepCopiedDefaults,
-			Kinds:    getKindsForNode(clabTopo, nodeName),
+			Kinds:    getKindsForNode(containerlabConfig.Topology, nodeName),
 			Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
 				nodeName: nodeDefinition,
 			},
@@ -345,7 +344,7 @@ func (c *Controller) processConfigForNode(
 		Prefix: clabernetesutil.ToPointer(""),
 	}
 
-	for _, link := range clabTopo.Links {
+	for _, link := range containerlabConfig.Topology.Links {
 		if len(link.Endpoints) != clabernetesapistopologyv1alpha1.LinkEndpointElementCount {
 			msg := fmt.Sprintf(
 				"endpoint '%q' has wrong syntax, unexpected number of items", link.Endpoints,
@@ -452,24 +451,23 @@ func (c *Controller) processConfigForNode(
 
 func (c *Controller) processConfig(
 	clab *clabernetesapistopologyv1alpha1.Containerlab,
-	clabTopo *clabernetesutilcontainerlab.Topology,
+	containerlabConfig *clabernetesutilcontainerlab.Config,
 	reconcileData *clabernetescontrollerstopologyreconciler.ReconcileData,
 ) (
 	err error,
 ) {
 	// we may have *different defaults per "sub-topology" so we do a cheater "deep copy" by just
 	// marshalling/unmarshalling :)
-	defaultsYAML, err := yaml.Marshal(clabTopo.Defaults)
+	defaultsYAML, err := yaml.Marshal(containerlabConfig.Topology.Defaults)
 	if err != nil {
 		return err
 	}
 
-	for nodeName, nodeDefinition := range clabTopo.Nodes {
+	for nodeName := range containerlabConfig.Topology.Nodes {
 		err = c.processConfigForNode(
 			clab,
-			clabTopo,
+			containerlabConfig,
 			nodeName,
-			nodeDefinition,
 			defaultsYAML,
 			reconcileData,
 		)
