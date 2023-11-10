@@ -5,10 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	k8scorev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
-
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
@@ -19,6 +15,7 @@ import (
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 	apimachineryscheme "k8s.io/apimachinery/pkg/runtime/schema"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -93,30 +90,15 @@ func mustNewManager(scheme *apimachineryruntime.Scheme, appName string) ctrlrunt
 				config *rest.Config,
 				opts ctrlruntimecache.Options,
 			) (ctrlruntimecache.Cache, error) {
-				// limit the cache for configmap and service kinds to just our objects; otherwise
-				// we let the cache have everything it normally would
-				opts.ByObject = map[ctrlruntimeclient.Object]ctrlruntimecache.ByObject{
-					&k8scorev1.ConfigMap{}: {
-						Label: labels.SelectorFromSet(
-							labels.Set{
-								// it would be cool to be more explicit here, but because we have
-								// the "global" config *and* configs that get mounted for each
-								// topology and the latter having different labels (for sane/good
-								// reasons!) we can just filter on this; ilke services this should
-								// pretty much always be enough to filter to just our objects --
-								// i mean who the hell calls their app "clabernetes" :)
-								"clabernetes/app": appName,
-							}),
+				opts.DefaultLabelSelector = labels.SelectorFromSet(
+					labels.Set{
+						// only cache objects with the "clabernetes/app" label, why would we care
+						// about anything else (for now -- and we can override it with opts.ByObject
+						// anyway?! and... who the hell calls their app "clabernetes" so this should
+						// really limit the cache nicely :)
+						"clabernetes/app": appName,
 					},
-					&k8scorev1.Service{}: {
-						Label: labels.SelectorFromSet(
-							labels.Set{
-								// little less explicit here, but seems unlikely this would end up
-								// including anyone's services but our own!
-								"clabernetes/app": appName,
-							}),
-					},
-				}
+				)
 
 				return ctrlruntimecache.New(config, opts)
 			},
