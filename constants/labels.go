@@ -49,3 +49,10 @@ const (
 	// LabelClickerNodeTarget is the target node for the clicker job.
 	LabelClickerNodeTarget = "clabernetes/clickerNodeTarget"
 )
+
+const (
+	// LabelIgnoreReconcile indicates that controller should ignore reconciling a given topology.
+	// Note that this basically ignored during deletion since our controller doest do anything in
+	// the delete case (owner reference handles clean up).
+	LabelIgnoreReconcile = "clabernetes/ignoreReconcile"
+)
