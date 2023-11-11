@@ -89,7 +89,7 @@ func (c *clabernetes) startup() {
 	c.setup()
 	c.launch()
 
-	go c.watch()
+	go c.watchContainers()
 
 	c.logger.Info("running for forever or until sigint...")
 
@@ -205,7 +205,7 @@ func (c *clabernetes) launch() {
 	}
 }
 
-func (c *clabernetes) watch() {
+func (c *clabernetes) watchContainers() {
 	if len(c.containerIDs) == 0 {
 		return
 	}

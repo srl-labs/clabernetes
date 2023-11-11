@@ -83,6 +83,7 @@ type manager struct {
 	ctxCancel     context.CancelFunc
 	logger        claberneteslogging.Instance
 	managerReadyF func() bool
+	returnedReady bool
 	client        ctrlruntimeclient.Client
 	server        *http.Server
 	stopping      bool
