@@ -121,10 +121,14 @@ spec:
               memory: 128Mi
               cpu: 50m
           ports:
-          - name: readiness-port
+          - name: http
             containerPort: 8080
-          readinessProbe:
+          livenessProbe:
             httpGet:
-              path: /ready
-              port: readiness-port
+              path: /alive
+              port: http
+              scheme: HTTPS
             successThreshold: 1
+            failureThreshold: 2
+            periodSeconds: 30
+            timeoutSeconds: 5

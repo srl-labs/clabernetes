@@ -24,6 +24,8 @@ func certificates(c clabernetesmanagertypes.Clabernetes) error {
 
 	clientCertDirectory := ensureClientCertDirectory()
 
+	webhookCertDirectory := ensureWebhookCertDirectory()
+
 	certsExist := true
 
 	for _, directory := range []string{caDirectory, clientCertDirectory} {
@@ -72,6 +74,16 @@ func certificates(c clabernetesmanagertypes.Clabernetes) error {
 	err = clientData.Write(clientCertDirectory)
 	if err != nil {
 		return fmt.Errorf("write client certificate data: %w", err)
+	}
+
+	webhookData, err := getCertFromSecret("webhook", secret)
+	if err != nil {
+		return err
+	}
+
+	err = webhookData.Write(webhookCertDirectory)
+	if err != nil {
+		return fmt.Errorf("write webhook certificate data: %w", err)
 	}
 
 	return nil
@@ -125,4 +137,19 @@ func ensureClientCertDirectory() string {
 	)
 
 	return clientCertDirectory
+}
+
+func ensureWebhookCertDirectory() string {
+	webhookCertDirectory := fmt.Sprintf(
+		"%s/%s",
+		clabernetesconstants.CertificateDirectory,
+		clabernetesconstants.WebhookCertificateSubDir,
+	)
+
+	clabernetesutil.MustCreateDirectory(
+		webhookCertDirectory,
+		clabernetesconstants.PermissionsEveryoneRead,
+	)
+
+	return webhookCertDirectory
 }

@@ -10,4 +10,7 @@ const (
 
 	// ClientCertificateSubDir is the subdirectory where client certs are stored.
 	ClientCertificateSubDir = "client"
+
+	// WebhookCertificateSubDir is the subdirectory where webhook/http certs are stored.
+	WebhookCertificateSubDir = "webhook"
 )

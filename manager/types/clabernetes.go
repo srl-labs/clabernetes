@@ -3,6 +3,8 @@ package types
 import (
 	"context"
 
+	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
+
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -41,6 +43,9 @@ type Clabernetes interface {
 
 	// GetCtrlRuntimeMgr returns the controller-runtime Manager for the clabernetes instance.
 	GetCtrlRuntimeMgr() ctrlruntime.Manager
+
+	// GetScheme returns apimachineryruntime.Scheme in use by the manager.
+	GetScheme() *apimachineryruntime.Scheme
 
 	// GetCtrlRuntimeClient returns the controller-runtime client.
 	GetCtrlRuntimeClient() ctrlruntimeclient.Client

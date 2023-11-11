@@ -10,6 +10,7 @@ RUN mkdir build
 # get permission denied issues when the controller tries to create ca/client subdirs
 RUN mkdir -p certificates/ca \
 RUN mkdir -p mkdir certificates/client
+RUN mkdir -p mkdir certificates/webhook
 RUN chgrp -R root /clabernetes/certificates && \
     chmod -R 0770 /clabernetes/certificates
 

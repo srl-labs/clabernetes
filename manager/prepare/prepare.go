@@ -24,9 +24,16 @@ func Prepare(c clabernetesmanagertypes.Clabernetes) {
 
 	logger.Debug("preparing certificates complete...")
 
-	logger.Info("preparing http endpoints...")
+	logger.Info("preparing scheme...")
 
-	endpoints(c)
+	err = registerToScheme(c)
+	if err != nil {
+		msg := fmt.Sprintf("failed registering apis to scheme, err: %s", err)
 
-	logger.Debug("preparing http endpoints complete...")
+		logger.Critical(msg)
+
+		clabernetesutil.Panic(msg)
+	}
+
+	logger.Debug("preparing scheme complete...")
 }
