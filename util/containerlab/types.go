@@ -2,17 +2,29 @@ package containerlab
 
 // Config defines lab configuration as it is provided in the YAML file.
 type Config struct {
-	Name     string    `json:"name,omitempty"`
-	Prefix   *string   `json:"prefix,omitempty"`
+	Name     string    `yaml:"name"`
+	Prefix   *string   `yaml:"prefix,omitempty"`
+	Mgmt     *MgmtNet  `yaml:"mgmt,omitempty"`
 	Topology *Topology `yaml:"topology,omitempty"`
-	// the debug flag value as passed via cli
-	// may be used by other packages to enable debug logging
-	Debug bool `json:"debug"`
+	Debug    bool      `yaml:"debug"`
+}
+
+// MgmtNet struct defines the management network options.
+type MgmtNet struct {
+	Network        string `yaml:"network,omitempty"`
+	IPv4Subnet     string `yaml:"ipv4-subnet,omitempty"`
+	IPv4Gw         string `yaml:"ipv4-gw,omitempty"`
+	IPv4Range      string `yaml:"ipv4-range,omitempty"`
+	IPv6Subnet     string `yaml:"ipv6-subnet,omitempty"`
+	IPv6Gw         string `yaml:"ipv6-gw,omitempty"`
+	IPv6Range      string `yaml:"ipv6-range,omitempty"`
+	MTU            int    `yaml:"mtu,omitempty"`
+	ExternalAccess *bool  `yaml:"external-access,omitempty"`
 }
 
 // Topology represents a lab topology.
 type Topology struct {
-	Defaults *NodeDefinition            `yaml:"defaults,omitempty"`
+	Defaults *NodeDefinition            `yaml:"defaults"`
 	Kinds    map[string]*NodeDefinition `yaml:"kinds,omitempty"`
 	Nodes    map[string]*NodeDefinition `yaml:"nodes,omitempty"`
 	Links    []*LinkDefinition          `yaml:"links,omitempty"`
@@ -155,7 +167,7 @@ type CertificateConfig struct {
 // LinkDefinition represents a link definition in the topology file.
 type LinkDefinition struct {
 	Type       string `yaml:"type,omitempty"`
-	LinkConfig `yaml:",inline"`
+	LinkConfig `       yaml:",inline"`
 }
 
 // LinkConfig is the vendor'd (ish) clab link config object.

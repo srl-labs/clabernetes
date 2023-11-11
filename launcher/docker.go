@@ -67,7 +67,10 @@ func (c *clabernetes) enableLegacyIPTables() error {
 		"/usr/sbin/iptables-legacy",
 	)
 
-	_, err := updateCmd.Output()
+	updateCmd.Stdout = c.logger
+	updateCmd.Stderr = c.logger
+
+	err := updateCmd.Run()
 	if err != nil {
 		return err
 	}

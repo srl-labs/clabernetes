@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	k8scorev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/labels"
+	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 
-	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
 	clabernetescontrollerstopologycontainerlab "github.com/srl-labs/clabernetes/controllers/topology/containerlab"
@@ -17,11 +15,8 @@ import (
 	clabernetesmanagerelection "github.com/srl-labs/clabernetes/manager/election"
 	clabernetesmanagerprestart "github.com/srl-labs/clabernetes/manager/prestart"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
-	apimachineryscheme "k8s.io/apimachinery/pkg/runtime/schema"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
@@ -29,7 +24,7 @@ import (
 	ctrlruntimemetricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
-func (c *clabernetes) startLeading() {
+func (c *clabernetes) startLeaderElection() {
 	c.leaderElectionIdentity = clabernetesmanagerelection.GenerateLeaderIdentity()
 	leaderElectionLockName := fmt.Sprintf("%s-manager", c.appName)
 
@@ -42,6 +37,7 @@ func (c *clabernetes) startLeading() {
 	)
 
 	c.logger.Info("start leader election")
+
 	clabernetesmanagerelection.RunElection(
 		c.baseCtx,
 		c.leaderElectionIdentity,
@@ -51,7 +47,7 @@ func (c *clabernetes) startLeading() {
 			RenewDeadline: electionRenew * time.Second,
 			RetryPeriod:   electionRetry * time.Second,
 		},
-		c.start,
+		c.startLeading,
 		c.stopLeading,
 		c.newLeader,
 	)
@@ -93,28 +89,31 @@ func mustNewManager(scheme *apimachineryruntime.Scheme, appName string) ctrlrunt
 				config *rest.Config,
 				opts ctrlruntimecache.Options,
 			) (ctrlruntimecache.Cache, error) {
-				// limit the cache for configmap and service kinds to just our objects; otherwise
-				// we let the cache have everything it normally would
-				opts.ByObject = map[ctrlruntimeclient.Object]ctrlruntimecache.ByObject{
-					&k8scorev1.ConfigMap{}: {
-						Label: labels.SelectorFromSet(
-							labels.Set{
-								// it would be cool to be more explicit here, but because we have
-								// the "global" config *and* configs that get mounted for each
-								// topology and the latter having different labels (for sane/good
-								// reasons!) we can just filter on this; ilke services this should
-								// pretty much always be enough to filter to just our objects --
-								// i mean who the hell calls their app "clabernetes" :)
-								"clabernetes/app": appName,
-							}),
+				opts.DefaultLabelSelector = labels.SelectorFromSet(
+					labels.Set{
+						// only cache objects with the "clabernetes/app" label, why would we care
+						// about anything else (for now -- and we can override it with opts.ByObject
+						// anyway?! and... who the hell calls their app "clabernetes" so this should
+						// really limit the cache nicely :)
+						"clabernetes/app": appName,
 					},
-					&k8scorev1.Service{}: {
-						Label: labels.SelectorFromSet(
-							labels.Set{
-								// little less explicit here, but seems unlikely this would end up
-								// including anyone's services but our own!
-								"clabernetes/app": appName,
-							}),
+				)
+
+				// obviously we need to cache all "our" objects, so do that
+				opts.ByObject = map[ctrlruntimeclient.Object]ctrlruntimecache.ByObject{
+					&clabernetesapistopologyv1alpha1.Containerlab{}: {
+						Namespaces: map[string]ctrlruntimecache.Config{
+							ctrlruntimecache.AllNamespaces: {
+								LabelSelector: labels.Everything(),
+							},
+						},
+					},
+					&clabernetesapistopologyv1alpha1.Kne{}: {
+						Namespaces: map[string]ctrlruntimecache.Config{
+							ctrlruntimecache.AllNamespaces: {
+								LabelSelector: labels.Everything(),
+							},
+						},
 					},
 				}
 
@@ -129,7 +128,7 @@ func mustNewManager(scheme *apimachineryruntime.Scheme, appName string) ctrlrunt
 	return mgr
 }
 
-func (c *clabernetes) start(ctx context.Context) {
+func (c *clabernetes) startLeading(ctx context.Context) {
 	c.leaderCtx = ctx
 
 	c.logger.Info("begin pre-start...")
@@ -138,40 +137,8 @@ func (c *clabernetes) start(ctx context.Context) {
 
 	c.logger.Debug("pre-start complete...")
 
-	c.logger.Info("registering apis to scheme...")
-
-	scheme := apimachineryruntime.NewScheme()
-
-	apisToRegisterFuncs := []func() (apimachineryscheme.GroupVersion, []apimachineryruntime.Object){
-		clabernetesapistopologyv1alpha1.GetAPIs,
-	}
-
-	for _, apiToRegisterFunc := range apisToRegisterFuncs {
-		gv, objects := apiToRegisterFunc()
-
-		for _, object := range objects {
-			scheme.AddKnownTypes(gv, object)
-		}
-
-		metav1.AddToGroupVersion(scheme, gv)
-	}
-
-	err := clientgoscheme.AddToScheme(scheme)
-	if err != nil {
-		clabernetesutil.Panic(err.Error())
-	}
-
-	err = apiextensionsv1.AddToScheme(scheme)
-	if err != nil {
-		clabernetesutil.Panic(err.Error())
-	}
-
-	c.logger.Debug("apis registered...")
-
-	c.mgr = mustNewManager(scheme, c.appName)
-
 	go func() {
-		err = c.mgr.Start(c.leaderCtx)
+		err := c.mgr.Start(c.leaderCtx)
 		if err != nil {
 			c.logger.Criticalf(
 				"encountered error starting controller-runtime manager, err: %s",

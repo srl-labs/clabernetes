@@ -6,7 +6,10 @@ import (
 	"os"
 	"time"
 
+	claberneteshttp "github.com/srl-labs/clabernetes/http"
+
 	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -67,7 +70,7 @@ func StartClabernetes(initializer bool) {
 		logger:      clabernetesLogger,
 	}
 
-	clabernetesInstance.startup()
+	clabernetesInstance.start()
 }
 
 var clabernetesInstance *clabernetes //nolint:gochecknoglobals
@@ -87,7 +90,8 @@ type clabernetes struct {
 	kubeConfig *rest.Config
 	kubeClient *kubernetes.Clientset
 
-	mgr ctrlruntime.Manager
+	scheme *apimachineryruntime.Scheme
+	mgr    ctrlruntime.Manager
 
 	leaderElectionIdentity string
 	// ready is set to true after controller-runtime caches have been synced and "startup" is
@@ -123,6 +127,10 @@ func (c *clabernetes) GetKubeClient() *kubernetes.Clientset {
 	return c.kubeClient
 }
 
+func (c *clabernetes) GetScheme() *apimachineryruntime.Scheme {
+	return c.scheme
+}
+
 func (c *clabernetes) GetCtrlRuntimeMgr() ctrlruntime.Manager {
 	return c.mgr
 }
@@ -155,7 +163,7 @@ func (c *clabernetes) IsReady() bool {
 	return c.ready
 }
 
-func (c *clabernetes) startup() {
+func (c *clabernetes) start() {
 	c.logger.Info("starting clabernetes...")
 
 	c.logger.Debugf("clabernetes version %s", clabernetesconstants.Version)
@@ -183,6 +191,8 @@ func (c *clabernetes) startup() {
 		clabernetesutil.Panic(err.Error())
 	}
 
+	c.scheme = apimachineryruntime.NewScheme()
+
 	if c.initializer {
 		// initializer means we are the init container and should run initialization tasks like
 		// creating crds/webhook configs. once done with this we are done and the init process will
@@ -192,12 +202,35 @@ func (c *clabernetes) startup() {
 		return
 	}
 
+	c.logger.Info("begin prepare...")
+
 	clabernetesmanagerprepare.Prepare(c)
 
-	c.startLeading()
+	// dont create the manager until we've loaded the scheme!
+	c.mgr = mustNewManager(c.scheme, c.appName)
+
+	c.logger.Debug("prepare complete...")
+
+	c.logger.Info("starting http manager...")
+
+	claberneteshttp.InitManager(c.baseCtx, c.baseCtxCancel, c.IsReady, c.mgr.GetClient())
+	claberneteshttp.GetManager().Start()
+
+	c.logger.Debug("http manager started...")
+
+	c.startLeaderElection()
 }
 
 func (c *clabernetes) Exit(exitCode int) {
+	if !c.initializer {
+		// init container would never have started the http server, so we skip shutting it down
+		// of course
+		err := claberneteshttp.GetManager().Stop()
+		if err != nil {
+			c.logger.Warnf("failed shutting down http manager, err: %s", err)
+		}
+	}
+
 	claberneteslogging.GetManager().Flush()
 
 	os.Exit(exitCode)

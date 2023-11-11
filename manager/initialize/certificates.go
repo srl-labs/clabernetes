@@ -14,7 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func certificates(c clabernetesmanagertypes.Clabernetes) error {
+func certificates(c clabernetesmanagertypes.Clabernetes) error { //nolint:funlen
 	logger := c.GetBaseLogger()
 
 	secret, err := clabernetesmanagerutil.GetCertificatesSecret(c)
@@ -25,7 +25,7 @@ func certificates(c clabernetesmanagertypes.Clabernetes) error {
 	certsExist := true
 
 	if secret.Data != nil {
-		for _, certType := range []string{"ca", "client"} {
+		for _, certType := range []string{"ca", "client", "webhook"} {
 			for _, fileName := range []string{"ca.crt", "tls.crt", "tls.key"} {
 				_, ok := secret.Data[fmt.Sprintf("%s-%s", certType, fileName)]
 				if !ok {
@@ -103,7 +103,40 @@ func certificates(c clabernetesmanagertypes.Clabernetes) error {
 	secret.Data["client-tls.crt"] = clientData.TLS
 	secret.Data["client-tls.key"] = clientData.Key
 
-	_, err = updateCertificateSecret(c, secret)
+	// webhook
+	webhookCert := clabernetesutil.CreateClientCertificate("webhook")
+	webhookCert.DNSNames = []string{
+		"localhost",
+		fmt.Sprintf("%s-webhook.%s.svc", c.GetAppName(), c.GetNamespace()),
+	}
+
+	webhookCertKey := clabernetesutil.MustGeneratePrivateKey(clabernetesconstants.KeySize)
+
+	webhookCertBytes, err := x509.CreateCertificate(
+		cryptorand.Reader,
+		webhookCert,
+		ca,
+		&webhookCertKey.PublicKey,
+		caKey,
+	)
+	if err != nil {
+		return fmt.Errorf("creating webhook certificate: %w", err)
+	}
+
+	webhookData, err := clabernetesutil.GenerateCertificateData(
+		webhookCertBytes,
+		caBytes,
+		webhookCertKey,
+	)
+	if err != nil {
+		return fmt.Errorf("generating webhook certificate: %w", err)
+	}
+
+	secret.Data["webhook-ca.crt"] = webhookData.CRT
+	secret.Data["webhook-tls.crt"] = webhookData.TLS
+	secret.Data["webhook-tls.key"] = webhookData.Key
+
+	err = updateCertificateSecret(c, secret)
 	if err != nil {
 		return fmt.Errorf("updating certificate secret: %w", err)
 	}
@@ -114,15 +147,17 @@ func certificates(c clabernetesmanagertypes.Clabernetes) error {
 func updateCertificateSecret(
 	c clabernetesmanagertypes.Clabernetes,
 	secret *k8scorev1.Secret,
-) (*k8scorev1.Secret, error) {
+) error {
 	client := c.GetKubeClient()
 
 	ctx, ctxCancel := c.NewContextWithTimeout()
 	defer ctxCancel()
 
-	return client.CoreV1().Secrets(c.GetNamespace()).Update(
+	_, err := client.CoreV1().Secrets(c.GetNamespace()).Update(
 		ctx,
 		secret,
 		metav1.UpdateOptions{},
 	)
+
+	return err
 }

@@ -67,7 +67,7 @@ func InitManager(ctx context.Context, appName, namespace string, client *kuberne
 func GetManager() Manager {
 	if managerInstance == nil {
 		panic(
-			"Config Manager instance is nil, 'GetManager' should never be called until the " +
+			"config manager instance is nil, 'GetManager' should never be called until the " +
 				"manager process has been started",
 		)
 	}
