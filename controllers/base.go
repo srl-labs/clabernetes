@@ -129,3 +129,24 @@ func (c *BaseController) LogReconcileCompleteObjectNotExist(_ ctrlruntime.Reques
 func (c *BaseController) LogReconcileFailedGettingObject(req ctrlruntime.Request, err error) {
 	c.Log.Criticalf("failed fetching '%s/%s', error: %s", req.Namespace, req.Name, err)
 }
+
+// ShouldIgnoreReconcile checks if the given object has the LabelIgnoreReconcile label, if so, it
+// logs a message and returns true indicating the concrete controller should skip reconciling the
+// object.
+func (c *BaseController) ShouldIgnoreReconcile(obj ctrlruntimeclient.Object) bool {
+	objLabels := obj.GetLabels()
+
+	_, hasIgnoreReconcileLabel := objLabels[clabernetesconstants.LabelIgnoreReconcile]
+	if !hasIgnoreReconcileLabel {
+		return false
+	}
+
+	c.Log.Infof(
+		"%s/%s has %q label set, ignoring reconciliation",
+		obj.GetNamespace(),
+		obj.GetName(),
+		clabernetesconstants.LabelIgnoreReconcile,
+	)
+
+	return true
+}

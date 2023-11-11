@@ -35,6 +35,10 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, nil
 	}
 
+	if c.BaseController.ShouldIgnoreReconcile(containerlab) {
+		return ctrlruntime.Result{}, nil
+	}
+
 	reconcileData, err := clabernetescontrollerstopologyreconciler.NewReconcileData(containerlab)
 	if err != nil {
 		c.BaseController.Log.Criticalf(
