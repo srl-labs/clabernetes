@@ -51,6 +51,14 @@ const (
 	// LauncherInsecureRegistries env var that tells the launcher pods which registries are
 	// insecure. Should be set by the controller via the topology spec.
 	LauncherInsecureRegistries = "LAUNCHER_INSECURE_REGISTRIES"
+
+	// LauncherImagePullThroughModeEnv env var tells the manager how to configure the launcher,
+	// which in turn tells the launcher how it should attempt to pull images for the node it
+	// represents.
+	LauncherImagePullThroughModeEnv = "LAUNCHER_IMAGE_PULL_THROUGH_MODE"
+
+	// LauncherCRIKindEnv env var tells the launcher what CRI sock is mounted in it (if configured).
+	LauncherCRIKindEnv = "LAUNCHER_CRI_KIND"
 )
 
 const (

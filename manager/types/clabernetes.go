@@ -30,6 +30,13 @@ type Clabernetes interface {
 	// GetNamespace returns the namespace the clabernetes instance is running in.
 	GetNamespace() string
 
+	// GetClusterCRIKind returns the kind (from a clabernetes perspective) of the cluster CRI --
+	// this value can be `containerd`, `crio` or `unknown`. If all nodes in a cluster (at the time
+	// the manager starts up) are of a given CRI kind we make the (possibly not great) assumption
+	// that the cluster is made up of only that CRI type. If there is a mix of CRIs we set the kind
+	// to "unknown".
+	GetClusterCRIKind() string
+
 	// IsInitializer returns true if the clabernetes instance is an initializer instance -- if true
 	// this means that this instance should update crds, webhook configurations, and other
 	// initialization resources.

@@ -8,7 +8,6 @@ import (
 
 	claberneteshttp "github.com/srl-labs/clabernetes/http"
 
-	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -18,7 +17,6 @@ import (
 	"k8s.io/client-go/rest"
 
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
-	clabernetesmanagerprepare "github.com/srl-labs/clabernetes/manager/prepare"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 
 	ctrlruntime "sigs.k8s.io/controller-runtime"
@@ -89,6 +87,7 @@ type clabernetes struct {
 	namespace  string
 	kubeConfig *rest.Config
 	kubeClient *kubernetes.Clientset
+	criKind    string
 
 	scheme *apimachineryruntime.Scheme
 	mgr    ctrlruntime.Manager
@@ -113,6 +112,10 @@ func (c *clabernetes) GetBaseLogger() claberneteslogging.Instance {
 
 func (c *clabernetes) GetNamespace() string {
 	return c.namespace
+}
+
+func (c *clabernetes) GetClusterCRIKind() string {
+	return c.criKind
 }
 
 func (c *clabernetes) IsInitializer() bool {
@@ -168,43 +171,18 @@ func (c *clabernetes) start() {
 
 	c.logger.Debugf("clabernetes version %s", clabernetesconstants.Version)
 
-	var err error
-
-	c.namespace, err = clabernetesutilkubernetes.CurrentNamespace()
-	if err != nil {
-		c.logger.Criticalf("failed getting current namespace, err: %s", err)
-
-		clabernetesutil.Panic(err.Error())
-	}
-
-	c.kubeConfig, err = rest.InClusterConfig()
-	if err != nil {
-		c.logger.Criticalf("failed getting in cluster kubeconfig, err: %s", err)
-
-		clabernetesutil.Panic(err.Error())
-	}
-
-	c.kubeClient, err = kubernetes.NewForConfig(c.kubeConfig)
-	if err != nil {
-		c.logger.Criticalf("failed creating kube client from in cluster kubeconfig, err: %s", err)
-
-		clabernetesutil.Panic(err.Error())
-	}
-
-	c.scheme = apimachineryruntime.NewScheme()
+	c.preInit()
 
 	if c.initializer {
 		// initializer means we are the init container and should run initialization tasks like
 		// creating crds/webhook configs. once done with this we are done and the init process will
 		// call os.exit to kill the process.
-		c.startInitLeading()
+		c.startInitLeaderElection()
 
 		return
 	}
 
-	c.logger.Info("begin prepare...")
-
-	clabernetesmanagerprepare.Prepare(c)
+	c.prepare()
 
 	// dont create the manager until we've loaded the scheme!
 	c.mgr = mustNewManager(c.scheme, c.appName)

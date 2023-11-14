@@ -87,6 +87,7 @@ func (c *clabernetes) startup() {
 	c.logger.Debugf("clabernetes version %s", clabernetesconstants.Version)
 
 	c.setup()
+	c.image()
 	c.launch()
 
 	go c.watchContainers()

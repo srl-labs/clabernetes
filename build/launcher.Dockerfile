@@ -75,6 +75,10 @@ RUN chmod 600 /root/.ssh/id_rsa
 COPY build/launcher/ssh_config /etc/ssh/ssh_config
 
 WORKDIR /clabernetes
+
+RUN mkdir .node
+RUN mkdir .image
+
 COPY --from=builder /clabernetes/build/manager .
 USER root
 

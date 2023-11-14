@@ -25,15 +25,20 @@ const (
 	// VXLANServicePort is the port number for vxlan that we use in the kubernetes service.
 	VXLANServicePort = 14789
 
-	// LauncherDefaultImage is the default image for launchers -- this shouldn't be used normally
-	// since the clabernetes chart has a default value for this.
-	LauncherDefaultImage = "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:latest"
-
 	// TCP is... TCP.
 	TCP = "TCP"
 
 	// UDP is... UDP.
 	UDP = "UDP"
+
+	// LauncherDefaultImage is the default image for launchers -- this shouldn't be used normally
+	// since the clabernetes chart has a default value for this.
+	LauncherDefaultImage = "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:latest"
+
+	// LauncherDefaultImagePullThroughMode is the default mode for "image pull through" on the
+	// launcher pods. This is "auto" the mode where we try to pull via CRI and fall back to pulling
+	// via local docker daemon if we cant.
+	LauncherDefaultImagePullThroughMode = "auto"
 
 	// DefaultInClusterDNSSuffix is the default "svc.cluster.local" dns suffix.
 	DefaultInClusterDNSSuffix = "svc.cluster.local"

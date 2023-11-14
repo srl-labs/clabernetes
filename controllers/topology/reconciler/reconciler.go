@@ -39,6 +39,8 @@ func NewReconciler(
 	owningTopologyKind string,
 	resourceLister ResourceListerFunc,
 	configManagerGetter clabernetesconfig.ManagerGetterFunc,
+	criKind,
+	imagePullThroughMode string,
 ) *Reconciler {
 	return &Reconciler{
 		Log:            log,
@@ -70,6 +72,8 @@ func NewReconciler(
 			log,
 			owningTopologyKind,
 			configManagerGetter,
+			criKind,
+			imagePullThroughMode,
 		),
 	}
 }

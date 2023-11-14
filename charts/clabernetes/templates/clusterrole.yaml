@@ -33,6 +33,13 @@ rules:
   - apiGroups:
       - ""
     resources:
+      - nodes
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - ""
+    resources:
       - namespaces
       - secrets
       - configmaps

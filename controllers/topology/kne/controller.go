@@ -4,6 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
+
+	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
+
 	clabernetescontrollerstopologyreconciler "github.com/srl-labs/clabernetes/controllers/topology/reconciler"
 
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
@@ -16,7 +21,6 @@ import (
 	clabernetesapistopology "github.com/srl-labs/clabernetes/apis/topology"
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
-	"k8s.io/client-go/rest"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlruntimecontroller "sigs.k8s.io/controller-runtime/pkg/controller"
@@ -24,11 +28,10 @@ import (
 
 // NewController returns a new Controller.
 func NewController(
-	ctx context.Context,
-	appName string,
-	config *rest.Config,
-	client ctrlruntimeclient.Client,
+	clabernetes clabernetesmanagertypes.Clabernetes,
 ) clabernetescontrollers.Controller {
+	ctx := clabernetes.GetContext()
+
 	baseController := clabernetescontrollers.NewBaseController(
 		ctx,
 		fmt.Sprintf(
@@ -36,9 +39,9 @@ func NewController(
 			clabernetesapistopology.Group,
 			clabernetesapistopology.Kne,
 		),
-		appName,
-		config,
-		client,
+		clabernetes.GetAppName(),
+		clabernetes.GetKubeConfig(),
+		clabernetes.GetCtrlRuntimeClient(),
 	)
 
 	c := &Controller{
@@ -70,6 +73,11 @@ func NewController(
 				return out, nil
 			},
 			clabernetesconfig.GetManager,
+			clabernetes.GetClusterCRIKind(),
+			clabernetesutil.GetEnvStrOrDefault(
+				clabernetesconstants.LauncherImagePullThroughModeEnv,
+				clabernetesconstants.LauncherDefaultImagePullThroughMode,
+			),
 		),
 	}
 
