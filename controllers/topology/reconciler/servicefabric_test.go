@@ -203,7 +203,7 @@ func TestRenderServiceFabric(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				if !reflect.DeepEqual(got.Annotations, want.Annotations) {
+				if !clabernetestesthelper.MapLessDeeplyEqual(got.Annotations, want.Annotations) {
 					clabernetestesthelper.FailOutput(t, got.Annotations, want.Annotations)
 				}
 				if !reflect.DeepEqual(got.Labels, want.Labels) {

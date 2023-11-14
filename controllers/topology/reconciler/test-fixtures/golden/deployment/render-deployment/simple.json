@@ -9,6 +9,9 @@
             "clabernetes/topologyKind": "containerlab",
             "clabernetes/topologyNode": "srl1",
             "clabernetes/topologyOwner": "render-deployment-test"
+        },
+        "annotations": {
+            "container.apparmor.security.beta.kubernetes.io/srl1": "unconfined"
         }
     },
     "spec": {
@@ -30,6 +33,9 @@
                     "clabernetes/topologyKind": "containerlab",
                     "clabernetes/topologyNode": "srl1",
                     "clabernetes/topologyOwner": "render-deployment-test"
+                },
+                "annotations": {
+                    "container.apparmor.security.beta.kubernetes.io/srl1": "unconfined"
                 }
             },
             "spec": {
@@ -88,7 +94,34 @@
                         "terminationMessagePolicy": "File",
                         "imagePullPolicy": "IfNotPresent",
                         "securityContext": {
-                            "privileged": true,
+                            "capabilities": {
+                                "add": [
+                                    "CHOWN",
+                                    "DAC_OVERRIDE",
+                                    "FSETID",
+                                    "FOWNER",
+                                    "MKNOD",
+                                    "NET_RAW",
+                                    "SETGID",
+                                    "SETUID",
+                                    "SETFCAP",
+                                    "SETPCAP",
+                                    "NET_BIND_SERVICE",
+                                    "SYS_CHROOT",
+                                    "KILL",
+                                    "AUDIT_WRITE",
+                                    "NET_ADMIN",
+                                    "SYS_ADMIN",
+                                    "SYS_RESOURCE",
+                                    "LINUX_IMMUTABLE",
+                                    "SYS_BOOT",
+                                    "SYS_TIME",
+                                    "SYS_MODULE",
+                                    "SYS_RAWIO",
+                                    "SYS_PTRACE"
+                                ]
+                            },
+                            "privileged": false,
                             "runAsUser": 0
                         }
                     }

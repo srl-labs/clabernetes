@@ -17,15 +17,15 @@ func (f fakeManager) Start() error {
 }
 
 func (f fakeManager) GetGlobalAnnotations() map[string]string {
-	return nil
+	return make(map[string]string)
 }
 
 func (f fakeManager) GetGlobalLabels() map[string]string {
-	return nil
+	return make(map[string]string)
 }
 
 func (f fakeManager) GetAllMetadata() (annotations, labels map[string]string) {
-	return annotations, labels
+	return f.GetGlobalAnnotations(), f.GetGlobalLabels()
 }
 
 func (f fakeManager) GetResourcesForContainerlabKind(
