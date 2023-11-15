@@ -118,7 +118,9 @@
                                     "SYS_TIME",
                                     "SYS_MODULE",
                                     "SYS_RAWIO",
-                                    "SYS_PTRACE"
+                                    "SYS_PTRACE",
+                                    "SYS_NICE",
+                                    "IPC_LOCK"
                                 ]
                             },
                             "privileged": false,
