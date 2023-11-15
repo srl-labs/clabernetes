@@ -3,7 +3,6 @@ package reconciler_test
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"testing"
 
 	clabernetesapistopology "github.com/srl-labs/clabernetes/apis/topology"
@@ -124,9 +123,7 @@ func TestResolveServiceNodeResolution(t *testing.T) {
 					clabernetestesthelper.FailOutput(t, got.Missing, testCase.expectedMissing)
 				}
 
-				if !reflect.DeepEqual(got.Extra, testCase.expectedExtra) {
-					clabernetestesthelper.FailOutput(t, got.Extra, testCase.expectedExtra)
-				}
+				clabernetestesthelper.MarshaledEqual(t, got.Extra, testCase.expectedExtra)
 			})
 	}
 }
@@ -206,15 +203,7 @@ func TestRenderServiceNodeResolution(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				if !clabernetestesthelper.MapLessDeeplyEqual(got.Annotations, want.Annotations) {
-					clabernetestesthelper.FailOutput(t, got.Annotations, want.Annotations)
-				}
-				if !reflect.DeepEqual(got.Labels, want.Labels) {
-					clabernetestesthelper.FailOutput(t, got.Labels, want.Labels)
-				}
-				if !reflect.DeepEqual(got.Spec, want.Spec) {
-					clabernetestesthelper.FailOutput(t, got.Spec, want.Spec)
-				}
+				clabernetestesthelper.MarshaledEqual(t, got, want)
 			})
 	}
 }

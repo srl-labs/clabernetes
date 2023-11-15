@@ -141,6 +141,13 @@ type TopologyCommonSpec struct {
 	// mapping applied.
 	// +optional
 	Resources map[string]k8scorev1.ResourceRequirements `json:"resources"`
+	// PrivilegedLauncher, when true, sets the launcher containers to privileged. By default, we do
+	// our best to *not* need this/set this, and instead set only the capabilities we need, however
+	// its possible that some containers launched by the launcher may need/want more capabilities,
+	// so this flag exists for users to bypass the default settings and enable fully privileged
+	// launcher pods.
+	// +optional
+	PrivilegedLauncher bool `json:"privilegedLauncher"`
 }
 
 // LinkEndpoint is a simple struct to hold node/interface name info for a given link.

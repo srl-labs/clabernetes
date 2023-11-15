@@ -1,13 +1,33 @@
 package testhelper
 
-import "reflect"
+import (
+	"bytes"
+	"encoding/json"
+	"testing"
+)
 
-// MapLessDeeplyEqual is just DeepEqual but also empty/nil maps are considered equal. Mostly used
-// for checking annotations in our case.
-func MapLessDeeplyEqual(a, b map[string]string) bool {
-	if len(a) == 0 && len(b) == 0 {
-		return true
+// MarshaledEqual marshals (json marshal) a and b and bytes.Equal compares them. If they are not
+// equal FailOutput is called.
+func MarshaledEqual(t *testing.T, a, b any) {
+	t.Helper()
+
+	aJSON, err := json.MarshalIndent(a, "", "    ")
+	if err != nil {
+		t.Fatalf(
+			"failed marshaling actual, err: %s",
+			err,
+		)
 	}
 
-	return reflect.DeepEqual(a, b)
+	bJSON, err := json.MarshalIndent(b, "", "    ")
+	if err != nil {
+		t.Fatalf(
+			"failed marshaling expected, err: %s",
+			err,
+		)
+	}
+
+	if !bytes.Equal(aJSON, bJSON) {
+		FailOutput(t, aJSON, bJSON)
+	}
 }

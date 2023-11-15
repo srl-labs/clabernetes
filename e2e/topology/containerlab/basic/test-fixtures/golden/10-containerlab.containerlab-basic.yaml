@@ -21,6 +21,7 @@ spec:
     claimSize: ""
     enabled: false
     storageClassName: ""
+  privilegedLauncher: false
 status:
   configs: |
     srl1:

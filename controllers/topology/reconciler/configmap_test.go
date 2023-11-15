@@ -3,7 +3,6 @@ package reconciler_test
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -227,15 +226,7 @@ func TestRenderConfigMap(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				if !clabernetestesthelper.MapLessDeeplyEqual(got.Annotations, want.Annotations) {
-					clabernetestesthelper.FailOutput(t, got.Annotations, want.Annotations)
-				}
-				if !reflect.DeepEqual(got.Labels, want.Labels) {
-					clabernetestesthelper.FailOutput(t, got.Labels, want.Labels)
-				}
-				if !reflect.DeepEqual(got.Data, want.Data) {
-					clabernetestesthelper.FailOutput(t, got.Data, want.Data)
-				}
+				clabernetestesthelper.MarshaledEqual(t, got, want)
 			},
 		)
 	}
