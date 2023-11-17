@@ -3,7 +3,6 @@ package reconciler_test
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"testing"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
@@ -121,9 +120,7 @@ func TestResolveServiceFabric(t *testing.T) {
 					clabernetestesthelper.FailOutput(t, got.Missing, testCase.expectedMissing)
 				}
 
-				if !reflect.DeepEqual(got.Extra, testCase.expectedExtra) {
-					clabernetestesthelper.FailOutput(t, got.Extra, testCase.expectedExtra)
-				}
+				clabernetestesthelper.MarshaledEqual(t, got.Extra, testCase.expectedExtra)
 			})
 	}
 }
@@ -203,15 +200,7 @@ func TestRenderServiceFabric(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				if !reflect.DeepEqual(got.Annotations, want.Annotations) {
-					clabernetestesthelper.FailOutput(t, got.Annotations, want.Annotations)
-				}
-				if !reflect.DeepEqual(got.Labels, want.Labels) {
-					clabernetestesthelper.FailOutput(t, got.Labels, want.Labels)
-				}
-				if !reflect.DeepEqual(got.Spec, want.Spec) {
-					clabernetestesthelper.FailOutput(t, got.Spec, want.Spec)
-				}
+				clabernetestesthelper.MarshaledEqual(t, got, want)
 			})
 	}
 }

@@ -268,11 +268,6 @@ func (r *DeploymentReconciler) renderDeploymentContainer(
 				"IfNotPresent",
 			),
 		),
-		SecurityContext: &k8scorev1.SecurityContext{
-			// obviously we need privileged for dind setup
-			Privileged: clabernetesutil.ToPointer(true),
-			RunAsUser:  clabernetesutil.ToPointer(int64(0)),
-		},
 	}
 
 	container.VolumeMounts = append(container.VolumeMounts, volumeMountsFromCommonSpec...)
@@ -352,6 +347,88 @@ func (r *DeploymentReconciler) renderDeploymentContainerResources(
 	}
 }
 
+func (r *DeploymentReconciler) renderDeploymentContainerPrivileges(
+	deployment *k8sappsv1.Deployment,
+	nodeName string,
+	owningTopologyCommonSpec *clabernetesapistopologyv1alpha1.TopologyCommonSpec,
+) {
+	if owningTopologyCommonSpec.PrivilegedLauncher {
+		deployment.Spec.Template.Spec.Containers[0].SecurityContext = &k8scorev1.SecurityContext{
+			Privileged: clabernetesutil.ToPointer(true),
+			RunAsUser:  clabernetesutil.ToPointer(int64(0)),
+		}
+
+		return
+	}
+
+	// w/out this set you cant remount /sys/fs/cgroup, /proc, and /proc/sys; note that the part
+	// after the "/" needs to be the name of the container this applies to -- in our case (for now?)
+	// this will always just be the node name
+	deployment.ObjectMeta.Annotations[fmt.Sprintf(
+		"%s/%s", "container.apparmor.security.beta.kubernetes.io", nodeName,
+	)] = "unconfined"
+
+	deployment.Spec.Template.Spec.Containers[0].SecurityContext = &k8scorev1.SecurityContext{
+		Privileged: clabernetesutil.ToPointer(false),
+		RunAsUser:  clabernetesutil.ToPointer(int64(0)),
+		Capabilities: &k8scorev1.Capabilities{
+			Add: []k8scorev1.Capability{
+				// docker says we need these ones:
+				// https://github.com/moby/moby/blob/master/oci/caps/defaults.go#L6-L19
+				"CHOWN",
+				"DAC_OVERRIDE",
+				"FSETID",
+				"FOWNER",
+				"MKNOD",
+				"NET_RAW",
+				"SETGID",
+				"SETUID",
+				"SETFCAP",
+				"SETPCAP",
+				"NET_BIND_SERVICE",
+				"SYS_CHROOT",
+				"KILL",
+				"AUDIT_WRITE",
+				// docker doesnt say we need this but surely we do otherwise cant connect to
+				// daemon
+				"NET_ADMIN",
+				// cant untar/load image w/out this it seems
+				// https://github.com/moby/moby/issues/43086
+				"SYS_ADMIN",
+				// this it seems we need otherwise we get some issues finding child pid of
+				// containers and when we "docker run" it craps out
+				"SYS_RESOURCE",
+				// and some more that we needed to boot srl
+				"LINUX_IMMUTABLE",
+				"SYS_BOOT",
+				"SYS_TIME",
+				"SYS_MODULE",
+				"SYS_RAWIO",
+				"SYS_PTRACE",
+				// and some more that we need to run xdp lc manager in srl, and probably others!?
+				"SYS_NICE",
+				"IPC_LOCK",
+				// the rest for convenience of adding more later if needed
+				// "MAC_OVERRIDE",
+				// "MAC_ADMIN",
+				// "BPF",
+				// "PERFMON",
+				// "NET_BROADCAST",
+				// "DAC_READ_SEARCH",
+				// "SYSLOG",
+				// "WAKE_ALARM",
+				// "BLOCK_SUSPEND",
+				// "AUDIT_READ",
+				// "LEASE",
+				// "CHECKPOINT_RESTORE",
+				// "SYS_TTY_CONFIG",
+				// "SYS_PACCT",
+				// "IPC_OWNER",
+			},
+		},
+	}
+}
+
 // Render accepts the owning topology a mapping of clabernetes sub-topology configs and a node name
 // and renders the final deployment for this node.
 func (r *DeploymentReconciler) Render(
@@ -397,6 +474,12 @@ func (r *DeploymentReconciler) Render(
 		nodeName,
 		&owningTopologyCommonSpec,
 		clabernetesConfigs,
+	)
+
+	r.renderDeploymentContainerPrivileges(
+		deployment,
+		nodeName,
+		&owningTopologyCommonSpec,
 	)
 
 	return deployment

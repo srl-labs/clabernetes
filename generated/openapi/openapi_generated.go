@@ -322,6 +322,14 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 							},
 						},
 					},
+					"privilegedLauncher": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PrivilegedLauncher, when true, sets the launcher containers to privileged. By default, we do our best to *not* need this/set this, and instead set only the capabilities we need, however its possible that some containers launched by the launcher may need/want more capabilities, so this flag exists for users to bypass the default settings and enable fully privileged launcher pods.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"config": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Config is a \"normal\" containerlab configuration file.",
@@ -829,6 +837,14 @@ func schema_clabernetes_apis_topology_v1alpha1_KneSpec(
 							},
 						},
 					},
+					"privilegedLauncher": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PrivilegedLauncher, when true, sets the launcher containers to privileged. By default, we do our best to *not* need this/set this, and instead set only the capabilities we need, however its possible that some containers launched by the launcher may need/want more capabilities, so this flag exists for users to bypass the default settings and enable fully privileged launcher pods.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"topology": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Topology is a \"normal\" kne topology proto file.",
@@ -1164,6 +1180,14 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 									},
 								},
 							},
+						},
+					},
+					"privilegedLauncher": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PrivilegedLauncher, when true, sets the launcher containers to privileged. By default, we do our best to *not* need this/set this, and instead set only the capabilities we need, however its possible that some containers launched by the launcher may need/want more capabilities, so this flag exists for users to bypass the default settings and enable fully privileged launcher pods.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 				},
