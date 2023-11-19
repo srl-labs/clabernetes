@@ -1,15 +1,12 @@
 package launcher
 
 import (
-	"context"
 	"fmt"
 	"os"
-	"time"
+	"os/exec"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
-
-	containerdclient "github.com/containerd/containerd/v2/client"
 )
 
 func (c *clabernetes) image() {
@@ -62,59 +59,126 @@ func (c *clabernetes) image() {
 		return
 	}
 
-	// TODO -- need to load clab topo to get the image here so we know what to load/export/import
+	imageName := os.Getenv(clabernetesconstants.LauncherNodeImageEnv)
+	if imageName == "" {
+		if imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
+			msg := fmt.Sprintf(
+				"image pull through mode is always, node image is unknown," +
+					" cannot continue...",
+			)
+
+			c.logger.Critical(msg)
+
+			clabernetesutil.Panic(msg)
+		}
+
+		c.logger.Warn(
+			"image pull through mode is auto, but node image is unknown," +
+				" continuing to normal launch...",
+		)
+
+		return
+	}
+
+	var err error
 
 	switch criKind {
 	case clabernetesconstants.KubernetesCRIContainerd:
 		c.logger.Info("attempting containerd image pull through...")
 
-		c.imageContainerd()
+		err = c.imageContainerd(imageName)
 	default:
 		clabernetesutil.Panic(
 			"image pull through not implemented for anything but containerd, this is a bug",
 		)
 	}
+
+	if err != nil {
+		c.logger.Warnf("failed image pull through (pull), err: %s", err)
+
+		if imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
+			clabernetesutil.Panic(
+				"image pull through failed and pull through mode is always, cannot continue",
+			)
+		}
+
+		// if mode is *not* always we can fail through to try to let docker handle it
+		return
+	}
+
+	err = c.imageImport()
+	if err != nil {
+		c.logger.Warnf("failed image pull through (import), err: %s", err)
+
+		if imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
+			clabernetesutil.Panic(
+				"image pull through failed and pull through mode is always, cannot continue",
+			)
+		}
+	}
 }
 
-func (c *clabernetes) imageContainerd() {
-	// TODO -- yolo, just shell out cuz we already have ctr and then we have less deps which is life
-	client, err := containerdclient.New(
-		fmt.Sprintf(
-			"%s/%s",
-			clabernetesconstants.LauncherCRISockPath,
-			clabernetesconstants.KubernetesCRISockContainerd,
-		),
+func (c *clabernetes) imageContainerd(imageName string) error {
+	pullCmd := exec.Command(
+		"nerdctl",
+		"--address",
+		"/clabernetes/.node/containerd.sock",
+		"--namespace",
+		"k8s.io",
+		"image",
+		"pull",
+		imageName,
+		"--quiet",
 	)
-	if err != nil {
 
+	pullCmd.Stdout = c.logger
+	pullCmd.Stderr = c.logger
+
+	err := pullCmd.Run()
+	if err != nil {
+		return err
 	}
 
-	baseCtx := context.Background()
+	exportCmd := exec.Command(
+		"nerdctl",
+		"--address",
+		"/clabernetes/.node/containerd.sock",
+		"--namespace",
+		"k8s.io",
+		"image",
+		"save",
+		"-o",
+		"/clabernetes/.image/node-image.tar",
+		imageName,
+	)
 
-	imagePullDeadline := time.Now().Add(5 * time.Minute)
+	exportCmd.Stdout = c.logger
+	exportCmd.Stderr = c.logger
 
-	pullCtx, pullCtxCancel := context.WithDeadline(baseCtx, imagePullDeadline)
-
-	imageName := "docker.io/hello-world:latest"
-
-	iamge, err := client.Pull(pullCtx, imageName)
-	pullCtxCancel()
-
+	err = exportCmd.Run()
 	if err != nil {
-
+		return err
 	}
 
-	exportCtx, exportCtxCancel := context.WithDeadline(baseCtx, imagePullDeadline)
+	return nil
+}
 
-	imageOutFile, err := os.Open(fmt.Sprintf("/clabennetes/.image/%s.tar", imageName))
+func (c *clabernetes) imageImport() error {
+	exportCmd := exec.Command(
+		"docker",
+		"image",
+		"load",
+		"-i",
+		"/clabernetes/.image/node-image.tar",
+	)
+
+	exportCmd.Stdout = c.logger
+	exportCmd.Stderr = c.logger
+
+	err := exportCmd.Run()
 	if err != nil {
-
+		return err
 	}
 
-	err = client.Export(exportCtx, imageOutFile)
-	exportCtxCancel()
-
-	if err != nil {
-
-	}
+	return nil
 }

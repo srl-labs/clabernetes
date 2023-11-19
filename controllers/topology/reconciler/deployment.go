@@ -333,7 +333,9 @@ func (r *DeploymentReconciler) renderDeploymentContainer(
 
 func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 	deployment *k8sappsv1.Deployment,
+	nodeName string,
 	owningTopologyCommonSpec *clabernetesapistopologyv1alpha1.TopologyCommonSpec,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 ) {
 	launcherLogLevel := clabernetesutil.GetEnvStrOrDefault(
 		clabernetesconstants.LauncherLoggerLevelEnv,
@@ -356,6 +358,14 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		{
 			Name:  clabernetesconstants.LauncherLoggerLevelEnv,
 			Value: launcherLogLevel,
+		},
+		{
+			Name:  clabernetesconstants.LauncherNodeNameEnv,
+			Value: nodeName,
+		},
+		{
+			Name:  clabernetesconstants.LauncherNodeImageEnv,
+			Value: clabernetesConfigs[nodeName].Topology.GetNodeImage(nodeName),
 		},
 	}
 
@@ -580,7 +590,9 @@ func (r *DeploymentReconciler) Render(
 
 	r.renderDeploymentContainerEnv(
 		deployment,
+		nodeName,
 		&owningTopologyCommonSpec,
+		clabernetesConfigs,
 	)
 
 	r.renderDeploymentContainerResources(

@@ -87,6 +87,14 @@
                                 "value": "info"
                             },
                             {
+                                "name": "LAUNCHER_NODE_NAME",
+                                "value": "srl1"
+                            },
+                            {
+                                "name": "LAUNCHER_NODE_IMAGE",
+                                "value": "ghcr.io/nokia/srlinux"
+                            },
+                            {
                                 "name": "LAUNCHER_INSECURE_REGISTRIES",
                                 "value": "1.2.3.4,potato.com"
                             }

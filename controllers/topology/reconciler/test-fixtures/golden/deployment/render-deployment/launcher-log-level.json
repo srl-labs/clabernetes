@@ -85,6 +85,14 @@
                             {
                                 "name": "LAUNCHER_LOGGER_LEVEL",
                                 "value": "debug"
+                            },
+                            {
+                                "name": "LAUNCHER_NODE_NAME",
+                                "value": "srl1"
+                            },
+                            {
+                                "name": "LAUNCHER_NODE_IMAGE",
+                                "value": "ghcr.io/nokia/srlinux"
                             }
                         ],
                         "resources": {},

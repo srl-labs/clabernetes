@@ -87,6 +87,14 @@
                                 "value": "info"
                             },
                             {
+                                "name": "LAUNCHER_NODE_NAME",
+                                "value": "srl1"
+                            },
+                            {
+                                "name": "LAUNCHER_NODE_IMAGE",
+                                "value": "ghcr.io/nokia/srlinux"
+                            },
+                            {
                                 "name": "LAUNCHER_CONTAINERLAB_DEBUG",
                                 "value": "true"
                             }
