@@ -156,6 +156,8 @@ spec:
               {{- else }}
               value: "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:{{ .Chart.Version }}"
               {{- end }}
+            - name: LAUNCHER_IMAGE_PULL_THROUGH_MODE
+              value: {{ .Values.launcher.imagePullThroughMode }}
           resources:
             requests:
               memory: {{ .Values.manager.resources.requests.memory }}

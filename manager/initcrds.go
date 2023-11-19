@@ -1,4 +1,4 @@
-package initialize
+package manager
 
 import (
 	"embed"
@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
-func crds(c clabernetesmanagertypes.Clabernetes) error {
+func initCrds(c clabernetesmanagertypes.Clabernetes) error {
 	loadedCrds, err := loadCrdsFromAssets()
 	if err != nil {
 		return err

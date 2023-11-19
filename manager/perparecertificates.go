@@ -1,20 +1,18 @@
-package prepare
+package manager
 
 import (
 	"fmt"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
-	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
-	clabernetesmanagerutil "github.com/srl-labs/clabernetes/manager/util"
-	clabernetesutil "github.com/srl-labs/clabernetes/util"
-
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
+	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	k8scorev1 "k8s.io/api/core/v1"
 )
 
-// certificates initializes clabernetes-manager certs -- this includes a certificate authority
-// and client certs.
-func certificates(c clabernetesmanagertypes.Clabernetes) error {
+// prepareCertificates initializes clabernetes-manager certs -- this includes a certificate
+// authority and client certs.
+func prepareCertificates(c clabernetesmanagertypes.Clabernetes) error {
 	clabernetesutil.MustCreateDirectory(
 		clabernetesconstants.CertificateDirectory,
 		clabernetesconstants.PermissionsEveryoneRead,
@@ -47,7 +45,7 @@ func certificates(c clabernetesmanagertypes.Clabernetes) error {
 		return nil
 	}
 
-	secret, err := clabernetesmanagerutil.GetCertificatesSecret(c)
+	secret, err := getCertificatesSecret(c)
 	if err != nil {
 		return fmt.Errorf("getting certificates secret: %w", err)
 	}

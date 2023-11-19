@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
+
 	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
 
 	ctrlruntimeevent "sigs.k8s.io/controller-runtime/pkg/event"
@@ -20,10 +22,7 @@ import (
 
 // NewController defines a function that creates and returns a clabernetes Controller object.
 type NewController func(
-	ctx context.Context,
-	appName string,
-	config *clientgorest.Config,
-	client ctrlruntimeclient.Client,
+	clabernetes clabernetesmanagertypes.Clabernetes,
 ) Controller
 
 // Controller defines a clabernetes controller.

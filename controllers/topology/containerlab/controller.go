@@ -4,6 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
+
+	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
+
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 
 	k8scorev1 "k8s.io/api/core/v1"
@@ -15,18 +20,16 @@ import (
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
 	clabernetescontrollerstopologyreconciler "github.com/srl-labs/clabernetes/controllers/topology/reconciler"
-	"k8s.io/client-go/rest"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // NewController returns a new Controller.
 func NewController(
-	ctx context.Context,
-	appName string,
-	config *rest.Config,
-	client ctrlruntimeclient.Client,
+	clabernetes clabernetesmanagertypes.Clabernetes,
 ) clabernetescontrollers.Controller {
+	ctx := clabernetes.GetContext()
+
 	baseController := clabernetescontrollers.NewBaseController(
 		ctx,
 		fmt.Sprintf(
@@ -34,9 +37,9 @@ func NewController(
 			clabernetesapistopology.Group,
 			clabernetesapistopology.Containerlab,
 		),
-		appName,
-		config,
-		client,
+		clabernetes.GetAppName(),
+		clabernetes.GetKubeConfig(),
+		clabernetes.GetCtrlRuntimeClient(),
 	)
 
 	c := &Controller{
@@ -68,6 +71,11 @@ func NewController(
 				return out, nil
 			},
 			clabernetesconfig.GetManager,
+			clabernetes.GetClusterCRIKind(),
+			clabernetesutil.GetEnvStrOrDefault(
+				clabernetesconstants.LauncherImagePullThroughModeEnv,
+				clabernetesconstants.LauncherDefaultImagePullThroughMode,
+			),
 		),
 	}
 

@@ -129,6 +129,14 @@ spec:
                   the file should be downloaded to. This is useful for configs that
                   are larger than the ConfigMap (etcd) 1Mb size limit.
                 type: object
+              imagePullThroughOverride:
+                description: ImagePullThroughOverride allows for overriding the image
+                  pull through mode for this particular topology.
+                enum:
+                - auto
+                - always
+                - never
+                type: string
               insecureRegistries:
                 description: InsecureRegistries is a slice of strings of insecure
                   registries to configure in the launcher pods.

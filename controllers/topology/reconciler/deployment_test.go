@@ -30,12 +30,14 @@ const renderDeploymentTestName = "deployment/render-deployment"
 
 func TestResolveDeployment(t *testing.T) {
 	cases := []struct {
-		name               string
-		ownedDeployments   *k8sappsv1.DeploymentList
-		clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config
-		expectedCurrent    []string
-		expectedMissing    []string
-		expectedExtra      []*k8sappsv1.Deployment
+		name                 string
+		ownedDeployments     *k8sappsv1.DeploymentList
+		criKind              string
+		imagePullThroughMode string
+		clabernetesConfigs   map[string]*clabernetesutilcontainerlab.Config
+		expectedCurrent      []string
+		expectedMissing      []string
+		expectedExtra        []*k8sappsv1.Deployment
 	}{
 		{
 			name:               "simple",
@@ -100,6 +102,8 @@ func TestResolveDeployment(t *testing.T) {
 					&claberneteslogging.FakeInstance{},
 					clabernetesapistopology.Containerlab,
 					clabernetesconfig.GetFakeManager,
+					testCase.criKind,
+					testCase.imagePullThroughMode,
 				)
 
 				got, err := reconciler.Resolve(
@@ -134,6 +138,8 @@ func TestRenderDeployment(t *testing.T) {
 	cases := []struct {
 		name                 string
 		owningTopologyObject clabernetesapistopologyv1alpha1.TopologyCommonObject
+		criKind              string
+		imagePullThroughMode string
 		clabernetesConfigs   map[string]*clabernetesutilcontainerlab.Config
 		nodeName             string
 	}{
@@ -437,6 +443,8 @@ func TestRenderDeployment(t *testing.T) {
 					&claberneteslogging.FakeInstance{},
 					clabernetesapistopology.Containerlab,
 					clabernetesconfig.GetFakeManager,
+					testCase.criKind,
+					testCase.imagePullThroughMode,
 				)
 
 				got := reconciler.Render(
@@ -1016,6 +1024,8 @@ func TestDeploymentConforms(t *testing.T) {
 					&claberneteslogging.FakeInstance{},
 					clabernetesapistopology.Containerlab,
 					clabernetesconfig.GetFakeManager,
+					"",
+					"",
 				)
 
 				actual := reconciler.Conforms(

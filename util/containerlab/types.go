@@ -63,6 +63,25 @@ func (t *Topology) GetNodeKindType(nodeName string) (
 	return containerlabKind, containerlabType
 }
 
+// GetNodeImage returns the resolved image for the given node.
+func (t *Topology) GetNodeImage(nodeName string) string {
+	nodeDefinition, nodeDefinitionOk := t.Nodes[nodeName]
+	if nodeDefinitionOk {
+		if nodeDefinition.Image != "" {
+			return nodeDefinition.Image
+		}
+	}
+
+	kindDefinition, kindDefinitionOk := t.Kinds[nodeName]
+	if kindDefinitionOk {
+		if kindDefinition.Image != "" {
+			return kindDefinition.Image
+		}
+	}
+
+	return t.Defaults.Image
+}
+
 // NodeDefinition represents a configuration a given node can have in the lab definition file.
 type NodeDefinition struct {
 	Kind                 string            `yaml:"kind,omitempty"`

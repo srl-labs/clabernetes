@@ -29,11 +29,13 @@ RUN CGO_ENABLED=0 \
 FROM debian:bookworm-slim
 
 ARG CONTAINERLAB_VERSION="0.48.*"
+ARG NERDCTL_VERSION="1.7.0"
 
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
         ca-certificates \
         curl \
+        wget \
         gnupg \
         lsb-release \
         vim \
@@ -62,6 +64,8 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/apt/archive/*.deb
 
+RUN wget -c https://github.com/containerd/nerdctl/releases/download/v${NERDCTL_VERSION}/nerdctl-${NERDCTL_VERSION}-linux-amd64.tar.gz -O - | tar -xz -C /usr/bin/ && rm /usr/bin/containerd-rootless*.sh
+
 # copy a basic but nicer than standard bashrc for the user
 COPY build/launcher/.bashrc /root/.bashrc
 
@@ -75,6 +79,10 @@ RUN chmod 600 /root/.ssh/id_rsa
 COPY build/launcher/ssh_config /etc/ssh/ssh_config
 
 WORKDIR /clabernetes
+
+RUN mkdir .node
+RUN mkdir .image
+
 COPY --from=builder /clabernetes/build/manager .
 USER root
 

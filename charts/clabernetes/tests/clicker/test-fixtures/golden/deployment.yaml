@@ -116,6 +116,8 @@ spec:
               value: "IfNotPresent"
             - name: LAUNCHER_IMAGE
               value: "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:dev-latest"
+            - name: LAUNCHER_IMAGE_PULL_THROUGH_MODE
+              value: auto
           resources:
             requests:
               memory: 128Mi

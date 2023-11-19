@@ -3,46 +3,40 @@ package manager
 import (
 	"context"
 	"fmt"
-	"time"
 
-	clabernetesmanagerelection "github.com/srl-labs/clabernetes/manager/election"
-	clabernetesmanagerinitialize "github.com/srl-labs/clabernetes/manager/initialize"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
-
-func (c *clabernetes) startInitLeading() {
-	leaderElectionIdentity := clabernetesmanagerelection.GenerateLeaderIdentity()
-	leaderElectionLockName := fmt.Sprintf("%s-init", c.appName)
-
-	leaderElectionLock := clabernetesmanagerelection.GetLeaseLock(
-		c.kubeClient,
-		c.appName,
-		c.namespace,
-		leaderElectionLockName,
-		leaderElectionIdentity,
-	)
-
-	c.logger.Info("start init leader election")
-	clabernetesmanagerelection.RunElection(
-		c.baseCtx,
-		leaderElectionIdentity,
-		leaderElectionLock,
-		clabernetesmanagerelection.Timers{
-			Duration:      electionDuration * time.Second,
-			RenewDeadline: electionRenew * time.Second,
-			RetryPeriod:   electionRetry * time.Second,
-		},
-		c.init,
-		c.stopLeading,
-		c.newLeader,
-	)
-}
 
 func (c *clabernetes) init(ctx context.Context) {
 	c.logger.Info("begin init...")
 
 	c.leaderCtx = ctx
 
-	clabernetesmanagerinitialize.Initialize(c)
+	c.logger.Info("initializing certificates...")
+
+	err := initializeCertificates(c)
+	if err != nil {
+		msg := fmt.Sprintf("failed initializing certificates, err: %s", err)
+
+		c.logger.Critical(msg)
+
+		clabernetesutil.Panic(msg)
+	}
+
+	c.logger.Debugf("initializing certificates complete...")
+
+	c.logger.Info("initializing crds...")
+
+	err = initCrds(c)
+	if err != nil {
+		msg := fmt.Sprintf("failed initializing crds, err: %s", err)
+
+		c.logger.Critical(msg)
+
+		clabernetesutil.Panic(msg)
+	}
+
+	c.logger.Debugf("initializing crds complete...")
 
 	c.logger.Info("init complete...")
 

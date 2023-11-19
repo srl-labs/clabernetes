@@ -27,11 +27,15 @@ func NewDeploymentReconciler(
 	log claberneteslogging.Instance,
 	owningTopologyKind string,
 	configManagerGetter clabernetesconfig.ManagerGetterFunc,
+	criKind,
+	imagePullThroughMode string,
 ) *DeploymentReconciler {
 	return &DeploymentReconciler{
-		log:                 log,
-		owningTopologyKind:  owningTopologyKind,
-		configManagerGetter: configManagerGetter,
+		log:                  log,
+		owningTopologyKind:   owningTopologyKind,
+		configManagerGetter:  configManagerGetter,
+		criKind:              criKind,
+		imagePullThroughMode: imagePullThroughMode,
 	}
 }
 
@@ -39,9 +43,11 @@ func NewDeploymentReconciler(
 // purposes. This is the component responsible for rendering/validating deployments for a
 // clabernetes topology resource.
 type DeploymentReconciler struct {
-	log                 claberneteslogging.Instance
-	owningTopologyKind  string
-	configManagerGetter clabernetesconfig.ManagerGetterFunc
+	log                  claberneteslogging.Instance
+	owningTopologyKind   string
+	configManagerGetter  clabernetesconfig.ManagerGetterFunc
+	criKind              string
+	imagePullThroughMode string
 }
 
 // Resolve accepts a mapping of clabernetes configs and a list of deployments that are -- by owner
@@ -172,9 +178,59 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 		},
 	}
 
-	volumesFromConfigMaps := make([]clabernetesapistopologyv1alpha1.FileFromConfigMap, 0)
-
 	volumeMountsFromCommonSpec := make([]k8scorev1.VolumeMount, 0)
+
+	// if we have containerd cri *and* pull through mode is auto or always, we need to mount the
+	// containerd sock
+	if r.imagePullThroughMode != clabernetesconstants.ImagePullThroughModeNever &&
+		owningTopologyCommonSpec.ImagePullThroughOverride != clabernetesconstants.ImagePullThroughModeNever { //nolint:lll
+		var path string
+
+		var subPath string
+
+		switch r.criKind {
+		case clabernetesconstants.KubernetesCRIContainerd:
+			path = clabernetesconstants.KubernetesCRISockContainerdPath
+
+			subPath = clabernetesconstants.KubernetesCRISockContainerd
+		default:
+			r.log.Warnf(
+				"image pull through mode is auto or always but cri kind is not containerd!"+
+					" got cri kind %q",
+				r.criKind,
+			)
+		}
+
+		if path != "" && subPath != "" {
+			volumes = append(
+				volumes,
+				k8scorev1.Volume{
+					Name: "cri-sock",
+					VolumeSource: k8scorev1.VolumeSource{
+						HostPath: &k8scorev1.HostPathVolumeSource{
+							Path: path,
+						},
+					},
+				},
+			)
+
+			volumeMountsFromCommonSpec = append(
+				volumeMountsFromCommonSpec,
+				k8scorev1.VolumeMount{
+					Name:     "cri-sock",
+					ReadOnly: true,
+					MountPath: fmt.Sprintf(
+						"%s/%s",
+						clabernetesconstants.LauncherCRISockPath,
+						subPath,
+					),
+					SubPath: subPath,
+				},
+			)
+		}
+	}
+
+	volumesFromConfigMaps := make([]clabernetesapistopologyv1alpha1.FileFromConfigMap, 0)
 
 	volumesFromConfigMaps = append(
 		volumesFromConfigMaps,
@@ -277,7 +333,9 @@ func (r *DeploymentReconciler) renderDeploymentContainer(
 
 func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 	deployment *k8sappsv1.Deployment,
+	nodeName string,
 	owningTopologyCommonSpec *clabernetesapistopologyv1alpha1.TopologyCommonSpec,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 ) {
 	launcherLogLevel := clabernetesutil.GetEnvStrOrDefault(
 		clabernetesconstants.LauncherLoggerLevelEnv,
@@ -288,10 +346,31 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		launcherLogLevel = owningTopologyCommonSpec.LauncherLogLevel
 	}
 
+	imagePullThroughMode := r.imagePullThroughMode
+	if owningTopologyCommonSpec.ImagePullThroughOverride != "" {
+		imagePullThroughMode = owningTopologyCommonSpec.ImagePullThroughOverride
+	}
+
 	envs := []k8scorev1.EnvVar{
+		{
+			Name:  clabernetesconstants.LauncherCRIKindEnv,
+			Value: r.criKind,
+		},
+		{
+			Name:  clabernetesconstants.LauncherImagePullThroughModeEnv,
+			Value: imagePullThroughMode,
+		},
 		{
 			Name:  clabernetesconstants.LauncherLoggerLevelEnv,
 			Value: launcherLogLevel,
+		},
+		{
+			Name:  clabernetesconstants.LauncherNodeNameEnv,
+			Value: nodeName,
+		},
+		{
+			Name:  clabernetesconstants.LauncherNodeImageEnv,
+			Value: clabernetesConfigs[nodeName].Topology.GetNodeImage(nodeName),
 		},
 	}
 
@@ -516,7 +595,9 @@ func (r *DeploymentReconciler) Render(
 
 	r.renderDeploymentContainerEnv(
 		deployment,
+		nodeName,
 		&owningTopologyCommonSpec,
+		clabernetesConfigs,
 	)
 
 	r.renderDeploymentContainerResources(
@@ -576,6 +657,13 @@ func (r *DeploymentReconciler) Conforms(
 
 	if renderedDeployment.Spec.Template.Spec.Hostname !=
 		existingDeployment.Spec.Template.Spec.Hostname {
+		return false
+	}
+
+	if !reflect.DeepEqual(
+		existingDeployment.Spec.Template.Spec.Volumes,
+		renderedDeployment.Spec.Template.Spec.Volumes,
+	) {
 		return false
 	}
 

@@ -1,4 +1,4 @@
-package initialize
+package manager
 
 import (
 	cryptorand "crypto/rand"
@@ -9,15 +9,14 @@ import (
 	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 
-	clabernetesmanagerutil "github.com/srl-labs/clabernetes/manager/util"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func certificates(c clabernetesmanagertypes.Clabernetes) error { //nolint:funlen
+func initializeCertificates(c clabernetesmanagertypes.Clabernetes) error { //nolint:funlen
 	logger := c.GetBaseLogger()
 
-	secret, err := clabernetesmanagerutil.GetCertificatesSecret(c)
+	secret, err := getCertificatesSecret(c)
 	if err != nil {
 		return fmt.Errorf("getting certificates secret: %w", err)
 	}

@@ -148,6 +148,11 @@ type TopologyCommonSpec struct {
 	// launcher pods.
 	// +optional
 	PrivilegedLauncher bool `json:"privilegedLauncher"`
+	// ImagePullThroughOverride allows for overriding the image pull through mode for this
+	// particular topology.
+	// +kubebuilder:validation:Enum=auto;always;never
+	// +optional
+	ImagePullThroughOverride string `json:"imagePullThroughOverride,omitempty"`
 }
 
 // LinkEndpoint is a simple struct to hold node/interface name info for a given link.
