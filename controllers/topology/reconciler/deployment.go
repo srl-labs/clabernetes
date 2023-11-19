@@ -429,6 +429,56 @@ func (r *DeploymentReconciler) renderDeploymentContainerPrivileges(
 	}
 }
 
+func (r *DeploymentReconciler) renderDeploymentDevices(
+	deployment *k8sappsv1.Deployment,
+	owningTopologyCommonSpec *clabernetesapistopologyv1alpha1.TopologyCommonSpec,
+) {
+	if owningTopologyCommonSpec.PrivilegedLauncher {
+		// launcher is privileged, no need to mount devices explicitly
+		return
+	}
+
+	// add volumes for devices we care about
+	deployment.Spec.Template.Spec.Volumes = append(
+		deployment.Spec.Template.Spec.Volumes,
+		[]k8scorev1.Volume{
+			{
+				Name: "dev-fuse",
+				VolumeSource: k8scorev1.VolumeSource{
+					HostPath: &k8scorev1.HostPathVolumeSource{
+						Path: "/dev/fuse",
+					},
+				},
+			},
+			{
+				Name: "dev-net-tun",
+				VolumeSource: k8scorev1.VolumeSource{
+					HostPath: &k8scorev1.HostPathVolumeSource{
+						Path: "/dev/net/tun",
+					},
+				},
+			},
+		}...,
+	)
+
+	// then mount them in our container (launchers (for now?!) only ever have the one container)
+	deployment.Spec.Template.Spec.Containers[0].VolumeMounts = append(
+		deployment.Spec.Template.Spec.Containers[0].VolumeMounts,
+		[]k8scorev1.VolumeMount{
+			{
+				Name:      "dev-fuse",
+				ReadOnly:  true,
+				MountPath: "/dev/fuse",
+			},
+			{
+				Name:      "dev-net-tun",
+				ReadOnly:  true,
+				MountPath: "/dev/net/tun",
+			},
+		}...,
+	)
+}
+
 // Render accepts the owning topology a mapping of clabernetes sub-topology configs and a node name
 // and renders the final deployment for this node.
 func (r *DeploymentReconciler) Render(
@@ -479,6 +529,11 @@ func (r *DeploymentReconciler) Render(
 	r.renderDeploymentContainerPrivileges(
 		deployment,
 		nodeName,
+		&owningTopologyCommonSpec,
+	)
+
+	r.renderDeploymentDevices(
+		deployment,
 		&owningTopologyCommonSpec,
 	)
 

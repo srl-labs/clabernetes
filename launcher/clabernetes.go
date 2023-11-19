@@ -99,11 +99,11 @@ func (c *clabernetes) startup() {
 }
 
 func (c *clabernetes) setup() {
-	c.logger.Debug("handling remounts...")
+	c.logger.Debug("handling mounts...")
 
-	err := c.handleRemounts()
+	err := c.handleMounts()
 	if err != nil {
-		c.logger.Criticalf("failed handling remounts, err: %s", err)
+		c.logger.Criticalf("failed handling mounts, err: %s", err)
 
 		clabernetesutil.Panic(err.Error())
 	}

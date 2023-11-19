@@ -45,6 +45,18 @@
                         "configMap": {
                             "name": "render-deployment-test"
                         }
+                    },
+                    {
+                        "name": "dev-fuse",
+                        "hostPath": {
+                            "path": "/dev/fuse"
+                        }
+                    },
+                    {
+                        "name": "dev-net-tun",
+                        "hostPath": {
+                            "path": "/dev/net/tun"
+                        }
                     }
                 ],
                 "containers": [
@@ -92,6 +104,16 @@
                                 "readOnly": true,
                                 "mountPath": "/clabernetes/files-from-url.yaml",
                                 "subPath": "srl1-files-from-url"
+                            },
+                            {
+                                "name": "dev-fuse",
+                                "readOnly": true,
+                                "mountPath": "/dev/fuse"
+                            },
+                            {
+                                "name": "dev-net-tun",
+                                "readOnly": true,
+                                "mountPath": "/dev/net/tun"
                             }
                         ],
                         "terminationMessagePath": "/dev/termination-log",
