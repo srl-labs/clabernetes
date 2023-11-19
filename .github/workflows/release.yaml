@@ -58,6 +58,9 @@ jobs:
 
       - name: package and push charts
         run: |
+          RELEASE_TAG=${{ github.ref_name }}
+          RELEASE_VERSION=${RELEASE_TAG#v}
+          
           helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
 
           make set-chart-versions $RELEASE_VERSION
