@@ -182,8 +182,8 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 
 	// if we have containerd cri *and* pull through mode is auto or always, we need to mount the
 	// containerd sock
-	if r.imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAuto ||
-		r.imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
+	if r.imagePullThroughMode != clabernetesconstants.ImagePullThroughModeNever &&
+		owningTopologyCommonSpec.ImagePullThroughOverride != clabernetesconstants.ImagePullThroughModeNever { //nolint:lll
 		var path string
 
 		var subPath string
@@ -346,6 +346,11 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		launcherLogLevel = owningTopologyCommonSpec.LauncherLogLevel
 	}
 
+	imagePullThroughMode := r.imagePullThroughMode
+	if owningTopologyCommonSpec.ImagePullThroughOverride != "" {
+		imagePullThroughMode = owningTopologyCommonSpec.ImagePullThroughOverride
+	}
+
 	envs := []k8scorev1.EnvVar{
 		{
 			Name:  clabernetesconstants.LauncherCRIKindEnv,
@@ -353,7 +358,7 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		},
 		{
 			Name:  clabernetesconstants.LauncherImagePullThroughModeEnv,
-			Value: r.imagePullThroughMode,
+			Value: imagePullThroughMode,
 		},
 		{
 			Name:  clabernetesconstants.LauncherLoggerLevelEnv,

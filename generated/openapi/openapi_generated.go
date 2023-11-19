@@ -330,6 +330,14 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 							Format:      "",
 						},
 					},
+					"imagePullThroughOverride": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ImagePullThroughOverride allows for overriding the image pull through mode for this particular topology.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"config": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Config is a \"normal\" containerlab configuration file.",
@@ -845,6 +853,14 @@ func schema_clabernetes_apis_topology_v1alpha1_KneSpec(
 							Format:      "",
 						},
 					},
+					"imagePullThroughOverride": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ImagePullThroughOverride allows for overriding the image pull through mode for this particular topology.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"topology": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Topology is a \"normal\" kne topology proto file.",
@@ -1187,6 +1203,14 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 							Description: "PrivilegedLauncher, when true, sets the launcher containers to privileged. By default, we do our best to *not* need this/set this, and instead set only the capabilities we need, however its possible that some containers launched by the launcher may need/want more capabilities, so this flag exists for users to bypass the default settings and enable fully privileged launcher pods.",
 							Default:     false,
 							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"imagePullThroughOverride": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ImagePullThroughOverride allows for overriding the image pull through mode for this particular topology.",
+							Default:     "",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},

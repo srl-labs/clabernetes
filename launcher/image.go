@@ -16,7 +16,7 @@ func (c *clabernetes) image() {
 	case clabernetesconstants.ImagePullThroughModeAuto,
 		clabernetesconstants.ImagePullThroughModeAlways:
 		c.logger.Infof(
-			"unknown image pull through mode %q, start image pull through attempt...",
+			"image pull through mode %q, start image pull through attempt...",
 			imagePullThroughMode,
 		)
 	case clabernetesconstants.ImagePullThroughModeNever:
