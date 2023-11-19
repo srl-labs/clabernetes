@@ -333,7 +333,6 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 					"imagePullThroughOverride": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ImagePullThroughOverride allows for overriding the image pull through mode for this particular topology.",
-							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -856,7 +855,6 @@ func schema_clabernetes_apis_topology_v1alpha1_KneSpec(
 					"imagePullThroughOverride": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ImagePullThroughOverride allows for overriding the image pull through mode for this particular topology.",
-							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1209,7 +1207,6 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 					"imagePullThroughOverride": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ImagePullThroughOverride allows for overriding the image pull through mode for this particular topology.",
-							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},

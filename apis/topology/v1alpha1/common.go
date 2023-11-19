@@ -152,7 +152,7 @@ type TopologyCommonSpec struct {
 	// particular topology.
 	// +kubebuilder:validation:Enum=auto;always;never
 	// +optional
-	ImagePullThroughOverride string `json:"imagePullThroughOverride"`
+	ImagePullThroughOverride string `json:"imagePullThroughOverride,omitempty"`
 }
 
 // LinkEndpoint is a simple struct to hold node/interface name info for a given link.
