@@ -25,7 +25,7 @@ RUN CGO_ENABLED=0 \
     build/clabverter \
     main.go
 
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM --platform=linux/amd64 gcr.io/distroless/static-debian12:nonroot
 
 WORKDIR /clabernetes
 COPY --from=builder --chown=nonroot:nonroot /clabernetes/work /clabernetes/work
