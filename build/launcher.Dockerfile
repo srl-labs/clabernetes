@@ -26,7 +26,7 @@ RUN CGO_ENABLED=0 \
     build/manager \
     main.go
 
-FROM debian:bookworm-slim
+FROM --platform=linux/amd64 debian:bookworm-slim
 
 ARG CONTAINERLAB_VERSION="0.48.*"
 ARG NERDCTL_VERSION="1.7.0"

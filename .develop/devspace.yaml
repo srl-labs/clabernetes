@@ -18,7 +18,7 @@ vars:
   LAUNCHER_IMAGE: ${REGISTRY}/${CLABERNETES}-launcher
   CLABVERTER_IMAGE: ${REGISTRY}/clabverter
 
-  # always build w/ 0.0.0 -- overriden for actual releases by release profile. for "normal" builds
+  # always build w/ 0.0.0 -- overridden for actual releases by release profile. for "normal" builds
   # (not releases) we'll do VERSION-HASH, for releases we'll just override to have version tag.
   VERSION: 0.0.0
   COMMIT_HASH: $(git describe --always --abbrev=8)

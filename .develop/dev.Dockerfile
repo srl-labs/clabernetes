@@ -1,4 +1,4 @@
-FROM golang:1.21-bookworm
+FROM --platform=linux/amd64 golang:1.21-bookworm
 
 RUN set -x && apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     ca-certificates wget jq procps curl vim inetutils-ping binutils && \
