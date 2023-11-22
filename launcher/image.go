@@ -4,10 +4,16 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"time"
+
+	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	claberneteslauncherimage "github.com/srl-labs/clabernetes/launcher/image"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
+
+const imageDestination = "/clabernetes/.image/node-image.tar"
 
 func (c *clabernetes) image() {
 	imagePullThroughMode := os.Getenv(clabernetesconstants.LauncherImagePullThroughModeEnv)
@@ -37,9 +43,13 @@ func (c *clabernetes) image() {
 
 	c.logger.Debug("handling image pull through...")
 
-	criKind := os.Getenv(clabernetesconstants.LauncherCRIKindEnv)
+	imageManager, err := claberneteslauncherimage.NewImageManager(
+		c.logger,
+		os.Getenv(clabernetesconstants.LauncherCRIKindEnv),
+	)
+	if err != nil {
+		c.logger.Warnf("error creating image manager, err: %s", err)
 
-	if criKind == "" || criKind == clabernetesconstants.KubernetesCRIUnknown {
 		if imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
 			msg := fmt.Sprintf(
 				"image pull through mode is always, but criKind is unset or unknown," +
@@ -80,31 +90,25 @@ func (c *clabernetes) image() {
 		return
 	}
 
-	var err error
+	imagePresent, err := imageManager.Present(imageName)
+	c.handleImagePullThroughError(err, imagePullThroughMode, "check")
 
-	switch criKind {
-	case clabernetesconstants.KubernetesCRIContainerd:
-		c.logger.Info("attempting containerd image pull through...")
+	if imagePresent {
+		c.logger.Infof("image %q is present, aborting image pull through", imageName)
 
-		err = c.imageContainerd(imageName)
-	default:
-		clabernetesutil.Panic(
-			"image pull through not implemented for anything but containerd, this is a bug",
-		)
-	}
-
-	if err != nil {
-		c.logger.Warnf("failed image pull through (pull), err: %s", err)
-
-		if imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
-			clabernetesutil.Panic(
-				"image pull through failed and pull through mode is always, cannot continue",
-			)
-		}
-
-		// if mode is *not* always we can fail through to try to let docker handle it
 		return
 	}
+
+	// TODO -- here we send a request to manager to run a job that spawns a pod on this node
+
+	err = c.waitForImage(imageName, imageManager)
+	c.handleImagePullThroughError(err, imagePullThroughMode, "wait")
+
+	err = imageManager.Pull(imageName)
+	c.handleImagePullThroughError(err, imagePullThroughMode, "pull")
+
+	err = imageManager.Export(imageName, imageDestination)
+	c.handleImagePullThroughError(err, imagePullThroughMode, "export")
 
 	err = c.imageImport()
 	if err != nil {
@@ -118,49 +122,49 @@ func (c *clabernetes) image() {
 	}
 }
 
-func (c *clabernetes) imageContainerd(imageName string) error {
-	pullCmd := exec.Command(
-		"nerdctl",
-		"--address",
-		"/clabernetes/.node/containerd.sock",
-		"--namespace",
-		"k8s.io",
-		"image",
-		"pull",
-		imageName,
-		"--quiet",
-	)
-
-	pullCmd.Stdout = c.logger
-	pullCmd.Stderr = c.logger
-
-	err := pullCmd.Run()
+func (c *clabernetes) handleImagePullThroughError(
+	err error,
+	imagePullThroughMode, imagePullThroughStage string,
+) {
 	if err != nil {
-		return err
+		c.logger.Warnf("failed image pull through (%s), err: %s", imagePullThroughStage, err)
+
+		if imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
+			clabernetesutil.Panic(
+				"image pull through failed and pull through mode is always, cannot continue",
+			)
+		}
+	}
+}
+
+func (c *clabernetes) waitForImage(
+	imageName string,
+	imageManager claberneteslauncherimage.Manager,
+) error {
+	startTime := time.Now()
+
+	ticker := time.NewTicker(5 * time.Second)
+
+	for range ticker.C {
+		if time.Since(startTime) > 5*time.Minute {
+			break
+		}
+
+		imagePresent, err := imageManager.Present(imageName)
+		if err != nil {
+			return err
+		}
+
+		if imagePresent {
+			return nil
+		}
 	}
 
-	exportCmd := exec.Command(
-		"nerdctl",
-		"--address",
-		"/clabernetes/.node/containerd.sock",
-		"--namespace",
-		"k8s.io",
-		"image",
-		"save",
-		"-o",
-		"/clabernetes/.image/node-image.tar",
+	return fmt.Errorf(
+		"%w: timed out waiting for image %q to be present on node",
+		claberneteserrors.ErrLaunch,
 		imageName,
 	)
-
-	exportCmd.Stdout = c.logger
-	exportCmd.Stderr = c.logger
-
-	err = exportCmd.Run()
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (c *clabernetes) imageImport() error {

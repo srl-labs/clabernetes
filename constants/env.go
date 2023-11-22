@@ -32,6 +32,16 @@ const (
 )
 
 const (
+	// NodeNameEnv is the env var name that holds the name of the node a pod is on -- this comes
+	// from the field object selector in a deployment/pod spec.
+	NodeNameEnv = "NODE_NAME"
+	// PodNameEnv is the env var name that holds the name of the pod.
+	PodNameEnv = "POD_NAME"
+	// PodNamespaceEnv is the env var name that holds the namespace of the pod.
+	PodNamespaceEnv = "POD_NAMESPACE"
+)
+
+const (
 	// LauncherLoggerLevelEnv is the environment variable name that can be used to set the
 	// clabernetes launcher logger level.
 	LauncherLoggerLevelEnv = "LAUNCHER_LOGGER_LEVEL"

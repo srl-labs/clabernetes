@@ -353,6 +353,30 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 
 	envs := []k8scorev1.EnvVar{
 		{
+			Name: clabernetesconstants.NodeNameEnv,
+			ValueFrom: &k8scorev1.EnvVarSource{
+				FieldRef: &k8scorev1.ObjectFieldSelector{
+					FieldPath: "spec.nodeName",
+				},
+			},
+		},
+		{
+			Name: clabernetesconstants.PodNameEnv,
+			ValueFrom: &k8scorev1.EnvVarSource{
+				FieldRef: &k8scorev1.ObjectFieldSelector{
+					FieldPath: "metadata.name",
+				},
+			},
+		},
+		{
+			Name: clabernetesconstants.PodNamespaceEnv,
+			ValueFrom: &k8scorev1.EnvVarSource{
+				FieldRef: &k8scorev1.ObjectFieldSelector{
+					FieldPath: "metadata.namespace",
+				},
+			},
+		},
+		{
 			Name:  clabernetesconstants.LauncherCRIKindEnv,
 			Value: r.criKind,
 		},
