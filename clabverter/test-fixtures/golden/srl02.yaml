@@ -16,10 +16,10 @@ spec:
           configMapName: srl02-srl1-files
           configMapPath: REPLACED
       srl2:
-        - filePath: /some/dir/clabernetes/clabverter/test-fixtures/clabversiontest/srl2/potato.txt
+        - filePath: /some/dir/clabernetes/clabverter/test-fixtures/clabversiontest/potato.txt
           configMapName: srl02-srl2-files
           configMapPath: REPLACED
-        - filePath: /some/dir/clabernetes/clabverter/test-fixtures/clabversiontest/potato.txt
+        - filePath: /some/dir/clabernetes/clabverter/test-fixtures/clabversiontest/srl2/potato.txt
           configMapName: srl02-srl2-files
           configMapPath: REPLACED
         - filePath: srl2.license

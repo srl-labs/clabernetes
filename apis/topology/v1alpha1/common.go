@@ -153,6 +153,17 @@ type TopologyCommonSpec struct {
 	// +kubebuilder:validation:Enum=auto;always;never
 	// +optional
 	ImagePullThroughOverride string `json:"imagePullThroughOverride,omitempty"`
+	// ImagePullSecrets allows for providing secret(s) to use when pulling the image. This is only
+	// applicable *if* ImagePullThrough mode is auto or always. The secret is used by the launcher
+	// pod to pull the image via the cluster CRI. The secret is *not* mounted to the pod, but
+	// instead is used in conjunction with a job that spawns a pod using the specified secret. The
+	// job will kill the pod as soon as the image has been pulled -- we do this because we don't
+	// care if the pod runs, we only care that the image gets pulled on a specific node. Note that
+	// just like "normal" pull secrets, the secret needs to be in the namespace that the topology
+	// is in.
+	// +listType=set
+	// +optional
+	ImagePullSecrets []string `json:"imagePullSecrets"`
 }
 
 // LinkEndpoint is a simple struct to hold node/interface name info for a given link.

@@ -337,6 +337,26 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
 							Format:      "",
 						},
 					},
+					"imagePullSecrets": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "ImagePullSecrets allows for providing secret(s) to use when pulling the image. This is only applicable *if* ImagePullThrough mode is auto or always. The secret is used by the launcher pod to pull the image via the cluster CRI. The secret is *not* mounted to the pod, but instead is used in conjunction with a job that spawns a pod using the specified secret. The job will kill the pod as soon as the image has been pulled -- we do this because we don't care if the pod runs, we only care that the image gets pulled on a specific node. Note that just like \"normal\" pull secrets, the secret needs to be in the namespace that the topology is in.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 					"config": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Config is a \"normal\" containerlab configuration file.",
@@ -859,6 +879,26 @@ func schema_clabernetes_apis_topology_v1alpha1_KneSpec(
 							Format:      "",
 						},
 					},
+					"imagePullSecrets": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "ImagePullSecrets allows for providing secret(s) to use when pulling the image. This is only applicable *if* ImagePullThrough mode is auto or always. The secret is used by the launcher pod to pull the image via the cluster CRI. The secret is *not* mounted to the pod, but instead is used in conjunction with a job that spawns a pod using the specified secret. The job will kill the pod as soon as the image has been pulled -- we do this because we don't care if the pod runs, we only care that the image gets pulled on a specific node. Note that just like \"normal\" pull secrets, the secret needs to be in the namespace that the topology is in.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 					"topology": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Topology is a \"normal\" kne topology proto file.",
@@ -1209,6 +1249,26 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 							Description: "ImagePullThroughOverride allows for overriding the image pull through mode for this particular topology.",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"imagePullSecrets": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "ImagePullSecrets allows for providing secret(s) to use when pulling the image. This is only applicable *if* ImagePullThrough mode is auto or always. The secret is used by the launcher pod to pull the image via the cluster CRI. The secret is *not* mounted to the pod, but instead is used in conjunction with a job that spawns a pod using the specified secret. The job will kill the pod as soon as the image has been pulled -- we do this because we don't care if the pod runs, we only care that the image gets pulled on a specific node. Note that just like \"normal\" pull secrets, the secret needs to be in the namespace that the topology is in.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
 						},
 					},
 				},

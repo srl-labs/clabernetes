@@ -39,8 +39,8 @@ func mustNewManager(scheme *apimachineryruntime.Scheme, appName string) ctrlrunt
 					},
 				)
 
-				// obviously we need to cache all "our" objects, so do that
 				opts.ByObject = map[ctrlruntimeclient.Object]ctrlruntimecache.ByObject{
+					// obviously we need to cache all "our" containerlab objects, so do that
 					&clabernetesapistopologyv1alpha1.Containerlab{}: {
 						Namespaces: map[string]ctrlruntimecache.Config{
 							ctrlruntimecache.AllNamespaces: {
@@ -48,6 +48,7 @@ func mustNewManager(scheme *apimachineryruntime.Scheme, appName string) ctrlrunt
 							},
 						},
 					},
+					// obviously we need to cache all "our" kne objects, so do that
 					&clabernetesapistopologyv1alpha1.Kne{}: {
 						Namespaces: map[string]ctrlruntimecache.Config{
 							ctrlruntimecache.AllNamespaces: {
