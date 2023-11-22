@@ -47,6 +47,12 @@
                         }
                     },
                     {
+                        "name": "dev-kvm",
+                        "hostPath": {
+                            "path": "/dev/kvm"
+                        }
+                    },
+                    {
                         "name": "dev-fuse",
                         "hostPath": {
                             "path": "/dev/fuse"
@@ -118,6 +124,11 @@
                                 "readOnly": true,
                                 "mountPath": "/clabernetes/files-from-url.yaml",
                                 "subPath": "srl1-files-from-url"
+                            },
+                            {
+                                "name": "dev-kvm",
+                                "readOnly": true,
+                                "mountPath": "/dev/kvm"
                             },
                             {
                                 "name": "dev-fuse",
