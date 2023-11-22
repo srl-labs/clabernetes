@@ -1,10 +1,18 @@
 package launcher
 
 import (
+	"bytes"
+	"context"
+	"crypto/tls"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"time"
+
+	claberneteshttptypes "github.com/srl-labs/clabernetes/http/types"
 
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 
@@ -13,7 +21,12 @@ import (
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
 
-const imageDestination = "/clabernetes/.image/node-image.tar"
+const (
+	imagePullRequestTimeout = 5 * time.Second
+	imageDestination        = "/clabernetes/.image/node-image.tar"
+	imageCheckPollInterval  = 5 * time.Second
+	imageCheckLogCounter    = 6
+)
 
 func (c *clabernetes) image() {
 	imagePullThroughMode := os.Getenv(clabernetesconstants.LauncherImagePullThroughModeEnv)
@@ -90,51 +103,153 @@ func (c *clabernetes) image() {
 		return
 	}
 
-	imagePresent, err := imageManager.Present(imageName)
-	c.handleImagePullThroughError(err, imagePullThroughMode, "check")
+	continuePullThrough := c.imageCheckPresent(imageManager, imageName, imagePullThroughMode)
+	if !continuePullThrough {
+		return
+	}
 
-	if imagePresent {
-		c.logger.Infof("image %q is present, aborting image pull through", imageName)
+	err = c.requestImagePull(imageName)
+	if err != nil {
+		c.logger.Warnf("failed image pull through (request pull), err: %s", err)
+
+		handleImagePullThroughModeAlwaysPanic(imagePullThroughMode)
 
 		return
 	}
 
-	// TODO -- here we send a request to manager to run a job that spawns a pod on this node
-
 	err = c.waitForImage(imageName, imageManager)
-	c.handleImagePullThroughError(err, imagePullThroughMode, "wait")
+	if err != nil {
+		c.logger.Warnf("failed image pull through (wait), err: %s", err)
 
-	err = imageManager.Pull(imageName)
-	c.handleImagePullThroughError(err, imagePullThroughMode, "pull")
+		handleImagePullThroughModeAlwaysPanic(imagePullThroughMode)
+
+		return
+	}
 
 	err = imageManager.Export(imageName, imageDestination)
-	c.handleImagePullThroughError(err, imagePullThroughMode, "export")
+	if err != nil {
+		c.logger.Warnf("failed image pull through (export), err: %s", err)
+
+		handleImagePullThroughModeAlwaysPanic(imagePullThroughMode)
+
+		return
+	}
 
 	err = c.imageImport()
 	if err != nil {
 		c.logger.Warnf("failed image pull through (import), err: %s", err)
 
-		if imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
-			clabernetesutil.Panic(
-				"image pull through failed and pull through mode is always, cannot continue",
-			)
-		}
+		handleImagePullThroughModeAlwaysPanic(imagePullThroughMode)
 	}
 }
 
-func (c *clabernetes) handleImagePullThroughError(
-	err error,
-	imagePullThroughMode, imagePullThroughStage string,
-) {
+func handleImagePullThroughModeAlwaysPanic(imagePullThroughMode string) {
+	if imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
+		clabernetesutil.Panic(
+			"image pull through failed and pull through mode is always, cannot continue",
+		)
+	}
+}
+
+func (c *clabernetes) requestImagePull(imageName string) error {
+	imageRequest := claberneteshttptypes.ImageRequest{
+		TopologyName:       os.Getenv(clabernetesconstants.LauncherTopologyNameEnv),
+		TopologyNamespace:  os.Getenv(clabernetesconstants.PodNamespaceEnv),
+		TopologyNodeName:   os.Getenv(clabernetesconstants.LauncherNodeNameEnv),
+		KubernetesNodeName: os.Getenv(clabernetesconstants.NodeNameEnv),
+		RequestingPodName:  os.Getenv(clabernetesconstants.PodNameEnv),
+		RequestedImageName: imageName,
+	}
+
+	requestJSON, err := json.Marshal(imageRequest)
 	if err != nil {
-		c.logger.Warnf("failed image pull through (%s), err: %s", imagePullThroughStage, err)
+		c.logger.Criticalf("failed marshaling image pull request, error: %s", err)
+
+		return err
+	}
+
+	body := bytes.NewReader(requestJSON)
+
+	ctx, cancel := context.WithTimeout(c.ctx, imagePullRequestTimeout)
+	defer cancel()
+
+	request, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		fmt.Sprintf(
+			"https://%s.%s/image",
+			fmt.Sprintf("%s-http", os.Getenv(clabernetesconstants.AppNameEnv)),
+			os.Getenv(clabernetesconstants.ManagerNamespaceEnv),
+		),
+		body,
+	)
+	if err != nil {
+		c.logger.Criticalf("failed building image pull request, error: %s", err)
+
+		return err
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
+	}}
+
+	response, err := client.Do(request)
+	if err != nil {
+		c.logger.Criticalf("failed executing image pull request, error: %s", err)
+
+		return err
+	}
+
+	responseBody, err := io.ReadAll(response.Body)
+	if err != nil {
+		c.logger.Criticalf("failed reading image pull request response, error: %s", err)
+
+		return err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		msg := fmt.Sprintf(
+			"received non 200 status code from image pull request, response body: %s",
+			string(responseBody),
+		)
+
+		c.logger.Criticalf(msg)
+
+		return fmt.Errorf("%w: %s", claberneteserrors.ErrLaunch, msg)
+	}
+
+	_ = response.Body.Close()
+
+	return nil
+}
+
+// return value is "should we continue (true) or with pull through process or not".
+func (c *clabernetes) imageCheckPresent(
+	imageManager claberneteslauncherimage.Manager,
+	imageName, imagePullThroughMode string,
+) bool {
+	imagePresent, err := imageManager.Present(imageName)
+	if err != nil {
+		c.logger.Warnf("failed image pull through (check), err: %s", err)
 
 		if imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
 			clabernetesutil.Panic(
 				"image pull through failed and pull through mode is always, cannot continue",
 			)
 		}
+
+		return false
 	}
+
+	if imagePresent {
+		c.logger.Infof("image %q is present, aborting image pull through", imageName)
+
+		return false
+	}
+
+	return true
 }
 
 func (c *clabernetes) waitForImage(
@@ -143,7 +258,9 @@ func (c *clabernetes) waitForImage(
 ) error {
 	startTime := time.Now()
 
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(imageCheckPollInterval)
+
+	var checkCounter int
 
 	for range ticker.C {
 		if time.Since(startTime) > 5*time.Minute {
@@ -157,6 +274,14 @@ func (c *clabernetes) waitForImage(
 
 		if imagePresent {
 			return nil
+		}
+
+		checkCounter++
+
+		if checkCounter == imageCheckLogCounter {
+			checkCounter = 0
+
+			c.logger.Infof("waiting for image %q to be present on node...", imageName)
 		}
 	}
 

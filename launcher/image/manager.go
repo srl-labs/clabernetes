@@ -29,8 +29,6 @@ func NewImageManager(logger claberneteslogging.Instance, criKind string) (Manage
 type Manager interface {
 	// Present checks if the image is already present in the node.
 	Present(imageName string) (bool, error)
-	// Pull pulls the given image.
-	Pull(imageName string) error
 	// Export is the main reason we are using this and not the cri interface directly (cri has no
 	// service for export!) -- and does what it says: exports an image to disk.
 	Export(imageName, destination string) error

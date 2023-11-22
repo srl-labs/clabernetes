@@ -36,6 +36,8 @@ type ResourceListerFunc func(
 func NewReconciler(
 	log claberneteslogging.Instance,
 	client ctrlruntimeclient.Client,
+	managerAppName,
+	managerNamespace,
 	owningTopologyKind string,
 	resourceLister ResourceListerFunc,
 	configManagerGetter clabernetesconfig.ManagerGetterFunc,
@@ -70,6 +72,8 @@ func NewReconciler(
 		),
 		deploymentReconciler: NewDeploymentReconciler(
 			log,
+			managerAppName,
+			managerNamespace,
 			owningTopologyKind,
 			configManagerGetter,
 			criKind,

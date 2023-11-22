@@ -63,7 +63,7 @@ func StartClabernetes(args *Args) {
 	clabernetesInstance = &clabernetes{
 		ctx: ctx,
 		appName: clabernetesutil.GetEnvStrOrDefault(
-			clabernetesconstants.AppNameEnvVar,
+			clabernetesconstants.AppNameEnv,
 			clabernetesconstants.AppNameDefault,
 		),
 		logger: clabernetesLogger,

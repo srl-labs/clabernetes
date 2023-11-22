@@ -25,6 +25,8 @@ import (
 // NewDeploymentReconciler returns an instance of DeploymentReconciler.
 func NewDeploymentReconciler(
 	log claberneteslogging.Instance,
+	managerAppName,
+	managerNamespace,
 	owningTopologyKind string,
 	configManagerGetter clabernetesconfig.ManagerGetterFunc,
 	criKind,
@@ -32,6 +34,8 @@ func NewDeploymentReconciler(
 ) *DeploymentReconciler {
 	return &DeploymentReconciler{
 		log:                  log,
+		managerAppName:       managerAppName,
+		managerNamespace:     managerNamespace,
 		owningTopologyKind:   owningTopologyKind,
 		configManagerGetter:  configManagerGetter,
 		criKind:              criKind,
@@ -44,6 +48,8 @@ func NewDeploymentReconciler(
 // clabernetes topology resource.
 type DeploymentReconciler struct {
 	log                  claberneteslogging.Instance
+	managerAppName       string
+	managerNamespace     string
 	owningTopologyKind   string
 	configManagerGetter  clabernetesconfig.ManagerGetterFunc
 	criKind              string
@@ -333,7 +339,8 @@ func (r *DeploymentReconciler) renderDeploymentContainer(
 
 func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 	deployment *k8sappsv1.Deployment,
-	nodeName string,
+	nodeName,
+	owningTopologyName string,
 	owningTopologyCommonSpec *clabernetesapistopologyv1alpha1.TopologyCommonSpec,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 ) {
@@ -377,6 +384,14 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 			},
 		},
 		{
+			Name:  clabernetesconstants.AppNameEnv,
+			Value: r.managerAppName,
+		},
+		{
+			Name:  clabernetesconstants.ManagerNamespaceEnv,
+			Value: r.managerNamespace,
+		},
+		{
 			Name:  clabernetesconstants.LauncherCRIKindEnv,
 			Value: r.criKind,
 		},
@@ -387,6 +402,10 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		{
 			Name:  clabernetesconstants.LauncherLoggerLevelEnv,
 			Value: launcherLogLevel,
+		},
+		{
+			Name:  clabernetesconstants.LauncherTopologyNameEnv,
+			Value: owningTopologyName,
 		},
 		{
 			Name:  clabernetesconstants.LauncherNodeNameEnv,
@@ -643,6 +662,7 @@ func (r *DeploymentReconciler) Render(
 	r.renderDeploymentContainerEnv(
 		deployment,
 		nodeName,
+		owningTopologyName,
 		&owningTopologyCommonSpec,
 		clabernetesConfigs,
 	)

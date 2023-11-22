@@ -23,7 +23,7 @@ var (
 
 const (
 	timeoutSeconds = 5
-	listenPort     = 8080
+	listenPort     = 10443
 )
 
 // InitManager initializes the clabernetes http server manager -- it does this once only, its a
@@ -96,6 +96,11 @@ func (m *manager) Start() {
 	mux.HandleFunc(
 		aliveRoute,
 		m.aliveHandler,
+	)
+
+	mux.HandleFunc(
+		imageRoute,
+		m.imageHandler,
 	)
 
 	m.server = &http.Server{

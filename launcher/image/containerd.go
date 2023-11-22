@@ -1,6 +1,7 @@
 package image
 
 import (
+	"fmt"
 	"os/exec"
 
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
@@ -11,33 +12,29 @@ type containerdManager struct {
 }
 
 func (m *containerdManager) Present(imageName string) (bool, error) {
-	_ = imageName
-
-	return false, nil
-}
-
-func (m *containerdManager) Pull(imageName string) error {
-	pullCmd := exec.Command(
+	checkCmd := exec.Command( //nolint:gosec
 		"nerdctl",
 		"--address",
 		"/clabernetes/.node/containerd.sock",
 		"--namespace",
 		"k8s.io",
 		"image",
-		"pull",
-		imageName,
+		"list",
+		"--filter",
+		fmt.Sprintf("reference=%s", imageName),
 		"--quiet",
 	)
 
-	pullCmd.Stdout = m.logger
-	pullCmd.Stderr = m.logger
-
-	err := pullCmd.Run()
+	output, err := checkCmd.Output()
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	return nil
+	if len(output) == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func (m *containerdManager) Export(imageName, destination string) error {
@@ -49,7 +46,7 @@ func (m *containerdManager) Export(imageName, destination string) error {
 		"k8s.io",
 		"image",
 		"save",
-		"-o",
+		"--output",
 		destination,
 		imageName,
 	)

@@ -100,6 +100,8 @@ func TestResolveDeployment(t *testing.T) {
 
 				reconciler := clabernetescontrollerstopologyreconciler.NewDeploymentReconciler(
 					&claberneteslogging.FakeInstance{},
+					"clabernetes",
+					"clabernetes",
 					clabernetesapistopology.Containerlab,
 					clabernetesconfig.GetFakeManager,
 					testCase.criKind,
@@ -441,6 +443,8 @@ func TestRenderDeployment(t *testing.T) {
 
 				reconciler := clabernetescontrollerstopologyreconciler.NewDeploymentReconciler(
 					&claberneteslogging.FakeInstance{},
+					"clabernetes",
+					"clabernetes",
 					clabernetesapistopology.Containerlab,
 					clabernetesconfig.GetFakeManager,
 					testCase.criKind,
@@ -1022,6 +1026,8 @@ func TestDeploymentConforms(t *testing.T) {
 
 				reconciler := clabernetescontrollerstopologyreconciler.NewDeploymentReconciler(
 					&claberneteslogging.FakeInstance{},
+					"clabernetes",
+					"clabernetes",
 					clabernetesapistopology.Containerlab,
 					clabernetesconfig.GetFakeManager,
 					"",

@@ -79,13 +79,15 @@ func (c *clabernetes) enableLegacyIPTables() error {
 }
 
 func (c *clabernetes) startDocker() error {
-	// this is janky, why am i too dumb to make docker start in the container?! (no systemd things)
 	var attempts int
 
 	for {
 		psCmd := exec.Command("docker", "ps")
 
-		_, err := psCmd.Output()
+		psCmd.Stdout = c.logger
+		psCmd.Stderr = c.logger
+
+		err := psCmd.Run()
 		if err == nil {
 			// exit 0, docker seems happy
 			return nil
@@ -95,9 +97,12 @@ func (c *clabernetes) startDocker() error {
 			return fmt.Errorf("%w: failed starting docker", claberneteserrors.ErrLaunch)
 		}
 
-		cmd := exec.Command("service", "docker", "start")
+		startCmd := exec.Command("service", "docker", "start")
 
-		_, err = cmd.Output()
+		startCmd.Stdout = c.logger
+		startCmd.Stderr = c.logger
+
+		err = startCmd.Run()
 		if err != nil {
 			return err
 		}

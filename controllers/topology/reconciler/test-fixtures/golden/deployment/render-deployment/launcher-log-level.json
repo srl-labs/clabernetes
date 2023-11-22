@@ -107,6 +107,14 @@
                                 }
                             },
                             {
+                                "name": "APP_NAME",
+                                "value": "clabernetes"
+                            },
+                            {
+                                "name": "MANAGER_NAMESPACE",
+                                "value": "clabernetes"
+                            },
+                            {
                                 "name": "LAUNCHER_CRI_KIND"
                             },
                             {
@@ -115,6 +123,10 @@
                             {
                                 "name": "LAUNCHER_LOGGER_LEVEL",
                                 "value": "debug"
+                            },
+                            {
+                                "name": "LAUNCHER_TOPOLOGY_NAME",
+                                "value": "render-deployment-test"
                             },
                             {
                                 "name": "LAUNCHER_NODE_NAME",

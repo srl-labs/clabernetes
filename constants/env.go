@@ -1,9 +1,9 @@
 package constants
 
 const (
-	// AppNameEnvVar is the environment variable name of the "appName" as supplied to helm
+	// AppNameEnv is the environment variable name of the "appName" as supplied to helm
 	// if not set the default will always be AppNameDefault.
-	AppNameEnvVar = "APP_NAME"
+	AppNameEnv = "APP_NAME"
 
 	// ManagerLoggerLevelEnv is the environment variable name that can be used to set the
 	// clabernetes manager logger level. This is the logger for the "main" process, not the
@@ -39,6 +39,9 @@ const (
 	PodNameEnv = "POD_NAME"
 	// PodNamespaceEnv is the env var name that holds the namespace of the pod.
 	PodNamespaceEnv = "POD_NAMESPACE"
+	// ManagerNamespaceEnv is the environment variable that holds the namespace that the manager is
+	// running in.
+	ManagerNamespaceEnv = "MANAGER_NAMESPACE"
 )
 
 const (
@@ -73,6 +76,10 @@ const (
 
 	// LauncherCRIKindEnv env var tells the launcher what CRI sock is mounted in it (if configured).
 	LauncherCRIKindEnv = "LAUNCHER_CRI_KIND"
+
+	// LauncherTopologyNameEnv is the env var that holds the name of the topology that a given
+	// launcher is responsible for.
+	LauncherTopologyNameEnv = "LAUNCHER_TOPOLOGY_NAME"
 
 	// LauncherNodeNameEnv is the env var that holds the name of the node in the original topology
 	// that a given launcher is responsible for.
