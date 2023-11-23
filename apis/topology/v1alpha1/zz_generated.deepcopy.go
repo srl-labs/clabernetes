@@ -372,6 +372,11 @@ func (in *TopologyCommonSpec) DeepCopyInto(out *TopologyCommonSpec) {
 			(*out)[key] = *val.DeepCopy()
 		}
 	}
+	if in.ImagePullSecrets != nil {
+		in, out := &in.ImagePullSecrets, &out.ImagePullSecrets
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

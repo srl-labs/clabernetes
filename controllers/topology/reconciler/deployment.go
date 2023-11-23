@@ -25,6 +25,8 @@ import (
 // NewDeploymentReconciler returns an instance of DeploymentReconciler.
 func NewDeploymentReconciler(
 	log claberneteslogging.Instance,
+	managerAppName,
+	managerNamespace,
 	owningTopologyKind string,
 	configManagerGetter clabernetesconfig.ManagerGetterFunc,
 	criKind,
@@ -32,6 +34,8 @@ func NewDeploymentReconciler(
 ) *DeploymentReconciler {
 	return &DeploymentReconciler{
 		log:                  log,
+		managerAppName:       managerAppName,
+		managerNamespace:     managerNamespace,
 		owningTopologyKind:   owningTopologyKind,
 		configManagerGetter:  configManagerGetter,
 		criKind:              criKind,
@@ -44,6 +48,8 @@ func NewDeploymentReconciler(
 // clabernetes topology resource.
 type DeploymentReconciler struct {
 	log                  claberneteslogging.Instance
+	managerAppName       string
+	managerNamespace     string
 	owningTopologyKind   string
 	configManagerGetter  clabernetesconfig.ManagerGetterFunc
 	criKind              string
@@ -315,6 +321,12 @@ func (r *DeploymentReconciler) renderDeploymentContainer(
 				MountPath: "/clabernetes/files-from-url.yaml",
 				SubPath:   fmt.Sprintf("%s-files-from-url", nodeName),
 			},
+			{
+				Name:      configVolumeName,
+				ReadOnly:  true,
+				MountPath: "/clabernetes/configured-pull-secrets.yaml",
+				SubPath:   "configured-pull-secrets",
+			},
 		},
 		TerminationMessagePath:   "/dev/termination-log",
 		TerminationMessagePolicy: "File",
@@ -333,7 +345,8 @@ func (r *DeploymentReconciler) renderDeploymentContainer(
 
 func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 	deployment *k8sappsv1.Deployment,
-	nodeName string,
+	nodeName,
+	owningTopologyName string,
 	owningTopologyCommonSpec *clabernetesapistopologyv1alpha1.TopologyCommonSpec,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 ) {
@@ -353,6 +366,38 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 
 	envs := []k8scorev1.EnvVar{
 		{
+			Name: clabernetesconstants.NodeNameEnv,
+			ValueFrom: &k8scorev1.EnvVarSource{
+				FieldRef: &k8scorev1.ObjectFieldSelector{
+					FieldPath: "spec.nodeName",
+				},
+			},
+		},
+		{
+			Name: clabernetesconstants.PodNameEnv,
+			ValueFrom: &k8scorev1.EnvVarSource{
+				FieldRef: &k8scorev1.ObjectFieldSelector{
+					FieldPath: "metadata.name",
+				},
+			},
+		},
+		{
+			Name: clabernetesconstants.PodNamespaceEnv,
+			ValueFrom: &k8scorev1.EnvVarSource{
+				FieldRef: &k8scorev1.ObjectFieldSelector{
+					FieldPath: "metadata.namespace",
+				},
+			},
+		},
+		{
+			Name:  clabernetesconstants.AppNameEnv,
+			Value: r.managerAppName,
+		},
+		{
+			Name:  clabernetesconstants.ManagerNamespaceEnv,
+			Value: r.managerNamespace,
+		},
+		{
 			Name:  clabernetesconstants.LauncherCRIKindEnv,
 			Value: r.criKind,
 		},
@@ -363,6 +408,10 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		{
 			Name:  clabernetesconstants.LauncherLoggerLevelEnv,
 			Value: launcherLogLevel,
+		},
+		{
+			Name:  clabernetesconstants.LauncherTopologyNameEnv,
+			Value: owningTopologyName,
 		},
 		{
 			Name:  clabernetesconstants.LauncherNodeNameEnv,
@@ -619,6 +668,7 @@ func (r *DeploymentReconciler) Render(
 	r.renderDeploymentContainerEnv(
 		deployment,
 		nodeName,
+		owningTopologyName,
 		&owningTopologyCommonSpec,
 		clabernetesConfigs,
 	)

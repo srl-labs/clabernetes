@@ -9,6 +9,9 @@ import (
 	"sync"
 	"time"
 
+	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
+	"k8s.io/client-go/kubernetes"
+
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
@@ -23,17 +26,14 @@ var (
 
 const (
 	timeoutSeconds = 5
-	listenPort     = 8080
+	listenPort     = 10443
 )
 
 // InitManager initializes the clabernetes http server manager -- it does this once only, its a
 // no-op if the manager is already initialized. This accepts the base context cancel func to cancel
 // it if there is any issue w/ the http sever.
 func InitManager(
-	ctx context.Context,
-	cancel context.CancelFunc,
-	managerReadyF func() bool,
-	client ctrlruntimeclient.Client,
+	c clabernetesmanagertypes.Clabernetes,
 ) {
 	managerInstanceOnce.Do(func() {
 		logManager := claberneteslogging.GetManager()
@@ -47,11 +47,12 @@ func InitManager(
 		)
 
 		m := &manager{
-			ctx:           ctx,
-			ctxCancel:     cancel,
+			ctx:           c.GetContext(),
+			ctxCancel:     c.GetContextCancel(),
 			logger:        logger,
-			managerReadyF: managerReadyF,
-			client:        client,
+			managerReadyF: c.IsReady,
+			client:        c.GetCtrlRuntimeClient(),
+			kubeClient:    c.GetKubeClient(),
 		}
 
 		managerInstance = m
@@ -85,6 +86,7 @@ type manager struct {
 	managerReadyF func() bool
 	returnedReady bool
 	client        ctrlruntimeclient.Client
+	kubeClient    *kubernetes.Clientset
 	server        *http.Server
 	stopping      bool
 }
@@ -96,6 +98,11 @@ func (m *manager) Start() {
 	mux.HandleFunc(
 		aliveRoute,
 		m.aliveHandler,
+	)
+
+	mux.HandleFunc(
+		imageRoute,
+		m.imageHandler,
 	)
 
 	m.server = &http.Server{

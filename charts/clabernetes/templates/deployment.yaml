@@ -168,7 +168,7 @@ spec:
             {{- end }}
           ports:
           - name: http
-            containerPort: 8080
+            containerPort: 10443
           livenessProbe:
             httpGet:
               path: /alive
