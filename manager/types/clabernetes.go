@@ -21,6 +21,9 @@ type Clabernetes interface {
 	// GetContext returns the main/root context for the manager.
 	GetContext() context.Context
 
+	// GetContextCancel returns the cancel func for the main/root context for the manager.
+	GetContextCancel() context.CancelFunc
+
 	// GetAppName returns the "appName" for the clabernetes deployment, usually "clabernetes".
 	GetAppName() string
 

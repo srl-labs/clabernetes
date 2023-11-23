@@ -56,3 +56,13 @@ const (
 	// the delete case (owner reference handles clean up).
 	LabelIgnoreReconcile = "clabernetes/ignoreReconcile"
 )
+
+const (
+	// LabelPullerImageHash is a label that holds the (shortened) hash of the image tag that the
+	// puller is trying to pull onto a node.
+	LabelPullerImageHash = "clabernetes/pullerImageHash"
+
+	// LabelPullerNodeTarget is a label that holds the node name that is being targeted by the
+	// puller pod.
+	LabelPullerNodeTarget = "clabernetes/pullerNodeTarget"
+)

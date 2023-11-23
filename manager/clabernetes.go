@@ -102,6 +102,10 @@ func (c *clabernetes) GetContext() context.Context {
 	return c.baseCtx
 }
 
+func (c *clabernetes) GetContextCancel() context.CancelFunc {
+	return c.baseCtxCancel
+}
+
 func (c *clabernetes) GetAppName() string {
 	return c.appName
 }
@@ -191,7 +195,7 @@ func (c *clabernetes) start() {
 
 	c.logger.Info("starting http manager...")
 
-	claberneteshttp.InitManager(c.baseCtx, c.baseCtxCancel, c.IsReady, c.mgr.GetClient())
+	claberneteshttp.InitManager(c)
 	claberneteshttp.GetManager().Start()
 
 	c.logger.Debug("http manager started...")

@@ -38,6 +38,7 @@ rules:
       - secrets
       - configmaps
       - services
+      - pods
     verbs:
       - get
       - list

@@ -263,7 +263,7 @@ func (c *clabernetes) waitForImage(
 	var checkCounter int
 
 	for range ticker.C {
-		if time.Since(startTime) > 5*time.Minute {
+		if time.Since(startTime) > clabernetesconstants.PullerPodTimeout {
 			break
 		}
 
@@ -273,6 +273,8 @@ func (c *clabernetes) waitForImage(
 		}
 
 		if imagePresent {
+			c.logger.Infof("image %q is now available on node, continuing...", imageName)
+
 			return nil
 		}
 
