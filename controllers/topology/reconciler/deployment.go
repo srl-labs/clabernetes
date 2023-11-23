@@ -522,6 +522,14 @@ func (r *DeploymentReconciler) renderDeploymentDevices(
 		deployment.Spec.Template.Spec.Volumes,
 		[]k8scorev1.Volume{
 			{
+				Name: "dev-kvm",
+				VolumeSource: k8scorev1.VolumeSource{
+					HostPath: &k8scorev1.HostPathVolumeSource{
+						Path: "/dev/kvm",
+					},
+				},
+			},
+			{
 				Name: "dev-fuse",
 				VolumeSource: k8scorev1.VolumeSource{
 					HostPath: &k8scorev1.HostPathVolumeSource{
@@ -544,6 +552,11 @@ func (r *DeploymentReconciler) renderDeploymentDevices(
 	deployment.Spec.Template.Spec.Containers[0].VolumeMounts = append(
 		deployment.Spec.Template.Spec.Containers[0].VolumeMounts,
 		[]k8scorev1.VolumeMount{
+			{
+				Name:      "dev-kvm",
+				ReadOnly:  true,
+				MountPath: "/dev/kvm",
+			},
 			{
 				Name:      "dev-fuse",
 				ReadOnly:  true,
