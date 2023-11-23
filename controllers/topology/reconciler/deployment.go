@@ -321,6 +321,12 @@ func (r *DeploymentReconciler) renderDeploymentContainer(
 				MountPath: "/clabernetes/files-from-url.yaml",
 				SubPath:   fmt.Sprintf("%s-files-from-url", nodeName),
 			},
+			{
+				Name:      configVolumeName,
+				ReadOnly:  true,
+				MountPath: "/clabernetes/configured-pull-secrets.yaml",
+				SubPath:   "configured-pull-secrets",
+			},
 		},
 		TerminationMessagePath:   "/dev/termination-log",
 		TerminationMessagePolicy: "File",

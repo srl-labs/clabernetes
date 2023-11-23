@@ -63,7 +63,11 @@ func (r *ConfigMapReconciler) Render(
 		labels[k] = v
 	}
 
-	data := make(map[string]string)
+	data := map[string]string{
+		// we always make this key like the other keys so we can be lazy and not have to wonder if
+		// the key / mounted file exists.
+		"configured-pull-secrets": "",
+	}
 
 	for nodeName, nodeTopo := range clabernetesConfigs {
 		// always initialize the tunnels and files from url keys in the configmap, this way we don't

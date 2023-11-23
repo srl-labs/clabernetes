@@ -12,6 +12,8 @@ import (
 	"os/exec"
 	"time"
 
+	"gopkg.in/yaml.v3"
+
 	claberneteshttptypes "github.com/srl-labs/clabernetes/http/types"
 
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
@@ -22,36 +24,111 @@ import (
 )
 
 const (
-	imagePullRequestTimeout = 5 * time.Second
-	imageDestination        = "/clabernetes/.image/node-image.tar"
-	imageCheckPollInterval  = 5 * time.Second
-	imageCheckLogCounter    = 6
+	imageDestination       = "/clabernetes/.image/node-image.tar"
+	imageCheckPollInterval = 5 * time.Second
+	imageCheckLogCounter   = 6
 )
 
 func (c *clabernetes) image() {
-	imagePullThroughMode := os.Getenv(clabernetesconstants.LauncherImagePullThroughModeEnv)
+	abort, imageManager := c.prepareImagePullThrough()
+	if abort {
+		return
+	}
 
-	switch imagePullThroughMode {
+	abort = c.imageCheckPresent(imageManager)
+	if abort {
+		return
+	}
+
+	configuredPullSecretsBytes, err := os.ReadFile("configured-pull-secrets.yaml")
+	if err != nil {
+		c.logger.Warnf("failed image pull through (read secrets), err: %s", err)
+
+		handleImagePullThroughModeAlwaysPanic(c.imagePullThroughMode)
+
+		return
+	}
+
+	var configuredPullSecrets []string
+
+	err = yaml.Unmarshal(configuredPullSecretsBytes, &configuredPullSecrets)
+	if err != nil {
+		c.logger.Warnf("failed image pull through (unmarshal secrets), err: %s", err)
+
+		handleImagePullThroughModeAlwaysPanic(c.imagePullThroughMode)
+
+		return
+	}
+
+	if len(configuredPullSecrets) == 0 {
+		c.logger.Info("no pull secrets configured, pulling image ourselves with no credentials...")
+
+		err = imageManager.Pull(c.imageName)
+		if err != nil {
+			handleImagePullThroughModeAlwaysPanic(c.imagePullThroughMode)
+
+			return
+		}
+	} else {
+		err = c.requestImagePull(imageManager, configuredPullSecrets)
+		if err != nil {
+			handleImagePullThroughModeAlwaysPanic(c.imagePullThroughMode)
+
+			return
+		}
+	}
+
+	err = c.waitForImage(imageManager)
+	if err != nil {
+		c.logger.Warnf("failed image pull through (wait), err: %s", err)
+
+		handleImagePullThroughModeAlwaysPanic(c.imagePullThroughMode)
+
+		return
+	}
+
+	err = imageManager.Export(c.imageName, imageDestination)
+	if err != nil {
+		c.logger.Warnf("failed image pull through (export), err: %s", err)
+
+		handleImagePullThroughModeAlwaysPanic(c.imagePullThroughMode)
+
+		return
+	}
+
+	err = c.imageImport()
+	if err != nil {
+		c.logger.Warnf("failed image pull through (import), err: %s", err)
+
+		handleImagePullThroughModeAlwaysPanic(c.imagePullThroughMode)
+	}
+}
+
+func (c *clabernetes) prepareImagePullThrough() (
+	abort bool,
+	imageManager claberneteslauncherimage.Manager,
+) {
+	switch c.imagePullThroughMode {
 	case clabernetesconstants.ImagePullThroughModeAuto,
 		clabernetesconstants.ImagePullThroughModeAlways:
 		c.logger.Infof(
 			"image pull through mode %q, start image pull through attempt...",
-			imagePullThroughMode,
+			c.imagePullThroughMode,
 		)
 	case clabernetesconstants.ImagePullThroughModeNever:
 		c.logger.Debugf(
 			"image pull through mode is %q, skipping image pull through...",
-			imagePullThroughMode,
+			c.imagePullThroughMode,
 		)
 
-		return
+		return true, nil
 	default:
 		c.logger.Warnf(
 			"unknown image pull through mode %q, skipping image pull through...",
-			imagePullThroughMode,
+			c.imagePullThroughMode,
 		)
 
-		return
+		return true, nil
 	}
 
 	c.logger.Debug("handling image pull through...")
@@ -63,7 +140,7 @@ func (c *clabernetes) image() {
 	if err != nil {
 		c.logger.Warnf("error creating image manager, err: %s", err)
 
-		if imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
+		if c.imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
 			msg := fmt.Sprintf(
 				"image pull through mode is always, but criKind is unset or unknown," +
 					" cannot continue...",
@@ -79,12 +156,11 @@ func (c *clabernetes) image() {
 				" continuing to normal launch...",
 		)
 
-		return
+		return true, nil
 	}
 
-	imageName := os.Getenv(clabernetesconstants.LauncherNodeImageEnv)
-	if imageName == "" {
-		if imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
+	if c.imageName == "" {
+		if c.imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
 			msg := fmt.Sprintf(
 				"image pull through mode is always, node image is unknown," +
 					" cannot continue...",
@@ -100,47 +176,10 @@ func (c *clabernetes) image() {
 				" continuing to normal launch...",
 		)
 
-		return
+		return true, nil
 	}
 
-	continuePullThrough := c.imageCheckPresent(imageManager, imageName, imagePullThroughMode)
-	if !continuePullThrough {
-		return
-	}
-
-	err = c.requestImagePull(imageName)
-	if err != nil {
-		c.logger.Warnf("failed image pull through (request pull), err: %s", err)
-
-		handleImagePullThroughModeAlwaysPanic(imagePullThroughMode)
-
-		return
-	}
-
-	err = c.waitForImage(imageName, imageManager)
-	if err != nil {
-		c.logger.Warnf("failed image pull through (wait), err: %s", err)
-
-		handleImagePullThroughModeAlwaysPanic(imagePullThroughMode)
-
-		return
-	}
-
-	err = imageManager.Export(imageName, imageDestination)
-	if err != nil {
-		c.logger.Warnf("failed image pull through (export), err: %s", err)
-
-		handleImagePullThroughModeAlwaysPanic(imagePullThroughMode)
-
-		return
-	}
-
-	err = c.imageImport()
-	if err != nil {
-		c.logger.Warnf("failed image pull through (import), err: %s", err)
-
-		handleImagePullThroughModeAlwaysPanic(imagePullThroughMode)
-	}
+	return false, imageManager
 }
 
 func handleImagePullThroughModeAlwaysPanic(imagePullThroughMode string) {
@@ -151,14 +190,36 @@ func handleImagePullThroughModeAlwaysPanic(imagePullThroughMode string) {
 	}
 }
 
-func (c *clabernetes) requestImagePull(imageName string) error {
+func (c *clabernetes) requestImagePull(
+	imageManager claberneteslauncherimage.Manager,
+	configuredPullSecrets []string,
+) error {
+	err := c.sendImagePullRequest(configuredPullSecrets)
+	if err != nil {
+		c.logger.Warnf("failed image pull through (request pull), err: %s", err)
+
+		return err
+	}
+
+	err = c.waitForImage(imageManager)
+	if err != nil {
+		c.logger.Warnf("failed image pull through (wait), err: %s", err)
+
+		return err
+	}
+
+	return nil
+}
+
+func (c *clabernetes) sendImagePullRequest(configuredPullSecrets []string) error {
 	imageRequest := claberneteshttptypes.ImageRequest{
-		TopologyName:       os.Getenv(clabernetesconstants.LauncherTopologyNameEnv),
-		TopologyNamespace:  os.Getenv(clabernetesconstants.PodNamespaceEnv),
-		TopologyNodeName:   os.Getenv(clabernetesconstants.LauncherNodeNameEnv),
-		KubernetesNodeName: os.Getenv(clabernetesconstants.NodeNameEnv),
-		RequestingPodName:  os.Getenv(clabernetesconstants.PodNameEnv),
-		RequestedImageName: imageName,
+		TopologyName:          os.Getenv(clabernetesconstants.LauncherTopologyNameEnv),
+		TopologyNamespace:     os.Getenv(clabernetesconstants.PodNamespaceEnv),
+		TopologyNodeName:      os.Getenv(clabernetesconstants.LauncherNodeNameEnv),
+		KubernetesNodeName:    os.Getenv(clabernetesconstants.NodeNameEnv),
+		RequestingPodName:     os.Getenv(clabernetesconstants.PodNameEnv),
+		RequestedImageName:    c.imageName,
+		ConfiguredPullSecrets: configuredPullSecrets,
 	}
 
 	requestJSON, err := json.Marshal(imageRequest)
@@ -170,7 +231,7 @@ func (c *clabernetes) requestImagePull(imageName string) error {
 
 	body := bytes.NewReader(requestJSON)
 
-	ctx, cancel := context.WithTimeout(c.ctx, imagePullRequestTimeout)
+	ctx, cancel := context.WithTimeout(c.ctx, clabernetesconstants.DefaultClientOperationTimeout)
 	defer cancel()
 
 	request, err := http.NewRequestWithContext(
@@ -225,35 +286,32 @@ func (c *clabernetes) requestImagePull(imageName string) error {
 	return nil
 }
 
-// return value is "should we continue (true) or with pull through process or not".
 func (c *clabernetes) imageCheckPresent(
 	imageManager claberneteslauncherimage.Manager,
-	imageName, imagePullThroughMode string,
 ) bool {
-	imagePresent, err := imageManager.Present(imageName)
+	imagePresent, err := imageManager.Present(c.imageName)
 	if err != nil {
 		c.logger.Warnf("failed image pull through (check), err: %s", err)
 
-		if imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
+		if c.imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
 			clabernetesutil.Panic(
 				"image pull through failed and pull through mode is always, cannot continue",
 			)
 		}
 
-		return false
+		return true
 	}
 
 	if imagePresent {
-		c.logger.Infof("image %q is present, aborting image pull through", imageName)
+		c.logger.Infof("image %q is present, aborting image pull through", c.imageName)
 
-		return false
+		return true
 	}
 
-	return true
+	return false
 }
 
 func (c *clabernetes) waitForImage(
-	imageName string,
 	imageManager claberneteslauncherimage.Manager,
 ) error {
 	startTime := time.Now()
@@ -267,13 +325,13 @@ func (c *clabernetes) waitForImage(
 			break
 		}
 
-		imagePresent, err := imageManager.Present(imageName)
+		imagePresent, err := imageManager.Present(c.imageName)
 		if err != nil {
 			return err
 		}
 
 		if imagePresent {
-			c.logger.Infof("image %q is now available on node, continuing...", imageName)
+			c.logger.Infof("image %q is now available on node, continuing...", c.imageName)
 
 			return nil
 		}
@@ -283,14 +341,14 @@ func (c *clabernetes) waitForImage(
 		if checkCounter == imageCheckLogCounter {
 			checkCounter = 0
 
-			c.logger.Infof("waiting for image %q to be present on node...", imageName)
+			c.logger.Infof("waiting for image %q to be present on node...", c.imageName)
 		}
 	}
 
 	return fmt.Errorf(
 		"%w: timed out waiting for image %q to be present on node",
 		claberneteserrors.ErrLaunch,
-		imageName,
+		c.imageName,
 	)
 }
 
