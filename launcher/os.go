@@ -6,15 +6,18 @@ import (
 	"os/exec"
 )
 
-func (c *clabernetes) handleMounts() error {
-	err := c.handleRemounts()
-	if err != nil {
-		return err
-	}
+func (c *clabernetes) handleMounts() {
+	c.handleRemounts()
 
 	isCgroupV2, err := c.isCgroupV2()
 	if err != nil {
-		return err
+		c.logger.Warnf(
+			"failed determining cgroup style, will continue assuming v2 style,"+
+				" but booting node may fail, err: %s",
+			err,
+		)
+
+		return
 	}
 
 	if isCgroupV2 {
@@ -22,21 +25,16 @@ func (c *clabernetes) handleMounts() error {
 		// need to do; for cgroupv1 things we need to continue on to remount the sub components
 		c.logger.Debug("running cgroupv2, no more remounting to do...")
 
-		return nil
+		return
 	}
 
 	c.logger.Debug("handling cgroupv1 remounts...")
 
-	err = c.handleCgroupV1Remounts()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	c.handleCgroupV1Remounts()
 }
 
-func (c *clabernetes) handleRemounts() error {
-	for _, remountPath := range []string{
+func (c *clabernetes) handleRemounts() {
+	for _, path := range []string{
 		"/sys/fs/cgroup",
 		"/proc",
 		"/proc/sys",
@@ -46,8 +44,8 @@ func (c *clabernetes) handleRemounts() error {
 			"-v",
 			"-o",
 			"remount,rw",
-			remountPath,
-			remountPath,
+			path,
+			path,
 		)
 
 		updateCmd.Stdout = c.logger
@@ -55,14 +53,16 @@ func (c *clabernetes) handleRemounts() error {
 
 		err := updateCmd.Run()
 		if err != nil {
-			return err
+			c.logger.Warnf(
+				"failed remounting %q, will continue but booting node may fail, err: %s",
+				path,
+				err,
+			)
 		}
 	}
-
-	return nil
 }
 
-func (c *clabernetes) handleCgroupV1Remounts() error {
+func (c *clabernetes) handleCgroupV1Remounts() {
 	cgroupRemounts := []string{
 		"blkio",
 		"cpu,cpuacct",
@@ -88,7 +88,11 @@ func (c *clabernetes) handleCgroupV1Remounts() error {
 
 		err := updateCmd.Run()
 		if err != nil {
-			return err
+			c.logger.Warnf(
+				"failed unmounting %q, will continue but booting node may fail, err: %s",
+				path,
+				err,
+			)
 		}
 	}
 
@@ -109,11 +113,13 @@ func (c *clabernetes) handleCgroupV1Remounts() error {
 
 		err := updateCmd.Run()
 		if err != nil {
-			return err
+			c.logger.Warnf(
+				"failed (re)mounting %q, will continue but booting node may fail, err: %s",
+				path,
+				err,
+			)
 		}
 	}
-
-	return nil
 }
 
 func (c *clabernetes) isCgroupV2() (bool, error) {

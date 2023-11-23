@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
@@ -102,16 +103,16 @@ func (c *clabernetes) startup() {
 func (c *clabernetes) setup() {
 	c.logger.Debug("handling mounts...")
 
-	err := c.handleMounts()
-	if err != nil {
-		c.logger.Criticalf("failed handling mounts, err: %s", err)
-
-		clabernetesutil.Panic(err.Error())
+	if !strings.EqualFold(
+		os.Getenv(clabernetesconstants.LauncherPrivilegedEnv),
+		clabernetesconstants.True,
+	) {
+		c.handleMounts()
 	}
 
 	c.logger.Debug("configure insecure registries if requested...")
 
-	err = c.handleInsecureRegistries()
+	err := c.handleInsecureRegistries()
 	if err != nil {
 		c.logger.Criticalf("failed configuring insecure docker registries, err: %s", err)
 

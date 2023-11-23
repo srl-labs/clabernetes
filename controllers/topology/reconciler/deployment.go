@@ -394,6 +394,16 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		)
 	}
 
+	if owningTopologyCommonSpec.PrivilegedLauncher {
+		envs = append(
+			envs,
+			k8scorev1.EnvVar{
+				Name:  clabernetesconstants.LauncherPrivilegedEnv,
+				Value: clabernetesconstants.True,
+			},
+		)
+	}
+
 	deployment.Spec.Template.Spec.Containers[0].Env = envs
 }
 
