@@ -172,7 +172,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /alive
-              port: http
+              port: 10443
               scheme: HTTPS
             successThreshold: 1
             failureThreshold: 2
