@@ -6,7 +6,13 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
+	"strings"
 	"testing"
+
+	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
+
+	"sigs.k8s.io/yaml"
 
 	clabernetesclabverter "github.com/srl-labs/clabernetes/clabverter"
 
@@ -157,26 +163,39 @@ func normalizeFromFileFilePaths(t *testing.T, b []byte) []byte {
 		t.Fatalf("failed getting working dir, err: %s", err)
 	}
 
-	originalPathPattern := regexp.MustCompile(fmt.Sprintf(`(?:filePath: )(%s)`, cwd))
+	containerlab := &clabernetesapistopologyv1alpha1.Containerlab{}
 
-	foundPathSubMatch := originalPathPattern.FindSubmatch(b)
-	if len(foundPathSubMatch) != 2 {
-		return b
+	err = yaml.Unmarshal(b, containerlab)
+	if err != nil {
+		t.Fatalf("failed unmarshaling containerlab cr, err: %s", err)
 	}
 
-	foundPath := string(foundPathSubMatch[1])
+	for nodeName := range containerlab.Spec.FilesFromConfigMap {
+		sort.Slice(containerlab.Spec.FilesFromConfigMap[nodeName], func(i, j int) bool {
+			return containerlab.Spec.FilesFromConfigMap[nodeName][i].FilePath < containerlab.Spec.FilesFromConfigMap[nodeName][j].FilePath
+		})
+	}
 
-	pathPattern := regexp.MustCompile(fmt.Sprintf(`filePath: %s`, foundPath))
-
-	b = pathPattern.ReplaceAll(b, []byte("filePath: /some/dir/clabernetes/clabverter"))
+	for nodeName := range containerlab.Spec.FilesFromConfigMap {
+		for idx, fileFromConfigMap := range containerlab.Spec.FilesFromConfigMap[nodeName] {
+			containerlab.Spec.FilesFromConfigMap[nodeName][idx].FilePath = strings.Replace(
+				fileFromConfigMap.FilePath,
+				cwd,
+				"/some/dir/clabernetes/clabverter",
+				1,
+			)
+			containerlab.Spec.FilesFromConfigMap[nodeName][idx].ConfigMapPath = "REPLACED"
+		}
+	}
 
 	// above is just replacing the filePath parts, below we just pave over configmap paths because
 	// its not worth the effort to try to ensure that they are the same since they can change based
 	// on path of where the test is ran and then the safe concat name hash comes into play etc
 
-	configMapPathsPattern := regexp.MustCompile(`(?m)^\s+configMapPath: .*$`)
-
-	b = configMapPathsPattern.ReplaceAll(b, []byte("          configMapPath: REPLACED"))
+	b, err = yaml.Marshal(containerlab)
+	if err != nil {
+		t.Fatalf("failed marshaling containerlab cr, err: %s", err)
+	}
 
 	return b
 }
