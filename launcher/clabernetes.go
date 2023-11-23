@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
@@ -102,7 +103,12 @@ func (c *clabernetes) startup() {
 func (c *clabernetes) setup() {
 	c.logger.Debug("handling mounts...")
 
-	c.handleMounts()
+	if !strings.EqualFold(
+		os.Getenv(clabernetesconstants.LauncherPrivilegedEnv),
+		clabernetesconstants.True,
+	) {
+		c.handleMounts()
+	}
 
 	c.logger.Debug("configure insecure registries if requested...")
 

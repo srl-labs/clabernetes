@@ -75,6 +75,10 @@
                             {
                                 "name": "LAUNCHER_NODE_IMAGE",
                                 "value": "ghcr.io/nokia/srlinux"
+                            },
+                            {
+                                "name": "LAUNCHER_PRIVILEGED",
+                                "value": "true"
                             }
                         ],
                         "resources": {},

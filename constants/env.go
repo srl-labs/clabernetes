@@ -48,6 +48,10 @@ const (
 	// clabernetes (launcher) pods.
 	LauncherPullPolicyEnv = "LAUNCHER_PULL_POLICY"
 
+	// LauncherPrivilegedEnv is an envar that indicates if the launcher is launched with
+	// privileged mode or our "not so privileged mode".
+	LauncherPrivilegedEnv = "LAUNCHER_PRIVILEGED"
+
 	// LauncherInsecureRegistries env var that tells the launcher pods which registries are
 	// insecure. Should be set by the controller via the topology spec.
 	LauncherInsecureRegistries = "LAUNCHER_INSECURE_REGISTRIES"
