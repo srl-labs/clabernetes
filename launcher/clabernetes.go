@@ -102,16 +102,11 @@ func (c *clabernetes) startup() {
 func (c *clabernetes) setup() {
 	c.logger.Debug("handling mounts...")
 
-	err := c.handleMounts()
-	if err != nil {
-		c.logger.Criticalf("failed handling mounts, err: %s", err)
-
-		clabernetesutil.Panic(err.Error())
-	}
+	c.handleMounts()
 
 	c.logger.Debug("configure insecure registries if requested...")
 
-	err = c.handleInsecureRegistries()
+	err := c.handleInsecureRegistries()
 	if err != nil {
 		c.logger.Criticalf("failed configuring insecure docker registries, err: %s", err)
 
