@@ -49,6 +49,7 @@ func (r *ConfigMapReconciler) Render(
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	tunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
 	filesFromURL map[string][]clabernetesapistopologyv1alpha1.FileFromURL,
+	imagePullSecretsString string,
 ) (*k8scorev1.ConfigMap, error) {
 	annotations, globalLabels := r.configManagerGetter().GetAllMetadata()
 
@@ -66,7 +67,7 @@ func (r *ConfigMapReconciler) Render(
 	data := map[string]string{
 		// we always make this key like the other keys so we can be lazy and not have to wonder if
 		// the key / mounted file exists.
-		"configured-pull-secrets": "",
+		"configured-pull-secrets": imagePullSecretsString,
 	}
 
 	for nodeName, nodeTopo := range clabernetesConfigs {

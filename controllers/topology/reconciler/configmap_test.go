@@ -52,6 +52,7 @@ func TestRenderConfigMap(t *testing.T) {
 		clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config
 		tunnels            map[string][]*clabernetesapistopologyv1alpha1.Tunnel
 		filesFromURL       map[string][]clabernetesapistopologyv1alpha1.FileFromURL
+		imagePullSecrets   string
 	}{
 		{
 			name: "basic-two-node-with-links",
@@ -181,6 +182,36 @@ func TestRenderConfigMap(t *testing.T) {
 			},
 			filesFromURL: map[string][]clabernetesapistopologyv1alpha1.FileFromURL{},
 		},
+		{
+			name: "image-pull-secrets",
+			namespacedName: apimachinerytypes.NamespacedName{
+				Name:      "test-configmap",
+				Namespace: "nowhere",
+			},
+			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
+				"srl1": {
+					Name:   "clabernetes-srl1",
+					Prefix: clabernetesutil.ToPointer(""),
+					Topology: &clabernetesutilcontainerlab.Topology{
+						Defaults: &clabernetesutilcontainerlab.NodeDefinition{
+							Ports: defaultPorts,
+						},
+						Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
+							"srl1": {
+								Kind: "srl",
+							},
+						},
+						Links: []*clabernetesutilcontainerlab.LinkDefinition{},
+					},
+					Debug: false,
+				},
+			},
+			tunnels: map[string][]*clabernetesapistopologyv1alpha1.Tunnel{
+				"srl1": {},
+			},
+			filesFromURL:     map[string][]clabernetesapistopologyv1alpha1.FileFromURL{},
+			imagePullSecrets: "- some-secret\n-another-secret",
+		},
 	}
 
 	for _, testCase := range cases {
@@ -200,6 +231,7 @@ func TestRenderConfigMap(t *testing.T) {
 					testCase.clabernetesConfigs,
 					testCase.tunnels,
 					testCase.filesFromURL,
+					testCase.imagePullSecrets,
 				)
 				if err != nil {
 					t.Fatal(err)

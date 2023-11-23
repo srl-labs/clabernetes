@@ -99,14 +99,16 @@ type Reconciler struct {
 	deploymentReconciler       *DeploymentReconciler
 }
 
-// ReconcileConfigMap reconciles the primary configmap containing clabernetes configs and tunnel
-// information.
+// ReconcileConfigMap reconciles the primary configmap containing clabernetes configs, tunnel
+// information, pull secret information, and perhaps more in the future.
 func (r *Reconciler) ReconcileConfigMap(
 	ctx context.Context,
 	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
 	reconcileData *ReconcileData,
 ) error {
 	var err error
+
+	topologyCommonSpec := owningTopology.GetTopologyCommonSpec()
 
 	configBytes, configHash, err := clabernetesutil.HashObjectYAML(
 		reconcileData.ResolvedConfigs,
@@ -127,9 +129,7 @@ func (r *Reconciler) ReconcileConfigMap(
 
 	reconcileData.ResolvedTunnelsHash = tunnelHash
 
-	filesFromURL := owningTopology.GetTopologyCommonSpec().FilesFromURL
-
-	for nodeName, nodeFilesFromURL := range filesFromURL {
+	for nodeName, nodeFilesFromURL := range topologyCommonSpec.FilesFromURL {
 		var nodeFilesFromURLHash string
 
 		_, nodeFilesFromURLHash, err = clabernetesutil.HashObject(nodeFilesFromURL)
@@ -146,9 +146,16 @@ func (r *Reconciler) ReconcileConfigMap(
 		}
 	}
 
-	if reconcileData.PreviousConfigsHash == reconcileData.ResolvedConfigsHash &&
-		reconcileData.PreviousTunnelsHash == reconcileData.ResolvedTunnelsHash &&
-		reconcileData.NodesNeedingReboot.Len() == 0 {
+	imagePullSecretsBytes, imagePullSecretsHash, err := clabernetesutil.HashObjectYAML(
+		topologyCommonSpec.ImagePullSecrets,
+	)
+	if err != nil {
+		return err
+	}
+
+	reconcileData.ResolvedImagePullSecretsHash = imagePullSecretsHash
+
+	if !reconcileData.ConfigMapHasChanges() {
 		// the configs hashes match, nothing to do, should reconcile is false, and no error, *but*
 		// because the services may force us to update the cr we are reconciling, and we haven't
 		// processed the tunnel ids yet (because its slow and we are lazy), we need to copy the
@@ -177,7 +184,8 @@ func (r *Reconciler) ReconcileConfigMap(
 		namespacedName,
 		reconcileData.ResolvedConfigs,
 		reconcileData.ResolvedTunnels,
-		filesFromURL,
+		topologyCommonSpec.FilesFromURL,
+		string(imagePullSecretsBytes),
 	)
 	if err != nil {
 		return err

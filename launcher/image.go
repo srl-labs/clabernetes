@@ -78,15 +78,6 @@ func (c *clabernetes) image() {
 		}
 	}
 
-	err = c.waitForImage(imageManager)
-	if err != nil {
-		c.logger.Warnf("failed image pull through (wait), err: %s", err)
-
-		handleImagePullThroughModeAlwaysPanic(c.imagePullThroughMode)
-
-		return
-	}
-
 	err = imageManager.Export(c.imageName, imageDestination)
 	if err != nil {
 		c.logger.Warnf("failed image pull through (export), err: %s", err)

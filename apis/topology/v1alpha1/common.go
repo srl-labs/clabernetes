@@ -225,4 +225,6 @@ type TopologyStatus struct {
 	NodeExposedPorts map[string]*ExposedPorts `json:"nodeExposedPorts"`
 	// NodeExposedPortsHash is a hash of the last stored NodeExposedPorts data.
 	NodeExposedPortsHash string `json:"nodeExposedPortsHash"`
+	// ImagePullSecretsHash is a hash of the last stored ImagePullSecrets data.
+	ImagePullSecretsHash string `json:"imagePullSecretsHash"`
 }

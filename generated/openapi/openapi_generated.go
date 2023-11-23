@@ -470,6 +470,14 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
 							Format:      "",
 						},
 					},
+					"imagePullSecretsHash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ImagePullSecretsHash is a hash of the last stored ImagePullSecrets data.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{
 					"configs",
@@ -479,6 +487,7 @@ func schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
 					"filesFromURLHashes",
 					"nodeExposedPorts",
 					"nodeExposedPortsHash",
+					"imagePullSecretsHash",
 				},
 			},
 		},
@@ -1012,6 +1021,14 @@ func schema_clabernetes_apis_topology_v1alpha1_KneStatus(
 							Format:      "",
 						},
 					},
+					"imagePullSecretsHash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ImagePullSecretsHash is a hash of the last stored ImagePullSecrets data.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{
 					"configs",
@@ -1021,6 +1038,7 @@ func schema_clabernetes_apis_topology_v1alpha1_KneStatus(
 					"filesFromURLHashes",
 					"nodeExposedPorts",
 					"nodeExposedPortsHash",
+					"imagePullSecretsHash",
 				},
 			},
 		},
@@ -1375,6 +1393,14 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyStatus(
 							Format:      "",
 						},
 					},
+					"imagePullSecretsHash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ImagePullSecretsHash is a hash of the last stored ImagePullSecrets data.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{
 					"configs",
@@ -1384,6 +1410,7 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyStatus(
 					"filesFromURLHashes",
 					"nodeExposedPorts",
 					"nodeExposedPortsHash",
+					"imagePullSecretsHash",
 				},
 			},
 		},

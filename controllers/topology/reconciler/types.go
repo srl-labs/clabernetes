@@ -24,6 +24,9 @@ type ReconcileData struct {
 	PreviousFilesFromURLHashes map[string]string
 	ResolvedFilesFromURLHashes map[string]string
 
+	PreviousImagePullSecretsHash string
+	ResolvedImagePullSecretsHash string
+
 	ResolvedNodeExposedPorts     map[string]*clabernetesapistopologyv1alpha1.ExposedPorts
 	ResolvedNodeExposedPortsHash string
 
@@ -48,6 +51,8 @@ func NewReconcileData(
 
 		PreviousFilesFromURLHashes: status.FilesFromURLHashes,
 		ResolvedFilesFromURLHashes: map[string]string{},
+
+		PreviousImagePullSecretsHash: status.ImagePullSecretsHash,
 
 		ResolvedNodeExposedPorts: map[string]*clabernetesapistopologyv1alpha1.ExposedPorts{},
 
@@ -77,4 +82,28 @@ func (r *ReconcileData) SetStatus(
 	owningTopologyStatus.NodeExposedPorts = r.ResolvedNodeExposedPorts
 	owningTopologyStatus.NodeExposedPortsHash = r.ResolvedNodeExposedPortsHash
 	owningTopologyStatus.FilesFromURLHashes = r.ResolvedFilesFromURLHashes
+	owningTopologyStatus.ImagePullSecretsHash = r.ResolvedImagePullSecretsHash
+}
+
+// ConfigMapHasChanges returns true if the data that gets stored in the topology configmap has
+// changed between the last reconcile and the current iteration. This is just a helper to be more
+// verbose/clear what we are checking rather than having a giant conditional in the Reconciler.
+func (r *ReconcileData) ConfigMapHasChanges() bool {
+	if r.PreviousConfigsHash != r.ResolvedConfigsHash {
+		return true
+	}
+
+	if r.PreviousTunnelsHash != r.ResolvedTunnelsHash {
+		return true
+	}
+
+	if r.PreviousImagePullSecretsHash != r.ResolvedImagePullSecretsHash {
+		return true
+	}
+
+	if r.NodesNeedingReboot.Len() != 0 {
+		return true
+	}
+
+	return false
 }

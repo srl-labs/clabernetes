@@ -287,6 +287,10 @@ spec:
                   hashes stored so we can easily identify which nodes had changes
                   in their FilesFromURL data so we can know to restart them.
                 type: object
+              imagePullSecretsHash:
+                description: ImagePullSecretsHash is a hash of the last stored ImagePullSecrets
+                  data.
+                type: string
               nodeExposedPorts:
                 additionalProperties:
                   description: ExposedPorts holds information about exposed ports.
@@ -370,6 +374,7 @@ spec:
             - configs
             - configsHash
             - filesFromURLHashes
+            - imagePullSecretsHash
             - nodeExposedPorts
             - nodeExposedPortsHash
             - tunnels
