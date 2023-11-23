@@ -59,9 +59,11 @@ func StartClabernetes() {
 			clabernetesconstants.AppNameEnv,
 			clabernetesconstants.AppNameDefault,
 		),
-		logger:             clabernetesLogger,
-		containerlabLogger: containerlabLogger,
-		nodeLogger:         nodeLogger,
+		logger:               clabernetesLogger,
+		containerlabLogger:   containerlabLogger,
+		nodeLogger:           nodeLogger,
+		imageName:            os.Getenv(clabernetesconstants.LauncherNodeImageEnv),
+		imagePullThroughMode: os.Getenv(clabernetesconstants.LauncherImagePullThroughModeEnv),
 	}
 
 	clabernetesInstance.startup()
@@ -78,6 +80,9 @@ type clabernetes struct {
 	logger             claberneteslogging.Instance
 	containerlabLogger claberneteslogging.Instance
 	nodeLogger         claberneteslogging.Instance
+
+	imageName            string
+	imagePullThroughMode string
 
 	containerIDs []string
 }

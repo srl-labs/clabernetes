@@ -158,6 +158,12 @@
                                 "subPath": "srl1-files-from-url"
                             },
                             {
+                                "name": "render-deployment-test-config",
+                                "readOnly": true,
+                                "mountPath": "/clabernetes/configured-pull-secrets.yaml",
+                                "subPath": "configured-pull-secrets"
+                            },
+                            {
                                 "name": "dev-kvm",
                                 "readOnly": true,
                                 "mountPath": "/dev/kvm"
