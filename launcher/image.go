@@ -35,8 +35,26 @@ func (c *clabernetes) image() {
 		return
 	}
 
-	abort = c.imageCheckPresent(imageManager)
-	if abort {
+	imagePresent, err := imageManager.Present(c.imageName)
+	if err != nil {
+		c.logger.Warnf("failed image pull through (check), err: %s", err)
+
+		if c.imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
+			clabernetesutil.Panic(
+				"image pull through failed and pull through mode is always, cannot continue",
+			)
+		}
+
+		c.logger.Warnf("attempting to continue without image pull through...")
+
+		return
+	}
+
+	if imagePresent {
+		c.logger.Infof("image %q is present, begin copy to docker daemon...", c.imageName)
+
+		c.copyImageFromCRI(imageManager)
+
 		return
 	}
 
@@ -78,7 +96,11 @@ func (c *clabernetes) image() {
 		}
 	}
 
-	err = imageManager.Export(c.imageName, imageDestination)
+	c.copyImageFromCRI(imageManager)
+}
+
+func (c *clabernetes) copyImageFromCRI(imageManager claberneteslauncherimage.Manager) {
+	err := imageManager.Export(c.imageName, imageDestination)
 	if err != nil {
 		c.logger.Warnf("failed image pull through (export), err: %s", err)
 
@@ -275,31 +297,6 @@ func (c *clabernetes) sendImagePullRequest(configuredPullSecrets []string) error
 	_ = response.Body.Close()
 
 	return nil
-}
-
-func (c *clabernetes) imageCheckPresent(
-	imageManager claberneteslauncherimage.Manager,
-) bool {
-	imagePresent, err := imageManager.Present(c.imageName)
-	if err != nil {
-		c.logger.Warnf("failed image pull through (check), err: %s", err)
-
-		if c.imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
-			clabernetesutil.Panic(
-				"image pull through failed and pull through mode is always, cannot continue",
-			)
-		}
-
-		return true
-	}
-
-	if imagePresent {
-		c.logger.Infof("image %q is present, aborting image pull through", c.imageName)
-
-		return true
-	}
-
-	return false
 }
 
 func (c *clabernetes) waitForImage(
