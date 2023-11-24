@@ -37,7 +37,8 @@
                     {
                         "name": "render-deployment-test-config",
                         "configMap": {
-                            "name": "render-deployment-test"
+                            "name": "render-deployment-test",
+                            "defaultMode": 493
                         }
                     }
                 ],
@@ -62,6 +63,7 @@
                                 "name": "NODE_NAME",
                                 "valueFrom": {
                                     "fieldRef": {
+                                        "apiVersion": "v1",
                                         "fieldPath": "spec.nodeName"
                                     }
                                 }
@@ -70,6 +72,7 @@
                                 "name": "POD_NAME",
                                 "valueFrom": {
                                     "fieldRef": {
+                                        "apiVersion": "v1",
                                         "fieldPath": "metadata.name"
                                     }
                                 }
@@ -78,6 +81,7 @@
                                 "name": "POD_NAMESPACE",
                                 "valueFrom": {
                                     "fieldRef": {
+                                        "apiVersion": "v1",
                                         "fieldPath": "metadata.namespace"
                                     }
                                 }
@@ -158,7 +162,9 @@
                 "hostname": "srl1"
             }
         },
-        "strategy": {},
+        "strategy": {
+            "type": "Recreate"
+        },
         "revisionHistoryLimit": 0
     },
     "status": {}
