@@ -11,6 +11,8 @@ const (
 func (m *manager) aliveHandler(w http.ResponseWriter, r *http.Request) {
 	if !m.returnedReady {
 		m.logRequest(r)
+
+		m.returnedReady = true
 	}
 
 	if m.managerReadyF() {
