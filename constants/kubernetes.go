@@ -7,6 +7,9 @@ const (
 	// KubernetesService is a const to use for "service".
 	KubernetesService = "service"
 
+	// KubernetesPVC is a const to use for "persistentvolumeclaim".
+	KubernetesPVC = "persistentvolumeclaim"
+
 	// KubernetesDeployment is a const to use for "deployment".
 	KubernetesDeployment = "deployment"
 

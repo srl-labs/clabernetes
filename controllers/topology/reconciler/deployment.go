@@ -646,6 +646,41 @@ func (r *DeploymentReconciler) renderDeploymentDevices(
 	)
 }
 
+func (r *DeploymentReconciler) renderDeploymentPersistence(
+	deployment *k8sappsv1.Deployment,
+	nodeName,
+	owningTopologyName string,
+	owningTopologyCommonSpec *clabernetesapistopologyv1alpha1.TopologyCommonSpec,
+) {
+	if !owningTopologyCommonSpec.Persistence.Enabled {
+		return
+	}
+
+	volumeName := "containerlab-directory-persistence"
+
+	deployment.Spec.Template.Spec.Volumes = append(
+		deployment.Spec.Template.Spec.Volumes,
+		k8scorev1.Volume{
+			Name: volumeName,
+			VolumeSource: k8scorev1.VolumeSource{
+				PersistentVolumeClaim: &k8scorev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: fmt.Sprintf("%s-%s", owningTopologyName, nodeName),
+					ReadOnly:  false,
+				},
+			},
+		},
+	)
+
+	deployment.Spec.Template.Spec.Containers[0].VolumeMounts = append(
+		deployment.Spec.Template.Spec.Containers[0].VolumeMounts,
+		k8scorev1.VolumeMount{
+			Name:      volumeName,
+			ReadOnly:  false,
+			MountPath: fmt.Sprintf("/clabernetes/clab-clabernetes-%s", nodeName),
+		},
+	)
+}
+
 // Render accepts the owning topology a mapping of clabernetes sub-topology configs and a node name
 // and renders the final deployment for this node.
 func (r *DeploymentReconciler) Render(
@@ -704,6 +739,13 @@ func (r *DeploymentReconciler) Render(
 
 	r.renderDeploymentDevices(
 		deployment,
+		&owningTopologyCommonSpec,
+	)
+
+	r.renderDeploymentPersistence(
+		deployment,
+		nodeName,
+		owningTopologyName,
 		&owningTopologyCommonSpec,
 	)
 

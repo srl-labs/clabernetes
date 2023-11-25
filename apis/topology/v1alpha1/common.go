@@ -53,11 +53,15 @@ type Persistence struct {
 	// a mounted PVC.
 	Enabled bool `json:"enabled"`
 	// ClaimSize is the size of the PVC for this topology -- if not provided this defaults to 5Gi.
-	// If provided, the string value must be a valid kubernetes storage requests style string.
+	// If provided, the string value must be a valid kubernetes storage requests style string. Note
+	// the claim size *cannot be made smaller* once created, but it *can* be expanded. If you need
+	// to make the claim smaller you must delete the topology (or the node from the topology) and
+	// re-add it.
 	// +optional
 	ClaimSize string `json:"claimSize"`
 	// StorageClassName is the storage class to set in the PVC -- if not provided this will be left
-	// empty which will end up using your default storage class.
+	// empty which will end up using your default storage class. Note that currently we assume you
+	// have (as default) or provide a dynamically provisionable storage class, hence no selector.
 	// +optional
 	StorageClassName string `json:"storageClassName"`
 }

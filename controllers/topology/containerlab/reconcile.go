@@ -85,6 +85,18 @@ func (c *Controller) Reconcile(
 		reconcileData,
 	)
 	if err != nil {
+		// error already logged
+		return ctrlruntime.Result{}, err
+	}
+
+	err = c.TopologyReconciler.ReconcilePersistentVolumeClaim(
+		ctx,
+		containerlab,
+		reconcileData,
+	)
+	if err != nil {
+		c.BaseController.Log.Criticalf("failed reconciling clabernetes pvcs, error: %s", err)
+
 		return ctrlruntime.Result{}, err
 	}
 

@@ -39,6 +39,7 @@ rules:
       - configmaps
       - services
       - pods
+      - persistentvolumeclaims
     verbs:
       - get
       - list
