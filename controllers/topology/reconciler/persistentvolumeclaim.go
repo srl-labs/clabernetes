@@ -219,6 +219,24 @@ func (r *PersistentVolumeClaimReconciler) Conforms(
 	renderedPVC *k8scorev1.PersistentVolumeClaim,
 	expectedOwnerUID apimachinerytypes.UID,
 ) bool {
+	existingClaimSize := existingPVC.Spec.Resources.Requests.Storage().Value()
+	renderedClaimSize := renderedPVC.Spec.Resources.Requests.Storage().Value()
+
+	if renderedClaimSize != existingClaimSize {
+		if renderedClaimSize > existingClaimSize {
+			// we only "dont conform" if the rendered claim size is greater than the existing claim;
+			// we do this because we can *expand* but not shrink pvc claims
+			return false
+		}
+
+		r.log.Warnf(
+			"existing claim size of %q is *smaller* than desired claim size of %q,"+
+				" however claim size can only be increased, not shrunk, ignoring...",
+			existingPVC.Spec.Resources.Requests.Storage().String(),
+			renderedPVC.Spec.Resources.Requests.Storage().String(),
+		)
+	}
+
 	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
 		existingPVC.ObjectMeta.Annotations,
 		renderedPVC.ObjectMeta.Annotations,
