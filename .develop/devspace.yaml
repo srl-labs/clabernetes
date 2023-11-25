@@ -31,6 +31,7 @@ localRegistry:
 
 images:
   clabernetes-dev:
+    createPullSecret: false
     image: ${MANAGER_DEV_IMAGE}
     context: ../
     dockerfile: dev.Dockerfile
@@ -39,6 +40,7 @@ images:
       - $(git describe --always --abbrev=8)
 
   clabernetes:
+    createPullSecret: false
     image: ${MANAGER_IMAGE}
     context: ../
     dockerfile: ../build/manager.Dockerfile
@@ -50,6 +52,7 @@ images:
       - $(git describe --always --abbrev=8)
 
   clabernetes-launcher:
+    createPullSecret: false
     image: ${LAUNCHER_IMAGE}
     context: ../
     dockerfile: ../build/launcher.Dockerfile
@@ -61,6 +64,7 @@ images:
       - ${COMMIT_HASH}
 
   clabverter:
+    createPullSecret: false
     image: ${CLABVERTER_IMAGE}
     context: ../
     dockerfile: ../build/clabverter.Dockerfile
@@ -209,7 +213,6 @@ pipelines:
   dev:
     # override the default dev pipeline to not bother building clabverter while doing dev things
     run: |
-      ensure_pull_secrets --all
       build_images clabernetes-dev clabernetes clabernetes-launcher
       create_deployments --all
       start_dev --all
@@ -219,7 +222,6 @@ pipelines:
     # deploy pipeline
     run: |
       run_dependencies --all
-      ensure_pull_secrets --all
       build_images clabernetes clabernetes-launcher
       create_deployments --all
 

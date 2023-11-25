@@ -7,3 +7,6 @@ var ErrParse = errors.New("errParse")
 
 // ErrInvalidData is the error returned when encountering issues with some resources data.
 var ErrInvalidData = errors.New("errInvalidData")
+
+// ErrReconcile is the error used for generic errors during reconciliation.
+var ErrReconcile = errors.New("errReconcile)")

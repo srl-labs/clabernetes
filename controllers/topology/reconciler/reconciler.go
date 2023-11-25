@@ -6,6 +6,8 @@ import (
 	"slices"
 	"time"
 
+	claberneteserrors "github.com/srl-labs/clabernetes/errors"
+
 	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
@@ -240,6 +242,8 @@ func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 		return nil
 	}
 
+	var restartNodeError error
+
 	for _, nodeName := range reconcileData.NodesNeedingReboot.Items() {
 		if slices.Contains(deployments.Missing, nodeName) {
 			// is a new node, don't restart, we'll deploy it soon
@@ -251,21 +255,10 @@ func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 			nodeName,
 		)
 
-		if r.Log.GetLevel() == clabernetesconstants.Debug {
-			diff, err := clabernetesutil.UnifiedDiff(
-				reconcileData.ResolvedConfigs[nodeName],
-				reconcileData.PreviousConfigs[nodeName],
-			)
-			if err != nil {
-				r.Log.Warnf(
-					"failed generating diff of deployment. this only happened because logging"+
-						" is at debug level, ignoring the error. err: %s",
-					err,
-				)
-			} else {
-				r.Log.Debugf("deployment diff: %s", diff)
-			}
-		}
+		r.diffIfDebug(
+			reconcileData.PreviousConfigs[nodeName],
+			reconcileData.ResolvedConfigs[nodeName],
+		)
 
 		deploymentName := fmt.Sprintf("%s-%s", owningTopology.GetName(), nodeName)
 
@@ -288,10 +281,19 @@ func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 					deploymentName,
 				)
 
-				return nil
+				continue
 			}
 
-			return err
+			r.Log.Warnf("failed fetching deployment for node %q, err: %s", nodeName, err)
+
+			if restartNodeError == nil {
+				restartNodeError = fmt.Errorf(
+					"%w: encountered issue during node reboot process",
+					claberneteserrors.ErrReconcile,
+				)
+			}
+
+			continue
 		}
 
 		if nodeDeployment.Spec.Template.ObjectMeta.Annotations == nil {
@@ -304,11 +306,20 @@ func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 
 		err = r.updateObj(ctx, nodeDeployment, clabernetesconstants.KubernetesDeployment)
 		if err != nil {
-			return err
+			r.Log.Warnf("failed restarting deployment for node %q, err: %s", nodeName, err)
+
+			if restartNodeError == nil {
+				restartNodeError = fmt.Errorf(
+					"%w: encountered issue during node reboot process",
+					claberneteserrors.ErrReconcile,
+				)
+			}
+
+			continue
 		}
 	}
 
-	return nil
+	return restartNodeError
 }
 
 // ReconcileDeployments reconciles the deployments that make up a clabernetes Topology.
@@ -383,6 +394,9 @@ func (r *Reconciler) ReconcileDeployments(
 			renderedCurrentDeployment,
 			owningTopology.GetUID(),
 		) {
+			// only diff'ing spec since we *probably* only care about that part (minus metadata)
+			r.diffIfDebug(existingCurrentDeployment.Spec, renderedCurrentDeployment.Spec)
+
 			err = r.updateObj(
 				ctx,
 				renderedCurrentDeployment,
@@ -782,4 +796,24 @@ func (r *Reconciler) EnqueueForAll(
 	}
 
 	return requests
+}
+
+func (r *Reconciler) diffIfDebug(a, b any) {
+	if r.Log.GetLevel() != clabernetesconstants.Debug {
+		return
+	}
+
+	diff, err := clabernetesutil.UnifiedDiff(
+		a,
+		b,
+	)
+	if err != nil {
+		r.Log.Warnf(
+			"failed generating diff. this only happened because logging"+
+				" is at debug level, ignoring the error. err: %s",
+			err,
+		)
+	} else {
+		r.Log.Debugf("object diff: %s", diff)
+	}
 }

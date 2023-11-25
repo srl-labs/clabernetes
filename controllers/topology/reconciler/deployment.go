@@ -144,6 +144,12 @@ func (r *DeploymentReconciler) renderDeploymentBase(
 		Spec: k8sappsv1.DeploymentSpec{
 			Replicas:             clabernetesutil.ToPointer(int32(1)),
 			RevisionHistoryLimit: clabernetesutil.ToPointer(int32(0)),
+			Strategy: k8sappsv1.DeploymentStrategy{
+				// in our case there is no (current?) need for more gracefully updating our
+				// deployments, so just yolo recreate them instead...
+				Type:          k8sappsv1.RecreateDeploymentStrategyType,
+				RollingUpdate: nil,
+			},
 			Selector: &metav1.LabelSelector{
 				MatchLabels: selectorLabels,
 			},
@@ -179,6 +185,9 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 					LocalObjectReference: k8scorev1.LocalObjectReference{
 						Name: owningTopologyName,
 					},
+					DefaultMode: clabernetesutil.ToPointer(
+						int32(clabernetesconstants.PermissionsEveryoneRead),
+					),
 				},
 			},
 		},
@@ -215,6 +224,7 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 					VolumeSource: k8scorev1.VolumeSource{
 						HostPath: &k8scorev1.HostPathVolumeSource{
 							Path: path,
+							Type: clabernetesutil.ToPointer(k8scorev1.HostPathType("")),
 						},
 					},
 				},
@@ -369,7 +379,8 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 			Name: clabernetesconstants.NodeNameEnv,
 			ValueFrom: &k8scorev1.EnvVarSource{
 				FieldRef: &k8scorev1.ObjectFieldSelector{
-					FieldPath: "spec.nodeName",
+					APIVersion: "v1",
+					FieldPath:  "spec.nodeName",
 				},
 			},
 		},
@@ -377,7 +388,8 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 			Name: clabernetesconstants.PodNameEnv,
 			ValueFrom: &k8scorev1.EnvVarSource{
 				FieldRef: &k8scorev1.ObjectFieldSelector{
-					FieldPath: "metadata.name",
+					APIVersion: "v1",
+					FieldPath:  "metadata.name",
 				},
 			},
 		},
@@ -385,7 +397,8 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 			Name: clabernetesconstants.PodNamespaceEnv,
 			ValueFrom: &k8scorev1.EnvVarSource{
 				FieldRef: &k8scorev1.ObjectFieldSelector{
-					FieldPath: "metadata.namespace",
+					APIVersion: "v1",
+					FieldPath:  "metadata.namespace",
 				},
 			},
 		},
@@ -585,6 +598,7 @@ func (r *DeploymentReconciler) renderDeploymentDevices(
 				VolumeSource: k8scorev1.VolumeSource{
 					HostPath: &k8scorev1.HostPathVolumeSource{
 						Path: "/dev/kvm",
+						Type: clabernetesutil.ToPointer(k8scorev1.HostPathType("")),
 					},
 				},
 			},
@@ -593,6 +607,7 @@ func (r *DeploymentReconciler) renderDeploymentDevices(
 				VolumeSource: k8scorev1.VolumeSource{
 					HostPath: &k8scorev1.HostPathVolumeSource{
 						Path: "/dev/fuse",
+						Type: clabernetesutil.ToPointer(k8scorev1.HostPathType("")),
 					},
 				},
 			},
@@ -601,6 +616,7 @@ func (r *DeploymentReconciler) renderDeploymentDevices(
 				VolumeSource: k8scorev1.VolumeSource{
 					HostPath: &k8scorev1.HostPathVolumeSource{
 						Path: "/dev/net/tun",
+						Type: clabernetesutil.ToPointer(k8scorev1.HostPathType("")),
 					},
 				},
 			},
@@ -790,7 +806,7 @@ func (r *DeploymentReconciler) Conforms(
 	}
 
 	if len(existingDeployment.ObjectMeta.OwnerReferences) != 1 {
-		// we should have only one owner reference, the extractor
+		// we should have only one owner reference, the owning topology
 		return false
 	}
 
