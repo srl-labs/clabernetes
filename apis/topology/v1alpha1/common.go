@@ -57,7 +57,8 @@ type Persistence struct {
 	// +optional
 	ClaimSize string `json:"claimSize"`
 	// StorageClassName is the storage class to set in the PVC -- if not provided this will be left
-	// empty which will end up using your default storage class.
+	// empty which will end up using your default storage class. Note that currently we assume you
+	// have (as default) or provide a dynamically provisionable storage class, hence no selector.
 	// +optional
 	StorageClassName string `json:"storageClassName"`
 }

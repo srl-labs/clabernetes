@@ -582,6 +582,94 @@ func (r *Reconciler) ReconcileServicesExpose(
 	return nil
 }
 
+// ReconcilePersistentVolumeClaim reconciles the persistent volume claims used for persisting the
+// containerlab working directory on nodes in a topology.
+func (r *Reconciler) ReconcilePersistentVolumeClaim(
+	ctx context.Context,
+	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
+	reconcileData *ReconcileData,
+) error {
+	pvcs, err := reconcileResolve(
+		ctx,
+		r,
+		&k8scorev1.PersistentVolumeClaim{},
+		&k8scorev1.PersistentVolumeClaimList{},
+		clabernetesconstants.KubernetesPVC,
+		owningTopology,
+		reconcileData.ResolvedConfigs,
+		r.persistentVolumeClaimReconciler.Resolve,
+	)
+	if err != nil {
+		return err
+	}
+
+	r.Log.Info("pruning extraneous pvcs")
+
+	for _, extraPVC := range pvcs.Extra {
+		err = r.deleteObj(ctx, extraPVC, clabernetesconstants.KubernetesPVC)
+		if err != nil {
+			return err
+		}
+	}
+
+	r.Log.Info("creating missing pvcs")
+
+	renderedMissingPVCs := r.persistentVolumeClaimReconciler.RenderAll(
+		owningTopology,
+		pvcs.Missing,
+	)
+
+	for _, renderedMissingPVC := range renderedMissingPVCs {
+		err = r.createObj(
+			ctx,
+			owningTopology,
+			renderedMissingPVC,
+			clabernetesconstants.KubernetesPVC,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	r.Log.Info("enforcing desired state on existing deployments")
+
+	for existingCurrentPVCNodeName, existingCurrentPVC := range pvcs.Current {
+		renderedCurrentPVC := r.persistentVolumeClaimReconciler.Render(
+			owningTopology,
+			existingCurrentPVCNodeName,
+		)
+
+		err = ctrlruntimeutil.SetOwnerReference(
+			owningTopology,
+			renderedCurrentPVC,
+			r.Client.Scheme(),
+		)
+		if err != nil {
+			return err
+		}
+
+		if !r.persistentVolumeClaimReconciler.Conforms(
+			existingCurrentPVC,
+			renderedCurrentPVC,
+			owningTopology.GetUID(),
+		) {
+			// only diff'ing spec since we *probably* only care about that part (minus metadata)
+			r.diffIfDebug(existingCurrentPVC.Spec, renderedCurrentPVC.Spec)
+
+			err = r.updateObj(
+				ctx,
+				renderedCurrentPVC,
+				clabernetesconstants.KubernetesPVC,
+			)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 	ctx context.Context,
 	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
