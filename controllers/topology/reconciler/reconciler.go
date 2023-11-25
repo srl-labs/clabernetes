@@ -6,13 +6,11 @@ import (
 	"slices"
 	"time"
 
-	claberneteserrors "github.com/srl-labs/clabernetes/errors"
-
 	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
-
-	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 	k8sappsv1 "k8s.io/api/apps/v1"
 
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
@@ -72,6 +70,11 @@ func NewReconciler(
 			owningTopologyKind,
 			configManagerGetter,
 		),
+		persistentVolumeClaimReconciler: NewPersistentVolumeClaimReconciler(
+			log,
+			owningTopologyKind,
+			configManagerGetter,
+		),
 		deploymentReconciler: NewDeploymentReconciler(
 			log,
 			managerAppName,
@@ -94,11 +97,12 @@ type Reconciler struct {
 	ResourceKind   string
 	ResourceLister ResourceListerFunc
 
-	configMapReconciler        *ConfigMapReconciler
-	serviceNodeAliasReconciler *ServiceNodeAliasReconciler
-	serviceFabricReconciler    *ServiceFabricReconciler
-	serviceExposeReconciler    *ServiceExposeReconciler
-	deploymentReconciler       *DeploymentReconciler
+	configMapReconciler             *ConfigMapReconciler
+	serviceNodeAliasReconciler      *ServiceNodeAliasReconciler
+	serviceFabricReconciler         *ServiceFabricReconciler
+	serviceExposeReconciler         *ServiceExposeReconciler
+	persistentVolumeClaimReconciler *PersistentVolumeClaimReconciler
+	deploymentReconciler            *DeploymentReconciler
 }
 
 // ReconcileConfigMap reconciles the primary configmap containing clabernetes configs, tunnel
@@ -222,198 +226,6 @@ func (r *Reconciler) ReconcileConfigMap(
 	}
 
 	return r.updateObj(ctx, renderedConfigMap, clabernetesconstants.KubernetesConfigMap)
-}
-
-func (r *Reconciler) reconcileDeploymentsHandleRestarts(
-	ctx context.Context,
-	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
-	deployments *clabernetesutil.ObjectDiffer[*k8sappsv1.Deployment],
-	reconcileData *ReconcileData,
-) error {
-	r.Log.Debug("determining nodes needing restart")
-
-	r.deploymentReconciler.DetermineNodesNeedingRestart(
-		reconcileData,
-	)
-
-	if reconcileData.NodesNeedingReboot.Len() == 0 {
-		r.Log.Debug("all nodes are up to date, no restarts required")
-
-		return nil
-	}
-
-	var restartNodeError error
-
-	for _, nodeName := range reconcileData.NodesNeedingReboot.Items() {
-		if slices.Contains(deployments.Missing, nodeName) {
-			// is a new node, don't restart, we'll deploy it soon
-			continue
-		}
-
-		r.Log.Infof(
-			"restarting the node '%s' as configurations have changed",
-			nodeName,
-		)
-
-		r.diffIfDebug(
-			reconcileData.PreviousConfigs[nodeName],
-			reconcileData.ResolvedConfigs[nodeName],
-		)
-
-		deploymentName := fmt.Sprintf("%s-%s", owningTopology.GetName(), nodeName)
-
-		nodeDeployment := &k8sappsv1.Deployment{}
-
-		err := r.getObj(
-			ctx,
-			nodeDeployment,
-			apimachinerytypes.NamespacedName{
-				Namespace: owningTopology.GetNamespace(),
-				Name:      deploymentName,
-			},
-			clabernetesconstants.KubernetesDeployment,
-		)
-		if err != nil {
-			if apimachineryerrors.IsNotFound(err) {
-				r.Log.Warnf(
-					"could not find deployment '%s', cannot restart after config change,"+
-						" this should not happen",
-					deploymentName,
-				)
-
-				continue
-			}
-
-			r.Log.Warnf("failed fetching deployment for node %q, err: %s", nodeName, err)
-
-			if restartNodeError == nil {
-				restartNodeError = fmt.Errorf(
-					"%w: encountered issue during node reboot process",
-					claberneteserrors.ErrReconcile,
-				)
-			}
-
-			continue
-		}
-
-		if nodeDeployment.Spec.Template.ObjectMeta.Annotations == nil {
-			nodeDeployment.Spec.Template.ObjectMeta.Annotations = map[string]string{}
-		}
-
-		now := time.Now().Format(time.RFC3339)
-
-		nodeDeployment.Spec.Template.ObjectMeta.Annotations["kubectl.kubernetes.io/restartedAt"] = now //nolint:lll
-
-		err = r.updateObj(ctx, nodeDeployment, clabernetesconstants.KubernetesDeployment)
-		if err != nil {
-			r.Log.Warnf("failed restarting deployment for node %q, err: %s", nodeName, err)
-
-			if restartNodeError == nil {
-				restartNodeError = fmt.Errorf(
-					"%w: encountered issue during node reboot process",
-					claberneteserrors.ErrReconcile,
-				)
-			}
-
-			continue
-		}
-	}
-
-	return restartNodeError
-}
-
-// ReconcileDeployments reconciles the deployments that make up a clabernetes Topology.
-func (r *Reconciler) ReconcileDeployments(
-	ctx context.Context,
-	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
-	reconcileData *ReconcileData,
-) error {
-	deployments, err := reconcileResolve(
-		ctx,
-		r,
-		&k8sappsv1.Deployment{},
-		&k8sappsv1.DeploymentList{},
-		clabernetesconstants.KubernetesDeployment,
-		owningTopology,
-		reconcileData.ResolvedConfigs,
-		r.deploymentReconciler.Resolve,
-	)
-	if err != nil {
-		return err
-	}
-
-	r.Log.Info("pruning extraneous deployments")
-
-	for _, extraDeployment := range deployments.Extra {
-		err = r.deleteObj(ctx, extraDeployment, clabernetesconstants.KubernetesDeployment)
-		if err != nil {
-			return err
-		}
-	}
-
-	r.Log.Info("creating missing deployments")
-
-	renderedMissingDeployments := r.deploymentReconciler.RenderAll(
-		owningTopology,
-		reconcileData.ResolvedConfigs,
-		deployments.Missing,
-	)
-
-	for _, renderedMissingDeployment := range renderedMissingDeployments {
-		err = r.createObj(
-			ctx,
-			owningTopology,
-			renderedMissingDeployment,
-			clabernetesconstants.KubernetesDeployment,
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	r.Log.Info("enforcing desired state on existing deployments")
-
-	for existingCurrentDeploymentNodeName, existingCurrentDeployment := range deployments.Current {
-		renderedCurrentDeployment := r.deploymentReconciler.Render(
-			owningTopology,
-			reconcileData.ResolvedConfigs,
-			existingCurrentDeploymentNodeName,
-		)
-
-		err = ctrlruntimeutil.SetOwnerReference(
-			owningTopology,
-			renderedCurrentDeployment,
-			r.Client.Scheme(),
-		)
-		if err != nil {
-			return err
-		}
-
-		if !r.deploymentReconciler.Conforms(
-			existingCurrentDeployment,
-			renderedCurrentDeployment,
-			owningTopology.GetUID(),
-		) {
-			// only diff'ing spec since we *probably* only care about that part (minus metadata)
-			r.diffIfDebug(existingCurrentDeployment.Spec, renderedCurrentDeployment.Spec)
-
-			err = r.updateObj(
-				ctx,
-				renderedCurrentDeployment,
-				clabernetesconstants.KubernetesDeployment,
-			)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return r.reconcileDeploymentsHandleRestarts(
-		ctx,
-		owningTopology,
-		deployments,
-		reconcileData,
-	)
 }
 
 // ReconcileServices reconciles all the services for a clabernetes Topology.
@@ -768,6 +580,198 @@ func (r *Reconciler) ReconcileServicesExpose(
 	}
 
 	return nil
+}
+
+func (r *Reconciler) reconcileDeploymentsHandleRestarts(
+	ctx context.Context,
+	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
+	deployments *clabernetesutil.ObjectDiffer[*k8sappsv1.Deployment],
+	reconcileData *ReconcileData,
+) error {
+	r.Log.Debug("determining nodes needing restart")
+
+	r.deploymentReconciler.DetermineNodesNeedingRestart(
+		reconcileData,
+	)
+
+	if reconcileData.NodesNeedingReboot.Len() == 0 {
+		r.Log.Debug("all nodes are up to date, no restarts required")
+
+		return nil
+	}
+
+	var restartNodeError error
+
+	for _, nodeName := range reconcileData.NodesNeedingReboot.Items() {
+		if slices.Contains(deployments.Missing, nodeName) {
+			// is a new node, don't restart, we'll deploy it soon
+			continue
+		}
+
+		r.Log.Infof(
+			"restarting the node '%s' as configurations have changed",
+			nodeName,
+		)
+
+		r.diffIfDebug(
+			reconcileData.PreviousConfigs[nodeName],
+			reconcileData.ResolvedConfigs[nodeName],
+		)
+
+		deploymentName := fmt.Sprintf("%s-%s", owningTopology.GetName(), nodeName)
+
+		nodeDeployment := &k8sappsv1.Deployment{}
+
+		err := r.getObj(
+			ctx,
+			nodeDeployment,
+			apimachinerytypes.NamespacedName{
+				Namespace: owningTopology.GetNamespace(),
+				Name:      deploymentName,
+			},
+			clabernetesconstants.KubernetesDeployment,
+		)
+		if err != nil {
+			if apimachineryerrors.IsNotFound(err) {
+				r.Log.Warnf(
+					"could not find deployment '%s', cannot restart after config change,"+
+						" this should not happen",
+					deploymentName,
+				)
+
+				continue
+			}
+
+			r.Log.Warnf("failed fetching deployment for node %q, err: %s", nodeName, err)
+
+			if restartNodeError == nil {
+				restartNodeError = fmt.Errorf(
+					"%w: encountered issue during node reboot process",
+					claberneteserrors.ErrReconcile,
+				)
+			}
+
+			continue
+		}
+
+		if nodeDeployment.Spec.Template.ObjectMeta.Annotations == nil {
+			nodeDeployment.Spec.Template.ObjectMeta.Annotations = map[string]string{}
+		}
+
+		now := time.Now().Format(time.RFC3339)
+
+		nodeDeployment.Spec.Template.ObjectMeta.Annotations["kubectl.kubernetes.io/restartedAt"] = now //nolint:lll
+
+		err = r.updateObj(ctx, nodeDeployment, clabernetesconstants.KubernetesDeployment)
+		if err != nil {
+			r.Log.Warnf("failed restarting deployment for node %q, err: %s", nodeName, err)
+
+			if restartNodeError == nil {
+				restartNodeError = fmt.Errorf(
+					"%w: encountered issue during node reboot process",
+					claberneteserrors.ErrReconcile,
+				)
+			}
+
+			continue
+		}
+	}
+
+	return restartNodeError
+}
+
+// ReconcileDeployments reconciles the deployments that make up a clabernetes Topology.
+func (r *Reconciler) ReconcileDeployments(
+	ctx context.Context,
+	owningTopology clabernetesapistopologyv1alpha1.TopologyCommonObject,
+	reconcileData *ReconcileData,
+) error {
+	deployments, err := reconcileResolve(
+		ctx,
+		r,
+		&k8sappsv1.Deployment{},
+		&k8sappsv1.DeploymentList{},
+		clabernetesconstants.KubernetesDeployment,
+		owningTopology,
+		reconcileData.ResolvedConfigs,
+		r.deploymentReconciler.Resolve,
+	)
+	if err != nil {
+		return err
+	}
+
+	r.Log.Info("pruning extraneous deployments")
+
+	for _, extraDeployment := range deployments.Extra {
+		err = r.deleteObj(ctx, extraDeployment, clabernetesconstants.KubernetesDeployment)
+		if err != nil {
+			return err
+		}
+	}
+
+	r.Log.Info("creating missing deployments")
+
+	renderedMissingDeployments := r.deploymentReconciler.RenderAll(
+		owningTopology,
+		reconcileData.ResolvedConfigs,
+		deployments.Missing,
+	)
+
+	for _, renderedMissingDeployment := range renderedMissingDeployments {
+		err = r.createObj(
+			ctx,
+			owningTopology,
+			renderedMissingDeployment,
+			clabernetesconstants.KubernetesDeployment,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	r.Log.Info("enforcing desired state on existing deployments")
+
+	for existingCurrentDeploymentNodeName, existingCurrentDeployment := range deployments.Current {
+		renderedCurrentDeployment := r.deploymentReconciler.Render(
+			owningTopology,
+			reconcileData.ResolvedConfigs,
+			existingCurrentDeploymentNodeName,
+		)
+
+		err = ctrlruntimeutil.SetOwnerReference(
+			owningTopology,
+			renderedCurrentDeployment,
+			r.Client.Scheme(),
+		)
+		if err != nil {
+			return err
+		}
+
+		if !r.deploymentReconciler.Conforms(
+			existingCurrentDeployment,
+			renderedCurrentDeployment,
+			owningTopology.GetUID(),
+		) {
+			// only diff'ing spec since we *probably* only care about that part (minus metadata)
+			r.diffIfDebug(existingCurrentDeployment.Spec, renderedCurrentDeployment.Spec)
+
+			err = r.updateObj(
+				ctx,
+				renderedCurrentDeployment,
+				clabernetesconstants.KubernetesDeployment,
+			)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return r.reconcileDeploymentsHandleRestarts(
+		ctx,
+		owningTopology,
+		deployments,
+		reconcileData,
+	)
 }
 
 // EnqueueForAll enqueues a reconcile for kinds the Reconciler represents. This is probably not very
