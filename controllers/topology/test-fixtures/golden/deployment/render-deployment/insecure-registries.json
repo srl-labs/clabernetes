@@ -6,7 +6,6 @@
         "labels": {
             "clabernetes/app": "clabernetes",
             "clabernetes/name": "render-deployment-test-srl1",
-            "clabernetes/topologyKind": "containerlab",
             "clabernetes/topologyNode": "srl1",
             "clabernetes/topologyOwner": "render-deployment-test"
         },
@@ -30,7 +29,6 @@
                 "labels": {
                     "clabernetes/app": "clabernetes",
                     "clabernetes/name": "render-deployment-test-srl1",
-                    "clabernetes/topologyKind": "containerlab",
                     "clabernetes/topologyNode": "srl1",
                     "clabernetes/topologyOwner": "render-deployment-test"
                 },
