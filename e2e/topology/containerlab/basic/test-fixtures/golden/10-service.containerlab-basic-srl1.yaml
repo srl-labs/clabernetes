@@ -11,8 +11,8 @@ metadata:
   name: containerlab-basic-srl1
   namespace: NAMESPACE
   ownerReferences:
-    - apiVersion: topology.clabernetes/v1alpha1
-      kind: Containerlab
+    - apiVersion: clabernetes.containerlab.dev/v1alpha1
+      kind: Topology
       name: containerlab-basic
 spec:
   allocateLoadBalancerNodePorts: true

@@ -69,7 +69,7 @@ func TestContainerlabBasic(t *testing.T) {
 			Index:       10,
 			Description: "Create a simple containerlab topology with just one node",
 			AssertObjects: map[string][]clabernetestesthelpersuite.AssertObject{
-				"containerlab": {
+				"topology": {
 					{
 						Name: testName,
 						NormalizeFuncs: []func(t *testing.T, objectData []byte) []byte{
