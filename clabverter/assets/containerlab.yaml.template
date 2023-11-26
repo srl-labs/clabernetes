@@ -1,6 +1,6 @@
 ---
-apiVersion: topology.clabernetes/v1alpha1
-kind: Containerlab
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
 metadata:
   name: {{ .Name }}
   namespace: {{ .Namespace }}

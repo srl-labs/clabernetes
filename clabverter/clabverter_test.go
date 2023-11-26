@@ -148,7 +148,7 @@ func normalizeManifest(t *testing.T, b []byte) []byte {
 	switch {
 	case bytes.Contains(b, []byte("kind: ConfigMap")):
 		return normalizeConfigMapPaths(t, b)
-	case bytes.Contains(b, []byte("kind: Containerlab")):
+	case bytes.Contains(b, []byte("kind: Topology")):
 		return normalizeFromFileFilePaths(t, b)
 	default:
 		return b
