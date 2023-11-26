@@ -30,473 +30,40 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Containerlab": schema_clabernetes_apis_topology_v1alpha1_Containerlab(
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.ExposedPorts": schema_srl_labs_clabernetes_apis_v1alpha1_ExposedPorts(
 			ref,
 		),
-		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ContainerlabList": schema_clabernetes_apis_topology_v1alpha1_ContainerlabList(
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.FileFromConfigMap": schema_srl_labs_clabernetes_apis_v1alpha1_FileFromConfigMap(
 			ref,
 		),
-		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ContainerlabSpec": schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.FileFromURL": schema_srl_labs_clabernetes_apis_v1alpha1_FileFromURL(
 			ref,
 		),
-		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ContainerlabStatus": schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.LinkEndpoint": schema_srl_labs_clabernetes_apis_v1alpha1_LinkEndpoint(
 			ref,
 		),
-		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ExposedPorts": schema_clabernetes_apis_topology_v1alpha1_ExposedPorts(
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.Persistence": schema_srl_labs_clabernetes_apis_v1alpha1_Persistence(
 			ref,
 		),
-		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap": schema_clabernetes_apis_topology_v1alpha1_FileFromConfigMap(
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.Topology": schema_srl_labs_clabernetes_apis_v1alpha1_Topology(
 			ref,
 		),
-		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromURL": schema_clabernetes_apis_topology_v1alpha1_FileFromURL(
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.TopologyList": schema_srl_labs_clabernetes_apis_v1alpha1_TopologyList(
 			ref,
 		),
-		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Kne": schema_clabernetes_apis_topology_v1alpha1_Kne(
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.TopologySpec": schema_srl_labs_clabernetes_apis_v1alpha1_TopologySpec(
 			ref,
 		),
-		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.KneList": schema_clabernetes_apis_topology_v1alpha1_KneList(
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.TopologyStatus": schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 			ref,
 		),
-		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.KneSpec": schema_clabernetes_apis_topology_v1alpha1_KneSpec(
-			ref,
-		),
-		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.KneStatus": schema_clabernetes_apis_topology_v1alpha1_KneStatus(
-			ref,
-		),
-		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.LinkEndpoint": schema_clabernetes_apis_topology_v1alpha1_LinkEndpoint(
-			ref,
-		),
-		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Persistence": schema_clabernetes_apis_topology_v1alpha1_Persistence(
-			ref,
-		),
-		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.TopologyCommonSpec": schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
-			ref,
-		),
-		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.TopologyStatus": schema_clabernetes_apis_topology_v1alpha1_TopologyStatus(
-			ref,
-		),
-		"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Tunnel": schema_clabernetes_apis_topology_v1alpha1_Tunnel(
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.Tunnel": schema_srl_labs_clabernetes_apis_v1alpha1_Tunnel(
 			ref,
 		),
 	}
 }
 
-func schema_clabernetes_apis_topology_v1alpha1_Containerlab(
-	ref common.ReferenceCallback,
-) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Containerlab is an object that holds a \"normal\" containerlab topology file and any additional data necessary to \"clabernetes-ify\" it.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref: ref(
-								"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ContainerlabSpec",
-							),
-						},
-					},
-					"status": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref: ref(
-								"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ContainerlabStatus",
-							),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ContainerlabSpec", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ContainerlabStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-	}
-}
-
-func schema_clabernetes_apis_topology_v1alpha1_ContainerlabList(
-	ref common.ReferenceCallback,
-) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "ContainerlabList is a list of Containerlab topology objects.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
-						},
-					},
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref: ref(
-											"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Containerlab",
-										),
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"items"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Containerlab", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
-	}
-}
-
-func schema_clabernetes_apis_topology_v1alpha1_ContainerlabSpec(
-	ref common.ReferenceCallback,
-) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "ContainerlabSpec is the spec for a Containerlab topology resource.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"disableNodeAliasService": {
-						SchemaProps: spec.SchemaProps{
-							Description: "DisableNodeAliasService indicates if headless services for each node in a containerlab topology should *not* be created. By default, clabernetes creates these headless services for each node so that \"normal\" docker and containerlab service discovery works -- this means you can simply resolve \"my-neat-node\" from within the namespace of a topology like you would in docker locally. You may wish to disable this feature though if you have no need of it and just don't want the extra services around. Additionally, you may want to disable this feature if you are running multiple labs in the same namespace (which is not generally recommended by the way!) as you may end up in a situation where a name (i.e. \"leaf1\") is duplicated in more than one topology -- this will cause some problems for clabernetes!",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"disableExpose": {
-						SchemaProps: spec.SchemaProps{
-							Description: "DisableExpose indicates if exposing nodes via LoadBalancer service should be disabled, by default any mapped ports in a containerlab topology will be exposed.",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"disableAutoExpose": {
-						SchemaProps: spec.SchemaProps{
-							Description: "DisableAutoExpose disables the automagic exposing of ports for a given topology. When this setting is disabled clabernetes will not auto add ports so if you want to expose (via a load balancer service) you will need to have ports outlined in your containerlab config (or equivalent for kne). When this is `false` (default), clabernetes will add and expose the following list of ports to whatever ports you have already defined:\n\n21    - tcp - ftp 22    - tcp - ssh 23    - tcp - telnet 80    - tcp - http 161   - udp - snmp 443   - tcp - https 830   - tcp - netconf (over ssh) 5000  - tcp - telnet for vrnetlab qemu host 5900  - tcp - vnc 6030  - tcp - gnmi (arista default) 9339  - tcp - gnmi/gnoi 9340  - tcp - gribi 9559  - tcp - p4rt 57400 - tcp - gnmi (nokia srl/sros default)\n\nThis setting is *ignored completely* if `DisableExpose` is true!",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"insecureRegistries": {
-						SchemaProps: spec.SchemaProps{
-							Description: "InsecureRegistries is a slice of strings of insecure registries to configure in the launcher pods.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"filesFromConfigMap": {
-						SchemaProps: spec.SchemaProps{
-							Description: "FilesFromConfigMap is a slice of FileFromConfigMap that define the configmap/path and node and path on a launcher node that the file should be mounted to. If the path is not provided the configmap is mounted in its entirety (like normal k8s things), so you *probably* want to specify the sub path unless you are sure what you're doing!",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"array"},
-										Items: &spec.SchemaOrArray{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Default: map[string]interface{}{},
-													Ref: ref(
-														"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap",
-													),
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-					"filesFromURL": {
-						SchemaProps: spec.SchemaProps{
-							Description: "FilesFromURL is a mapping of FileFromURL that define a URL at which to fetch a file, and path on a launcher node that the file should be downloaded to. This is useful for configs that are larger than the ConfigMap (etcd) 1Mb size limit.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"array"},
-										Items: &spec.SchemaOrArray{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Default: map[string]interface{}{},
-													Ref: ref(
-														"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromURL",
-													),
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-					"persistence": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Persistence holds configurations relating to persisting each nodes working containerlab directory.",
-							Default:     map[string]interface{}{},
-							Ref: ref(
-								"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Persistence",
-							),
-						},
-					},
-					"containerlabDebug": {
-						SchemaProps: spec.SchemaProps{
-							Description: "ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods. This is disabled by default.",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"launcherLogLevel": {
-						SchemaProps: spec.SchemaProps{
-							Description: "LauncherLogLevel sets the launcher clabernetes worker log level -- this overrides whatever is set on the controllers env vars for this topology. Note: omitempty because empty str does not satisfy enum of course.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"resources": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Resources is a mapping of nodeName (or \"default\") to kubernetes resource requirements -- any value set here overrides the \"global\" config resource definitions. If a key \"default\" is set, those resource values will be preferred over *all global settings* for this topology -- meaning, the \"global\" resource settings will never be looked up for this topology, and any kind/type that is *not* in this resources map will have the \"default\" resources from this mapping applied.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/api/core/v1.ResourceRequirements"),
-									},
-								},
-							},
-						},
-					},
-					"privilegedLauncher": {
-						SchemaProps: spec.SchemaProps{
-							Description: "PrivilegedLauncher, when true, sets the launcher containers to privileged. By default, we do our best to *not* need this/set this, and instead set only the capabilities we need, however its possible that some containers launched by the launcher may need/want more capabilities, so this flag exists for users to bypass the default settings and enable fully privileged launcher pods.",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"imagePullThroughOverride": {
-						SchemaProps: spec.SchemaProps{
-							Description: "ImagePullThroughOverride allows for overriding the image pull through mode for this particular topology.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"imagePullSecrets": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "ImagePullSecrets allows for providing secret(s) to use when pulling the image. This is only applicable *if* ImagePullThrough mode is auto or always. The secret is used by the launcher pod to pull the image via the cluster CRI. The secret is *not* mounted to the pod, but instead is used in conjunction with a job that spawns a pod using the specified secret. The job will kill the pod as soon as the image has been pulled -- we do this because we don't care if the pod runs, we only care that the image gets pulled on a specific node. Note that just like \"normal\" pull secrets, the secret needs to be in the namespace that the topology is in.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"config": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Config is a \"normal\" containerlab configuration file.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"config"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromURL", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Persistence", "k8s.io/api/core/v1.ResourceRequirements"},
-	}
-}
-
-func schema_clabernetes_apis_topology_v1alpha1_ContainerlabStatus(
-	ref common.ReferenceCallback,
-) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "ContainerlabStatus is the status for a Containerlab topology resource.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"configs": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Configs is a map of node name -> clab config -- in other words, this is the original containerlab configuration broken up and modified to use multi-node topology setup (via host links+vxlan). This is stored as a raw message so we don't have any weirdness w/ yaml tags instead of json tags in clab things, and so we kube builder doesnt poop itself.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"configsHash": {
-						SchemaProps: spec.SchemaProps{
-							Description: "ConfigsHash is a hash of the last stored Configs data.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"tunnels": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Tunnels is a mapping of tunnels that need to be configured between nodes (nodes:[]tunnels).",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"array"},
-										Items: &spec.SchemaOrArray{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Ref: ref(
-														"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Tunnel",
-													),
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-					"tunnelsHash": {
-						SchemaProps: spec.SchemaProps{
-							Description: "TunnelsHash is a hash of the last stored Tunnels data. As this can change due to the dns suffix changing and not just the config changing we need to independently track this state.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"filesFromURLHashes": {
-						SchemaProps: spec.SchemaProps{
-							Description: "FilesFromURLHashes is a mapping of node FilesFromURL hashes stored so we can easily identify which nodes had changes in their FilesFromURL data so we can know to restart them.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"nodeExposedPorts": {
-						SchemaProps: spec.SchemaProps{
-							Description: "NodeExposedPorts holds a map of (containerlab) nodes and their exposed ports (via load balancer).",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref(
-											"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ExposedPorts",
-										),
-									},
-								},
-							},
-						},
-					},
-					"nodeExposedPortsHash": {
-						SchemaProps: spec.SchemaProps{
-							Description: "NodeExposedPortsHash is a hash of the last stored NodeExposedPorts data.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"imagePullSecretsHash": {
-						SchemaProps: spec.SchemaProps{
-							Description: "ImagePullSecretsHash is a hash of the last stored ImagePullSecrets data.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{
-					"configs",
-					"configsHash",
-					"tunnels",
-					"tunnelsHash",
-					"filesFromURLHashes",
-					"nodeExposedPorts",
-					"nodeExposedPortsHash",
-					"imagePullSecretsHash",
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ExposedPorts", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Tunnel"},
-	}
-}
-
-func schema_clabernetes_apis_topology_v1alpha1_ExposedPorts(
+func schema_srl_labs_clabernetes_apis_v1alpha1_ExposedPorts(
 	ref common.ReferenceCallback,
 ) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
@@ -560,7 +127,7 @@ func schema_clabernetes_apis_topology_v1alpha1_ExposedPorts(
 	}
 }
 
-func schema_clabernetes_apis_topology_v1alpha1_FileFromConfigMap(
+func schema_srl_labs_clabernetes_apis_v1alpha1_FileFromConfigMap(
 	ref common.ReferenceCallback,
 ) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
@@ -600,7 +167,7 @@ func schema_clabernetes_apis_topology_v1alpha1_FileFromConfigMap(
 	}
 }
 
-func schema_clabernetes_apis_topology_v1alpha1_FileFromURL(
+func schema_srl_labs_clabernetes_apis_v1alpha1_FileFromURL(
 	ref common.ReferenceCallback,
 ) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
@@ -632,422 +199,7 @@ func schema_clabernetes_apis_topology_v1alpha1_FileFromURL(
 	}
 }
 
-func schema_clabernetes_apis_topology_v1alpha1_Kne(
-	ref common.ReferenceCallback,
-) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Kne is an object that holds a \"normal\" kne topology file and any additional data necessary to \"clabernetes-ify\" it.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref: ref(
-								"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.KneSpec",
-							),
-						},
-					},
-					"status": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref: ref(
-								"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.KneStatus",
-							),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.KneSpec", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.KneStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-	}
-}
-
-func schema_clabernetes_apis_topology_v1alpha1_KneList(
-	ref common.ReferenceCallback,
-) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "KneList is a list of Kne topology objects.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
-						},
-					},
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref: ref(
-											"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Kne",
-										),
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"items"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Kne", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
-	}
-}
-
-func schema_clabernetes_apis_topology_v1alpha1_KneSpec(
-	ref common.ReferenceCallback,
-) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "KneSpec is the spec for a Kne topology resource.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"disableNodeAliasService": {
-						SchemaProps: spec.SchemaProps{
-							Description: "DisableNodeAliasService indicates if headless services for each node in a containerlab topology should *not* be created. By default, clabernetes creates these headless services for each node so that \"normal\" docker and containerlab service discovery works -- this means you can simply resolve \"my-neat-node\" from within the namespace of a topology like you would in docker locally. You may wish to disable this feature though if you have no need of it and just don't want the extra services around. Additionally, you may want to disable this feature if you are running multiple labs in the same namespace (which is not generally recommended by the way!) as you may end up in a situation where a name (i.e. \"leaf1\") is duplicated in more than one topology -- this will cause some problems for clabernetes!",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"disableExpose": {
-						SchemaProps: spec.SchemaProps{
-							Description: "DisableExpose indicates if exposing nodes via LoadBalancer service should be disabled, by default any mapped ports in a containerlab topology will be exposed.",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"disableAutoExpose": {
-						SchemaProps: spec.SchemaProps{
-							Description: "DisableAutoExpose disables the automagic exposing of ports for a given topology. When this setting is disabled clabernetes will not auto add ports so if you want to expose (via a load balancer service) you will need to have ports outlined in your containerlab config (or equivalent for kne). When this is `false` (default), clabernetes will add and expose the following list of ports to whatever ports you have already defined:\n\n21    - tcp - ftp 22    - tcp - ssh 23    - tcp - telnet 80    - tcp - http 161   - udp - snmp 443   - tcp - https 830   - tcp - netconf (over ssh) 5000  - tcp - telnet for vrnetlab qemu host 5900  - tcp - vnc 6030  - tcp - gnmi (arista default) 9339  - tcp - gnmi/gnoi 9340  - tcp - gribi 9559  - tcp - p4rt 57400 - tcp - gnmi (nokia srl/sros default)\n\nThis setting is *ignored completely* if `DisableExpose` is true!",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"insecureRegistries": {
-						SchemaProps: spec.SchemaProps{
-							Description: "InsecureRegistries is a slice of strings of insecure registries to configure in the launcher pods.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"filesFromConfigMap": {
-						SchemaProps: spec.SchemaProps{
-							Description: "FilesFromConfigMap is a slice of FileFromConfigMap that define the configmap/path and node and path on a launcher node that the file should be mounted to. If the path is not provided the configmap is mounted in its entirety (like normal k8s things), so you *probably* want to specify the sub path unless you are sure what you're doing!",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"array"},
-										Items: &spec.SchemaOrArray{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Default: map[string]interface{}{},
-													Ref: ref(
-														"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap",
-													),
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-					"filesFromURL": {
-						SchemaProps: spec.SchemaProps{
-							Description: "FilesFromURL is a mapping of FileFromURL that define a URL at which to fetch a file, and path on a launcher node that the file should be downloaded to. This is useful for configs that are larger than the ConfigMap (etcd) 1Mb size limit.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"array"},
-										Items: &spec.SchemaOrArray{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Default: map[string]interface{}{},
-													Ref: ref(
-														"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromURL",
-													),
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-					"persistence": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Persistence holds configurations relating to persisting each nodes working containerlab directory.",
-							Default:     map[string]interface{}{},
-							Ref: ref(
-								"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Persistence",
-							),
-						},
-					},
-					"containerlabDebug": {
-						SchemaProps: spec.SchemaProps{
-							Description: "ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods. This is disabled by default.",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"launcherLogLevel": {
-						SchemaProps: spec.SchemaProps{
-							Description: "LauncherLogLevel sets the launcher clabernetes worker log level -- this overrides whatever is set on the controllers env vars for this topology. Note: omitempty because empty str does not satisfy enum of course.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"resources": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Resources is a mapping of nodeName (or \"default\") to kubernetes resource requirements -- any value set here overrides the \"global\" config resource definitions. If a key \"default\" is set, those resource values will be preferred over *all global settings* for this topology -- meaning, the \"global\" resource settings will never be looked up for this topology, and any kind/type that is *not* in this resources map will have the \"default\" resources from this mapping applied.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/api/core/v1.ResourceRequirements"),
-									},
-								},
-							},
-						},
-					},
-					"privilegedLauncher": {
-						SchemaProps: spec.SchemaProps{
-							Description: "PrivilegedLauncher, when true, sets the launcher containers to privileged. By default, we do our best to *not* need this/set this, and instead set only the capabilities we need, however its possible that some containers launched by the launcher may need/want more capabilities, so this flag exists for users to bypass the default settings and enable fully privileged launcher pods.",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"imagePullThroughOverride": {
-						SchemaProps: spec.SchemaProps{
-							Description: "ImagePullThroughOverride allows for overriding the image pull through mode for this particular topology.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"imagePullSecrets": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "ImagePullSecrets allows for providing secret(s) to use when pulling the image. This is only applicable *if* ImagePullThrough mode is auto or always. The secret is used by the launcher pod to pull the image via the cluster CRI. The secret is *not* mounted to the pod, but instead is used in conjunction with a job that spawns a pod using the specified secret. The job will kill the pod as soon as the image has been pulled -- we do this because we don't care if the pod runs, we only care that the image gets pulled on a specific node. Note that just like \"normal\" pull secrets, the secret needs to be in the namespace that the topology is in.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"topology": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Topology is a \"normal\" kne topology proto file.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"topology"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromURL", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Persistence", "k8s.io/api/core/v1.ResourceRequirements"},
-	}
-}
-
-func schema_clabernetes_apis_topology_v1alpha1_KneStatus(
-	ref common.ReferenceCallback,
-) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "KneStatus is the status for a Kne topology resource.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"configs": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Configs is a map of node name -> clab config -- in other words, this is the original containerlab configuration broken up and modified to use multi-node topology setup (via host links+vxlan). This is stored as a raw message so we don't have any weirdness w/ yaml tags instead of json tags in clab things, and so we kube builder doesnt poop itself.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"configsHash": {
-						SchemaProps: spec.SchemaProps{
-							Description: "ConfigsHash is a hash of the last stored Configs data.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"tunnels": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Tunnels is a mapping of tunnels that need to be configured between nodes (nodes:[]tunnels).",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"array"},
-										Items: &spec.SchemaOrArray{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Ref: ref(
-														"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Tunnel",
-													),
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-					"tunnelsHash": {
-						SchemaProps: spec.SchemaProps{
-							Description: "TunnelsHash is a hash of the last stored Tunnels data. As this can change due to the dns suffix changing and not just the config changing we need to independently track this state.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"filesFromURLHashes": {
-						SchemaProps: spec.SchemaProps{
-							Description: "FilesFromURLHashes is a mapping of node FilesFromURL hashes stored so we can easily identify which nodes had changes in their FilesFromURL data so we can know to restart them.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"nodeExposedPorts": {
-						SchemaProps: spec.SchemaProps{
-							Description: "NodeExposedPorts holds a map of (containerlab) nodes and their exposed ports (via load balancer).",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref(
-											"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ExposedPorts",
-										),
-									},
-								},
-							},
-						},
-					},
-					"nodeExposedPortsHash": {
-						SchemaProps: spec.SchemaProps{
-							Description: "NodeExposedPortsHash is a hash of the last stored NodeExposedPorts data.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"imagePullSecretsHash": {
-						SchemaProps: spec.SchemaProps{
-							Description: "ImagePullSecretsHash is a hash of the last stored ImagePullSecrets data.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{
-					"configs",
-					"configsHash",
-					"tunnels",
-					"tunnelsHash",
-					"filesFromURLHashes",
-					"nodeExposedPorts",
-					"nodeExposedPortsHash",
-					"imagePullSecretsHash",
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ExposedPorts", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Tunnel"},
-	}
-}
-
-func schema_clabernetes_apis_topology_v1alpha1_LinkEndpoint(
+func schema_srl_labs_clabernetes_apis_v1alpha1_LinkEndpoint(
 	ref common.ReferenceCallback,
 ) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
@@ -1079,7 +231,7 @@ func schema_clabernetes_apis_topology_v1alpha1_LinkEndpoint(
 	}
 }
 
-func schema_clabernetes_apis_topology_v1alpha1_Persistence(
+func schema_srl_labs_clabernetes_apis_v1alpha1_Persistence(
 	ref common.ReferenceCallback,
 ) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
@@ -1119,15 +271,129 @@ func schema_clabernetes_apis_topology_v1alpha1_Persistence(
 	}
 }
 
-func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
+func schema_srl_labs_clabernetes_apis_v1alpha1_Topology(
 	ref common.ReferenceCallback,
 ) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "TopologyCommonSpec holds fields that are common across different CR types for their spec.",
+				Description: "Topology is an object that holds information about a clabernetes Topology -- that is, a valid topology file (ex: containerlab topology), and any associated configurations.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.TopologySpec",
+							),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.TopologyStatus",
+							),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.TopologySpec", "github.com/srl-labs/clabernetes/apis/v1alpha1.TopologyStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyList(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TopologyList is a list of Topology objects.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref: ref(
+											"github.com/srl-labs/clabernetes/apis/v1alpha1.Topology",
+										),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.Topology", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_TopologySpec(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TopologySpec is the spec for a Topology resource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"config": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Config is a \"normal\" containerlab configuration file.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"disableNodeAliasService": {
 						SchemaProps: spec.SchemaProps{
 							Description: "DisableNodeAliasService indicates if headless services for each node in a containerlab topology should *not* be created. By default, clabernetes creates these headless services for each node so that \"normal\" docker and containerlab service discovery works -- this means you can simply resolve \"my-neat-node\" from within the namespace of a topology like you would in docker locally. You may wish to disable this feature though if you have no need of it and just don't want the extra services around. Additionally, you may want to disable this feature if you are running multiple labs in the same namespace (which is not generally recommended by the way!) as you may end up in a situation where a name (i.e. \"leaf1\") is duplicated in more than one topology -- this will cause some problems for clabernetes!",
@@ -1181,7 +447,7 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 												SchemaProps: spec.SchemaProps{
 													Default: map[string]interface{}{},
 													Ref: ref(
-														"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap",
+														"github.com/srl-labs/clabernetes/apis/v1alpha1.FileFromConfigMap",
 													),
 												},
 											},
@@ -1205,7 +471,7 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 												SchemaProps: spec.SchemaProps{
 													Default: map[string]interface{}{},
 													Ref: ref(
-														"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromURL",
+														"github.com/srl-labs/clabernetes/apis/v1alpha1.FileFromURL",
 													),
 												},
 											},
@@ -1220,7 +486,7 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 							Description: "Persistence holds configurations relating to persisting each nodes working containerlab directory.",
 							Default:     map[string]interface{}{},
 							Ref: ref(
-								"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Persistence",
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.Persistence",
 							),
 						},
 					},
@@ -1290,20 +556,21 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyCommonSpec(
 						},
 					},
 				},
+				Required: []string{"config"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromConfigMap", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.FileFromURL", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Persistence", "k8s.io/api/core/v1.ResourceRequirements"},
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.FileFromConfigMap", "github.com/srl-labs/clabernetes/apis/v1alpha1.FileFromURL", "github.com/srl-labs/clabernetes/apis/v1alpha1.Persistence", "k8s.io/api/core/v1.ResourceRequirements"},
 	}
 }
 
-func schema_clabernetes_apis_topology_v1alpha1_TopologyStatus(
+func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 	ref common.ReferenceCallback,
 ) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "TopologyStatus is a common struct used inline as CR status for topology resources.",
+				Description: "TopologyStatus is the status for a Containerlab topology resource.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"configs": {
@@ -1335,7 +602,7 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyStatus(
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 													Ref: ref(
-														"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Tunnel",
+														"github.com/srl-labs/clabernetes/apis/v1alpha1.Tunnel",
 													),
 												},
 											},
@@ -1378,7 +645,7 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyStatus(
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Ref: ref(
-											"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ExposedPorts",
+											"github.com/srl-labs/clabernetes/apis/v1alpha1.ExposedPorts",
 										),
 									},
 								},
@@ -1415,11 +682,11 @@ func schema_clabernetes_apis_topology_v1alpha1_TopologyStatus(
 			},
 		},
 		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/topology/v1alpha1.ExposedPorts", "github.com/srl-labs/clabernetes/apis/topology/v1alpha1.Tunnel"},
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.ExposedPorts", "github.com/srl-labs/clabernetes/apis/v1alpha1.Tunnel"},
 	}
 }
 
-func schema_clabernetes_apis_topology_v1alpha1_Tunnel(
+func schema_srl_labs_clabernetes_apis_v1alpha1_Tunnel(
 	ref common.ReferenceCallback,
 ) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{

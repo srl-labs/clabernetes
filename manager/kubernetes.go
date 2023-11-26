@@ -3,7 +3,8 @@ package manager
 import (
 	"fmt"
 
-	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
+	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	"k8s.io/apimachinery/pkg/labels"
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
@@ -40,16 +41,8 @@ func mustNewManager(scheme *apimachineryruntime.Scheme, appName string) ctrlrunt
 				)
 
 				opts.ByObject = map[ctrlruntimeclient.Object]ctrlruntimecache.ByObject{
-					// obviously we need to cache all "our" containerlab objects, so do that
-					&clabernetesapistopologyv1alpha1.Containerlab{}: {
-						Namespaces: map[string]ctrlruntimecache.Config{
-							ctrlruntimecache.AllNamespaces: {
-								LabelSelector: labels.Everything(),
-							},
-						},
-					},
-					// obviously we need to cache all "our" kne objects, so do that
-					&clabernetesapistopologyv1alpha1.Kne{}: {
+					// obviously we need to cache all "our" topology objects, so do that
+					&clabernetesapisv1alpha1.Topology{}: {
 						Namespaces: map[string]ctrlruntimecache.Config{
 							ctrlruntimecache.AllNamespaces: {
 								LabelSelector: labels.Everything(),

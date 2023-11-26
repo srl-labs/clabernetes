@@ -63,8 +63,8 @@ run-client-gen: ## Run client-gen
 	GOMOD111=on \
 	client-gen \
 	--go-header-file hack/boilerplate.go.txt \
-	--input-base github.com/srl-labs/clabernetes/apis \
-	--input topology/v1alpha1 \
+	--input-base github.com/srl-labs/clabernetes \
+	--input apis/v1alpha1 \
 	--trim-path-prefix ${GOPATH}/src/github.com/srl-labs/clabernetes \
 	--output-package github.com/srl-labs/clabernetes/generated \
 	--clientset-name clientset

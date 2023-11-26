@@ -3,15 +3,15 @@ package topology
 import (
 	"sort"
 
-	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
+	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 )
 
 // AllocateTunnelIDs processes the given tunnels and allocates vnids. This function updates the
 // given status object by iterating over the freshly processed tunnels (as processed during a
 // reconciliation) and assigning any tunnels in the status without a vnid the next valid vnid.
 func AllocateTunnelIDs(
-	statusTunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
-	processedTunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
+	statusTunnels map[string][]*clabernetesapisv1alpha1.Tunnel,
+	processedTunnels map[string][]*clabernetesapisv1alpha1.Tunnel,
 ) {
 	// we want to allocate ids deterministically, so lets iterate over the maps in *order* by
 	// getting a sorted list of keys and then iterating over those
@@ -97,7 +97,7 @@ func AllocateTunnelIDs(
 func findAllocatedIDIfExists(
 	nodeName, tunnelRemoteNodeName, tunnelLocalLinkName string,
 	sortedKeys []string,
-	processedTunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel,
+	processedTunnels map[string][]*clabernetesapisv1alpha1.Tunnel,
 ) int {
 	for _, remoteNodeName := range sortedKeys {
 		if nodeName == remoteNodeName {

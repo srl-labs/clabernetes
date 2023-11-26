@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"net/http"
 
-	topologyv1alpha1 "github.com/srl-labs/clabernetes/generated/clientset/typed/topology/v1alpha1"
+	clabernetesv1alpha1 "github.com/srl-labs/clabernetes/generated/clientset/typed/apis/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -30,18 +30,18 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	TopologyV1alpha1() topologyv1alpha1.TopologyV1alpha1Interface
+	ClabernetesV1alpha1() clabernetesv1alpha1.ClabernetesV1alpha1Interface
 }
 
 // Clientset contains the clients for groups.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	topologyV1alpha1 *topologyv1alpha1.TopologyV1alpha1Client
+	clabernetesV1alpha1 *clabernetesv1alpha1.ClabernetesV1alpha1Client
 }
 
-// TopologyV1alpha1 retrieves the TopologyV1alpha1Client
-func (c *Clientset) TopologyV1alpha1() topologyv1alpha1.TopologyV1alpha1Interface {
-	return c.topologyV1alpha1
+// ClabernetesV1alpha1 retrieves the ClabernetesV1alpha1Client
+func (c *Clientset) ClabernetesV1alpha1() clabernetesv1alpha1.ClabernetesV1alpha1Interface {
+	return c.clabernetesV1alpha1
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -93,7 +93,7 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 
 	var cs Clientset
 	var err error
-	cs.topologyV1alpha1, err = topologyv1alpha1.NewForConfigAndClient(
+	cs.clabernetesV1alpha1, err = clabernetesv1alpha1.NewForConfigAndClient(
 		&configShallowCopy,
 		httpClient,
 	)
@@ -124,7 +124,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.topologyV1alpha1 = topologyv1alpha1.New(c)
+	cs.clabernetesV1alpha1 = clabernetesv1alpha1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

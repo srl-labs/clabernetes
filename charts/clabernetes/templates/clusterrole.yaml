@@ -19,7 +19,7 @@ metadata:
   name: "{{ .Values.appName }}-cluster-role"
 rules:
   - apiGroups:
-      - topology.clabernetes
+      - clabernetes.containerlab.dev
     resources:
       - "*"
     verbs:

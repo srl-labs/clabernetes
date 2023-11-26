@@ -3,7 +3,8 @@ package manager
 import (
 	"fmt"
 
-	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
+	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+
 	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,7 +18,7 @@ func registerToScheme(c clabernetesmanagertypes.Clabernetes) error {
 	scheme := c.GetScheme()
 
 	apisToRegisterFuncs := []func() (apimachineryscheme.GroupVersion, []apimachineryruntime.Object){
-		clabernetesapistopologyv1alpha1.GetAPIs,
+		clabernetesapisv1alpha1.GetAPIs,
 	}
 
 	for _, apiToRegisterFunc := range apisToRegisterFuncs {

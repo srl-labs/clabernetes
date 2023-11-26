@@ -6,7 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
+	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+
 	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
 	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
 )
@@ -20,13 +21,13 @@ const testAllocateTunnelIdsTestName = "tunnels/allocate-tunnel-ids"
 func TestAllocateTunnelIds(t *testing.T) {
 	cases := []struct {
 		name             string
-		statusTunnels    map[string][]*clabernetesapistopologyv1alpha1.Tunnel
-		processedTunnels map[string][]*clabernetesapistopologyv1alpha1.Tunnel
+		statusTunnels    map[string][]*clabernetesapisv1alpha1.Tunnel
+		processedTunnels map[string][]*clabernetesapisv1alpha1.Tunnel
 	}{
 		{
 			name:          "simple",
-			statusTunnels: map[string][]*clabernetesapistopologyv1alpha1.Tunnel{},
-			processedTunnels: map[string][]*clabernetesapistopologyv1alpha1.Tunnel{
+			statusTunnels: map[string][]*clabernetesapisv1alpha1.Tunnel{},
+			processedTunnels: map[string][]*clabernetesapisv1alpha1.Tunnel{
 				"srl1": {
 					{
 						ID:             0,
@@ -51,7 +52,7 @@ func TestAllocateTunnelIds(t *testing.T) {
 		},
 		{
 			name: "simple-existing-status",
-			statusTunnels: map[string][]*clabernetesapistopologyv1alpha1.Tunnel{
+			statusTunnels: map[string][]*clabernetesapisv1alpha1.Tunnel{
 				"srl1": {
 					{
 						ID:             0,
@@ -73,7 +74,7 @@ func TestAllocateTunnelIds(t *testing.T) {
 					},
 				},
 			},
-			processedTunnels: map[string][]*clabernetesapistopologyv1alpha1.Tunnel{
+			processedTunnels: map[string][]*clabernetesapisv1alpha1.Tunnel{
 				"srl1": {
 					{
 						ID:             0,
@@ -98,7 +99,7 @@ func TestAllocateTunnelIds(t *testing.T) {
 		},
 		{
 			name: "simple-already-allocated-ids",
-			statusTunnels: map[string][]*clabernetesapistopologyv1alpha1.Tunnel{
+			statusTunnels: map[string][]*clabernetesapisv1alpha1.Tunnel{
 				"srl1": {
 					{
 						ID:             1,
@@ -120,7 +121,7 @@ func TestAllocateTunnelIds(t *testing.T) {
 					},
 				},
 			},
-			processedTunnels: map[string][]*clabernetesapistopologyv1alpha1.Tunnel{
+			processedTunnels: map[string][]*clabernetesapisv1alpha1.Tunnel{
 				"srl1": {
 					{
 						ID:             0,
@@ -145,7 +146,7 @@ func TestAllocateTunnelIds(t *testing.T) {
 		},
 		{
 			name: "simple-weirdly-allocated-ids",
-			statusTunnels: map[string][]*clabernetesapistopologyv1alpha1.Tunnel{
+			statusTunnels: map[string][]*clabernetesapisv1alpha1.Tunnel{
 				"srl1": {
 					{
 						ID:             0,
@@ -167,7 +168,7 @@ func TestAllocateTunnelIds(t *testing.T) {
 					},
 				},
 			},
-			processedTunnels: map[string][]*clabernetesapistopologyv1alpha1.Tunnel{
+			processedTunnels: map[string][]*clabernetesapisv1alpha1.Tunnel{
 				"srl1": {
 					{
 						ID:             0,
@@ -192,8 +193,8 @@ func TestAllocateTunnelIds(t *testing.T) {
 		},
 		{
 			name:          "meshy-links",
-			statusTunnels: map[string][]*clabernetesapistopologyv1alpha1.Tunnel{},
-			processedTunnels: map[string][]*clabernetesapistopologyv1alpha1.Tunnel{
+			statusTunnels: map[string][]*clabernetesapisv1alpha1.Tunnel{},
+			processedTunnels: map[string][]*clabernetesapisv1alpha1.Tunnel{
 				"srl1": {
 					{
 						ID:             0,
@@ -309,7 +310,7 @@ func TestAllocateTunnelIds(t *testing.T) {
 					)
 				}
 
-				var want map[string][]*clabernetesapistopologyv1alpha1.Tunnel
+				var want map[string][]*clabernetesapisv1alpha1.Tunnel
 
 				err := json.Unmarshal(
 					clabernetestesthelper.ReadTestFixtureFile(
