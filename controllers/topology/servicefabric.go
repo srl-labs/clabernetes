@@ -95,11 +95,12 @@ func (r *ServiceFabricReconciler) Resolve(
 }
 
 func (r *ServiceFabricReconciler) renderServiceBase(
+	owningTopology *clabernetesapisv1alpha1.Topology,
 	name,
-	namespace,
-	owningTopologyName,
 	nodeName string,
 ) *k8scorev1.Service {
+	owningTopologyName := owningTopology.GetName()
+
 	annotations, globalLabels := r.configManagerGetter().GetAllMetadata()
 
 	deploymentName := fmt.Sprintf("%s-%s", owningTopologyName, nodeName)
@@ -112,8 +113,7 @@ func (r *ServiceFabricReconciler) renderServiceBase(
 	}
 
 	labels := map[string]string{
-		// TODO - label blah
-		// clabernetesconstants.LabelTopologyKind:        r.owningTopologyKind,
+		clabernetesconstants.LabelTopologyKind:        owningTopology.GetTopologyKind(),
 		clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeFabric, //nolint:lll
 
 	}
@@ -129,7 +129,7 @@ func (r *ServiceFabricReconciler) renderServiceBase(
 	return &k8scorev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
-			Namespace:   namespace,
+			Namespace:   owningTopology.GetNamespace(),
 			Annotations: annotations,
 			Labels:      labels,
 		},
@@ -159,9 +159,8 @@ func (r *ServiceFabricReconciler) Render(
 	owningTopologyName := owningTopology.GetName()
 
 	service := r.renderServiceBase(
+		owningTopology,
 		fmt.Sprintf("%s-%s-vx", owningTopologyName, nodeName),
-		owningTopology.GetNamespace(),
-		owningTopologyName,
 		nodeName,
 	)
 

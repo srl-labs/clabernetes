@@ -6,4 +6,7 @@ const (
 
 	// Topology is the Kind of the Topology custom resource.
 	Topology = "topology"
+
+	// TopologyKindContainerlab is the "containerlab" type of topology.
+	TopologyKindContainerlab = "containerlab"
 )

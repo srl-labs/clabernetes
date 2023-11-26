@@ -96,11 +96,13 @@ func (r *ServiceNodeAliasReconciler) Resolve(
 }
 
 func (r *ServiceNodeAliasReconciler) renderServiceBase(
+	owningTopology *clabernetesapisv1alpha1.Topology,
 	name,
-	namespace,
-	owningTopologyName,
 	nodeName string,
 ) *k8scorev1.Service {
+	owningTopologyName := owningTopology.GetName()
+	owningTopologyNamespace := owningTopology.GetNamespace()
+
 	annotations, globalLabels := r.configManagerGetter().GetAllMetadata()
 
 	deploymentName := fmt.Sprintf("%s-%s", owningTopologyName, nodeName)
@@ -113,8 +115,7 @@ func (r *ServiceNodeAliasReconciler) renderServiceBase(
 	}
 
 	labels := map[string]string{
-		// TODO - label blah
-		// clabernetesconstants.LabelTopologyKind:        r.owningTopologyKind,
+		clabernetesconstants.LabelTopologyKind:        owningTopology.GetTopologyKind(),
 		clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeNodeAlias, //nolint:lll
 
 	}
@@ -130,7 +131,7 @@ func (r *ServiceNodeAliasReconciler) renderServiceBase(
 	return &k8scorev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
-			Namespace:   namespace,
+			Namespace:   owningTopologyNamespace,
 			Annotations: annotations,
 			Labels:      labels,
 		},
@@ -139,7 +140,7 @@ func (r *ServiceNodeAliasReconciler) renderServiceBase(
 			ExternalName: fmt.Sprintf(
 				"%s.%s.%s",
 				deploymentName,
-				namespace,
+				owningTopologyNamespace,
 				clabernetesutil.GetEnvStrOrDefault(
 					clabernetesconstants.InClusterDNSSuffixEnv,
 					clabernetesconstants.DefaultInClusterDNSSuffix,
@@ -156,12 +157,9 @@ func (r *ServiceNodeAliasReconciler) Render(
 	owningTopology *clabernetesapisv1alpha1.Topology,
 	nodeName string,
 ) *k8scorev1.Service {
-	owningTopologyName := owningTopology.GetName()
-
 	service := r.renderServiceBase(
+		owningTopology,
 		nodeName,
-		owningTopology.GetNamespace(),
-		owningTopologyName,
 		nodeName,
 	)
 

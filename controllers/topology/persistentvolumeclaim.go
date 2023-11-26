@@ -93,11 +93,12 @@ func (r *PersistentVolumeClaimReconciler) Resolve(
 }
 
 func (r *PersistentVolumeClaimReconciler) renderPVCBase(
+	owningTopology *clabernetesapisv1alpha1.Topology,
 	name,
-	namespace,
-	owningTopologyName,
 	nodeName string,
 ) *k8scorev1.PersistentVolumeClaim {
+	owningTopologyName := owningTopology.GetName()
+
 	annotations, globalLabels := r.configManagerGetter().GetAllMetadata()
 
 	deploymentName := fmt.Sprintf("%s-%s", owningTopologyName, nodeName)
@@ -110,10 +111,7 @@ func (r *PersistentVolumeClaimReconciler) renderPVCBase(
 	}
 
 	labels := map[string]string{
-		// TODO -- this should still exist -- so gotta find where else i nuked it...c ould only
-		//  be configmap and deployment i think. this should still be containerlab/kne/XYZ but now
-		//  itll be based on the stuff in topolgoy.spec.topology.containerlab or .kne or .something
-		clabernetesconstants.LabelTopologyKind: "TODO",
+		clabernetesconstants.LabelTopologyKind: owningTopology.GetTopologyKind(),
 	}
 
 	for k, v := range selectorLabels {
@@ -127,7 +125,7 @@ func (r *PersistentVolumeClaimReconciler) renderPVCBase(
 	return &k8scorev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
-			Namespace:   namespace,
+			Namespace:   owningTopology.GetNamespace(),
 			Annotations: annotations,
 			Labels:      labels,
 		},
@@ -184,9 +182,8 @@ func (r *PersistentVolumeClaimReconciler) Render(
 	owningTopologyName := owningTopology.GetName()
 
 	pvc := r.renderPVCBase(
+		owningTopology,
 		fmt.Sprintf("%s-%s", owningTopologyName, nodeName),
-		owningTopology.GetNamespace(),
-		owningTopologyName,
 		nodeName,
 	)
 

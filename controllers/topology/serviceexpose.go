@@ -111,11 +111,12 @@ func (r *ServiceExposeReconciler) Resolve(
 }
 
 func (r *ServiceExposeReconciler) renderServiceBase(
+	owningTopology *clabernetesapisv1alpha1.Topology,
 	name,
-	namespace,
-	owningTopologyName,
 	nodeName string,
 ) *k8scorev1.Service {
+	owningTopologyName := owningTopology.GetName()
+
 	annotations, globalLabels := r.configManagerGetter().GetAllMetadata()
 
 	deploymentName := fmt.Sprintf("%s-%s", owningTopologyName, nodeName)
@@ -128,8 +129,7 @@ func (r *ServiceExposeReconciler) renderServiceBase(
 	}
 
 	labels := map[string]string{
-		// TODO label topology kind
-		clabernetesconstants.LabelTopologyKind:        "r.owningTopologyKind",
+		clabernetesconstants.LabelTopologyKind:        owningTopology.GetTopologyKind(),
 		clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeExpose, //nolint:lll
 
 	}
@@ -145,7 +145,7 @@ func (r *ServiceExposeReconciler) renderServiceBase(
 	return &k8scorev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
-			Namespace:   namespace,
+			Namespace:   owningTopology.GetNamespace(),
 			Annotations: annotations,
 			Labels:      labels,
 		},
@@ -242,9 +242,8 @@ func (r *ServiceExposeReconciler) Render(
 	owningTopologyName := owningTopology.GetName()
 
 	service := r.renderServiceBase(
+		owningTopology,
 		fmt.Sprintf("%s-%s", owningTopologyName, nodeName),
-		owningTopology.GetNamespace(),
-		owningTopologyName,
 		nodeName,
 	)
 

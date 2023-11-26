@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	clabernetesapis "github.com/srl-labs/clabernetes/apis"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -18,6 +19,12 @@ type Topology struct {
 
 	Spec   TopologySpec   `json:"spec,omitempty"`
 	Status TopologyStatus `json:"status,omitempty"`
+}
+
+// GetTopologyKind returns the "kind" of topology this CR represents -- typically this will be
+// "containerlab", but may be "kne" or perhaps others in the future as well.
+func (t *Topology) GetTopologyKind() string {
+	return clabernetesapis.TopologyKindContainerlab
 }
 
 // TopologySpec is the spec for a Topology resource.
