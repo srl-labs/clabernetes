@@ -6,7 +6,6 @@
         "labels": {
             "clabernetes/app": "clabernetes",
             "clabernetes/name": "test-configmap",
-            "clabernetes/topologyKind": "containerlab",
             "clabernetes/topologyOwner": "test-configmap"
         }
     },
