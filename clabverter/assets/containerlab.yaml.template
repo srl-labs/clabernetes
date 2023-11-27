@@ -33,5 +33,6 @@ spec:
     {{- end }}
   {{- end }}
 
-  config: |-
-    {{- .ClabConfig }}
+  definition:
+    containerlab: |-
+      {{- .ClabConfig }}

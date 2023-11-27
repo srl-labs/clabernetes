@@ -13,6 +13,7 @@ import (
 // topology file (ex: containerlab topology), and any associated configurations.
 // +k8s:openapi-gen=true
 // +kubebuilder:resource:path="topologies"
+// +kubebuilder:printcolumn:JSONPath=".status.kind",name=Kind,type=string
 type Topology struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -27,10 +28,24 @@ func (t *Topology) GetTopologyKind() string {
 	return clabernetesapis.TopologyKindContainerlab
 }
 
+// Definition holds the underlying topology definition for the Topology CR. A Topology *must* have
+// one -- and only one -- definition type defined.
+type Definition struct {
+	// Containerlab holds a valid containerlab topology.
+	// +optional
+	Containerlab string `json:"containerlab"`
+	// Kne holds a valid kne topology.
+	// +optional
+	Kne string `json:"kne"`
+}
+
 // TopologySpec is the spec for a Topology resource.
 type TopologySpec struct {
-	// Config is a "normal" containerlab configuration file.
-	Config string `json:"config"`
+	// Definition defines the actual set of nodes (network ones, not k8s ones!) that this Topology
+	// CR represents. Historically, and probably most often, this means Topology holds a "normal"
+	// containerlab topology file that will be "clabernetsified", however this could also be a "kne"
+	// config, or perhaps others in the future.
+	Definition Definition `json:"definition"`
 
 	// DisableNodeAliasService indicates if headless services for each node in a containerlab
 	// topology should *not* be created. By default, clabernetes creates these headless services for
@@ -136,6 +151,10 @@ type TopologySpec struct {
 
 // TopologyStatus is the status for a Containerlab topology resource.
 type TopologyStatus struct {
+	// Kind is the topology kind this CR represents -- for example "containerlab".
+	// +kubebuilder:default=unknown
+	// +kubebuilder:validation:Enum=unknown;containerlab;kne
+	Kind string `json:"kind"`
 	// Configs is a map of node name -> clab config -- in other words, this is the original
 	// containerlab configuration broken up and modified to use multi-node topology setup (via host
 	// links+vxlan). This is stored as a raw message so we don't have any weirdness w/ yaml tags

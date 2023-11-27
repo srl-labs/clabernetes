@@ -30,6 +30,9 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.Definition": schema_srl_labs_clabernetes_apis_v1alpha1_Definition(
+			ref,
+		),
 		"github.com/srl-labs/clabernetes/apis/v1alpha1.ExposedPorts": schema_srl_labs_clabernetes_apis_v1alpha1_ExposedPorts(
 			ref,
 		),
@@ -60,6 +63,37 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/srl-labs/clabernetes/apis/v1alpha1.Tunnel": schema_srl_labs_clabernetes_apis_v1alpha1_Tunnel(
 			ref,
 		),
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_Definition(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Definition holds the underlying topology definition for the Topology CR. A Topology *must* have one -- and only one -- definition type defined.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"containerlab": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Containerlab holds a valid containerlab topology.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"kne": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kne holds a valid kne topology.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -386,12 +420,13 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologySpec(
 				Description: "TopologySpec is the spec for a Topology resource.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"config": {
+					"definition": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Config is a \"normal\" containerlab configuration file.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
+							Description: "Definition defines the actual set of nodes (network ones, not k8s ones!) that this Topology CR represents. Historically, and probably most often, this means Topology holds a \"normal\" containerlab topology file that will be \"clabernetsified\", however this could also be a \"kne\" config, or perhaps others in the future.",
+							Default:     map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.Definition",
+							),
 						},
 					},
 					"disableNodeAliasService": {
@@ -556,11 +591,11 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologySpec(
 						},
 					},
 				},
-				Required: []string{"config"},
+				Required: []string{"definition"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/v1alpha1.FileFromConfigMap", "github.com/srl-labs/clabernetes/apis/v1alpha1.FileFromURL", "github.com/srl-labs/clabernetes/apis/v1alpha1.Persistence", "k8s.io/api/core/v1.ResourceRequirements"},
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.Definition", "github.com/srl-labs/clabernetes/apis/v1alpha1.FileFromConfigMap", "github.com/srl-labs/clabernetes/apis/v1alpha1.FileFromURL", "github.com/srl-labs/clabernetes/apis/v1alpha1.Persistence", "k8s.io/api/core/v1.ResourceRequirements"},
 	}
 }
 
@@ -573,6 +608,14 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 				Description: "TopologyStatus is the status for a Containerlab topology resource.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is the topology kind this CR represents -- for example \"containerlab\".",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"configs": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Configs is a map of node name -> clab config -- in other words, this is the original containerlab configuration broken up and modified to use multi-node topology setup (via host links+vxlan). This is stored as a raw message so we don't have any weirdness w/ yaml tags instead of json tags in clab things, and so we kube builder doesnt poop itself.",
@@ -670,6 +713,7 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 					},
 				},
 				Required: []string{
+					"kind",
 					"configs",
 					"configsHash",
 					"tunnels",

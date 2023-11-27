@@ -10,6 +10,8 @@ import (
 // ReconcileData is a struct that holds data that is common during a reconciliation process
 // regardless of the type of clabernetes topology that is being reconciled.
 type ReconcileData struct {
+	Kind string
+
 	PreviousConfigsHash  string
 	PreviousConfigs      map[string]*clabernetesutilcontainerlab.Config
 	ResolvedConfigs      map[string]*clabernetesutilcontainerlab.Config
@@ -75,6 +77,7 @@ func NewReconcileData(
 func (r *ReconcileData) SetStatus(
 	owningTopologyStatus *clabernetesapisv1alpha1.TopologyStatus,
 ) {
+	owningTopologyStatus.Kind = r.Kind
 	owningTopologyStatus.Configs = string(r.ResolvedConfigsBytes)
 	owningTopologyStatus.ConfigsHash = r.ResolvedConfigsHash
 	owningTopologyStatus.Tunnels = r.ResolvedTunnels

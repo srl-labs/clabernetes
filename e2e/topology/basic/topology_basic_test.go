@@ -58,7 +58,7 @@ func normalizeExposeService(t *testing.T, objectData []byte) []byte {
 func TestContainerlabBasic(t *testing.T) {
 	t.Parallel()
 
-	testName := "containerlab-basic"
+	testName := "topology-basic"
 
 	steps := clabernetestesthelpersuite.Steps{
 		{

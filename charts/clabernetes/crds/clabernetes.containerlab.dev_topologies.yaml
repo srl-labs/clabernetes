@@ -14,7 +14,11 @@ spec:
     singular: topology
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.kind
+      name: Kind
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: 'Topology is an object that holds information about a clabernetes
@@ -36,13 +40,24 @@ spec:
           spec:
             description: TopologySpec is the spec for a Topology resource.
             properties:
-              config:
-                description: Config is a "normal" containerlab configuration file.
-                type: string
               containerlabDebug:
                 description: ContainerlabDebug sets the `--debug` flag when invoking
                   containerlab in the launcher pods. This is disabled by default.
                 type: boolean
+              definition:
+                description: Definition defines the actual set of nodes (network ones,
+                  not k8s ones!) that this Topology CR represents. Historically, and
+                  probably most often, this means Topology holds a "normal" containerlab
+                  topology file that will be "clabernetsified", however this could
+                  also be a "kne" config, or perhaps others in the future.
+                properties:
+                  containerlab:
+                    description: Containerlab holds a valid containerlab topology.
+                    type: string
+                  kne:
+                    description: Kne holds a valid kne topology.
+                    type: string
+                type: object
               disableAutoExpose:
                 description: "DisableAutoExpose disables the automagic exposing of
                   ports for a given topology. When this setting is disabled clabernetes
@@ -269,7 +284,7 @@ spec:
                   this mapping applied.
                 type: object
             required:
-            - config
+            - definition
             type: object
           status:
             description: TopologyStatus is the status for a Containerlab topology
@@ -296,6 +311,15 @@ spec:
               imagePullSecretsHash:
                 description: ImagePullSecretsHash is a hash of the last stored ImagePullSecrets
                   data.
+                type: string
+              kind:
+                default: unknown
+                description: Kind is the topology kind this CR represents -- for example
+                  "containerlab".
+                enum:
+                - unknown
+                - containerlab
+                - kne
                 type: string
               nodeExposedPorts:
                 additionalProperties:
@@ -381,6 +405,7 @@ spec:
             - configsHash
             - filesFromURLHashes
             - imagePullSecretsHash
+            - kind
             - nodeExposedPorts
             - nodeExposedPortsHash
             - tunnels
@@ -389,3 +414,4 @@ spec:
         type: object
     served: true
     storage: true
+    subresources: {}

@@ -140,7 +140,8 @@ func TestRenderServiceNodeResolution(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					Config: `---
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
     name: test
     topology:
       nodes:
@@ -148,6 +149,7 @@ func TestRenderServiceNodeResolution(t *testing.T) {
           kind: srl
           image: ghcr.io/nokia/srlinux
 `,
+					},
 				},
 			},
 			nodeName: "srl1",

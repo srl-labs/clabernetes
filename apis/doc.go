@@ -9,4 +9,7 @@ const (
 
 	// TopologyKindContainerlab is the "containerlab" type of topology.
 	TopologyKindContainerlab = "containerlab"
+
+	// TopologyKindKne is the "kne" type of topology.
+	TopologyKindKne = "kne"
 )

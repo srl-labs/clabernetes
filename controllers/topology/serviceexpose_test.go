@@ -40,7 +40,8 @@ func TestResolveServiceExpose(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					Config: `---
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
     name: test
     topology:
       nodes:
@@ -48,6 +49,7 @@ func TestResolveServiceExpose(t *testing.T) {
           kind: srl
           image: ghcr.io/nokia/srlinux
 `,
+					},
 				},
 			},
 			expectedCurrent: nil,
@@ -67,7 +69,8 @@ func TestResolveServiceExpose(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					Config: `---
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
     name: test
     topology:
       nodes:
@@ -75,6 +78,7 @@ func TestResolveServiceExpose(t *testing.T) {
           kind: srl
           image: ghcr.io/nokia/srlinux
 `,
+					},
 				},
 			},
 			expectedCurrent: nil,
@@ -106,7 +110,8 @@ func TestResolveServiceExpose(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					Config: `---
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
     name: test
     topology:
       nodes:
@@ -114,6 +119,7 @@ func TestResolveServiceExpose(t *testing.T) {
           kind: srl
           image: ghcr.io/nokia/srlinux
 `,
+					},
 				},
 			},
 			expectedCurrent: nil,
@@ -188,7 +194,8 @@ func TestRenderServiceExpose(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					Config: `---
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
     name: test
     topology:
       nodes:
@@ -196,6 +203,7 @@ func TestRenderServiceExpose(t *testing.T) {
           kind: srl
           image: ghcr.io/nokia/srlinux
 `,
+					},
 				},
 			},
 			owningTopologyStatus: &clabernetesapisv1alpha1.TopologyStatus{

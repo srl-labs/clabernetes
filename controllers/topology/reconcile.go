@@ -3,7 +3,6 @@ package topology
 import (
 	"context"
 
-	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
 )
@@ -47,19 +46,9 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, err
 	}
 
-	// load the containerlab topo from the CR to make sure its all good
-	containerlabConfig, err := clabernetesutilcontainerlab.LoadContainerlabConfig(
-		topology.Spec.Config,
-	)
+	err = c.processDefinition(topology, reconcileData)
 	if err != nil {
-		c.BaseController.Log.Criticalf("failed parsing containerlab config, error: %s", err)
-
-		return ctrlruntime.Result{}, err
-	}
-
-	err = c.processConfig(topology, containerlabConfig, reconcileData)
-	if err != nil {
-		c.BaseController.Log.Criticalf("failed processing containerlab config, error: %s", err)
+		c.BaseController.Log.Criticalf("failed processing topology definition, error: %s", err)
 
 		return ctrlruntime.Result{}, err
 	}

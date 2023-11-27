@@ -5,28 +5,30 @@ metadata:
   name: srl02
   namespace: notclabernetes
 spec:
-  config: |-
-    name: srl02
-
-    topology:
-      nodes:
-        srl1:
-          kind: srl
-          image: ghcr.io/nokia/srlinux
-          startup-config: srl1.cfg
-          license: taco/srl1.license
-        srl2:
-          kind: srl
-          image: ghcr.io/nokia/srlinux
-          startup-config: srl2.cfg
-          license: srl2.license
-          binds:
-            - __clabDir__/potato.txt:/potato.txt
-            - __clabNodeDir__/potato.txt:/nodedir-potato.txt
-
-      links:
-        - endpoints: ["srl1:e1-1", "srl2:e1-1"]
   containerlabDebug: false
+  definition:
+    containerlab: |-
+      name: srl02
+
+      topology:
+        nodes:
+          srl1:
+            kind: srl
+            image: ghcr.io/nokia/srlinux
+            startup-config: srl1.cfg
+            license: taco/srl1.license
+          srl2:
+            kind: srl
+            image: ghcr.io/nokia/srlinux
+            startup-config: srl2.cfg
+            license: srl2.license
+            binds:
+              - __clabDir__/potato.txt:/potato.txt
+              - __clabNodeDir__/potato.txt:/nodedir-potato.txt
+
+        links:
+          - endpoints: ["srl1:e1-1", "srl2:e1-1"]
+    kne: ""
   disableAutoExpose: false
   disableExpose: false
   disableNodeAliasService: false
@@ -66,6 +68,7 @@ status:
   configsHash: ""
   filesFromURLHashes: null
   imagePullSecretsHash: ""
+  kind: ""
   nodeExposedPorts: null
   nodeExposedPortsHash: ""
   tunnels: null

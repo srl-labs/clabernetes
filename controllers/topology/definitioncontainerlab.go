@@ -5,10 +5,9 @@ import (
 	"strings"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
-
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	"gopkg.in/yaml.v3"
@@ -297,7 +296,8 @@ func getKindsForNode(
 	return nil
 }
 
-func (c *Controller) processConfigForNode(
+func processConfigForNode(
+	logger claberneteslogging.Instance,
 	topology *clabernetesapisv1alpha1.Topology,
 	containerlabConfig *clabernetesutilcontainerlab.Config,
 	nodeName string,
@@ -350,7 +350,7 @@ func (c *Controller) processConfigForNode(
 				"endpoint '%q' has wrong syntax, unexpected number of items", link.Endpoints,
 			)
 
-			c.BaseController.Log.Critical(msg)
+			logger.Critical(msg)
 
 			return fmt.Errorf(
 				"%w: %s", claberneteserrors.ErrParse, msg,
@@ -366,7 +366,7 @@ func (c *Controller) processConfigForNode(
 				"endpoint '%q' has wrong syntax, bad endpoint:interface config", link.Endpoints,
 			)
 
-			c.BaseController.Log.Critical(msg)
+			logger.Critical(msg)
 
 			return fmt.Errorf(
 				"%w: %s", claberneteserrors.ErrParse, msg,
@@ -444,36 +444,6 @@ func (c *Controller) processConfigForNode(
 				RemoteLinkName: uninterestingEndpoint.InterfaceName,
 			},
 		)
-	}
-
-	return nil
-}
-
-func (c *Controller) processConfig(
-	topology *clabernetesapisv1alpha1.Topology,
-	containerlabConfig *clabernetesutilcontainerlab.Config,
-	reconcileData *ReconcileData,
-) (
-	err error,
-) {
-	// we may have *different defaults per "sub-topology" so we do a cheater "deep copy" by just
-	// marshalling/unmarshalling :)
-	defaultsYAML, err := yaml.Marshal(containerlabConfig.Topology.Defaults)
-	if err != nil {
-		return err
-	}
-
-	for nodeName := range containerlabConfig.Topology.Nodes {
-		err = c.processConfigForNode(
-			topology,
-			containerlabConfig,
-			nodeName,
-			defaultsYAML,
-			reconcileData,
-		)
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil

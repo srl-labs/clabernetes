@@ -19,8 +19,9 @@ import (
 )
 
 const (
-	specIndentSpaces     = 4
-	maxBytesForConfigMap = 950_000
+	specIndentSpaces           = 4
+	specDefinitionIndentSpaces = 8
+	maxBytesForConfigMap       = 950_000
 )
 
 // MustNewClabverter returns an instance of Clabverter or panics.
@@ -364,7 +365,10 @@ func (c *Clabverter) handleManifest() error {
 			Name:      c.clabConfig.Name,
 			Namespace: c.destinationNamespace,
 			// pad w/ a newline so the template can look prettier :)
-			ClabConfig:         "\n" + clabernetesutil.Indent(c.rawClabConfig, specIndentSpaces),
+			ClabConfig: "\n" + clabernetesutil.Indent(
+				c.rawClabConfig,
+				specDefinitionIndentSpaces,
+			),
 			Files:              files,
 			FilesFromURL:       c.extraFilesFromURL,
 			InsecureRegistries: c.insecureRegistries,

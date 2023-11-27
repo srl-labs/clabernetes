@@ -3,17 +3,17 @@ kind: Service
 metadata:
   labels:
     clabernetes/app: clabernetes
-    clabernetes/name: containerlab-basic-srl1
+    clabernetes/name: topology-basic-srl1
     clabernetes/topologyKind: containerlab
     clabernetes/topologyNode: srl1
-    clabernetes/topologyOwner: containerlab-basic
+    clabernetes/topologyOwner: topology-basic
     clabernetes/topologyServiceType: expose
-  name: containerlab-basic-srl1
+  name: topology-basic-srl1
   namespace: NAMESPACE
   ownerReferences:
     - apiVersion: clabernetes.containerlab.dev/v1alpha1
       kind: Topology
-      name: containerlab-basic
+      name: topology-basic
 spec:
   allocateLoadBalancerNodePorts: true
   externalTrafficPolicy: Cluster
@@ -80,9 +80,9 @@ spec:
       targetPort: 60012
   selector:
     clabernetes/app: clabernetes
-    clabernetes/name: containerlab-basic-srl1
+    clabernetes/name: topology-basic-srl1
     clabernetes/topologyNode: srl1
-    clabernetes/topologyOwner: containerlab-basic
+    clabernetes/topologyOwner: topology-basic
   sessionAffinity: None
   type: LoadBalancer
 status:

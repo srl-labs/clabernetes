@@ -150,7 +150,8 @@ func TestRenderDeployment(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					Config: `---
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
     name: test
     topology:
       nodes:
@@ -158,6 +159,7 @@ func TestRenderDeployment(t *testing.T) {
           kind: srl
           image: ghcr.io/nokia/srlinux
 `,
+					},
 				},
 			},
 			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
@@ -206,7 +208,8 @@ func TestRenderDeployment(t *testing.T) {
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
 					PrivilegedLauncher: true,
-					Config: `---
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
     name: test
     topology:
       nodes:
@@ -214,6 +217,7 @@ func TestRenderDeployment(t *testing.T) {
           kind: srl
           image: ghcr.io/nokia/srlinux
 `,
+					},
 				},
 			},
 			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
@@ -262,7 +266,8 @@ func TestRenderDeployment(t *testing.T) {
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
 					ContainerlabDebug: true,
-					Config: `---
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
     name: test
     topology:
       nodes:
@@ -270,6 +275,7 @@ func TestRenderDeployment(t *testing.T) {
           kind: srl
           image: ghcr.io/nokia/srlinux
 `,
+					},
 				},
 			},
 			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
@@ -318,7 +324,8 @@ func TestRenderDeployment(t *testing.T) {
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
 					LauncherLogLevel: "debug",
-					Config: `---
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
 		   name: test
 		   topology:
 		     nodes:
@@ -326,6 +333,7 @@ func TestRenderDeployment(t *testing.T) {
 		         kind: srl
 		         image: ghcr.io/nokia/srlinux
 		`,
+					},
 				},
 			},
 			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
@@ -374,7 +382,8 @@ func TestRenderDeployment(t *testing.T) {
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
 					InsecureRegistries: []string{"1.2.3.4", "potato.com"},
-					Config: `---
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
 		   name: test
 		   topology:
 		     nodes:
@@ -382,6 +391,7 @@ func TestRenderDeployment(t *testing.T) {
 		         kind: srl
 		         image: ghcr.io/nokia/srlinux
 		`,
+					},
 				},
 			},
 			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
