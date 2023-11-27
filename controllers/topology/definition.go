@@ -72,6 +72,8 @@ func (c *Controller) processKneDefinition(
 	topology *clabernetesapisv1alpha1.Topology,
 	reconcileData *ReconcileData,
 ) error {
+	reconcileData.Kind = clabernetesapis.TopologyKindKne
+
 	// load the kne topo to make sure its all good
 	kneTopo, err := clabernetesutilkne.LoadKneTopology(topology.Spec.Definition.Kne)
 	if err != nil {

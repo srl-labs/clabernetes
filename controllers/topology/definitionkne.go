@@ -157,6 +157,9 @@ func processKneDefinition(
 		reconcileData.ResolvedConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
 			Name: fmt.Sprintf("clabernetes-%s", nodeName),
 			Topology: &clabernetesutilcontainerlab.Topology{
+				Defaults: &clabernetesutilcontainerlab.NodeDefinition{
+					Ports: make([]string, 0),
+				},
 				Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
 					nodeName: {
 						Kind:  containerlabKind,
