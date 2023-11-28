@@ -3,10 +3,32 @@ package topology
 import (
 	"context"
 
+	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+	ctrlruntime "sigs.k8s.io/controller-runtime"
+
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
+
+// getTopologyFromReq fetches the reconcile target Topology from the Request.
+func (c *Controller) getTopologyFromReq(
+	ctx context.Context,
+	req ctrlruntime.Request,
+) (*clabernetesapisv1alpha1.Topology, error) {
+	containerlab := &clabernetesapisv1alpha1.Topology{}
+
+	err := c.BaseController.Client.Get(
+		ctx,
+		apimachinerytypes.NamespacedName{
+			Namespace: req.Namespace,
+			Name:      req.Name,
+		},
+		containerlab,
+	)
+
+	return containerlab, err
+}
 
 func (r *Reconciler) createObj(
 	ctx context.Context,

@@ -5,6 +5,9 @@ import (
 
 	clabernetesapis "github.com/srl-labs/clabernetes/apis"
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+	apimachinerytypes "k8s.io/apimachinery/pkg/types"
+	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlruntimereconcile "sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
@@ -20,7 +23,6 @@ import (
 
 	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
-	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // NewController returns a new Controller.
@@ -44,28 +46,6 @@ func NewController(
 			baseController.Client,
 			clabernetes.GetAppName(),
 			clabernetes.GetNamespace(),
-			func(
-				ctx context.Context,
-				client ctrlruntimeclient.Client,
-			) ([]ctrlruntimeclient.Object, error) {
-				containerlabs := &clabernetesapisv1alpha1.TopologyList{}
-
-				err := client.List(ctx, containerlabs)
-				if err != nil {
-					return nil, err
-				}
-
-				var out []ctrlruntimeclient.Object
-
-				for idx := range containerlabs.Items {
-					out = append(
-						out,
-						&containerlabs.Items[idx],
-					)
-				}
-
-				return out, nil
-			},
 			clabernetesconfig.GetManager,
 			clabernetes.GetClusterCRIKind(),
 			clabernetesutil.GetEnvStrOrDefault(
@@ -82,6 +62,34 @@ func NewController(
 type Controller struct {
 	*clabernetescontrollers.BaseController
 	TopologyReconciler *Reconciler
+}
+
+// enqueueForAll enqueues all Topology CRs for reconciliation.
+func (c *Controller) enqueueForAll(
+	ctx context.Context,
+	_ ctrlruntimeclient.Object,
+) []ctrlruntimereconcile.Request {
+	topologies := &clabernetesapisv1alpha1.TopologyList{}
+
+	err := c.Client.List(ctx, topologies)
+	if err != nil {
+		c.Log.Criticalf("failed listing resource objects in EnqueueForAll, err: %s", err)
+
+		return nil
+	}
+
+	requests := make([]ctrlruntimereconcile.Request, len(topologies.Items))
+
+	for idx := range topologies.Items {
+		requests[idx] = ctrlruntimereconcile.Request{
+			NamespacedName: apimachinerytypes.NamespacedName{
+				Namespace: topologies.Items[idx].GetNamespace(),
+				Name:      topologies.Items[idx].GetName(),
+			},
+		}
+	}
+
+	return requests
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -114,7 +122,7 @@ func (c *Controller) SetupWithManager(mgr ctrlruntime.Manager) error {
 		Watches(
 			&k8scorev1.ConfigMap{},
 			ctrlruntimehandler.EnqueueRequestsFromMapFunc(
-				c.TopologyReconciler.EnqueueForAll,
+				c.enqueueForAll,
 			),
 			ctrlruntimebuilder.WithPredicates(
 				c.BaseController.GlobalConfigPredicates(),

@@ -22,7 +22,6 @@ import (
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
-	ctrlruntimereconcile "sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // ResourceListerFunc represents a function that can list the objects that a topology controller
@@ -38,15 +37,13 @@ func NewReconciler(
 	client ctrlruntimeclient.Client,
 	managerAppName,
 	managerNamespace string,
-	resourceLister ResourceListerFunc,
 	configManagerGetter clabernetesconfig.ManagerGetterFunc,
 	criKind,
 	imagePullThroughMode string,
 ) *Reconciler {
 	return &Reconciler{
-		Log:            log,
-		Client:         client,
-		ResourceLister: resourceLister,
+		Log:    log,
+		Client: client,
 
 		configMapReconciler: NewConfigMapReconciler(
 			log,
@@ -84,10 +81,9 @@ func NewReconciler(
 // common/standard resources that represent a clabernetes object (configmap, deployments,
 // services, etc.).
 type Reconciler struct {
-	Log            claberneteslogging.Instance
-	Client         ctrlruntimeclient.Client
-	ResourceKind   string
-	ResourceLister ResourceListerFunc
+	Log          claberneteslogging.Instance
+	Client       ctrlruntimeclient.Client
+	ResourceKind string
 
 	configMapReconciler             *ConfigMapReconciler
 	serviceNodeAliasReconciler      *ServiceNodeAliasReconciler
@@ -848,34 +844,6 @@ func (r *Reconciler) ReconcileDeployments(
 		deployments,
 		reconcileData,
 	)
-}
-
-// EnqueueForAll enqueues a reconcile for kinds the Reconciler represents. This is probably not very
-// efficient/good but we should have low volume and we're using the cached ctrlruntime client so its
-// probably ok :).
-func (r *Reconciler) EnqueueForAll(
-	ctx context.Context,
-	_ ctrlruntimeclient.Object,
-) []ctrlruntimereconcile.Request {
-	objList, err := r.ResourceLister(ctx, r.Client)
-	if err != nil {
-		r.Log.Criticalf("failed listing resource objects in EnqueueForAll, err: %s", err)
-
-		return nil
-	}
-
-	requests := make([]ctrlruntimereconcile.Request, len(objList))
-
-	for idx := range objList {
-		requests[idx] = ctrlruntimereconcile.Request{
-			NamespacedName: apimachinerytypes.NamespacedName{
-				Namespace: objList[idx].GetNamespace(),
-				Name:      objList[idx].GetName(),
-			},
-		}
-	}
-
-	return requests
 }
 
 func (r *Reconciler) diffIfDebug(a, b any) {
