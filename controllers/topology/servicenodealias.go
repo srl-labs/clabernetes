@@ -77,7 +77,7 @@ func (r *ServiceNodeAliasReconciler) Resolve(
 
 	var allNodes []string
 
-	if !owningTopology.Spec.DisableNodeAliasService {
+	if !owningTopology.Spec.Expose.DisableNodeAliasService {
 		allNodes = make([]string, len(clabernetesConfigs))
 
 		idx := 0
@@ -115,7 +115,7 @@ func (r *ServiceNodeAliasReconciler) renderServiceBase(
 	}
 
 	labels := map[string]string{
-		clabernetesconstants.LabelTopologyKind:        owningTopology.GetTopologyKind(),
+		clabernetesconstants.LabelTopologyKind:        GetTopologyKind(owningTopology),
 		clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeNodeAlias, //nolint:lll
 
 	}

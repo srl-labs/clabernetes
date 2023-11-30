@@ -313,7 +313,7 @@ func processConfigForNode(
 
 	nodeDefinition := containerlabConfig.Topology.Nodes[nodeName]
 
-	if !topology.Spec.DisableExpose && !topology.Spec.DisableAutoExpose {
+	if !topology.Spec.Expose.DisableExpose && !topology.Spec.Expose.DisableAutoExpose {
 		// disable expose is *not* set and disable auto expose is *not* set, so we want to
 		// automagically add our default expose ports to the topo. we'll simply tack this onto
 		// the clab defaults ports list since that will get merged w/ any user defined ports

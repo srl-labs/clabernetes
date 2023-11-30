@@ -43,18 +43,21 @@ type ConfigMapReconciler struct {
 // the configmap that will ultimately be referenced when mounting sub-topologies and tunnel data in
 // the clabernetes launcher pod(s) for a given topology.
 func (r *ConfigMapReconciler) Render(
-	owningTopologyNamespacedName apimachinerytypes.NamespacedName,
+	owningTopology *clabernetesapisv1alpha1.Topology,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 	tunnels map[string][]*clabernetesapisv1alpha1.Tunnel,
 	filesFromURL map[string][]clabernetesapisv1alpha1.FileFromURL,
 	imagePullSecretsString string,
 ) (*k8scorev1.ConfigMap, error) {
+	owningTopologyName := owningTopology.GetName()
+
 	annotations, globalLabels := r.configManagerGetter().GetAllMetadata()
 
 	labels := map[string]string{
 		clabernetesconstants.LabelApp:           clabernetesconstants.Clabernetes,
-		clabernetesconstants.LabelName:          owningTopologyNamespacedName.Name,
-		clabernetesconstants.LabelTopologyOwner: owningTopologyNamespacedName.Name,
+		clabernetesconstants.LabelName:          owningTopologyName,
+		clabernetesconstants.LabelTopologyOwner: owningTopologyName,
+		clabernetesconstants.LabelTopologyKind:  GetTopologyKind(owningTopology),
 	}
 
 	for k, v := range globalLabels {
@@ -108,8 +111,8 @@ func (r *ConfigMapReconciler) Render(
 
 	return &k8scorev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        owningTopologyNamespacedName.Name,
-			Namespace:   owningTopologyNamespacedName.Namespace,
+			Name:        owningTopologyName,
+			Namespace:   owningTopology.GetNamespace(),
 			Annotations: annotations,
 			Labels:      labels,
 		},

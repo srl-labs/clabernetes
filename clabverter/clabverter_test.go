@@ -170,21 +170,21 @@ func normalizeFromFileFilePaths(t *testing.T, b []byte) []byte {
 		t.Fatalf("failed unmarshaling topology cr, err: %s", err)
 	}
 
-	for nodeName := range topology.Spec.FilesFromConfigMap {
-		sort.Slice(topology.Spec.FilesFromConfigMap[nodeName], func(i, j int) bool {
-			return topology.Spec.FilesFromConfigMap[nodeName][i].FilePath < topology.Spec.FilesFromConfigMap[nodeName][j].FilePath
+	for nodeName := range topology.Spec.Deployment.FilesFromConfigMap {
+		sort.Slice(topology.Spec.Deployment.FilesFromConfigMap[nodeName], func(i, j int) bool {
+			return topology.Spec.Deployment.FilesFromConfigMap[nodeName][i].FilePath < topology.Spec.Deployment.FilesFromConfigMap[nodeName][j].FilePath
 		})
 	}
 
-	for nodeName := range topology.Spec.FilesFromConfigMap {
-		for idx, fileFromConfigMap := range topology.Spec.FilesFromConfigMap[nodeName] {
-			topology.Spec.FilesFromConfigMap[nodeName][idx].FilePath = strings.Replace(
+	for nodeName := range topology.Spec.Deployment.FilesFromConfigMap {
+		for idx, fileFromConfigMap := range topology.Spec.Deployment.FilesFromConfigMap[nodeName] {
+			topology.Spec.Deployment.FilesFromConfigMap[nodeName][idx].FilePath = strings.Replace(
 				fileFromConfigMap.FilePath,
 				cwd,
 				"/some/dir/clabernetes/clabverter",
 				1,
 			)
-			topology.Spec.FilesFromConfigMap[nodeName][idx].ConfigMapPath = "REPLACED"
+			topology.Spec.Deployment.FilesFromConfigMap[nodeName][idx].ConfigMapPath = "REPLACED"
 		}
 	}
 

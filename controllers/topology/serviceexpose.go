@@ -82,8 +82,8 @@ func (r *ServiceExposeReconciler) Resolve(
 
 	exposedNodes := make([]string, 0)
 
-	disableExpose := owningTopology.Spec.DisableExpose
-	disableAutoExpose := owningTopology.Spec.DisableAutoExpose
+	disableExpose := owningTopology.Spec.Expose.DisableExpose
+	disableAutoExpose := owningTopology.Spec.Expose.DisableAutoExpose
 
 	for nodeName, nodeData := range clabernetesConfigs {
 		// disable expose is set to true for the whole spec, nothing should be exposed, so skip
@@ -129,7 +129,7 @@ func (r *ServiceExposeReconciler) renderServiceBase(
 	}
 
 	labels := map[string]string{
-		clabernetesconstants.LabelTopologyKind:        owningTopology.GetTopologyKind(),
+		clabernetesconstants.LabelTopologyKind:        GetTopologyKind(owningTopology),
 		clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeExpose, //nolint:lll
 
 	}

@@ -194,7 +194,7 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 	// if we have containerd cri *and* pull through mode is auto or always, we need to mount the
 	// containerd sock
 	if r.imagePullThroughMode != clabernetesconstants.ImagePullThroughModeNever &&
-		owningTopology.Spec.ImagePullThroughOverride != clabernetesconstants.ImagePullThroughModeNever { //nolint:lll
+		owningTopology.Spec.ImagePull.PullThroughOverride != clabernetesconstants.ImagePullThroughModeNever { //nolint:lll
 		var path string
 
 		var subPath string
@@ -246,7 +246,7 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 
 	volumesFromConfigMaps = append(
 		volumesFromConfigMaps,
-		owningTopology.Spec.FilesFromConfigMap[nodeName]...,
+		owningTopology.Spec.Deployment.FilesFromConfigMap[nodeName]...,
 	)
 
 	for _, podVolume := range volumesFromConfigMaps {
@@ -361,13 +361,13 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		clabernetesconstants.Info,
 	)
 
-	if owningTopology.Spec.LauncherLogLevel != "" {
-		launcherLogLevel = owningTopology.Spec.LauncherLogLevel
+	if owningTopology.Spec.Deployment.LauncherLogLevel != "" {
+		launcherLogLevel = owningTopology.Spec.Deployment.LauncherLogLevel
 	}
 
 	imagePullThroughMode := r.imagePullThroughMode
-	if owningTopology.Spec.ImagePullThroughOverride != "" {
-		imagePullThroughMode = owningTopology.Spec.ImagePullThroughOverride
+	if owningTopology.Spec.ImagePull.PullThroughOverride != "" {
+		imagePullThroughMode = owningTopology.Spec.ImagePull.PullThroughOverride
 	}
 
 	envs := []k8scorev1.EnvVar{
@@ -432,7 +432,7 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		},
 	}
 
-	if owningTopology.Spec.ContainerlabDebug {
+	if owningTopology.Spec.Deployment.ContainerlabDebug {
 		envs = append(
 			envs,
 			k8scorev1.EnvVar{
@@ -442,17 +442,17 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		)
 	}
 
-	if len(owningTopology.Spec.InsecureRegistries) > 0 {
+	if len(owningTopology.Spec.ImagePull.InsecureRegistries) > 0 {
 		envs = append(
 			envs,
 			k8scorev1.EnvVar{
 				Name:  clabernetesconstants.LauncherInsecureRegistries,
-				Value: strings.Join(owningTopology.Spec.InsecureRegistries, ","),
+				Value: strings.Join(owningTopology.Spec.ImagePull.InsecureRegistries, ","),
 			},
 		)
 	}
 
-	if owningTopology.Spec.PrivilegedLauncher {
+	if owningTopology.Spec.Deployment.PrivilegedLauncher {
 		envs = append(
 			envs,
 			k8scorev1.EnvVar{
@@ -471,14 +471,14 @@ func (r *DeploymentReconciler) renderDeploymentContainerResources(
 	owningTopology *clabernetesapisv1alpha1.Topology,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 ) {
-	nodeResources, nodeResourcesOk := owningTopology.Spec.Resources[nodeName]
+	nodeResources, nodeResourcesOk := owningTopology.Spec.Deployment.Resources[nodeName]
 	if nodeResourcesOk {
 		deployment.Spec.Template.Spec.Containers[0].Resources = nodeResources
 
 		return
 	}
 
-	defaultResources, defaultResourcesOk := owningTopology.Spec.Resources[clabernetesconstants.Default] //nolint:lll
+	defaultResources, defaultResourcesOk := owningTopology.Spec.Deployment.Resources[clabernetesconstants.Default] //nolint:lll
 	if defaultResourcesOk {
 		deployment.Spec.Template.Spec.Containers[0].Resources = defaultResources
 
@@ -499,7 +499,7 @@ func (r *DeploymentReconciler) renderDeploymentContainerPrivileges(
 	nodeName string,
 	owningTopology *clabernetesapisv1alpha1.Topology,
 ) {
-	if owningTopology.Spec.PrivilegedLauncher {
+	if owningTopology.Spec.Deployment.PrivilegedLauncher {
 		deployment.Spec.Template.Spec.Containers[0].SecurityContext = &k8scorev1.SecurityContext{
 			Privileged: clabernetesutil.ToPointer(true),
 			RunAsUser:  clabernetesutil.ToPointer(int64(0)),
@@ -580,7 +580,7 @@ func (r *DeploymentReconciler) renderDeploymentDevices(
 	deployment *k8sappsv1.Deployment,
 	owningTopology *clabernetesapisv1alpha1.Topology,
 ) {
-	if owningTopology.Spec.PrivilegedLauncher {
+	if owningTopology.Spec.Deployment.PrivilegedLauncher {
 		// launcher is privileged, no need to mount devices explicitly
 		return
 	}
@@ -648,7 +648,7 @@ func (r *DeploymentReconciler) renderDeploymentPersistence(
 	owningTopologyName string,
 	owningTopology *clabernetesapisv1alpha1.Topology,
 ) {
-	if !owningTopology.Spec.Persistence.Enabled {
+	if !owningTopology.Spec.Deployment.Persistence.Enabled {
 		return
 	}
 

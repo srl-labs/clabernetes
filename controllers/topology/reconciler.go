@@ -121,7 +121,7 @@ func (r *Reconciler) ReconcileConfigMap(
 
 	reconcileData.ResolvedTunnelsHash = tunnelHash
 
-	for nodeName, nodeFilesFromURL := range owningTopology.Spec.FilesFromURL {
+	for nodeName, nodeFilesFromURL := range owningTopology.Spec.Deployment.FilesFromURL {
 		var nodeFilesFromURLHash string
 
 		_, nodeFilesFromURLHash, err = clabernetesutil.HashObject(nodeFilesFromURL)
@@ -139,7 +139,7 @@ func (r *Reconciler) ReconcileConfigMap(
 	}
 
 	imagePullSecretsBytes, imagePullSecretsHash, err := clabernetesutil.HashObjectYAML(
-		owningTopology.Spec.ImagePullSecrets,
+		owningTopology.Spec.ImagePull.PullSecrets,
 	)
 	if err != nil {
 		return err
@@ -173,10 +173,10 @@ func (r *Reconciler) ReconcileConfigMap(
 	}
 
 	renderedConfigMap, err := r.configMapReconciler.Render(
-		namespacedName,
+		owningTopology,
 		reconcileData.ResolvedConfigs,
 		reconcileData.ResolvedTunnels,
-		owningTopology.Spec.FilesFromURL,
+		owningTopology.Spec.Deployment.FilesFromURL,
 		string(imagePullSecretsBytes),
 	)
 	if err != nil {

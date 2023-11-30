@@ -38,8 +38,10 @@ func TestResolvePersistentVolumeClaim(t *testing.T) {
 			clabernetesConfigs: nil,
 			owningTopology: &clabernetesapisv1alpha1.Topology{
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					Persistence: clabernetesapisv1alpha1.Persistence{
-						Enabled: true,
+					Deployment: clabernetesapisv1alpha1.Deployment{
+						Persistence: clabernetesapisv1alpha1.Persistence{
+							Enabled: true,
+						},
 					},
 				},
 			},
@@ -65,8 +67,10 @@ func TestResolvePersistentVolumeClaim(t *testing.T) {
 			clabernetesConfigs: nil,
 			owningTopology: &clabernetesapisv1alpha1.Topology{
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					Persistence: clabernetesapisv1alpha1.Persistence{
-						Enabled: true,
+					Deployment: clabernetesapisv1alpha1.Deployment{
+						Persistence: clabernetesapisv1alpha1.Persistence{
+							Enabled: true,
+						},
 					},
 				},
 			}, expectedCurrent: nil,
@@ -92,8 +96,10 @@ func TestResolvePersistentVolumeClaim(t *testing.T) {
 			},
 			owningTopology: &clabernetesapisv1alpha1.Topology{
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					Persistence: clabernetesapisv1alpha1.Persistence{
-						Enabled: true,
+					Deployment: clabernetesapisv1alpha1.Deployment{
+						Persistence: clabernetesapisv1alpha1.Persistence{
+							Enabled: true,
+						},
 					},
 				},
 			},
@@ -122,8 +128,10 @@ func TestResolvePersistentVolumeClaim(t *testing.T) {
 			},
 			owningTopology: &clabernetesapisv1alpha1.Topology{
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					Persistence: clabernetesapisv1alpha1.Persistence{
-						Enabled: false,
+					Deployment: clabernetesapisv1alpha1.Deployment{
+						Persistence: clabernetesapisv1alpha1.Persistence{
+							Enabled: false,
+						},
 					},
 				},
 			},
@@ -197,8 +205,10 @@ func TestRenderPersistentVolumeClaim(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					Persistence: clabernetesapisv1alpha1.Persistence{
-						Enabled: true,
+					Deployment: clabernetesapisv1alpha1.Deployment{
+						Persistence: clabernetesapisv1alpha1.Persistence{
+							Enabled: true,
+						},
 					},
 				},
 			},
@@ -215,9 +225,11 @@ func TestRenderPersistentVolumeClaim(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					Persistence: clabernetesapisv1alpha1.Persistence{
-						Enabled:          true,
-						StorageClassName: "my-custom-storage-class",
+					Deployment: clabernetesapisv1alpha1.Deployment{
+						Persistence: clabernetesapisv1alpha1.Persistence{
+							Enabled:          true,
+							StorageClassName: "my-custom-storage-class",
+						},
 					},
 				},
 			},
@@ -234,9 +246,11 @@ func TestRenderPersistentVolumeClaim(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					Persistence: clabernetesapisv1alpha1.Persistence{
-						Enabled:   true,
-						ClaimSize: "99Gi",
+					Deployment: clabernetesapisv1alpha1.Deployment{
+						Persistence: clabernetesapisv1alpha1.Persistence{
+							Enabled:   true,
+							ClaimSize: "99Gi",
+						},
 					},
 				},
 			},

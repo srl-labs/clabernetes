@@ -47,7 +47,7 @@ const renderConfigMapTestName = "configmap/render-config-map"
 func TestRenderConfigMap(t *testing.T) {
 	cases := []struct {
 		name               string
-		namespacedName     apimachinerytypes.NamespacedName
+		owningTopology     *clabernetesapisv1alpha1.Topology
 		clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config
 		tunnels            map[string][]*clabernetesapisv1alpha1.Tunnel
 		filesFromURL       map[string][]clabernetesapisv1alpha1.FileFromURL
@@ -55,9 +55,11 @@ func TestRenderConfigMap(t *testing.T) {
 	}{
 		{
 			name: "basic-two-node-with-links",
-			namespacedName: apimachinerytypes.NamespacedName{
-				Name:      "test-configmap",
-				Namespace: "nowhere",
+			owningTopology: &clabernetesapisv1alpha1.Topology{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-configmap",
+					Namespace: "nowhere",
+				},
 			},
 			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
 				"srl1": {
@@ -137,9 +139,11 @@ func TestRenderConfigMap(t *testing.T) {
 		},
 		{
 			name: "basic-two-node-no-links",
-			namespacedName: apimachinerytypes.NamespacedName{
-				Name:      "test-configmap",
-				Namespace: "nowhere",
+			owningTopology: &clabernetesapisv1alpha1.Topology{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-configmap",
+					Namespace: "nowhere",
+				},
 			},
 			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
 				"srl1": {
@@ -183,9 +187,11 @@ func TestRenderConfigMap(t *testing.T) {
 		},
 		{
 			name: "image-pull-secrets",
-			namespacedName: apimachinerytypes.NamespacedName{
-				Name:      "test-configmap",
-				Namespace: "nowhere",
+			owningTopology: &clabernetesapisv1alpha1.Topology{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-configmap",
+					Namespace: "nowhere",
+				},
 			},
 			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
 				"srl1": {
@@ -225,7 +231,7 @@ func TestRenderConfigMap(t *testing.T) {
 				)
 
 				got, err := reconciler.Render(
-					testCase.namespacedName,
+					testCase.owningTopology,
 					testCase.clabernetesConfigs,
 					testCase.tunnels,
 					testCase.filesFromURL,

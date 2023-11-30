@@ -333,7 +333,7 @@ func (c *Clabverter) handleAssociatedFiles() error {
 }
 
 func (c *Clabverter) handleManifest() error {
-	t, err := template.ParseFS(Assets, "assets/containerlab.yaml.template")
+	t, err := template.ParseFS(Assets, "assets/topology.yaml.template")
 	if err != nil {
 		c.logger.Criticalf("failed loading containerlab manifest from assets: %s", err)
 

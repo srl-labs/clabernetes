@@ -70,7 +70,7 @@ func (r *PersistentVolumeClaimReconciler) Resolve(
 		pvcs.Current[nodeName] = &ownedPVCs.Items[i]
 	}
 
-	persistenceEnabled := owningTopology.Spec.Persistence.Enabled
+	persistenceEnabled := owningTopology.Spec.Deployment.Persistence.Enabled
 
 	if persistenceEnabled {
 		allNodes := make([]string, len(clabernetesConfigs))
@@ -111,7 +111,7 @@ func (r *PersistentVolumeClaimReconciler) renderPVCBase(
 	}
 
 	labels := map[string]string{
-		clabernetesconstants.LabelTopologyKind: owningTopology.GetTopologyKind(),
+		clabernetesconstants.LabelTopologyKind: GetTopologyKind(owningTopology),
 	}
 
 	for k, v := range selectorLabels {
@@ -136,7 +136,7 @@ func (r *PersistentVolumeClaimReconciler) renderPVCSpec(
 	owningTopology *clabernetesapisv1alpha1.Topology,
 	pvc *k8scorev1.PersistentVolumeClaim,
 ) {
-	persistence := owningTopology.Spec.Persistence
+	persistence := owningTopology.Spec.Deployment.Persistence
 
 	var storageClassName *string
 

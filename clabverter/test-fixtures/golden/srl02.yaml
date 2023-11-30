@@ -1,11 +1,10 @@
-apiVersion: clabernetes.containerlab.dev/v1alpha1
+apiVersion: topologies.containerlab.dev/v1alpha1
 kind: Topology
 metadata:
   creationTimestamp: null
   name: srl02
   namespace: notclabernetes
 spec:
-  containerlabDebug: false
   definition:
     containerlab: |-
       name: srl02
@@ -29,40 +28,44 @@ spec:
         links:
           - endpoints: ["srl1:e1-1", "srl2:e1-1"]
     kne: ""
-  disableAutoExpose: false
-  disableExpose: false
-  disableNodeAliasService: false
-  filesFromConfigMap:
-    srl1:
-    - configMapName: srl02-srl1-startup-config
-      configMapPath: REPLACED
-      filePath: srl1.cfg
-    - configMapName: srl02-srl1-files
-      configMapPath: REPLACED
-      filePath: taco/srl1.license
-    srl2:
-    - configMapName: srl02-srl2-files
-      configMapPath: REPLACED
-      filePath: /some/dir/clabernetes/clabverter/test-fixtures/clabversiontest/potato.txt
-    - configMapName: srl02-srl2-files
-      configMapPath: REPLACED
-      filePath: /some/dir/clabernetes/clabverter/test-fixtures/clabversiontest/srl2/potato.txt
-    - configMapName: srl02-srl2-startup-config
-      configMapPath: REPLACED
-      filePath: srl2.cfg
-    - configMapName: srl02-srl2-files
-      configMapPath: REPLACED
-      filePath: srl2.license
-  filesFromURL: null
-  imagePullSecrets: null
-  insecureRegistries:
-  - 1.2.3.4
-  persistence:
-    claimSize: ""
-    enabled: false
-    storageClassName: ""
-  privilegedLauncher: false
-  resources: null
+  deployment:
+    containerlabDebug: false
+    filesFromConfigMap:
+      srl1:
+      - configMapName: srl02-srl1-startup-config
+        configMapPath: REPLACED
+        filePath: srl1.cfg
+      - configMapName: srl02-srl1-files
+        configMapPath: REPLACED
+        filePath: taco/srl1.license
+      srl2:
+      - configMapName: srl02-srl2-files
+        configMapPath: REPLACED
+        filePath: /some/dir/clabernetes/clabverter/test-fixtures/clabversiontest/potato.txt
+      - configMapName: srl02-srl2-files
+        configMapPath: REPLACED
+        filePath: /some/dir/clabernetes/clabverter/test-fixtures/clabversiontest/srl2/potato.txt
+      - configMapName: srl02-srl2-startup-config
+        configMapPath: REPLACED
+        filePath: srl2.cfg
+      - configMapName: srl02-srl2-files
+        configMapPath: REPLACED
+        filePath: srl2.license
+    filesFromURL: null
+    persistence:
+      claimSize: ""
+      enabled: false
+      storageClassName: ""
+    privilegedLauncher: false
+    resources: null
+  expose:
+    disableAutoExpose: false
+    disableExpose: false
+    disableNodeAliasService: false
+  imagePull:
+    insecureRegistries:
+    - 1.2.3.4
+    pullSecrets: null
 status:
   configs: ""
   configsHash: ""

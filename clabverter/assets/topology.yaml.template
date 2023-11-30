@@ -1,0 +1,42 @@
+---
+apiVersion: topologies.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: {{ .Name }}
+  namespace: {{ .Namespace }}
+spec:
+  {{- if gt (len .InsecureRegistries) 0 }}
+  imagePull:
+    insecureRegistries:
+      {{- range $registry := .InsecureRegistries }}
+      - {{ $registry }}
+      {{- end }}
+  {{- end }}
+  {{- if or (gt (len .Files) 0) (gt (len .FilesFromURL) 0) }}
+  deployment:
+    {{- if or (gt (len .Files) 0) }}
+    filesFromConfigMap:
+      {{- range $nodeName, $nodeFiles := .Files }}
+        {{ $nodeName }}:
+          {{- range $nodeFile := $nodeFiles }}
+          - filePath: {{ $nodeFile.FilePath }}
+            configMapName: {{ $nodeFile.ConfigMapName }}
+            configMapPath: {{ $nodeFile.FileName }}
+          {{- end }}
+      {{- end }}
+    {{- end }}
+    {{- if (gt (len .FilesFromURL) 0) }}
+    filesFromURL:
+      {{- range $nodeName, $nodeFiles := .FilesFromURL }}
+        {{ $nodeName }}:
+          {{- range $nodeFile := $nodeFiles }}
+          - filePath: {{ $nodeFile.FilePath }}
+            url: {{ $nodeFile.URL }}
+          {{- end }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+
+  definition:
+    containerlab: |-
+      {{- .ClabConfig }}

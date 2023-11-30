@@ -7,9 +7,12 @@ const (
 	// Topology is the Kind of the Topology custom resource.
 	Topology = "topology"
 
-	// TopologyKindContainerlab is the "containerlab" type of topology.
+	// TopologyKindContainerlab is the "containerlab" kind of topology.
 	TopologyKindContainerlab = "containerlab"
 
-	// TopologyKindKne is the "kne" type of topology.
+	// TopologyKindKne is the "kne" kind of topology.
 	TopologyKindKne = "kne"
+
+	// TopologyKindUnknown is the kind of topology for unknown topologies.
+	TopologyKindUnknown = "unknown"
 )

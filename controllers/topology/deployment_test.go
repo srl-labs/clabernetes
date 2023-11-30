@@ -207,7 +207,9 @@ func TestRenderDeployment(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					PrivilegedLauncher: true,
+					Deployment: clabernetesapisv1alpha1.Deployment{
+						PrivilegedLauncher: true,
+					},
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
     name: test
@@ -265,7 +267,9 @@ func TestRenderDeployment(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					ContainerlabDebug: true,
+					Deployment: clabernetesapisv1alpha1.Deployment{
+						ContainerlabDebug: true,
+					},
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
     name: test
@@ -323,7 +327,9 @@ func TestRenderDeployment(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					LauncherLogLevel: "debug",
+					Deployment: clabernetesapisv1alpha1.Deployment{
+						LauncherLogLevel: "debug",
+					},
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
 		   name: test
@@ -381,7 +387,9 @@ func TestRenderDeployment(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					InsecureRegistries: []string{"1.2.3.4", "potato.com"},
+					ImagePull: clabernetesapisv1alpha1.ImagePull{
+						InsecureRegistries: []string{"1.2.3.4", "potato.com"},
+					},
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
 		   name: test
