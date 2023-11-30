@@ -314,25 +314,11 @@ spec:
             properties:
               configs:
                 description: Configs is a map of node name -> clab config -- in other
-                  words, this is the original containerlab configuration broken up
-                  and modified to use multi-node topology setup (via host links+vxlan).
+                  words, this is the original Topology.Spec.Definition broken up and
+                  modified to use multi-node topology setup (via host links+vxlan).
                   This is stored as a raw message so we don't have any weirdness w/
                   yaml tags instead of json tags in clab things, and so we kube builder
                   doesnt poop itself.
-                type: string
-              configsHash:
-                description: ConfigsHash is a hash of the last stored Configs data.
-                type: string
-              filesFromURLHashes:
-                additionalProperties:
-                  type: string
-                description: FilesFromURLHashes is a mapping of node FilesFromURL
-                  hashes stored so we can easily identify which nodes had changes
-                  in their FilesFromURL data so we can know to restart them.
-                type: object
-              imagePullSecretsHash:
-                description: ImagePullSecretsHash is a hash of the last stored ImagePullSecrets
-                  data.
                 type: string
               kind:
                 description: Kind is the topology kind this CR represents -- for example
@@ -371,10 +357,51 @@ spec:
                 description: NodeExposedPorts holds a map of (containerlab) nodes
                   and their exposed ports (via load balancer).
                 type: object
-              nodeExposedPortsHash:
-                description: NodeExposedPortsHash is a hash of the last stored NodeExposedPorts
-                  data.
-                type: string
+              reconcileHashes:
+                description: ReconcileHashes holds the hashes form the last reconciliation
+                  run.
+                properties:
+                  config:
+                    description: Config is the last stored hash of the rendered config(s)
+                      -- that is, the map of "sub topologies" representing the overall
+                      Topology.Spec.Definition.
+                    type: string
+                  exposedPorts:
+                    description: ExposedPorts is the last stored hash of the exposed
+                      ports mapping for this Topology. Note that while we obviously
+                      care about the exposed ports on a *per node basis*, we don't
+                      need to track that here -- this is here strictly to track differences
+                      in the load balancer service -- the actual sub-topologies (or
+                      sub-configs) effectively track the expose port status per node.
+                    type: string
+                  filesFromURL:
+                    additionalProperties:
+                      type: string
+                    description: FilesFromURL is the hash of the last stored mapping
+                      of files from URL (to node mapping). Note that this is tracked
+                      on a *per node basis* because the URL of a file could be updated
+                      without any change to the actual config/topology (or sub-config/sub-topology);
+                      as such we need to explicitly track this per node to know when
+                      a node needs to be restarted such that the new URL is "picked
+                      up" by the node/launcher.
+                    type: object
+                  imagePullSecrets:
+                    description: ImagePullSecrets is the hash of hte last stored image
+                      pull secrets for this Topology.
+                    type: string
+                  tunnels:
+                    description: Tunnels is the last stored hash of the tunnels that
+                      provided connectivity between the launcher nodes. As this can
+                      change due to the dns suffix changing and not just the config
+                      changing we need to independently track this state.
+                    type: string
+                required:
+                - config
+                - exposedPorts
+                - filesFromURL
+                - imagePullSecrets
+                - tunnels
+                type: object
               tunnels:
                 additionalProperties:
                   items:
@@ -415,21 +442,12 @@ spec:
                 description: Tunnels is a mapping of tunnels that need to be configured
                   between nodes (nodes:[]tunnels).
                 type: object
-              tunnelsHash:
-                description: TunnelsHash is a hash of the last stored Tunnels data.
-                  As this can change due to the dns suffix changing and not just the
-                  config changing we need to independently track this state.
-                type: string
             required:
             - configs
-            - configsHash
-            - filesFromURLHashes
-            - imagePullSecretsHash
             - kind
             - nodeExposedPorts
-            - nodeExposedPortsHash
+            - reconcileHashes
             - tunnels
-            - tunnelsHash
             type: object
         type: object
     served: true

@@ -12,25 +12,17 @@ import (
 type ReconcileData struct {
 	Kind string
 
-	PreviousConfigsHash  string
+	PreviousHashes clabernetesapisv1alpha1.ReconcileHashes
+	ResolvedHashes clabernetesapisv1alpha1.ReconcileHashes
+
 	PreviousConfigs      map[string]*clabernetesutilcontainerlab.Config
 	ResolvedConfigs      map[string]*clabernetesutilcontainerlab.Config
 	ResolvedConfigsBytes []byte
-	ResolvedConfigsHash  string
 
-	PreviousTunnelsHash string
-	PreviousTunnels     map[string][]*clabernetesapisv1alpha1.Tunnel
-	ResolvedTunnels     map[string][]*clabernetesapisv1alpha1.Tunnel
-	ResolvedTunnelsHash string
+	PreviousTunnels map[string][]*clabernetesapisv1alpha1.Tunnel
+	ResolvedTunnels map[string][]*clabernetesapisv1alpha1.Tunnel
 
-	PreviousFilesFromURLHashes map[string]string
-	ResolvedFilesFromURLHashes map[string]string
-
-	PreviousImagePullSecretsHash string
-	ResolvedImagePullSecretsHash string
-
-	ResolvedNodeExposedPorts     map[string]*clabernetesapisv1alpha1.ExposedPorts
-	ResolvedNodeExposedPortsHash string
+	ResolvedNodeExposedPorts map[string]*clabernetesapisv1alpha1.ExposedPorts
 
 	ShouldUpdateResource bool
 	NodesNeedingReboot   clabernetesutil.StringSet
@@ -43,18 +35,16 @@ func NewReconcileData(
 	status := owningTopology.Status
 
 	rd := &ReconcileData{
-		PreviousConfigsHash: status.ConfigsHash,
-		PreviousConfigs:     make(map[string]*clabernetesutilcontainerlab.Config),
-		ResolvedConfigs:     make(map[string]*clabernetesutilcontainerlab.Config),
+		PreviousHashes: status.ReconcileHashes,
+		ResolvedHashes: clabernetesapisv1alpha1.ReconcileHashes{
+			FilesFromURL: make(map[string]string),
+		},
 
-		PreviousTunnelsHash: status.TunnelsHash,
-		PreviousTunnels:     status.Tunnels,
-		ResolvedTunnels:     make(map[string][]*clabernetesapisv1alpha1.Tunnel),
+		PreviousConfigs: make(map[string]*clabernetesutilcontainerlab.Config),
+		ResolvedConfigs: make(map[string]*clabernetesutilcontainerlab.Config),
 
-		PreviousFilesFromURLHashes: status.FilesFromURLHashes,
-		ResolvedFilesFromURLHashes: map[string]string{},
-
-		PreviousImagePullSecretsHash: status.ImagePullSecretsHash,
+		PreviousTunnels: status.Tunnels,
+		ResolvedTunnels: make(map[string][]*clabernetesapisv1alpha1.Tunnel),
 
 		ResolvedNodeExposedPorts: map[string]*clabernetesapisv1alpha1.ExposedPorts{},
 
@@ -79,28 +69,25 @@ func (r *ReconcileData) SetStatus(
 ) {
 	owningTopologyStatus.Kind = r.Kind
 	owningTopologyStatus.Configs = string(r.ResolvedConfigsBytes)
-	owningTopologyStatus.ConfigsHash = r.ResolvedConfigsHash
 	owningTopologyStatus.Tunnels = r.ResolvedTunnels
-	owningTopologyStatus.TunnelsHash = r.ResolvedTunnelsHash
 	owningTopologyStatus.NodeExposedPorts = r.ResolvedNodeExposedPorts
-	owningTopologyStatus.NodeExposedPortsHash = r.ResolvedNodeExposedPortsHash
-	owningTopologyStatus.FilesFromURLHashes = r.ResolvedFilesFromURLHashes
-	owningTopologyStatus.ImagePullSecretsHash = r.ResolvedImagePullSecretsHash
+
+	owningTopologyStatus.ReconcileHashes = r.ResolvedHashes
 }
 
 // ConfigMapHasChanges returns true if the data that gets stored in the topology configmap has
 // changed between the last reconcile and the current iteration. This is just a helper to be more
 // verbose/clear what we are checking rather than having a giant conditional in the Reconciler.
 func (r *ReconcileData) ConfigMapHasChanges() bool {
-	if r.PreviousConfigsHash != r.ResolvedConfigsHash {
+	if r.PreviousHashes.Config != r.ResolvedHashes.Config {
 		return true
 	}
 
-	if r.PreviousTunnelsHash != r.ResolvedTunnelsHash {
+	if r.PreviousHashes.Tunnels != r.ResolvedHashes.Tunnels {
 		return true
 	}
 
-	if r.PreviousImagePullSecretsHash != r.ResolvedImagePullSecretsHash {
+	if r.PreviousHashes.ImagePullSecrets != r.ResolvedHashes.ImagePullSecrets {
 		return true
 	}
 

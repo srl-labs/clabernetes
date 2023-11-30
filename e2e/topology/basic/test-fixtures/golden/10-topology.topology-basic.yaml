@@ -55,9 +55,6 @@ status:
                     image: ghcr.io/nokia/srlinux
                     ports: []
         debug: false
-  configsHash: 420183e825ce8790275e3d08f0d8c4fedf4557d1cd227bf25d9be78b23803438
-  filesFromURLHashes: {}
-  imagePullSecretsHash: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570
   kind: containerlab
   nodeExposedPorts:
     srl1:
@@ -77,5 +74,10 @@ status:
         - 57400
       udpPorts:
         - 161
+  reconcileHashes:
+    config: 420183e825ce8790275e3d08f0d8c4fedf4557d1cd227bf25d9be78b23803438
+    exposedPorts: aff43c6de18ccfa851dd54ccf432ce4ca39f235555ce30bd076d03942858c8be
+    filesFromURL: {}
+    imagePullSecrets: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570
+    tunnels: 420183e825ce8790275e3d08f0d8c4fedf4557d1cd227bf25d9be78b23803438
   tunnels: {}
-  tunnelsHash: 420183e825ce8790275e3d08f0d8c4fedf4557d1cd227bf25d9be78b23803438

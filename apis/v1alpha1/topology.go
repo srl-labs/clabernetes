@@ -45,28 +45,18 @@ type TopologyStatus struct {
 	// Kind is the topology kind this CR represents -- for example "containerlab".
 	// +kubebuilder:validation:Enum=containerlab;kne
 	Kind string `json:"kind"`
+	// ReconcileHashes holds the hashes form the last reconciliation run.
+	ReconcileHashes ReconcileHashes `json:"reconcileHashes"`
 	// Configs is a map of node name -> clab config -- in other words, this is the original
-	// containerlab configuration broken up and modified to use multi-node topology setup (via host
+	// Topology.Spec.Definition broken up and modified to use multi-node topology setup (via host
 	// links+vxlan). This is stored as a raw message so we don't have any weirdness w/ yaml tags
 	// instead of json tags in clab things, and so we kube builder doesnt poop itself.
 	Configs string `json:"configs"`
-	// ConfigsHash is a hash of the last stored Configs data.
-	ConfigsHash string `json:"configsHash"`
 	// Tunnels is a mapping of tunnels that need to be configured between nodes (nodes:[]tunnels).
 	Tunnels map[string][]*Tunnel `json:"tunnels"`
-	// TunnelsHash is a hash of the last stored Tunnels data. As this can change due to the dns
-	// suffix changing and not just the config changing we need to independently track this state.
-	TunnelsHash string `json:"tunnelsHash"`
-	// FilesFromURLHashes is a mapping of node FilesFromURL hashes stored so we can easily identify
-	// which nodes had changes in their FilesFromURL data so we can know to restart them.
-	FilesFromURLHashes map[string]string `json:"filesFromURLHashes"`
 	// NodeExposedPorts holds a map of (containerlab) nodes and their exposed ports
 	// (via load balancer).
 	NodeExposedPorts map[string]*ExposedPorts `json:"nodeExposedPorts"`
-	// NodeExposedPortsHash is a hash of the last stored NodeExposedPorts data.
-	NodeExposedPortsHash string `json:"nodeExposedPortsHash"`
-	// ImagePullSecretsHash is a hash of the last stored ImagePullSecrets data.
-	ImagePullSecretsHash string `json:"imagePullSecretsHash"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

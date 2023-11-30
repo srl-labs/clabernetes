@@ -68,11 +68,12 @@ spec:
     pullSecrets: null
 status:
   configs: ""
-  configsHash: ""
-  filesFromURLHashes: null
-  imagePullSecretsHash: ""
   kind: ""
   nodeExposedPorts: null
-  nodeExposedPortsHash: ""
+  reconcileHashes:
+    config: ""
+    exposedPorts: ""
+    filesFromURL: null
+    imagePullSecrets: ""
+    tunnels: ""
   tunnels: null
-  tunnelsHash: ""

@@ -110,7 +110,7 @@ func (r *Reconciler) ReconcileConfigMap(
 	}
 
 	reconcileData.ResolvedConfigsBytes = configBytes
-	reconcileData.ResolvedConfigsHash = configHash
+	reconcileData.ResolvedHashes.Config = configHash
 
 	_, tunnelHash, err := clabernetesutil.HashObjectYAML(
 		reconcileData.ResolvedConfigs,
@@ -119,7 +119,7 @@ func (r *Reconciler) ReconcileConfigMap(
 		return err
 	}
 
-	reconcileData.ResolvedTunnelsHash = tunnelHash
+	reconcileData.ResolvedHashes.Tunnels = tunnelHash
 
 	for nodeName, nodeFilesFromURL := range owningTopology.Spec.Deployment.FilesFromURL {
 		var nodeFilesFromURLHash string
@@ -129,9 +129,9 @@ func (r *Reconciler) ReconcileConfigMap(
 			return err
 		}
 
-		reconcileData.ResolvedFilesFromURLHashes[nodeName] = nodeFilesFromURLHash
+		reconcileData.ResolvedHashes.FilesFromURL[nodeName] = nodeFilesFromURLHash
 
-		if reconcileData.PreviousFilesFromURLHashes[nodeName] != nodeFilesFromURLHash {
+		if reconcileData.PreviousHashes.FilesFromURL[nodeName] != nodeFilesFromURLHash {
 			// files from url hash has changed, need to smack the node so the configmap update
 			// gets realized
 			reconcileData.NodesNeedingReboot.Add(nodeName)
@@ -145,7 +145,7 @@ func (r *Reconciler) ReconcileConfigMap(
 		return err
 	}
 
-	reconcileData.ResolvedImagePullSecretsHash = imagePullSecretsHash
+	reconcileData.ResolvedHashes.ImagePullSecrets = imagePullSecretsHash
 
 	if !reconcileData.ConfigMapHasChanges() {
 		// the configs hashes match, nothing to do, should reconcile is false, and no error, *but*
@@ -556,8 +556,8 @@ func (r *Reconciler) ReconcileServicesExpose(
 		return err
 	}
 
-	if owningTopology.Status.NodeExposedPortsHash != newNodeExposedPortsHash {
-		reconcileData.ResolvedNodeExposedPortsHash = newNodeExposedPortsHash
+	if owningTopology.Status.ReconcileHashes.ExposedPorts != newNodeExposedPortsHash {
+		reconcileData.ResolvedHashes.ExposedPorts = newNodeExposedPortsHash
 
 		// our exposed hash stuff changed, we need to update the cr status
 		reconcileData.ShouldUpdateResource = true

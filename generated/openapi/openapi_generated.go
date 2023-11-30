@@ -57,6 +57,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/srl-labs/clabernetes/apis/v1alpha1.Persistence": schema_srl_labs_clabernetes_apis_v1alpha1_Persistence(
 			ref,
 		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.ReconcileHashes": schema_srl_labs_clabernetes_apis_v1alpha1_ReconcileHashes(
+			ref,
+		),
 		"github.com/srl-labs/clabernetes/apis/v1alpha1.Topology": schema_srl_labs_clabernetes_apis_v1alpha1_Topology(
 			ref,
 		),
@@ -522,6 +525,76 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_Persistence(
 	}
 }
 
+func schema_srl_labs_clabernetes_apis_v1alpha1_ReconcileHashes(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ReconcileHashes holds hashes of the last recorded reconciliation -- these are used to know if things have changed between the last and current reconciliation.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"config": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Config is the last stored hash of the rendered config(s) -- that is, the map of \"sub topologies\" representing the overall Topology.Spec.Definition.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"tunnels": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Tunnels is the last stored hash of the tunnels that provided connectivity between the launcher nodes. As this can change due to the dns suffix changing and not just the config changing we need to independently track this state.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"exposedPorts": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ExposedPorts is the last stored hash of the exposed ports mapping for this Topology. Note that while we obviously care about the exposed ports on a *per node basis*, we don't need to track that here -- this is here strictly to track differences in the load balancer service -- the actual sub-topologies (or sub-configs) effectively track the expose port status per node.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"filesFromURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FilesFromURL is the hash of the last stored mapping of files from URL (to node mapping). Note that this is tracked on a *per node basis* because the URL of a file could be updated without any change to the actual config/topology (or sub-config/sub-topology); as such we need to explicitly track this per node to know when a node needs to be restarted such that the new URL is \"picked up\" by the node/launcher.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"imagePullSecrets": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ImagePullSecrets is the hash of hte last stored image pull secrets for this Topology.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{
+					"config",
+					"tunnels",
+					"exposedPorts",
+					"filesFromURL",
+					"imagePullSecrets",
+				},
+			},
+		},
+	}
+}
+
 func schema_srl_labs_clabernetes_apis_v1alpha1_Topology(
 	ref common.ReferenceCallback,
 ) common.OpenAPIDefinition {
@@ -699,17 +772,18 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 							Format:      "",
 						},
 					},
-					"configs": {
+					"reconcileHashes": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Configs is a map of node name -> clab config -- in other words, this is the original containerlab configuration broken up and modified to use multi-node topology setup (via host links+vxlan). This is stored as a raw message so we don't have any weirdness w/ yaml tags instead of json tags in clab things, and so we kube builder doesnt poop itself.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
+							Description: "ReconcileHashes holds the hashes form the last reconciliation run.",
+							Default:     map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.ReconcileHashes",
+							),
 						},
 					},
-					"configsHash": {
+					"configs": {
 						SchemaProps: spec.SchemaProps{
-							Description: "ConfigsHash is a hash of the last stored Configs data.",
+							Description: "Configs is a map of node name -> clab config -- in other words, this is the original Topology.Spec.Definition broken up and modified to use multi-node topology setup (via host links+vxlan). This is stored as a raw message so we don't have any weirdness w/ yaml tags instead of json tags in clab things, and so we kube builder doesnt poop itself.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -738,30 +812,6 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 							},
 						},
 					},
-					"tunnelsHash": {
-						SchemaProps: spec.SchemaProps{
-							Description: "TunnelsHash is a hash of the last stored Tunnels data. As this can change due to the dns suffix changing and not just the config changing we need to independently track this state.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"filesFromURLHashes": {
-						SchemaProps: spec.SchemaProps{
-							Description: "FilesFromURLHashes is a mapping of node FilesFromURL hashes stored so we can easily identify which nodes had changes in their FilesFromURL data so we can know to restart them.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
 					"nodeExposedPorts": {
 						SchemaProps: spec.SchemaProps{
 							Description: "NodeExposedPorts holds a map of (containerlab) nodes and their exposed ports (via load balancer).",
@@ -778,38 +828,18 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 							},
 						},
 					},
-					"nodeExposedPortsHash": {
-						SchemaProps: spec.SchemaProps{
-							Description: "NodeExposedPortsHash is a hash of the last stored NodeExposedPorts data.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"imagePullSecretsHash": {
-						SchemaProps: spec.SchemaProps{
-							Description: "ImagePullSecretsHash is a hash of the last stored ImagePullSecrets data.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 				},
 				Required: []string{
 					"kind",
+					"reconcileHashes",
 					"configs",
-					"configsHash",
 					"tunnels",
-					"tunnelsHash",
-					"filesFromURLHashes",
 					"nodeExposedPorts",
-					"nodeExposedPortsHash",
-					"imagePullSecretsHash",
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/v1alpha1.ExposedPorts", "github.com/srl-labs/clabernetes/apis/v1alpha1.Tunnel"},
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.ExposedPorts", "github.com/srl-labs/clabernetes/apis/v1alpha1.ReconcileHashes", "github.com/srl-labs/clabernetes/apis/v1alpha1.Tunnel"},
 	}
 }
 
