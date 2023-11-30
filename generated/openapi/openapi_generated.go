@@ -789,29 +789,6 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 							Format:      "",
 						},
 					},
-					"tunnels": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Tunnels is a mapping of tunnels that need to be configured between nodes (nodes:[]tunnels).",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"array"},
-										Items: &spec.SchemaOrArray{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Ref: ref(
-														"github.com/srl-labs/clabernetes/apis/v1alpha1.Tunnel",
-													),
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
 					"nodeExposedPorts": {
 						SchemaProps: spec.SchemaProps{
 							Description: "NodeExposedPorts holds a map of (containerlab) nodes and their exposed ports (via load balancer).",
@@ -829,17 +806,11 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 						},
 					},
 				},
-				Required: []string{
-					"kind",
-					"reconcileHashes",
-					"configs",
-					"tunnels",
-					"nodeExposedPorts",
-				},
+				Required: []string{"kind", "reconcileHashes", "configs", "nodeExposedPorts"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/v1alpha1.ExposedPorts", "github.com/srl-labs/clabernetes/apis/v1alpha1.ReconcileHashes", "github.com/srl-labs/clabernetes/apis/v1alpha1.Tunnel"},
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.ExposedPorts", "github.com/srl-labs/clabernetes/apis/v1alpha1.ReconcileHashes"},
 	}
 }
 

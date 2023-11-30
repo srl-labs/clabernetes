@@ -43,7 +43,6 @@ func NewReconcileData(
 		PreviousConfigs: make(map[string]*clabernetesutilcontainerlab.Config),
 		ResolvedConfigs: make(map[string]*clabernetesutilcontainerlab.Config),
 
-		PreviousTunnels: status.Tunnels,
 		ResolvedTunnels: make(map[string][]*clabernetesapisv1alpha1.Tunnel),
 
 		ResolvedNodeExposedPorts: map[string]*clabernetesapisv1alpha1.ExposedPorts{},
@@ -69,7 +68,6 @@ func (r *ReconcileData) SetStatus(
 ) {
 	owningTopologyStatus.Kind = r.Kind
 	owningTopologyStatus.Configs = string(r.ResolvedConfigsBytes)
-	owningTopologyStatus.Tunnels = r.ResolvedTunnels
 	owningTopologyStatus.NodeExposedPorts = r.ResolvedNodeExposedPorts
 
 	owningTopologyStatus.ReconcileHashes = r.ResolvedHashes

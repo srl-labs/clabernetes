@@ -207,7 +207,6 @@ func TestRenderServiceExpose(t *testing.T) {
 				},
 			},
 			owningTopologyStatus: &clabernetesapisv1alpha1.TopologyStatus{
-				Tunnels:          map[string][]*clabernetesapisv1alpha1.Tunnel{},
 				NodeExposedPorts: map[string]*clabernetesapisv1alpha1.ExposedPorts{},
 			},
 			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{

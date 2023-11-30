@@ -356,27 +356,6 @@ func (in *TopologySpec) DeepCopy() *TopologySpec {
 func (in *TopologyStatus) DeepCopyInto(out *TopologyStatus) {
 	*out = *in
 	in.ReconcileHashes.DeepCopyInto(&out.ReconcileHashes)
-	if in.Tunnels != nil {
-		in, out := &in.Tunnels, &out.Tunnels
-		*out = make(map[string][]*Tunnel, len(*in))
-		for key, val := range *in {
-			var outVal []*Tunnel
-			if val == nil {
-				(*out)[key] = nil
-			} else {
-				in, out := &val, &outVal
-				*out = make([]*Tunnel, len(*in))
-				for i := range *in {
-					if (*in)[i] != nil {
-						in, out := &(*in)[i], &(*out)[i]
-						*out = new(Tunnel)
-						**out = **in
-					}
-				}
-			}
-			(*out)[key] = outVal
-		}
-	}
 	if in.NodeExposedPorts != nil {
 		in, out := &in.NodeExposedPorts, &out.NodeExposedPorts
 		*out = make(map[string]*ExposedPorts, len(*in))

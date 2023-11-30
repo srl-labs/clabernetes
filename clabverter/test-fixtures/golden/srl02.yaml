@@ -76,4 +76,3 @@ status:
     filesFromURL: null
     imagePullSecrets: ""
     tunnels: ""
-  tunnels: null

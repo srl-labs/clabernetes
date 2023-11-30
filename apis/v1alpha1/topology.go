@@ -52,8 +52,6 @@ type TopologyStatus struct {
 	// links+vxlan). This is stored as a raw message so we don't have any weirdness w/ yaml tags
 	// instead of json tags in clab things, and so we kube builder doesnt poop itself.
 	Configs string `json:"configs"`
-	// Tunnels is a mapping of tunnels that need to be configured between nodes (nodes:[]tunnels).
-	Tunnels map[string][]*Tunnel `json:"tunnels"`
 	// NodeExposedPorts holds a map of (containerlab) nodes and their exposed ports
 	// (via load balancer).
 	NodeExposedPorts map[string]*ExposedPorts `json:"nodeExposedPorts"`

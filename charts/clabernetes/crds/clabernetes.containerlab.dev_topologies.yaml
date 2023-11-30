@@ -402,52 +402,11 @@ spec:
                 - imagePullSecrets
                 - tunnels
                 type: object
-              tunnels:
-                additionalProperties:
-                  items:
-                    description: Tunnel represents a VXLAN tunnel between clabernetes
-                      nodes (as configured by containerlab).
-                    properties:
-                      id:
-                        description: ID is the VXLAN ID (vnid) for the tunnel.
-                        type: integer
-                      localLinkName:
-                        description: LocalLinkName is the local link name for the
-                          local end of the tunnel.
-                        type: string
-                      localNodeName:
-                        description: LocalNodeName is the name of the local node for
-                          this tunnel.
-                        type: string
-                      remoteLinkName:
-                        description: RemoteLinkName is the remote link name for the
-                          remote end of the tunnel.
-                        type: string
-                      remoteName:
-                        description: RemoteName is the name of the service to contact
-                          the remote end of the tunnel.
-                        type: string
-                      remoteNodeName:
-                        description: RemoteNodeName is the name of the remote node.
-                        type: string
-                    required:
-                    - id
-                    - localLinkName
-                    - localNodeName
-                    - remoteLinkName
-                    - remoteName
-                    - remoteNodeName
-                    type: object
-                  type: array
-                description: Tunnels is a mapping of tunnels that need to be configured
-                  between nodes (nodes:[]tunnels).
-                type: object
             required:
             - configs
             - kind
             - nodeExposedPorts
             - reconcileHashes
-            - tunnels
             type: object
         type: object
     served: true
