@@ -335,11 +335,9 @@ spec:
                   data.
                 type: string
               kind:
-                default: unknown
                 description: Kind is the topology kind this CR represents -- for example
                   "containerlab".
                 enum:
-                - unknown
                 - containerlab
                 - kne
                 type: string

@@ -43,8 +43,7 @@ type TopologySpec struct {
 // TopologyStatus is the status for a Containerlab topology resource.
 type TopologyStatus struct {
 	// Kind is the topology kind this CR represents -- for example "containerlab".
-	// +kubebuilder:default=unknown
-	// +kubebuilder:validation:Enum=unknown;containerlab;kne
+	// +kubebuilder:validation:Enum=containerlab;kne
 	Kind string `json:"kind"`
 	// Configs is a map of node name -> clab config -- in other words, this is the original
 	// containerlab configuration broken up and modified to use multi-node topology setup (via host
