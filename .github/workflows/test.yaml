@@ -103,11 +103,11 @@ jobs:
           set -x
           kubectl get pods -n clabernetes -o yaml
           echo "********************************"
-          echo "****         events         ****
+          echo "****         events         ****"
           echo "********************************"
           kubectl get events -n clabernetes --sort-by='.lastTimestamp'
           echo "********************************"
-          echo "****          logs          ****
+          echo "****          logs          ****"
           echo "********************************"
           kubectl logs -l clabernetes/name=clabernetes-manager -n clabernetes --tail=-1
           exit 1
