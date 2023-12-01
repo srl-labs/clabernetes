@@ -783,15 +783,15 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 					},
 					"configs": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Configs is a map of node name -> clab config -- in other words, this is the original Topology.Spec.Definition broken up and modified to use multi-node topology setup (via host links+vxlan). This is stored as a raw message so we don't have any weirdness w/ yaml tags instead of json tags in clab things, and so we kube builder doesnt poop itself.",
+							Description: "Configs is a map of node name -> containerlab config -- in other words, this is the original Topology.Spec.Definition converted to containerlab \"sub-topologies\" The actual \"sub-topologies\"/\"sub-configs\" are stored as a string -- this is the actual containerlab topology that gets mounted in the launcher pod.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"nodeExposedPorts": {
+					"exposedPorts": {
 						SchemaProps: spec.SchemaProps{
-							Description: "NodeExposedPorts holds a map of (containerlab) nodes and their exposed ports (via load balancer).",
+							Description: "ExposedPorts holds a map of (containerlab not k8s!) nodes and their exposed ports (via load balancer).",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
@@ -806,7 +806,7 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 						},
 					},
 				},
-				Required: []string{"kind", "reconcileHashes", "configs", "nodeExposedPorts"},
+				Required: []string{"kind", "reconcileHashes", "configs", "exposedPorts"},
 			},
 		},
 		Dependencies: []string{

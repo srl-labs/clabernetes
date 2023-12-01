@@ -207,7 +207,7 @@ func TestRenderServiceExpose(t *testing.T) {
 				},
 			},
 			owningTopologyStatus: &clabernetesapisv1alpha1.TopologyStatus{
-				NodeExposedPorts: map[string]*clabernetesapisv1alpha1.ExposedPorts{},
+				ExposedPorts: map[string]*clabernetesapisv1alpha1.ExposedPorts{},
 			},
 			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
 				"srl1": {
@@ -292,7 +292,7 @@ func TestRenderServiceExpose(t *testing.T) {
 							renderServiceExposeTestName,
 							testCase.name,
 						),
-						reconcileData.ResolvedNodeExposedPorts,
+						reconcileData.ResolvedExposedPorts,
 					)
 				}
 

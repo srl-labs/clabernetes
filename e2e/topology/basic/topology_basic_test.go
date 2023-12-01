@@ -24,12 +24,12 @@ func normalizeContainerlab(t *testing.T, objectData []byte) []byte {
 	objectData = clabernetestesthelper.YQCommand(
 		t,
 		objectData,
-		"del(.status.nodeExposedPortsHash)",
+		"del(.status.reconcileHashes.exposedPorts)",
 	)
 	objectData = clabernetestesthelper.YQCommand(
 		t,
 		objectData,
-		"del(.status.nodeExposedPorts[].loadBalancerAddress)",
+		"del(.status.exposedPorts[].loadBalancerAddress)",
 	)
 
 	return objectData

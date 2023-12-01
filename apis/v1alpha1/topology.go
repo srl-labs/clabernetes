@@ -47,14 +47,14 @@ type TopologyStatus struct {
 	Kind string `json:"kind"`
 	// ReconcileHashes holds the hashes form the last reconciliation run.
 	ReconcileHashes ReconcileHashes `json:"reconcileHashes"`
-	// Configs is a map of node name -> clab config -- in other words, this is the original
-	// Topology.Spec.Definition broken up and modified to use multi-node topology setup (via host
-	// links+vxlan). This is stored as a raw message so we don't have any weirdness w/ yaml tags
-	// instead of json tags in clab things, and so we kube builder doesnt poop itself.
+	// Configs is a map of node name -> containerlab config -- in other words, this is the original
+	// Topology.Spec.Definition converted to containerlab "sub-topologies" The actual
+	// "sub-topologies"/"sub-configs" are stored as a string -- this is the actual containerlab
+	// topology that gets mounted in the launcher pod.
 	Configs string `json:"configs"`
-	// NodeExposedPorts holds a map of (containerlab) nodes and their exposed ports
+	// ExposedPorts holds a map of (containerlab not k8s!) nodes and their exposed ports
 	// (via load balancer).
-	NodeExposedPorts map[string]*ExposedPorts `json:"nodeExposedPorts"`
+	ExposedPorts map[string]*ExposedPorts `json:"exposedPorts"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

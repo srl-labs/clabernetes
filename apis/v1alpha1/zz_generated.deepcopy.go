@@ -356,8 +356,8 @@ func (in *TopologySpec) DeepCopy() *TopologySpec {
 func (in *TopologyStatus) DeepCopyInto(out *TopologyStatus) {
 	*out = *in
 	in.ReconcileHashes.DeepCopyInto(&out.ReconcileHashes)
-	if in.NodeExposedPorts != nil {
-		in, out := &in.NodeExposedPorts, &out.NodeExposedPorts
+	if in.ExposedPorts != nil {
+		in, out := &in.ExposedPorts, &out.ExposedPorts
 		*out = make(map[string]*ExposedPorts, len(*in))
 		for key, val := range *in {
 			var outVal *ExposedPorts

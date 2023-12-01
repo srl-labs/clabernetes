@@ -313,21 +313,13 @@ spec:
               resource.
             properties:
               configs:
-                description: Configs is a map of node name -> clab config -- in other
-                  words, this is the original Topology.Spec.Definition broken up and
-                  modified to use multi-node topology setup (via host links+vxlan).
-                  This is stored as a raw message so we don't have any weirdness w/
-                  yaml tags instead of json tags in clab things, and so we kube builder
-                  doesnt poop itself.
+                description: Configs is a map of node name -> containerlab config
+                  -- in other words, this is the original Topology.Spec.Definition
+                  converted to containerlab "sub-topologies" The actual "sub-topologies"/"sub-configs"
+                  are stored as a string -- this is the actual containerlab topology
+                  that gets mounted in the launcher pod.
                 type: string
-              kind:
-                description: Kind is the topology kind this CR represents -- for example
-                  "containerlab".
-                enum:
-                - containerlab
-                - kne
-                type: string
-              nodeExposedPorts:
+              exposedPorts:
                 additionalProperties:
                   description: ExposedPorts holds information about exposed ports.
                   properties:
@@ -354,9 +346,16 @@ spec:
                   - tcpPorts
                   - udpPorts
                   type: object
-                description: NodeExposedPorts holds a map of (containerlab) nodes
+                description: ExposedPorts holds a map of (containerlab not k8s!) nodes
                   and their exposed ports (via load balancer).
                 type: object
+              kind:
+                description: Kind is the topology kind this CR represents -- for example
+                  "containerlab".
+                enum:
+                - containerlab
+                - kne
+                type: string
               reconcileHashes:
                 description: ReconcileHashes holds the hashes form the last reconciliation
                   run.
@@ -404,8 +403,8 @@ spec:
                 type: object
             required:
             - configs
+            - exposedPorts
             - kind
-            - nodeExposedPorts
             - reconcileHashes
             type: object
         type: object

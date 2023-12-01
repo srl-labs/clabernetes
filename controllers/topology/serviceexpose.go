@@ -183,7 +183,7 @@ func (r *ServiceExposeReconciler) renderServicePorts(
 	service *k8scorev1.Service,
 	nodeName string,
 ) {
-	reconcileData.ResolvedNodeExposedPorts[nodeName] = &clabernetesapisv1alpha1.ExposedPorts{ //nolint:lll
+	reconcileData.ResolvedExposedPorts[nodeName] = &clabernetesapisv1alpha1.ExposedPorts{
 		TCPPorts: make([]int, 0),
 		UDPPorts: make([]int, 0),
 	}
@@ -217,13 +217,13 @@ func (r *ServiceExposeReconciler) renderServicePorts(
 
 		// dont forget to update the exposed ports status bits
 		if port.Protocol == clabernetesconstants.TCP {
-			reconcileData.ResolvedNodeExposedPorts[nodeName].TCPPorts = append(
-				reconcileData.ResolvedNodeExposedPorts[nodeName].TCPPorts,
+			reconcileData.ResolvedExposedPorts[nodeName].TCPPorts = append(
+				reconcileData.ResolvedExposedPorts[nodeName].TCPPorts,
 				int(port.Port),
 			)
 		} else {
-			reconcileData.ResolvedNodeExposedPorts[nodeName].UDPPorts = append(
-				reconcileData.ResolvedNodeExposedPorts[nodeName].UDPPorts,
+			reconcileData.ResolvedExposedPorts[nodeName].UDPPorts = append(
+				reconcileData.ResolvedExposedPorts[nodeName].UDPPorts,
 				int(port.Port),
 			)
 		}

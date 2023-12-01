@@ -452,8 +452,8 @@ func (r *Reconciler) ReconcileServicesExpose(
 ) error {
 	serviceTypeName := fmt.Sprintf("expose %s", clabernetesconstants.KubernetesService)
 
-	if owningTopology.Status.NodeExposedPorts == nil {
-		owningTopology.Status.NodeExposedPorts = map[string]*clabernetesapisv1alpha1.ExposedPorts{} //nolint:lll
+	if owningTopology.Status.ExposedPorts == nil {
+		owningTopology.Status.ExposedPorts = map[string]*clabernetesapisv1alpha1.ExposedPorts{}
 
 		// shouldUpdate is true because we didn't have any previously stored node exposed port
 		// status data
@@ -520,7 +520,7 @@ func (r *Reconciler) ReconcileServicesExpose(
 			// can/would this ever be more than 1? i dunno?
 			address := existingCurrentService.Status.LoadBalancer.Ingress[0].IP
 			if address != "" {
-				reconcileData.ResolvedNodeExposedPorts[existingCurrentServiceNodeName].LoadBalancerAddress = address //nolint:lll
+				reconcileData.ResolvedExposedPorts[existingCurrentServiceNodeName].LoadBalancerAddress = address //nolint:lll
 			}
 		}
 
@@ -550,7 +550,7 @@ func (r *Reconciler) ReconcileServicesExpose(
 	}
 
 	_, newNodeExposedPortsHash, err := clabernetesutil.HashObject(
-		owningTopology.Status.NodeExposedPorts,
+		owningTopology.Status.ExposedPorts,
 	)
 	if err != nil {
 		return err

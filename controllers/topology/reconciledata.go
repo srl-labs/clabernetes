@@ -22,7 +22,7 @@ type ReconcileData struct {
 	PreviousTunnels map[string][]*clabernetesapisv1alpha1.Tunnel
 	ResolvedTunnels map[string][]*clabernetesapisv1alpha1.Tunnel
 
-	ResolvedNodeExposedPorts map[string]*clabernetesapisv1alpha1.ExposedPorts
+	ResolvedExposedPorts map[string]*clabernetesapisv1alpha1.ExposedPorts
 
 	ShouldUpdateResource bool
 	NodesNeedingReboot   clabernetesutil.StringSet
@@ -45,7 +45,7 @@ func NewReconcileData(
 
 		ResolvedTunnels: make(map[string][]*clabernetesapisv1alpha1.Tunnel),
 
-		ResolvedNodeExposedPorts: map[string]*clabernetesapisv1alpha1.ExposedPorts{},
+		ResolvedExposedPorts: map[string]*clabernetesapisv1alpha1.ExposedPorts{},
 
 		NodesNeedingReboot: clabernetesutil.NewStringSet(),
 	}
@@ -68,7 +68,7 @@ func (r *ReconcileData) SetStatus(
 ) {
 	owningTopologyStatus.Kind = r.Kind
 	owningTopologyStatus.Configs = string(r.ResolvedConfigsBytes)
-	owningTopologyStatus.NodeExposedPorts = r.ResolvedNodeExposedPorts
+	owningTopologyStatus.ExposedPorts = r.ResolvedExposedPorts
 
 	owningTopologyStatus.ReconcileHashes = r.ResolvedHashes
 }

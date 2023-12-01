@@ -68,8 +68,8 @@ spec:
     pullSecrets: null
 status:
   configs: ""
+  exposedPorts: null
   kind: ""
-  nodeExposedPorts: null
   reconcileHashes:
     config: ""
     exposedPorts: ""
