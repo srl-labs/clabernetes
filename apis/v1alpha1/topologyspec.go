@@ -38,12 +38,12 @@ type Persistence struct {
 	// to make the claim smaller you must delete the topology (or the node from the topology) and
 	// re-add it.
 	// +optional
-	ClaimSize string `json:"claimSize"`
+	ClaimSize string `json:"claimSize,omitempty"`
 	// StorageClassName is the storage class to set in the PVC -- if not provided this will be left
 	// empty which will end up using your default storage class. Note that currently we assume you
 	// have (as default) or provide a dynamically provisionable storage class, hence no selector.
 	// +optional
-	StorageClassName string `json:"storageClassName"`
+	StorageClassName string `json:"storageClassName,omitempty"`
 }
 
 // InsecureRegistries is a slice of strings of insecure registries to configure in the launcher
@@ -55,10 +55,10 @@ type InsecureRegistries []string
 type Definition struct {
 	// Containerlab holds a valid containerlab topology.
 	// +optional
-	Containerlab string `json:"containerlab"`
+	Containerlab string `json:"containerlab,omitempty"`
 	// Kne holds a valid kne topology.
 	// +optional
-	Kne string `json:"kne"`
+	Kne string `json:"kne,omitempty"`
 }
 
 // Expose holds configurations relevant to how clabernetes exposes a topology.

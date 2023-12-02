@@ -27,7 +27,6 @@ spec:
 
         links:
           - endpoints: ["srl1:e1-1", "srl2:e1-1"]
-    kne: ""
   deployment:
     containerlabDebug: false
     filesFromConfigMap:
@@ -53,9 +52,7 @@ spec:
         filePath: srl2.license
     filesFromURL: null
     persistence:
-      claimSize: ""
       enabled: false
-      storageClassName: ""
     privilegedLauncher: false
     resources: null
   expose:

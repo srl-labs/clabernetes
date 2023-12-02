@@ -14,13 +14,10 @@ spec:
           srl1:
             kind: srl
             image: ghcr.io/nokia/srlinux
-    kne: ""
   deployment:
     containerlabDebug: false
     persistence:
-      claimSize: ""
       enabled: false
-      storageClassName: ""
     privilegedLauncher: false
   expose:
     disableAutoExpose: false
