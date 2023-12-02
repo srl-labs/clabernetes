@@ -3,6 +3,8 @@ package types
 import (
 	"context"
 
+	clabernetesgeneratedclientset "github.com/srl-labs/clabernetes/generated/clientset"
+
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
@@ -50,6 +52,9 @@ type Clabernetes interface {
 
 	// GetKubeClient returns the in-cluster kubernetes.Clientset for the clabernetes instance.
 	GetKubeClient() *kubernetes.Clientset
+
+	// GetKubeClabernetesClient returns the in-cluster clabernetes Clientset client.
+	GetKubeClabernetesClient() *clabernetesgeneratedclientset.Clientset
 
 	// GetCtrlRuntimeMgr returns the controller-runtime Manager for the clabernetes instance.
 	GetCtrlRuntimeMgr() ctrlruntime.Manager

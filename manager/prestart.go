@@ -54,7 +54,7 @@ func preStartConfig(c clabernetesmanagertypes.Clabernetes) error {
 		c.GetContext(),
 		c.GetAppName(),
 		c.GetNamespace(),
-		c.GetKubeClient(),
+		c.GetKubeClabernetesClient(),
 	)
 
 	configManager := clabernetesconfig.GetManager()

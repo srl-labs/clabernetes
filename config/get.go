@@ -9,7 +9,7 @@ func (m *manager) GetGlobalAnnotations() map[string]string {
 	// we dont want to pass by ref, so make a new map
 	outAnnotations := make(map[string]string)
 
-	for k, v := range m.config.globalAnnotations {
+	for k, v := range m.config.Metadata.Annotations {
 		outAnnotations[k] = v
 	}
 
@@ -23,7 +23,7 @@ func (m *manager) GetGlobalLabels() map[string]string {
 	// we dont want to pass by ref, so make a new map
 	outLabels := make(map[string]string)
 
-	for k, v := range m.config.globalLabels {
+	for k, v := range m.config.Metadata.Labels {
 		outLabels[k] = v
 	}
 
@@ -36,13 +36,13 @@ func (m *manager) GetAllMetadata() (outAnnotations, outLabels map[string]string)
 
 	outAnnotations = make(map[string]string)
 
-	for k, v := range m.config.globalAnnotations {
+	for k, v := range m.config.Metadata.Annotations {
 		outAnnotations[k] = v
 	}
 
 	outLabels = make(map[string]string)
 
-	for k, v := range m.config.globalLabels {
+	for k, v := range m.config.Metadata.Labels {
 		outLabels[k] = v
 	}
 

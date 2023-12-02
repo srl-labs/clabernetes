@@ -1,6 +1,7 @@
 package manager
 
 import (
+	clabernetesgeneratedclientset "github.com/srl-labs/clabernetes/generated/clientset"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
@@ -32,6 +33,16 @@ func (c *clabernetes) preInit() {
 	c.kubeClient, err = kubernetes.NewForConfig(c.kubeConfig)
 	if err != nil {
 		c.logger.Criticalf("failed creating kube client from in cluster kubeconfig, err: %s", err)
+
+		clabernetesutil.Panic(err.Error())
+	}
+
+	c.kubeClabernetesClient, err = clabernetesgeneratedclientset.NewForConfig(c.kubeConfig)
+	if err != nil {
+		c.logger.Criticalf(
+			"failed creating clabernetes kube client from in cluster kubeconfig, err: %s",
+			err,
+		)
 
 		clabernetesutil.Panic(err.Error())
 	}

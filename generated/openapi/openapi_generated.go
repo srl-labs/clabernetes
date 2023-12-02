@@ -161,9 +161,15 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigDeployment(
 				Description: "ConfigDeployment holds \"global\" or \"default\" configurations related to clabernetes spawned deployments. In the future this will likely include more of the \"normal\" (topology-level) deployment configs (ex: persistence, or maybe files from url).",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"resources": {
+					"resourcesDefault": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Resources is a mapping of container lab kind -> type -> default resource settings. If a key \"default\" is set at the map root *or* under the \"kind\" level, and there is no more explicit match for kind/type, then that default value will be used (unless overridden at the topology level which takes precedence).",
+							Description: "ResourcesDefault is the default set of resources for clabernetes launcher pods. This is used only as a last option if a Topology does not have resources, and there are no resources for the given containerlab kind/type",
+							Ref:         ref("k8s.io/api/core/v1.ResourceRequirements"),
+						},
+					},
+					"resourcesByContainerlabKind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ResourcesByContainerlabKind is a mapping of container lab kind -> type -> default resource settings. Note that a key value of \"default\" in the inner map will apply the given resources for any pod of that containerlab *kind*. For example: {\n  \"srl\": {\n    \"default\": DEFAULT RESOURCES FOR KIND \"srl\",\n    \"ixr10\": RESOURCES FOR KIND \"srl\", TYPE \"ixr10\"\n} Given resources as above, a containerlab node of kind \"srl\" and \"type\" ixr10\" would get the specific resources as allocated in the ixr10 key, whereas a containerlab kind of \"srl\" and \"type\" unset or \"ixr6\" would get the \"default\" resource settings. To apply global default resources, regardless of containerlab kind/type, use the `resourcesDefault` field.",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
