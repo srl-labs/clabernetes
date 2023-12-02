@@ -3,10 +3,10 @@ package manager
 import (
 	"context"
 
+	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
+
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
-	clabernetescontrollerstopologycontainerlab "github.com/srl-labs/clabernetes/controllers/topology/containerlab"
-	clabernetescontrollerstopologykne "github.com/srl-labs/clabernetes/controllers/topology/kne"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
 
@@ -41,8 +41,7 @@ func (c *clabernetes) startLeading(ctx context.Context) {
 	c.logger.Info("registering controllers...")
 
 	controllersToRegisterFuncs := []clabernetescontrollers.NewController{
-		clabernetescontrollerstopologycontainerlab.NewController,
-		clabernetescontrollerstopologykne.NewController,
+		clabernetescontrollerstopology.NewController,
 	}
 
 	for _, newF := range controllersToRegisterFuncs {

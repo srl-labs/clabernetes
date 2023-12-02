@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
+	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 
 	"sigs.k8s.io/yaml"
 
@@ -148,7 +148,7 @@ func normalizeManifest(t *testing.T, b []byte) []byte {
 	switch {
 	case bytes.Contains(b, []byte("kind: ConfigMap")):
 		return normalizeConfigMapPaths(t, b)
-	case bytes.Contains(b, []byte("kind: Containerlab")):
+	case bytes.Contains(b, []byte("kind: Topology")):
 		return normalizeFromFileFilePaths(t, b)
 	default:
 		return b
@@ -163,28 +163,28 @@ func normalizeFromFileFilePaths(t *testing.T, b []byte) []byte {
 		t.Fatalf("failed getting working dir, err: %s", err)
 	}
 
-	containerlab := &clabernetesapistopologyv1alpha1.Containerlab{}
+	topology := &clabernetesapisv1alpha1.Topology{}
 
-	err = yaml.Unmarshal(b, containerlab)
+	err = yaml.Unmarshal(b, topology)
 	if err != nil {
-		t.Fatalf("failed unmarshaling containerlab cr, err: %s", err)
+		t.Fatalf("failed unmarshaling topology cr, err: %s", err)
 	}
 
-	for nodeName := range containerlab.Spec.FilesFromConfigMap {
-		sort.Slice(containerlab.Spec.FilesFromConfigMap[nodeName], func(i, j int) bool {
-			return containerlab.Spec.FilesFromConfigMap[nodeName][i].FilePath < containerlab.Spec.FilesFromConfigMap[nodeName][j].FilePath
+	for nodeName := range topology.Spec.Deployment.FilesFromConfigMap {
+		sort.Slice(topology.Spec.Deployment.FilesFromConfigMap[nodeName], func(i, j int) bool {
+			return topology.Spec.Deployment.FilesFromConfigMap[nodeName][i].FilePath < topology.Spec.Deployment.FilesFromConfigMap[nodeName][j].FilePath
 		})
 	}
 
-	for nodeName := range containerlab.Spec.FilesFromConfigMap {
-		for idx, fileFromConfigMap := range containerlab.Spec.FilesFromConfigMap[nodeName] {
-			containerlab.Spec.FilesFromConfigMap[nodeName][idx].FilePath = strings.Replace(
+	for nodeName := range topology.Spec.Deployment.FilesFromConfigMap {
+		for idx, fileFromConfigMap := range topology.Spec.Deployment.FilesFromConfigMap[nodeName] {
+			topology.Spec.Deployment.FilesFromConfigMap[nodeName][idx].FilePath = strings.Replace(
 				fileFromConfigMap.FilePath,
 				cwd,
 				"/some/dir/clabernetes/clabverter",
 				1,
 			)
-			containerlab.Spec.FilesFromConfigMap[nodeName][idx].ConfigMapPath = "REPLACED"
+			topology.Spec.Deployment.FilesFromConfigMap[nodeName][idx].ConfigMapPath = "REPLACED"
 		}
 	}
 
@@ -192,9 +192,9 @@ func normalizeFromFileFilePaths(t *testing.T, b []byte) []byte {
 	// its not worth the effort to try to ensure that they are the same since they can change based
 	// on path of where the test is ran and then the safe concat name hash comes into play etc
 
-	b, err = yaml.Marshal(containerlab)
+	b, err = yaml.Marshal(topology)
 	if err != nil {
-		t.Fatalf("failed marshaling containerlab cr, err: %s", err)
+		t.Fatalf("failed marshaling topology cr, err: %s", err)
 	}
 
 	return b

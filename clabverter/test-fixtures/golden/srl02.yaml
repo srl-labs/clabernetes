@@ -1,72 +1,75 @@
-apiVersion: topology.clabernetes/v1alpha1
-kind: Containerlab
+apiVersion: topologies.containerlab.dev/v1alpha1
+kind: Topology
 metadata:
   creationTimestamp: null
   name: srl02
   namespace: notclabernetes
 spec:
-  config: |-
-    name: srl02
+  definition:
+    containerlab: |-
+      name: srl02
 
-    topology:
-      nodes:
-        srl1:
-          kind: srl
-          image: ghcr.io/nokia/srlinux
-          startup-config: srl1.cfg
-          license: taco/srl1.license
-        srl2:
-          kind: srl
-          image: ghcr.io/nokia/srlinux
-          startup-config: srl2.cfg
-          license: srl2.license
-          binds:
-            - __clabDir__/potato.txt:/potato.txt
-            - __clabNodeDir__/potato.txt:/nodedir-potato.txt
+      topology:
+        nodes:
+          srl1:
+            kind: srl
+            image: ghcr.io/nokia/srlinux
+            startup-config: srl1.cfg
+            license: taco/srl1.license
+          srl2:
+            kind: srl
+            image: ghcr.io/nokia/srlinux
+            startup-config: srl2.cfg
+            license: srl2.license
+            binds:
+              - __clabDir__/potato.txt:/potato.txt
+              - __clabNodeDir__/potato.txt:/nodedir-potato.txt
 
-      links:
-        - endpoints: ["srl1:e1-1", "srl2:e1-1"]
-  containerlabDebug: false
-  disableAutoExpose: false
-  disableExpose: false
-  disableNodeAliasService: false
-  filesFromConfigMap:
-    srl1:
-    - configMapName: srl02-srl1-startup-config
-      configMapPath: REPLACED
-      filePath: srl1.cfg
-    - configMapName: srl02-srl1-files
-      configMapPath: REPLACED
-      filePath: taco/srl1.license
-    srl2:
-    - configMapName: srl02-srl2-files
-      configMapPath: REPLACED
-      filePath: /some/dir/clabernetes/clabverter/test-fixtures/clabversiontest/potato.txt
-    - configMapName: srl02-srl2-files
-      configMapPath: REPLACED
-      filePath: /some/dir/clabernetes/clabverter/test-fixtures/clabversiontest/srl2/potato.txt
-    - configMapName: srl02-srl2-startup-config
-      configMapPath: REPLACED
-      filePath: srl2.cfg
-    - configMapName: srl02-srl2-files
-      configMapPath: REPLACED
-      filePath: srl2.license
-  filesFromURL: null
-  imagePullSecrets: null
-  insecureRegistries:
-  - 1.2.3.4
-  persistence:
-    claimSize: ""
-    enabled: false
-    storageClassName: ""
-  privilegedLauncher: false
-  resources: null
+        links:
+          - endpoints: ["srl1:e1-1", "srl2:e1-1"]
+  deployment:
+    containerlabDebug: false
+    filesFromConfigMap:
+      srl1:
+      - configMapName: srl02-srl1-startup-config
+        configMapPath: REPLACED
+        filePath: srl1.cfg
+      - configMapName: srl02-srl1-files
+        configMapPath: REPLACED
+        filePath: taco/srl1.license
+      srl2:
+      - configMapName: srl02-srl2-files
+        configMapPath: REPLACED
+        filePath: /some/dir/clabernetes/clabverter/test-fixtures/clabversiontest/potato.txt
+      - configMapName: srl02-srl2-files
+        configMapPath: REPLACED
+        filePath: /some/dir/clabernetes/clabverter/test-fixtures/clabversiontest/srl2/potato.txt
+      - configMapName: srl02-srl2-startup-config
+        configMapPath: REPLACED
+        filePath: srl2.cfg
+      - configMapName: srl02-srl2-files
+        configMapPath: REPLACED
+        filePath: srl2.license
+    filesFromURL: null
+    persistence:
+      enabled: false
+    privilegedLauncher: false
+    resources: null
+  expose:
+    disableAutoExpose: false
+    disableExpose: false
+    disableNodeAliasService: false
+  imagePull:
+    insecureRegistries:
+    - 1.2.3.4
+    pullSecrets: null
 status:
-  configs: ""
-  configsHash: ""
-  filesFromURLHashes: null
-  imagePullSecretsHash: ""
-  nodeExposedPorts: null
-  nodeExposedPortsHash: ""
-  tunnels: null
-  tunnelsHash: ""
+  configs: null
+  exposedPorts: null
+  kind: ""
+  reconcileHashes:
+    config: ""
+    exposedPorts: ""
+    filesFromURL: null
+    imagePullSecrets: ""
+    tunnels: ""

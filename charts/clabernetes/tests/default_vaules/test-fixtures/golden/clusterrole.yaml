@@ -13,7 +13,7 @@ metadata:
   name: "clabernetes-cluster-role"
 rules:
   - apiGroups:
-      - topology.clabernetes
+      - clabernetes.containerlab.dev
     resources:
       - "*"
     verbs:

@@ -7,7 +7,8 @@ import (
 	"strings"
 	"time"
 
-	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
+	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+
 	"sigs.k8s.io/yaml"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
@@ -192,7 +193,7 @@ func (c *clabernetes) launch() {
 		clabernetesutil.Panic(err.Error())
 	}
 
-	var tunnelObj []*clabernetesapistopologyv1alpha1.Tunnel
+	var tunnelObj []*clabernetesapisv1alpha1.Tunnel
 
 	err = yaml.Unmarshal(tunnelBytes, &tunnelObj)
 	if err != nil {

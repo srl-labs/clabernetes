@@ -1,0 +1,15 @@
+---
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: topology-basic
+spec:
+  definition:
+    containerlab: |-
+      name: topology-basic
+  
+      topology:
+        nodes:
+          srl1:
+            kind: srl
+            image: ghcr.io/nokia/srlinux

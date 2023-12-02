@@ -19,7 +19,7 @@
 package scheme
 
 import (
-	topologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
+	clabernetesv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -31,7 +31,7 @@ var Scheme = runtime.NewScheme()
 var Codecs = serializer.NewCodecFactory(Scheme)
 var ParameterCodec = runtime.NewParameterCodec(Scheme)
 var localSchemeBuilder = runtime.SchemeBuilder{
-	topologyv1alpha1.AddToScheme,
+	clabernetesv1alpha1.AddToScheme,
 }
 
 // AddToScheme adds all types of this clientset into the given scheme. This allows composition

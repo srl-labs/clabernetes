@@ -5,9 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
+	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 
-	clabernetesapistopologyv1alpha1 "github.com/srl-labs/clabernetes/apis/topology/v1alpha1"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	"gopkg.in/yaml.v3"
 )
@@ -18,7 +19,7 @@ func (c *clabernetes) getFilesFromURL() error {
 		return err
 	}
 
-	var filesFromURL []clabernetesapistopologyv1alpha1.FileFromURL
+	var filesFromURL []clabernetesapisv1alpha1.FileFromURL
 
 	err = yaml.Unmarshal(content, &filesFromURL)
 	if err != nil {
