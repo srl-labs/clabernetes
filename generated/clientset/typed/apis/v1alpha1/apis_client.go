@@ -28,12 +28,17 @@ import (
 
 type ClabernetesV1alpha1Interface interface {
 	RESTClient() rest.Interface
+	ConfigsGetter
 	TopologiesGetter
 }
 
 // ClabernetesV1alpha1Client is used to interact with features provided by the clabernetes.containerlab.dev group.
 type ClabernetesV1alpha1Client struct {
 	restClient rest.Interface
+}
+
+func (c *ClabernetesV1alpha1Client) Configs(namespace string) ConfigInterface {
+	return newConfigs(c, namespace)
 }
 
 func (c *ClabernetesV1alpha1Client) Topologies(namespace string) TopologyInterface {

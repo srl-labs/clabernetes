@@ -1,0 +1,214 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.13.0
+  name: configs.clabernetes.containerlab.dev
+spec:
+  group: clabernetes.containerlab.dev
+  names:
+    kind: Config
+    listKind: ConfigList
+    plural: configs
+    singular: config
+  scope: Cluster
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Config is an object that holds global clabernetes config information.
+          Note that this CR is expected to effectively be a global singleton -- that
+          is, there should be only *one* of these, and it should be named `clabernetes`
+          -- CRD metadata spec will enforce this.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ConfigSpec is the spec for a Config resource.
+            properties:
+              configurationMergeMode:
+                default: merge
+                description: ConfigurationMergeMode defines how configmap configuration
+                  data is merged into this global configuration object. This exists
+                  because when deploying clabernetes via helm, config data is first
+                  deployed as a configmap, which is then loaded via the init container(s)
+                  and merged back into this global singleton CR. This flag will be
+                  present in helm created configmap and this CR -- if present in both
+                  locations this CR's value takes precedence. A value of "merge" means
+                  that any value in the CR already will be preserved, while any value
+                  not in the CR will be copied from the configmap and set here. A
+                  value of "replace" means that the values in the configmap will replace
+                  any values in the CR.
+                enum:
+                - merge
+                - replace
+                type: string
+              deployment:
+                description: Deployment holds clabernetes deployment related configuration
+                  settings.
+                properties:
+                  containerlabDebug:
+                    description: ContainerlabDebug sets the `--debug` flag when invoking
+                      containerlab in the launcher pods. This is disabled by default.
+                    type: boolean
+                  launcherLogLevel:
+                    description: 'LauncherLogLevel sets the launcher clabernetes worker
+                      log level -- this overrides whatever is set on the controllers
+                      env vars for this topology. Note: omitempty because empty str
+                      does not satisfy enum of course.'
+                    enum:
+                    - disabled
+                    - critical
+                    - warn
+                    - info
+                    - debug
+                    type: string
+                  privilegedLauncher:
+                    description: PrivilegedLauncher, when true, sets the launcher
+                      containers to privileged. By default, we do our best to *not*
+                      need this/set this, and instead set only the capabilities we
+                      need, however its possible that some containers launched by
+                      the launcher may need/want more capabilities, so this flag exists
+                      for users to bypass the default settings and enable fully privileged
+                      launcher pods.
+                    type: boolean
+                  resources:
+                    additionalProperties:
+                      additionalProperties:
+                        description: ResourceRequirements describes the compute resource
+                          requirements.
+                        properties:
+                          claims:
+                            description: "Claims lists the names of resources, defined
+                              in spec.resourceClaims, that are used by this container.
+                              \n This is an alpha field and requires enabling the
+                              DynamicResourceAllocation feature gate. \n This field
+                              is immutable. It can only be set for containers."
+                            items:
+                              description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                              properties:
+                                name:
+                                  description: Name must match the name of one entry
+                                    in pod.spec.resourceClaims of the Pod where this
+                                    field is used. It makes that resource available
+                                    inside a container.
+                                  type: string
+                              required:
+                              - name
+                              type: object
+                            type: array
+                            x-kubernetes-list-map-keys:
+                            - name
+                            x-kubernetes-list-type: map
+                          limits:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: 'Limits describes the maximum amount of compute
+                              resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                            type: object
+                          requests:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: 'Requests describes the minimum amount of
+                              compute resources required. If Requests is omitted for
+                              a container, it defaults to Limits if that is explicitly
+                              specified, otherwise to an implementation-defined value.
+                              Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                            type: object
+                        type: object
+                      type: object
+                    description: Resources is a mapping of container lab kind -> type
+                      -> default resource settings. If a key "default" is set at the
+                      map root *or* under the "kind" level, and there is no more explicit
+                      match for kind/type, then that default value will be used (unless
+                      overridden at the topology level which takes precedence).
+                    type: object
+                type: object
+              imagePull:
+                description: ImagePull holds configurations relevant to how clabernetes
+                  launcher pods handle pulling images.
+                properties:
+                  insecureRegistries:
+                    description: InsecureRegistries is a slice of strings of insecure
+                      registries to configure in the launcher pods.
+                    items:
+                      type: string
+                    type: array
+                  pullSecrets:
+                    description: PullSecrets allows for providing secret(s) to use
+                      when pulling the image. This is only applicable *if* ImagePullThrough
+                      mode is auto or always. The secret is used by the launcher pod
+                      to pull the image via the cluster CRI. The secret is *not* mounted
+                      to the pod, but instead is used in conjunction with a job that
+                      spawns a pod using the specified secret. The job will kill the
+                      pod as soon as the image has been pulled -- we do this because
+                      we don't care if the pod runs, we only care that the image gets
+                      pulled on a specific node. Note that just like "normal" pull
+                      secrets, the secret needs to be in the namespace that the topology
+                      is in.
+                    items:
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: set
+                  pullThroughOverride:
+                    description: PullThroughOverride allows for overriding the image
+                      pull through mode for this particular topology.
+                    enum:
+                    - auto
+                    - always
+                    - never
+                    type: string
+                type: object
+              inClusterDNSSuffix:
+                description: InClusterDNSSuffix overrides the default in cluster dns
+                  suffix used when resolving services.
+                type: string
+              metadata:
+                description: Metadata holds "global" metadata -- that is, metadata
+                  that is applied to all objects created by the clabernetes controller.
+                properties:
+                  annotations:
+                    additionalProperties:
+                      type: string
+                    description: Annotations holds key/value pairs that should be
+                      set as annotations on clabernetes created resources. Note that
+                      (currently?) there is no input validation here, but this data
+                      must be valid kubernetes annotation data.
+                    type: object
+                  labels:
+                    additionalProperties:
+                      type: string
+                    description: Labels holds key/value pairs that should be set as
+                      labels on clabernetes created resources. Note that (currently?)
+                      there is no input validation here, but this data must be valid
+                      kubernetes label data.
+                    type: object
+                type: object
+            required:
+            - configurationMergeMode
+            type: object
+          status:
+            description: ConfigStatus is the status for a Config resource.
+            type: object
+        type: object
+    served: true
+    storage: true

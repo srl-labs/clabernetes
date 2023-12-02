@@ -30,6 +30,27 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.Config": schema_srl_labs_clabernetes_apis_v1alpha1_Config(
+			ref,
+		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigDeployment": schema_srl_labs_clabernetes_apis_v1alpha1_ConfigDeployment(
+			ref,
+		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigImagePull": schema_srl_labs_clabernetes_apis_v1alpha1_ConfigImagePull(
+			ref,
+		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigList": schema_srl_labs_clabernetes_apis_v1alpha1_ConfigList(
+			ref,
+		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigMetadata": schema_srl_labs_clabernetes_apis_v1alpha1_ConfigMetadata(
+			ref,
+		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigSpec": schema_srl_labs_clabernetes_apis_v1alpha1_ConfigSpec(
+			ref,
+		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigStatus": schema_srl_labs_clabernetes_apis_v1alpha1_ConfigStatus(
+			ref,
+		),
 		"github.com/srl-labs/clabernetes/apis/v1alpha1.Definition": schema_srl_labs_clabernetes_apis_v1alpha1_Definition(
 			ref,
 		),
@@ -75,6 +96,353 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/srl-labs/clabernetes/apis/v1alpha1.Tunnel": schema_srl_labs_clabernetes_apis_v1alpha1_Tunnel(
 			ref,
 		),
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_Config(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Config is an object that holds global clabernetes config information. Note that this CR is expected to effectively be a global singleton -- that is, there should be only *one* of these, and it should be named `clabernetes` -- CRD metadata spec will enforce this.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigSpec",
+							),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigStatus",
+							),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigSpec", "github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigDeployment(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConfigDeployment holds \"global\" or \"default\" configurations related to clabernetes spawned deployments. In the future this will likely include more of the \"normal\" (topology-level) deployment configs (ex: persistence, or maybe files from url).",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"resources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resources is a mapping of container lab kind -> type -> default resource settings. If a key \"default\" is set at the map root *or* under the \"kind\" level, and there is no more explicit match for kind/type, then that default value will be used (unless overridden at the topology level which takes precedence).",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Allows: true,
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Ref: ref(
+														"k8s.io/api/core/v1.ResourceRequirements",
+													),
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"privilegedLauncher": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PrivilegedLauncher, when true, sets the launcher containers to privileged. By default, we do our best to *not* need this/set this, and instead set only the capabilities we need, however its possible that some containers launched by the launcher may need/want more capabilities, so this flag exists for users to bypass the default settings and enable fully privileged launcher pods.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"containerlabDebug": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods. This is disabled by default.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"launcherLogLevel": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LauncherLogLevel sets the launcher clabernetes worker log level -- this overrides whatever is set on the controllers env vars for this topology. Note: omitempty because empty str does not satisfy enum of course.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/api/core/v1.ResourceRequirements"},
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigImagePull(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConfigImagePull holds configurations relevant to how clabernetes launcher pods handle pulling images.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"insecureRegistries": {
+						SchemaProps: spec.SchemaProps{
+							Description: "InsecureRegistries is a slice of strings of insecure registries to configure in the launcher pods.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"pullThroughOverride": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PullThroughOverride allows for overriding the image pull through mode for this particular topology.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"pullSecrets": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "PullSecrets allows for providing secret(s) to use when pulling the image. This is only applicable *if* ImagePullThrough mode is auto or always. The secret is used by the launcher pod to pull the image via the cluster CRI. The secret is *not* mounted to the pod, but instead is used in conjunction with a job that spawns a pod using the specified secret. The job will kill the pod as soon as the image has been pulled -- we do this because we don't care if the pod runs, we only care that the image gets pulled on a specific node. Note that just like \"normal\" pull secrets, the secret needs to be in the namespace that the topology is in.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigList(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConfigList is a list of Config objects.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref: ref(
+											"github.com/srl-labs/clabernetes/apis/v1alpha1.Config",
+										),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.Config", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigMetadata(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConfigMetadata holds \"global\" configuration data that will be applied to all objects created by the clabernetes controller.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"annotations": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Annotations holds key/value pairs that should be set as annotations on clabernetes created resources. Note that (currently?) there is no input validation here, but this data must be valid kubernetes annotation data.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"labels": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Labels holds key/value pairs that should be set as labels on clabernetes created resources. Note that (currently?) there is no input validation here, but this data must be valid kubernetes label data.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigSpec(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConfigSpec is the spec for a Config resource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"inClusterDNSSuffix": {
+						SchemaProps: spec.SchemaProps{
+							Description: "InClusterDNSSuffix overrides the default in cluster dns suffix used when resolving services.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"configurationMergeMode": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ConfigurationMergeMode defines how configmap configuration data is merged into this global configuration object. This exists because when deploying clabernetes via helm, config data is first deployed as a configmap, which is then loaded via the init container(s) and merged back into this global singleton CR. This flag will be present in helm created configmap and this CR -- if present in both locations this CR's value takes precedence. A value of \"merge\" means that any value in the CR already will be preserved, while any value not in the CR will be copied from the configmap and set here. A value of \"replace\" means that the values in the configmap will replace any values in the CR.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Metadata holds \"global\" metadata -- that is, metadata that is applied to all objects created by the clabernetes controller.",
+							Default:     map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigMetadata",
+							),
+						},
+					},
+					"deployment": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Deployment holds clabernetes deployment related configuration settings.",
+							Default:     map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigDeployment",
+							),
+						},
+					},
+					"imagePull": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ImagePull holds configurations relevant to how clabernetes launcher pods handle pulling images.",
+							Default:     map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigImagePull",
+							),
+						},
+					},
+				},
+				Required: []string{"configurationMergeMode"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigDeployment", "github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigImagePull", "github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigMetadata"},
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigStatus(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConfigStatus is the status for a Config resource.",
+				Type:        []string{"object"},
+			},
+		},
 	}
 }
 
