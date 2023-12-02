@@ -51,7 +51,7 @@ type TopologyStatus struct {
 	// Topology.Spec.Definition converted to containerlab "sub-topologies" The actual
 	// "sub-topologies"/"sub-configs" are stored as a string -- this is the actual containerlab
 	// topology that gets mounted in the launcher pod.
-	Configs string `json:"configs"`
+	Configs map[string]string `json:"configs"`
 	// ExposedPorts holds a map of (containerlab not k8s!) nodes and their exposed ports
 	// (via load balancer).
 	ExposedPorts map[string]*ExposedPorts `json:"exposedPorts"`

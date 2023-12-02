@@ -67,7 +67,7 @@ spec:
     - 1.2.3.4
     pullSecrets: null
 status:
-  configs: ""
+  configs: null
   exposedPorts: null
   kind: ""
   reconcileHashes:

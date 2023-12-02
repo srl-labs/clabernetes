@@ -50,8 +50,10 @@ func NewReconcileData(
 		NodesNeedingReboot: clabernetesutil.NewStringSet(),
 	}
 
-	if status.Configs != "" {
-		err := yaml.Unmarshal([]byte(status.Configs), &rd.PreviousConfigs)
+	for nodeName, nodeConfig := range status.Configs {
+		rd.PreviousConfigs[nodeName] = &clabernetesutilcontainerlab.Config{}
+
+		err := yaml.Unmarshal([]byte(nodeConfig), rd.PreviousConfigs[nodeName])
 		if err != nil {
 			return nil, err
 		}
@@ -65,12 +67,24 @@ func NewReconcileData(
 // we set in ReconcileData makes its way to the CR.
 func (r *ReconcileData) SetStatus(
 	owningTopologyStatus *clabernetesapisv1alpha1.TopologyStatus,
-) {
+) error {
 	owningTopologyStatus.Kind = r.Kind
-	owningTopologyStatus.Configs = string(r.ResolvedConfigsBytes)
 	owningTopologyStatus.ExposedPorts = r.ResolvedExposedPorts
 
 	owningTopologyStatus.ReconcileHashes = r.ResolvedHashes
+
+	owningTopologyStatus.Configs = make(map[string]string)
+
+	for nodeName, nodeConfig := range r.ResolvedConfigs {
+		configBytes, err := yaml.Marshal(nodeConfig)
+		if err != nil {
+			return err
+		}
+
+		owningTopologyStatus.Configs[nodeName] = string(configBytes)
+	}
+
+	return nil
 }
 
 // ConfigMapHasChanges returns true if the data that gets stored in the topology configmap has

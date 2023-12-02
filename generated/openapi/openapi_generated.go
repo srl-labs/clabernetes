@@ -784,9 +784,17 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 					"configs": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Configs is a map of node name -> containerlab config -- in other words, this is the original Topology.Spec.Definition converted to containerlab \"sub-topologies\" The actual \"sub-topologies\"/\"sub-configs\" are stored as a string -- this is the actual containerlab topology that gets mounted in the launcher pod.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
 						},
 					},
 					"exposedPorts": {

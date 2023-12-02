@@ -313,12 +313,14 @@ spec:
               resource.
             properties:
               configs:
+                additionalProperties:
+                  type: string
                 description: Configs is a map of node name -> containerlab config
                   -- in other words, this is the original Topology.Spec.Definition
                   converted to containerlab "sub-topologies" The actual "sub-topologies"/"sub-configs"
                   are stored as a string -- this is the actual containerlab topology
                   that gets mounted in the launcher pod.
-                type: string
+                type: object
               exposedPorts:
                 additionalProperties:
                   description: ExposedPorts holds information about exposed ports.
