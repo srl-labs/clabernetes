@@ -198,7 +198,14 @@ func (c *clabernetes) start() {
 	c.prepare()
 
 	// dont create the manager until we've loaded the scheme!
-	c.mgr = mustNewManager(c.scheme, c.appName)
+	var err error
+
+	c.mgr, err = newManager(c.scheme, c.appName)
+	if err != nil {
+		c.logger.Criticalf("failed creating controller runtime manager, err: %s", err)
+
+		c.Exit(clabernetesconstants.ExitCodeError)
+	}
 
 	c.logger.Debug("prepare complete...")
 
@@ -225,4 +232,10 @@ func (c *clabernetes) Exit(exitCode int) {
 	claberneteslogging.GetManager().Flush()
 
 	os.Exit(exitCode)
+}
+
+func (c *clabernetes) Panic(msg string) {
+	claberneteslogging.GetManager().Flush()
+
+	clabernetesutil.Panic(msg)
 }

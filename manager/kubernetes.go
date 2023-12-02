@@ -1,11 +1,8 @@
 package manager
 
 import (
-	"fmt"
-
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 
-	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	"k8s.io/apimachinery/pkg/labels"
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
@@ -16,8 +13,8 @@ import (
 	ctrlruntimemetricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
-func mustNewManager(scheme *apimachineryruntime.Scheme, appName string) ctrlruntime.Manager {
-	mgr, err := ctrlruntime.NewManager(
+func newManager(scheme *apimachineryruntime.Scheme, appName string) (ctrlruntime.Manager, error) {
+	return ctrlruntime.NewManager(
 		ctrlruntime.GetConfigOrDie(),
 		ctrlruntime.Options{
 			Logger: klog.NewKlogr(),
@@ -49,15 +46,12 @@ func mustNewManager(scheme *apimachineryruntime.Scheme, appName string) ctrlrunt
 							},
 						},
 					},
+					// watch our config "singleton" too
+					&clabernetesapisv1alpha1.Config{}: {},
 				}
 
 				return ctrlruntimecache.New(config, opts)
 			},
 		},
 	)
-	if err != nil {
-		clabernetesutil.Panic(fmt.Sprintf("unable to start manager, error: %s", err))
-	}
-
-	return mgr
 }

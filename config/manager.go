@@ -187,7 +187,7 @@ func (m *manager) Start() error {
 
 	config, err := m.kubeClabernetesClient.ClabernetesV1alpha1().
 		Configs(m.namespace).
-		Get(m.ctx, m.appName, metav1.GetOptions{})
+		Get(m.ctx, clabernetesconstants.Clabernetes, metav1.GetOptions{})
 	if err != nil {
 		if apimachineryerrors.IsNotFound(err) {
 			m.logger.Warn(
@@ -220,12 +220,12 @@ func (m *manager) Start() error {
 
 func (m *manager) watchConfig() {
 	listOptions := metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("metadata.name=%s", m.appName),
+		FieldSelector: fmt.Sprintf("metadata.name=%s", clabernetesconstants.Clabernetes),
 		Watch:         true,
 	}
 
 	watch, err := m.kubeClabernetesClient.ClabernetesV1alpha1().
-		Configs(m.namespace).
+		Configs("").
 		Watch(m.ctx, listOptions)
 	if err != nil {
 		m.logger.Criticalf("failed watching clabernetes config, err: %s", err)

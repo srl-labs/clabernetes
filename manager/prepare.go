@@ -2,8 +2,6 @@ package manager
 
 import (
 	"fmt"
-
-	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
 
 // prepare handles preparation tasks that happen before running the clabernetes.start method.
@@ -18,7 +16,7 @@ func (c *clabernetes) prepare() {
 
 		c.logger.Critical(msg)
 
-		clabernetesutil.Panic(msg)
+		c.Panic(msg)
 	}
 
 	c.logger.Debug("preparing certificates complete...")
@@ -31,7 +29,7 @@ func (c *clabernetes) prepare() {
 
 		c.logger.Critical(msg)
 
-		clabernetesutil.Panic(msg)
+		c.Panic(msg)
 	}
 
 	c.logger.Debug("preparing scheme complete...")

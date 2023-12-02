@@ -268,5 +268,7 @@ spec:
             description: ConfigStatus is the status for a Config resource.
             type: object
         type: object
+        x-kubernetes-validations:
+        - rule: (self.metadata.name == 'clabernetes')
     served: true
     storage: true

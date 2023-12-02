@@ -17,7 +17,6 @@ import (
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 
 	k8scorev1 "k8s.io/api/core/v1"
-	ctrlruntimebuilder "sigs.k8s.io/controller-runtime/pkg/builder"
 	ctrlruntimecontroller "sigs.k8s.io/controller-runtime/pkg/controller"
 	ctrlruntimehandler "sigs.k8s.io/controller-runtime/pkg/handler"
 
@@ -117,15 +116,11 @@ func (c *Controller) SetupWithManager(mgr ctrlruntime.Manager) error {
 				ctrlruntimehandler.OnlyControllerOwner(),
 			),
 		).
-		// watch configmaps so we can react to global config changes; predicates ensure we only
-		// watch the "clabernetes-config" (or appName-config) configmap
+		// watch our config cr too so we get any config updates handled
 		Watches(
-			&k8scorev1.ConfigMap{},
+			&clabernetesapisv1alpha1.Config{},
 			ctrlruntimehandler.EnqueueRequestsFromMapFunc(
 				c.enqueueForAll,
-			),
-			ctrlruntimebuilder.WithPredicates(
-				c.BaseController.GlobalConfigPredicates(),
 			),
 		).
 		Complete(c)

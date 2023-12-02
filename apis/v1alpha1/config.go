@@ -7,9 +7,11 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 // Config is an object that holds global clabernetes config information. Note that this CR is
 // expected to effectively be a global singleton -- that is, there should be only *one* of these,
-// and it should be named `clabernetes` -- CRD metadata spec will enforce this.
+// and it *must* be named `clabernetes` -- CRD metadata spec will enforce this (via x-validation
+// rules).
 // +k8s:openapi-gen=true
 // +kubebuilder:resource:scope=Cluster
+// +kubebuilder:validation:XValidation:rule=(self.metadata.name == 'clabernetes')
 type Config struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

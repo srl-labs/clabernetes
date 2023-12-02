@@ -3,8 +3,6 @@ package manager
 import (
 	"context"
 	"fmt"
-
-	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
 
 func (c *clabernetes) init(ctx context.Context) {
@@ -20,7 +18,7 @@ func (c *clabernetes) init(ctx context.Context) {
 
 		c.logger.Critical(msg)
 
-		clabernetesutil.Panic(msg)
+		c.Panic(err.Error())
 	}
 
 	c.logger.Debugf("initializing certificates complete...")
@@ -33,7 +31,7 @@ func (c *clabernetes) init(ctx context.Context) {
 
 		c.logger.Critical(msg)
 
-		clabernetesutil.Panic(msg)
+		c.Panic(err.Error())
 	}
 
 	c.logger.Debugf("initializing crds complete...")
