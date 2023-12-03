@@ -135,6 +135,7 @@ func (r *PersistentVolumeClaimReconciler) renderPVCBase(
 func (r *PersistentVolumeClaimReconciler) renderPVCSpec(
 	owningTopology *clabernetesapisv1alpha1.Topology,
 	pvc *k8scorev1.PersistentVolumeClaim,
+	existingPVC *k8scorev1.PersistentVolumeClaim,
 ) {
 	persistence := owningTopology.Spec.Deployment.Persistence
 
@@ -171,13 +172,22 @@ func (r *PersistentVolumeClaimReconciler) renderPVCSpec(
 		StorageClassName: storageClassName,
 		VolumeMode:       clabernetesutil.ToPointer(k8scorev1.PersistentVolumeFilesystem),
 	}
+
+	if existingPVC != nil {
+		// VolumeName is immutable, if this pvc already exists, ensure we copy the volume name!
+		pvc.Spec.VolumeName = existingPVC.Spec.VolumeName
+	}
 }
 
 // Render accepts the owning topology a mapping of clabernetes sub-topology configs and a node name
-// and renders the pvc for this node.
+// and renders the pvc for this node. Note that *Render* (but not RenderAll) accepts an existing
+// pvc as well - we do this because the VolumeName field is immutable, so we *must* use the name of
+// the volume that got provisioned (if it exists). RenderAll in this case should not ever be used to
+// render/re-render existing pvcs, so it can safely pass nil when it calls Render.
 func (r *PersistentVolumeClaimReconciler) Render(
 	owningTopology *clabernetesapisv1alpha1.Topology,
 	nodeName string,
+	existingPVC *k8scorev1.PersistentVolumeClaim,
 ) *k8scorev1.PersistentVolumeClaim {
 	owningTopologyName := owningTopology.GetName()
 
@@ -187,7 +197,7 @@ func (r *PersistentVolumeClaimReconciler) Render(
 		nodeName,
 	)
 
-	r.renderPVCSpec(owningTopology, pvc)
+	r.renderPVCSpec(owningTopology, pvc, existingPVC)
 
 	return pvc
 }
@@ -204,6 +214,7 @@ func (r *PersistentVolumeClaimReconciler) RenderAll(
 		pvcs[idx] = r.Render(
 			owningTopology,
 			nodeName,
+			nil,
 		)
 	}
 

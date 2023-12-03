@@ -619,6 +619,7 @@ func (r *Reconciler) ReconcilePersistentVolumeClaim(
 		renderedCurrentPVC := r.persistentVolumeClaimReconciler.Render(
 			owningTopology,
 			existingCurrentPVCNodeName,
+			existingCurrentPVC,
 		)
 
 		err = ctrlruntimeutil.SetOwnerReference(
