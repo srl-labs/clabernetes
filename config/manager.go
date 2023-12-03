@@ -75,9 +75,7 @@ func InitManager(
 					LauncherLogLevel:   "",
 				},
 				ImagePull: clabernetesapisv1alpha1.ConfigImagePull{
-					InsecureRegistries:  nil,
 					PullThroughOverride: "",
-					PullSecrets:         nil,
 				},
 			},
 		}
@@ -121,6 +119,10 @@ type Manager interface {
 		containerlabKind string,
 		containerlabType string,
 	) *k8scorev1.ResourceRequirements
+	// GetPrivilegedLauncher returns the global config value for the privileged launcher mode.
+	GetPrivilegedLauncher() bool
+	// GetContainerlabDebug returns the global config value for containerlabDebug.
+	GetContainerlabDebug() bool
 	// GetInClusterDNSSuffix returns the in cluster dns suffix as set by the global config.
 	GetInClusterDNSSuffix() string
 	// GetImagePullThroughOverride returns the image pull through mode in the global config.

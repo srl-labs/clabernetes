@@ -231,46 +231,11 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigImagePull(
 				Description: "ConfigImagePull holds configurations relevant to how clabernetes launcher pods handle pulling images.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"insecureRegistries": {
-						SchemaProps: spec.SchemaProps{
-							Description: "InsecureRegistries is a slice of strings of insecure registries to configure in the launcher pods.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
 					"pullThroughOverride": {
 						SchemaProps: spec.SchemaProps{
 							Description: "PullThroughOverride allows for overriding the image pull through mode for this particular topology.",
 							Type:        []string{"string"},
 							Format:      "",
-						},
-					},
-					"pullSecrets": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "PullSecrets allows for providing secret(s) to use when pulling the image. This is only applicable *if* ImagePullThrough mode is auto or always. The secret is used by the launcher pod to pull the image via the cluster CRI. The secret is *not* mounted to the pod, but instead is used in conjunction with a job that spawns a pod using the specified secret. The job will kill the pod as soon as the image has been pulled -- we do this because we don't care if the pod runs, we only care that the image gets pulled on a specific node. Note that just like \"normal\" pull secrets, the secret needs to be in the namespace that the topology is in.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
 						},
 					},
 				},
@@ -498,8 +463,7 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_Deployment(
 					},
 					"privilegedLauncher": {
 						SchemaProps: spec.SchemaProps{
-							Description: "PrivilegedLauncher, when true, sets the launcher containers to privileged. By default, we do our best to *not* need this/set this, and instead set only the capabilities we need, however its possible that some containers launched by the launcher may need/want more capabilities, so this flag exists for users to bypass the default settings and enable fully privileged launcher pods.",
-							Default:     false,
+							Description: "PrivilegedLauncher, when true, sets the launcher containers to privileged. By default, we do our best to *not* need this/set this, and instead set only the capabilities we need, however its possible that some containers launched by the launcher may need/want more capabilities, so this flag exists for users to bypass the default settings and enable fully privileged launcher pods. If this value is unset, the global config value (default of \"false\") will be used.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -563,8 +527,7 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_Deployment(
 					},
 					"containerlabDebug": {
 						SchemaProps: spec.SchemaProps{
-							Description: "ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods. This is disabled by default.",
-							Default:     false,
+							Description: "ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods. This is disabled by default. If this value is unset, the global config value (default of \"false\") will be used.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},

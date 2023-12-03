@@ -431,7 +431,10 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		},
 	}
 
-	if owningTopology.Spec.Deployment.ContainerlabDebug {
+	if ResolveGlobalVsTopologyBool(
+		r.configManagerGetter().GetContainerlabDebug(),
+		owningTopology.Spec.Deployment.ContainerlabDebug,
+	) {
 		envs = append(
 			envs,
 			k8scorev1.EnvVar{
@@ -451,7 +454,10 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		)
 	}
 
-	if owningTopology.Spec.Deployment.PrivilegedLauncher {
+	if ResolveGlobalVsTopologyBool(
+		r.configManagerGetter().GetPrivilegedLauncher(),
+		owningTopology.Spec.Deployment.PrivilegedLauncher,
+	) {
 		envs = append(
 			envs,
 			k8scorev1.EnvVar{
@@ -498,7 +504,10 @@ func (r *DeploymentReconciler) renderDeploymentContainerPrivileges(
 	nodeName string,
 	owningTopology *clabernetesapisv1alpha1.Topology,
 ) {
-	if owningTopology.Spec.Deployment.PrivilegedLauncher {
+	if ResolveGlobalVsTopologyBool(
+		r.configManagerGetter().GetPrivilegedLauncher(),
+		owningTopology.Spec.Deployment.PrivilegedLauncher,
+	) {
 		deployment.Spec.Template.Spec.Containers[0].SecurityContext = &k8scorev1.SecurityContext{
 			Privileged: clabernetesutil.ToPointer(true),
 			RunAsUser:  clabernetesutil.ToPointer(int64(0)),
@@ -579,7 +588,10 @@ func (r *DeploymentReconciler) renderDeploymentDevices(
 	deployment *k8sappsv1.Deployment,
 	owningTopology *clabernetesapisv1alpha1.Topology,
 ) {
-	if owningTopology.Spec.Deployment.PrivilegedLauncher {
+	if ResolveGlobalVsTopologyBool(
+		r.configManagerGetter().GetPrivilegedLauncher(),
+		owningTopology.Spec.Deployment.PrivilegedLauncher,
+	) {
 		// launcher is privileged, no need to mount devices explicitly
 		return
 	}

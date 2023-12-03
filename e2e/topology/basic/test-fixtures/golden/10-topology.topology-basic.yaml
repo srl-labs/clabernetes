@@ -15,10 +15,8 @@ spec:
             kind: srl
             image: ghcr.io/nokia/srlinux
   deployment:
-    containerlabDebug: false
     persistence:
       enabled: false
-    privilegedLauncher: false
   expose:
     disableAutoExpose: false
     disableExpose: false

@@ -37,6 +37,14 @@ func (f fakeManager) GetResourcesForContainerlabKind(
 	return nil
 }
 
+func (f fakeManager) GetPrivilegedLauncher() bool {
+	return false
+}
+
+func (f fakeManager) GetContainerlabDebug() bool {
+	return false
+}
+
 func (f fakeManager) GetInClusterDNSSuffix() string {
 	return "svc.cluster.local"
 }

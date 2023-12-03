@@ -29,5 +29,7 @@ data:
   resourcesByContainerlabKind: |-
     ---
     {}
+  privilegedLauncher: "false"
+  containerlabDebug: "false"
   inClusterDNSSuffix: svc.cluster.local
   imagePullThroughMode: auto

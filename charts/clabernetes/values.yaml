@@ -78,6 +78,11 @@ globalConfig:
   # that is already set in the CR is left alone. This is the default and "safe" option. You can
   # also set this to "overwrite" for a more declarative option where this bootstrap config data
   # replaces the existing CR entirely.
+  #
+  # note: bool values are completely ignored in "merge" mode as we do *not* have pointers to bools
+  # in the config CR; put another way, the bool values (ex: deployment.privilegedLauncher) are
+  # totally ignored in merge mode. if you want to update those values in the config CR you can do
+  # so directly, or use the "overwrite" merge mode.
   mergeMode: merge
 
   inClusterDNSSuffix: svc.cluster.local
@@ -111,6 +116,14 @@ globalConfig:
     # outer keys are the containerlab *kind* and the inner keys *type* -- you can specify a
     # "default" key in the types level as well to just have default resources for a given kind.
     resourcesByContainerlabKind: {}
+
+    # privilegedLauncher sets the global default value for "privilegedLauncher" -- that is, if the
+    # launcher pods should run in privileged mode or not.
+    privilegedLauncher: false
+
+    # containerlabDebug sets the global default value for whether launcher pods should have the
+    # containerlab debug flag set.
+    containerlabDebug: false
 
 #
 # clicker

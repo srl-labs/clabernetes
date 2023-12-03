@@ -64,6 +64,20 @@ func (m *manager) GetResourcesForContainerlabKind(
 	)
 }
 
+func (m *manager) GetPrivilegedLauncher() bool {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	return m.config.Deployment.PrivilegedLauncher
+}
+
+func (m *manager) GetContainerlabDebug() bool {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	return m.config.Deployment.ContainerlabDebug
+}
+
 func (m *manager) GetInClusterDNSSuffix() string {
 	m.lock.RLock()
 	defer m.lock.RUnlock()

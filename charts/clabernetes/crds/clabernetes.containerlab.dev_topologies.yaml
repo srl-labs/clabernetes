@@ -61,6 +61,8 @@ spec:
                   containerlabDebug:
                     description: ContainerlabDebug sets the `--debug` flag when invoking
                       containerlab in the launcher pods. This is disabled by default.
+                      If this value is unset, the global config value (default of
+                      "false") will be used.
                     type: boolean
                   filesFromConfigMap:
                     additionalProperties:
@@ -166,7 +168,8 @@ spec:
                       need, however its possible that some containers launched by
                       the launcher may need/want more capabilities, so this flag exists
                       for users to bypass the default settings and enable fully privileged
-                      launcher pods.
+                      launcher pods. If this value is unset, the global config value
+                      (default of "false") will be used.
                     type: boolean
                   resources:
                     additionalProperties:

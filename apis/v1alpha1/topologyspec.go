@@ -120,9 +120,10 @@ type Deployment struct {
 	// our best to *not* need this/set this, and instead set only the capabilities we need, however
 	// its possible that some containers launched by the launcher may need/want more capabilities,
 	// so this flag exists for users to bypass the default settings and enable fully privileged
-	// launcher pods.
+	// launcher pods. If this value is unset, the global config value (default of "false") will be
+	// used.
 	// +optional
-	PrivilegedLauncher bool `json:"privilegedLauncher"`
+	PrivilegedLauncher *bool `json:"privilegedLauncher"`
 	// FilesFromConfigMap is a slice of FileFromConfigMap that define the configmap/path and node
 	// and path on a launcher node that the file should be mounted to. If the path is not provided
 	// the configmap is mounted in its entirety (like normal k8s things), so you *probably* want
@@ -139,9 +140,10 @@ type Deployment struct {
 	// +optional
 	Persistence Persistence `json:"persistence"`
 	// ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods.
-	// This is disabled by default.
+	// This is disabled by default. If this value is unset, the global config value (default of
+	// "false") will be used.
 	// +optional
-	ContainerlabDebug bool `json:"containerlabDebug"`
+	ContainerlabDebug *bool `json:"containerlabDebug"`
 	// LauncherLogLevel sets the launcher clabernetes worker log level -- this overrides whatever
 	// is set on the controllers env vars for this topology. Note: omitempty because empty str does
 	// not satisfy enum of course.

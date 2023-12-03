@@ -207,7 +207,7 @@ func TestRenderDeployment(t *testing.T) {
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Deployment: clabernetesapisv1alpha1.Deployment{
-						PrivilegedLauncher: true,
+						PrivilegedLauncher: clabernetesutil.ToPointer(true),
 					},
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
@@ -267,7 +267,7 @@ func TestRenderDeployment(t *testing.T) {
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Deployment: clabernetesapisv1alpha1.Deployment{
-						ContainerlabDebug: true,
+						ContainerlabDebug: clabernetesutil.ToPointer(true),
 					},
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---

@@ -2,6 +2,9 @@ package config
 
 import (
 	"fmt"
+	"strings"
+
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
@@ -16,11 +19,13 @@ type bootstrapConfig struct {
 	globalLabels                map[string]string
 	resourcesDefault            *k8scorev1.ResourceRequirements
 	resourcesByContainerlabKind map[string]map[string]*k8scorev1.ResourceRequirements
+	privilegedLauncher          bool
+	containerlabDebug           bool
 	inClusterDNSSuffix          string
 	imagePullThroughMode        string
 }
 
-func bootstrapFromConfigMap(inMap map[string]string) (*bootstrapConfig, error) {
+func bootstrapFromConfigMap(inMap map[string]string) (*bootstrapConfig, error) { //nolint:gocyclo
 	bc := &bootstrapConfig{
 		mergeMode:            "merge",
 		inClusterDNSSuffix:   "svc.cluster.local",
@@ -66,6 +71,20 @@ func bootstrapFromConfigMap(inMap map[string]string) (*bootstrapConfig, error) {
 		}
 	}
 
+	inPrivilegedLauncher, inPrivilegedLauncherOk := inMap["privilegedLauncher"]
+	if inPrivilegedLauncherOk {
+		if strings.EqualFold(inPrivilegedLauncher, clabernetesconstants.True) {
+			bc.privilegedLauncher = true
+		}
+	}
+
+	inContainerlabDebug, inContainerlabDebugOk := inMap["containerlabDebug"]
+	if inContainerlabDebugOk {
+		if strings.EqualFold(inContainerlabDebug, clabernetesconstants.True) {
+			bc.containerlabDebug = true
+		}
+	}
+
 	inClusterDNSSuffix, inClusterDNSSuffixOk := inMap["inClusterDNSSuffix"]
 	if inClusterDNSSuffixOk {
 		bc.inClusterDNSSuffix = inClusterDNSSuffix
@@ -104,10 +123,10 @@ func MergeFromBootstrapConfig(
 		return err
 	}
 
-	if bootstrap.mergeMode == "replace" {
+	if bootstrap.mergeMode == "overwrite" {
 		mergeFromBootstrapConfigReplace(bootstrap, config)
 	} else {
-		// should only ever be "merge" if it isn't "replace", but either way, fallback to merge...
+		// should only ever be "merge" if it isn't "overwrite", but either way, fallback to merge...
 		mergeFromBootstrapConfigMerge(bootstrap, config)
 	}
 
@@ -174,6 +193,8 @@ func mergeFromBootstrapConfigReplace(
 		Deployment: clabernetesapisv1alpha1.ConfigDeployment{
 			ResourcesDefault:            bootstrap.resourcesDefault,
 			ResourcesByContainerlabKind: bootstrap.resourcesByContainerlabKind,
+			PrivilegedLauncher:          bootstrap.privilegedLauncher,
+			ContainerlabDebug:           bootstrap.containerlabDebug,
 		},
 	}
 }
