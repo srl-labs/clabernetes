@@ -56,8 +56,7 @@ func InitManager(
 			kubeClabernetesClient: client,
 			lock:                  &sync.RWMutex{},
 			config: &clabernetesapisv1alpha1.ConfigSpec{
-				InClusterDNSSuffix:     "",
-				ConfigurationMergeMode: "",
+				InClusterDNSSuffix: "",
 				Metadata: clabernetesapisv1alpha1.ConfigMetadata{
 					Annotations: nil,
 					Labels:      nil,
@@ -122,6 +121,10 @@ type Manager interface {
 		containerlabKind string,
 		containerlabType string,
 	) *k8scorev1.ResourceRequirements
+	// GetInClusterDNSSuffix returns the in cluster dns suffix as set by the global config.
+	GetInClusterDNSSuffix() string
+	// GetImagePullThroughOverride returns the image pull through mode in the global config.
+	GetImagePullThroughOverride() string
 }
 
 type manager struct {
@@ -225,7 +228,7 @@ func (m *manager) watchConfig() {
 	}
 
 	watch, err := m.kubeClabernetesClient.ClabernetesV1alpha1().
-		Configs("").
+		Configs(m.namespace).
 		Watch(m.ctx, listOptions)
 	if err != nil {
 		m.logger.Criticalf("failed watching clabernetes config, err: %s", err)

@@ -193,8 +193,8 @@ func (in *ConfigMetadata) DeepCopy() *ConfigMetadata {
 func (in *ConfigSpec) DeepCopyInto(out *ConfigSpec) {
 	*out = *in
 	in.Metadata.DeepCopyInto(&out.Metadata)
-	in.Deployment.DeepCopyInto(&out.Deployment)
 	in.ImagePull.DeepCopyInto(&out.ImagePull)
+	in.Deployment.DeepCopyInto(&out.Deployment)
 	return
 }
 

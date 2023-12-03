@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	clabernetesconfig "github.com/srl-labs/clabernetes/config"
+
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
@@ -435,10 +437,7 @@ func processConfigForNode(
 					topology.Name,
 					uninterestingEndpoint.NodeName,
 					topology.Namespace,
-					clabernetesutil.GetEnvStrOrDefault(
-						clabernetesconstants.InClusterDNSSuffixEnv,
-						clabernetesconstants.DefaultInClusterDNSSuffix,
-					),
+					clabernetesconfig.GetManager().GetInClusterDNSSuffix(),
 				),
 				LocalLinkName:  interestingEndpoint.InterfaceName,
 				RemoteLinkName: uninterestingEndpoint.InterfaceName,

@@ -1,6 +1,8 @@
 package config
 
-import k8scorev1 "k8s.io/api/core/v1"
+import (
+	k8scorev1 "k8s.io/api/core/v1"
+)
 
 func (m *manager) GetGlobalAnnotations() map[string]string {
 	m.lock.RLock()
@@ -60,4 +62,18 @@ func (m *manager) GetResourcesForContainerlabKind(
 		containerlabKind,
 		containerlabType,
 	)
+}
+
+func (m *manager) GetInClusterDNSSuffix() string {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	return m.config.InClusterDNSSuffix
+}
+
+func (m *manager) GetImagePullThroughOverride() string {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	return m.config.ImagePull.PullThroughOverride
 }

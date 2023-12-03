@@ -27,18 +27,16 @@ import (
 func NewDeploymentReconciler(
 	log claberneteslogging.Instance,
 	managerAppName,
-	managerNamespace string,
+	managerNamespace,
+	criKind string,
 	configManagerGetter clabernetesconfig.ManagerGetterFunc,
-	criKind,
-	imagePullThroughMode string,
 ) *DeploymentReconciler {
 	return &DeploymentReconciler{
-		log:                  log,
-		managerAppName:       managerAppName,
-		managerNamespace:     managerNamespace,
-		configManagerGetter:  configManagerGetter,
-		criKind:              criKind,
-		imagePullThroughMode: imagePullThroughMode,
+		log:                 log,
+		managerAppName:      managerAppName,
+		managerNamespace:    managerNamespace,
+		criKind:             criKind,
+		configManagerGetter: configManagerGetter,
 	}
 }
 
@@ -46,12 +44,11 @@ func NewDeploymentReconciler(
 // purposes. This is the component responsible for rendering/validating deployments for a
 // clabernetes topology resource.
 type DeploymentReconciler struct {
-	log                  claberneteslogging.Instance
-	managerAppName       string
-	managerNamespace     string
-	configManagerGetter  clabernetesconfig.ManagerGetterFunc
-	criKind              string
-	imagePullThroughMode string
+	log                 claberneteslogging.Instance
+	managerAppName      string
+	managerNamespace    string
+	criKind             string
+	configManagerGetter clabernetesconfig.ManagerGetterFunc
 }
 
 // Resolve accepts a mapping of clabernetes configs and a list of deployments that are -- by owner
@@ -193,7 +190,9 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 
 	// if we have containerd cri *and* pull through mode is auto or always, we need to mount the
 	// containerd sock
-	if r.imagePullThroughMode != clabernetesconstants.ImagePullThroughModeNever &&
+	if r.configManagerGetter().
+		GetImagePullThroughOverride() !=
+		clabernetesconstants.ImagePullThroughModeNever &&
 		owningTopology.Spec.ImagePull.PullThroughOverride != clabernetesconstants.ImagePullThroughModeNever { //nolint:lll
 		var path string
 
@@ -365,7 +364,7 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		launcherLogLevel = owningTopology.Spec.Deployment.LauncherLogLevel
 	}
 
-	imagePullThroughMode := r.imagePullThroughMode
+	imagePullThroughMode := r.configManagerGetter().GetImagePullThroughOverride()
 	if owningTopology.Spec.ImagePull.PullThroughOverride != "" {
 		imagePullThroughMode = owningTopology.Spec.ImagePull.PullThroughOverride
 	}

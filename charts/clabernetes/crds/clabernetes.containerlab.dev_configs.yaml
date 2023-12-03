@@ -12,15 +12,15 @@ spec:
     listKind: ConfigList
     plural: configs
     singular: config
-  scope: Cluster
+  scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: Config is an object that holds global clabernetes config information.
           Note that this CR is expected to effectively be a global singleton -- that
-          is, there should be only *one* of these, and it should be named `clabernetes`
-          -- CRD metadata spec will enforce this.
+          is, there should be only *one* of these, and it *must* be named `clabernetes`
+          -- CRD metadata spec will enforce this (via x-validation rules).
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -37,23 +37,6 @@ spec:
           spec:
             description: ConfigSpec is the spec for a Config resource.
             properties:
-              configurationMergeMode:
-                default: merge
-                description: ConfigurationMergeMode defines how configmap configuration
-                  data is merged into this global configuration object. This exists
-                  because when deploying clabernetes via helm, config data is first
-                  deployed as a configmap, which is then loaded via the init container(s)
-                  and merged back into this global singleton CR. This flag will be
-                  present in helm created configmap and this CR -- if present in both
-                  locations this CR's value takes precedence. A value of "merge" means
-                  that any value in the CR already will be preserved, while any value
-                  not in the CR will be copied from the configmap and set here. A
-                  value of "replace" means that the values in the configmap will replace
-                  any values in the CR.
-                enum:
-                - merge
-                - replace
-                type: string
               deployment:
                 description: Deployment holds clabernetes deployment related configuration
                   settings.
@@ -261,8 +244,6 @@ spec:
                       kubernetes label data.
                     type: object
                 type: object
-            required:
-            - configurationMergeMode
             type: object
           status:
             description: ConfigStatus is the status for a Config resource.

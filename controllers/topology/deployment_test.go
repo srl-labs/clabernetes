@@ -100,9 +100,8 @@ func TestResolveDeployment(t *testing.T) {
 					&claberneteslogging.FakeInstance{},
 					"clabernetes",
 					"clabernetes",
-					clabernetesconfig.GetFakeManager,
 					testCase.criKind,
-					testCase.imagePullThroughMode,
+					clabernetesconfig.GetFakeManager,
 				)
 
 				got, err := reconciler.Resolve(
@@ -451,9 +450,8 @@ func TestRenderDeployment(t *testing.T) {
 					&claberneteslogging.FakeInstance{},
 					"clabernetes",
 					"clabernetes",
-					clabernetesconfig.GetFakeManager,
 					testCase.criKind,
-					testCase.imagePullThroughMode,
+					clabernetesconfig.GetFakeManager,
 				)
 
 				got := reconciler.Render(
@@ -1033,9 +1031,8 @@ func TestDeploymentConforms(t *testing.T) {
 					&claberneteslogging.FakeInstance{},
 					"clabernetes",
 					"clabernetes",
+					"",
 					clabernetesconfig.GetFakeManager,
-					"",
-					"",
 				)
 
 				actual := reconciler.Conforms(

@@ -36,3 +36,11 @@ func (f fakeManager) GetResourcesForContainerlabKind(
 
 	return nil
 }
+
+func (f fakeManager) GetInClusterDNSSuffix() string {
+	return "svc.cluster.local"
+}
+
+func (f fakeManager) GetImagePullThroughOverride() string {
+	return "auto"
+}

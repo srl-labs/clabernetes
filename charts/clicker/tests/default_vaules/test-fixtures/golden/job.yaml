@@ -9,6 +9,7 @@ metadata:
     chart: "clicker-0.0.0"
     release: release-name
     heritage: Helm
+    revision: "1"
     clabernetes/app: clabernetes
     clabernetes/name: "clabernetes-clicker"
     clabernetes/component: clicker
@@ -19,6 +20,7 @@ spec:
         chart: "clicker-0.0.0"
         release: release-name
         heritage: Helm
+        revision: "1"
         clabernetes/app: clabernetes
         clabernetes/name: "clabernetes-clicker"
         clabernetes/component: clicker

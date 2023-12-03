@@ -1,3 +1,4 @@
+{{- if .Values.globalConfig.enabled }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -8,6 +9,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    revision: "{{ .Release.Revision }}"
     clabernetes/app: {{ .Values.appName }}
     clabernetes/name: "{{ .Values.appName }}-config"
     clabernetes/component: config
@@ -19,12 +21,19 @@ metadata:
 {{ .Values.globalAnnotations | toYaml | indent 4 }}
   {{- end }}
 data:
+  mergeMode: {{ .Values.globalConfig.mergeMode }}
   globalAnnotations: |-
     ---
 {{ .Values.globalAnnotations | toYaml | indent 4 }}
   globalLabels: |-
     ---
 {{ .Values.globalLabels | toYaml | indent 4 }}
-  defaultResources: |-
+  resourcesDefault: |-
     ---
-{{ .Values.launcher.defaultResources | toYaml | indent 4 }}
+{{ .Values.globalConfig.deployment.resourcesDefault | toYaml | indent 4 }}
+  resourcesByContainerlabKind: |-
+    ---
+{{ .Values.globalConfig.deployment.resourcesByContainerlabKind | toYaml | indent 4 }}
+  inClusterDNSSuffix: {{ .Values.globalConfig.inClusterDNSSuffix }}
+  imagePullThroughMode: {{ .Values.globalConfig.imagePull.imagePullThroughMode }}
+{{- end }}

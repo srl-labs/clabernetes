@@ -6,6 +6,8 @@ import (
 	"slices"
 	"time"
 
+	clabernetesconfig "github.com/srl-labs/clabernetes/config"
+
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
@@ -13,8 +15,6 @@ import (
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
@@ -36,10 +36,9 @@ func NewReconciler(
 	log claberneteslogging.Instance,
 	client ctrlruntimeclient.Client,
 	managerAppName,
-	managerNamespace string,
+	managerNamespace,
+	criKind string,
 	configManagerGetter clabernetesconfig.ManagerGetterFunc,
-	criKind,
-	imagePullThroughMode string,
 ) *Reconciler {
 	return &Reconciler{
 		Log:    log,
@@ -69,9 +68,8 @@ func NewReconciler(
 			log,
 			managerAppName,
 			managerNamespace,
-			configManagerGetter,
 			criKind,
-			imagePullThroughMode,
+			configManagerGetter,
 		),
 	}
 }

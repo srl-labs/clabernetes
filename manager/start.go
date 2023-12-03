@@ -56,6 +56,8 @@ func (c *clabernetes) startLeading(ctx context.Context) {
 
 	c.logger.Debug("startup complete...")
 
+	c.postStart()
+
 	c.logger.Info("running forever or until interrupt...")
 
 	<-c.leaderCtx.Done()

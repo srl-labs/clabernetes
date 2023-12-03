@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
-func initCrds(c clabernetesmanagertypes.Clabernetes) error {
+func initializeCrds(c clabernetesmanagertypes.Clabernetes) error {
 	loadedCrds, err := loadCrdsFromAssets()
 	if err != nil {
 		return err

@@ -46,8 +46,17 @@ func newManager(scheme *apimachineryruntime.Scheme, appName string) (ctrlruntime
 							},
 						},
 					},
-					// watch our config "singleton" too
-					&clabernetesapisv1alpha1.Config{}: {},
+					// watch our config "singleton" too; while this is sorta/basically a "cluster"
+					// CR -- we dont want to have to force users to have cluster wide perms, *and*
+					// we want to be able to set an owner ref to the manager deployment, so the
+					// config *is* namespaced, so... watch all the namespaces for the config...
+					&clabernetesapisv1alpha1.Config{}: {
+						Namespaces: map[string]ctrlruntimecache.Config{
+							ctrlruntimecache.AllNamespaces: {
+								LabelSelector: labels.Everything(),
+							},
+						},
+					},
 				}
 
 				return ctrlruntimecache.New(config, opts)

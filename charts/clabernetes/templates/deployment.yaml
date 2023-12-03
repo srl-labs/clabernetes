@@ -8,6 +8,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    revision: "{{ .Release.Revision }}"
     clabernetes/app: {{ .Values.appName }}
     clabernetes/name: "{{ .Values.appName }}-manager"
     clabernetes/component: manager
@@ -41,6 +42,7 @@ spec:
         chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
         release: {{ .Release.Name }}
         heritage: {{ .Release.Service }}
+        revision: "{{ .Release.Revision }}"
         clabernetes/app: {{ .Values.appName }}
         clabernetes/name: "{{ .Values.appName }}-manager"
         clabernetes/component: manager
@@ -138,8 +140,6 @@ spec:
                   fieldPath: metadata.namespace
             - name: CLIENT_OPERATION_TIMEOUT_MULTIPLIER
               value: "{{ .Values.manager.clientOperationTimeoutMultiplier }}"
-            - name:  IN_CLUSTER_DNS_SUFFIX
-              value: {{ .Values.manager.inClusterDNSSuffix }}
             - name: MANAGER_LOGGER_LEVEL
               value: {{ .Values.manager.managerLogLevel }}
             - name: CONTROLLER_LOGGER_LEVEL
@@ -156,8 +156,6 @@ spec:
               {{- else }}
               value: "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:{{ .Chart.Version }}"
               {{- end }}
-            - name: LAUNCHER_IMAGE_PULL_THROUGH_MODE
-              value: {{ .Values.launcher.imagePullThroughMode }}
           resources:
             requests:
               memory: {{ .Values.manager.resources.requests.memory }}

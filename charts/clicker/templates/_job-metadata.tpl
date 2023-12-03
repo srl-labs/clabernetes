@@ -3,6 +3,7 @@ labels:
   chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
   release: {{ .Release.Name }}
   heritage: {{ .Release.Service }}
+  revision: "{{ .Release.Revision }}"
   clabernetes/app: {{ .Values.appName }}
   clabernetes/name: "{{ .Values.appName }}-clicker"
   clabernetes/component: clicker

@@ -170,6 +170,8 @@ func (r *PersistentVolumeClaimReconciler) renderPVCSpec(
 		},
 		StorageClassName: storageClassName,
 		VolumeMode:       clabernetesutil.ToPointer(k8scorev1.PersistentVolumeFilesystem),
+		// TODO -- think that this will be broken for subsequent reconciles because we cant
+		//  mutate pvc volume name
 	}
 }
 

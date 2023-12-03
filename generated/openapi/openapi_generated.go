@@ -105,7 +105,7 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_Config(
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Config is an object that holds global clabernetes config information. Note that this CR is expected to effectively be a global singleton -- that is, there should be only *one* of these, and it should be named `clabernetes` -- CRD metadata spec will enforce this.",
+				Description: "Config is an object that holds global clabernetes config information. Note that this CR is expected to effectively be a global singleton -- that is, there should be only *one* of these, and it *must* be named `clabernetes` -- CRD metadata spec will enforce this (via x-validation rules).",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -388,6 +388,15 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigSpec(
 				Description: "ConfigSpec is the spec for a Config resource.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Metadata holds \"global\" metadata -- that is, metadata that is applied to all objects created by the clabernetes controller.",
+							Default:     map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigMetadata",
+							),
+						},
+					},
 					"inClusterDNSSuffix": {
 						SchemaProps: spec.SchemaProps{
 							Description: "InClusterDNSSuffix overrides the default in cluster dns suffix used when resolving services.",
@@ -395,20 +404,12 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigSpec(
 							Format:      "",
 						},
 					},
-					"configurationMergeMode": {
+					"imagePull": {
 						SchemaProps: spec.SchemaProps{
-							Description: "ConfigurationMergeMode defines how configmap configuration data is merged into this global configuration object. This exists because when deploying clabernetes via helm, config data is first deployed as a configmap, which is then loaded via the init container(s) and merged back into this global singleton CR. This flag will be present in helm created configmap and this CR -- if present in both locations this CR's value takes precedence. A value of \"merge\" means that any value in the CR already will be preserved, while any value not in the CR will be copied from the configmap and set here. A value of \"replace\" means that the values in the configmap will replace any values in the CR.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Metadata holds \"global\" metadata -- that is, metadata that is applied to all objects created by the clabernetes controller.",
+							Description: "ImagePull holds configurations relevant to how clabernetes launcher pods handle pulling images.",
 							Default:     map[string]interface{}{},
 							Ref: ref(
-								"github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigMetadata",
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigImagePull",
 							),
 						},
 					},
@@ -421,17 +422,7 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigSpec(
 							),
 						},
 					},
-					"imagePull": {
-						SchemaProps: spec.SchemaProps{
-							Description: "ImagePull holds configurations relevant to how clabernetes launcher pods handle pulling images.",
-							Default:     map[string]interface{}{},
-							Ref: ref(
-								"github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigImagePull",
-							),
-						},
-					},
 				},
-				Required: []string{"configurationMergeMode"},
 			},
 		},
 		Dependencies: []string{
