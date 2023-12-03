@@ -3,8 +3,6 @@ package manager
 import (
 	"fmt"
 
-	apimachinerytypes "k8s.io/apimachinery/pkg/types"
-
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 
@@ -91,12 +89,14 @@ func initConfigGetConfigCR(
 	ctx, ctxCancel := c.NewContextWithTimeout()
 	defer ctxCancel()
 
-	configCR := &clabernetesapisv1alpha1.Config{}
-
-	err := c.GetCtrlRuntimeClient().Get(ctx, apimachinerytypes.NamespacedName{
-		Namespace: c.GetNamespace(),
-		Name:      clabernetesconstants.Clabernetes,
-	}, configCR)
+	configCR, err := c.GetKubeClabernetesClient().
+		ClabernetesV1alpha1().
+		Configs(c.GetNamespace()).
+		Get(
+			ctx,
+			clabernetesconstants.Clabernetes,
+			metav1.GetOptions{},
+		)
 	if err != nil {
 		if apimachineryerrors.IsNotFound(err) {
 			return &clabernetesapisv1alpha1.Config{
@@ -139,18 +139,28 @@ func initConfigCreateOrUpdateConfig(
 		return nil
 	}
 
-	ctrlruntimeClient := c.GetCtrlRuntimeClient()
-
 	ctx, ctxCancel := c.NewContextWithTimeout()
 	defer ctxCancel()
 
 	if configCRExists {
-		err = ctrlruntimeClient.Update(ctx, configCR)
+		_, err = c.GetKubeClabernetesClient().
+			ClabernetesV1alpha1().
+			Configs(c.GetNamespace()).
+			Update(
+				ctx,
+				configCR,
+				metav1.UpdateOptions{},
+			)
 		if err != nil {
 			return err
 		}
 	} else {
-		err = ctrlruntimeClient.Create(ctx, configCR)
+		_, err = c.GetKubeClabernetesClient().ClabernetesV1alpha1().Configs(c.GetNamespace()).
+			Create(
+				ctx,
+				configCR,
+				metav1.CreateOptions{},
+			)
 		if err != nil {
 			return err
 		}
