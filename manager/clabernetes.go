@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	clabernetesgeneratedclientset "github.com/srl-labs/clabernetes/generated/clientset"
+
 	claberneteshttp "github.com/srl-labs/clabernetes/http"
 
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
@@ -84,10 +86,13 @@ type clabernetes struct {
 
 	logger claberneteslogging.Instance
 
-	namespace  string
-	kubeConfig *rest.Config
-	kubeClient *kubernetes.Clientset
-	criKind    string
+	namespace string
+
+	kubeConfig            *rest.Config
+	kubeClient            *kubernetes.Clientset
+	kubeClabernetesClient *clabernetesgeneratedclientset.Clientset
+
+	criKind string
 
 	scheme *apimachineryruntime.Scheme
 	mgr    ctrlruntime.Manager
@@ -132,6 +137,10 @@ func (c *clabernetes) GetKubeConfig() *rest.Config {
 
 func (c *clabernetes) GetKubeClient() *kubernetes.Clientset {
 	return c.kubeClient
+}
+
+func (c *clabernetes) GetKubeClabernetesClient() *clabernetesgeneratedclientset.Clientset {
+	return c.kubeClabernetesClient
 }
 
 func (c *clabernetes) GetScheme() *apimachineryruntime.Scheme {
@@ -189,7 +198,14 @@ func (c *clabernetes) start() {
 	c.prepare()
 
 	// dont create the manager until we've loaded the scheme!
-	c.mgr = mustNewManager(c.scheme, c.appName)
+	var err error
+
+	c.mgr, err = newManager(c.scheme, c.appName)
+	if err != nil {
+		c.logger.Criticalf("failed creating controller runtime manager, err: %s", err)
+
+		c.Exit(clabernetesconstants.ExitCodeError)
+	}
 
 	c.logger.Debug("prepare complete...")
 
@@ -216,4 +232,10 @@ func (c *clabernetes) Exit(exitCode int) {
 	claberneteslogging.GetManager().Flush()
 
 	os.Exit(exitCode)
+}
+
+func (c *clabernetes) Panic(msg string) {
+	claberneteslogging.GetManager().Flush()
+
+	clabernetesutil.Panic(msg)
 }

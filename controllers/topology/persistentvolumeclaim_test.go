@@ -275,6 +275,7 @@ func TestRenderPersistentVolumeClaim(t *testing.T) {
 				got := reconciler.Render(
 					testCase.owningTopology,
 					testCase.nodeName,
+					nil,
 				)
 
 				if *clabernetestesthelper.Update {

@@ -1,7 +1,7 @@
 package manager
 
 import (
-	clabernetesutil "github.com/srl-labs/clabernetes/util"
+	clabernetesgeneratedclientset "github.com/srl-labs/clabernetes/generated/clientset"
 	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
@@ -19,21 +19,31 @@ func (c *clabernetes) preInit() {
 	if err != nil {
 		c.logger.Criticalf("failed getting current namespace, err: %s", err)
 
-		clabernetesutil.Panic(err.Error())
+		c.Panic(err.Error())
 	}
 
 	c.kubeConfig, err = rest.InClusterConfig()
 	if err != nil {
 		c.logger.Criticalf("failed getting in cluster kubeconfig, err: %s", err)
 
-		clabernetesutil.Panic(err.Error())
+		c.Panic(err.Error())
 	}
 
 	c.kubeClient, err = kubernetes.NewForConfig(c.kubeConfig)
 	if err != nil {
 		c.logger.Criticalf("failed creating kube client from in cluster kubeconfig, err: %s", err)
 
-		clabernetesutil.Panic(err.Error())
+		c.Panic(err.Error())
+	}
+
+	c.kubeClabernetesClient, err = clabernetesgeneratedclientset.NewForConfig(c.kubeConfig)
+	if err != nil {
+		c.logger.Criticalf(
+			"failed creating clabernetes kube client from in cluster kubeconfig, err: %s",
+			err,
+		)
+
+		c.Panic(err.Error())
 	}
 
 	c.scheme = apimachineryruntime.NewScheme()

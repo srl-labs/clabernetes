@@ -9,7 +9,7 @@ LICENSE
 Makefile
 README.md
 hack
-generated
+generated/openapi
 .private
 .develop
 

@@ -28,6 +28,10 @@ type FakeClabernetesV1alpha1 struct {
 	*testing.Fake
 }
 
+func (c *FakeClabernetesV1alpha1) Configs(namespace string) v1alpha1.ConfigInterface {
+	return &FakeConfigs{c, namespace}
+}
+
 func (c *FakeClabernetesV1alpha1) Topologies(namespace string) v1alpha1.TopologyInterface {
 	return &FakeTopologies{c, namespace}
 }

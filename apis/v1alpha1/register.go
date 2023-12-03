@@ -42,6 +42,8 @@ func addKnownTypes(scheme *apimachineryruntime.Scheme) error {
 // GetAPIs returns the information necessary to register this package's types to a scheme.
 func GetAPIs() (apimachineryscheme.GroupVersion, []apimachineryruntime.Object) {
 	return SchemeGroupVersion, []apimachineryruntime.Object{
+		&Config{},
+		&ConfigList{},
 		&Topology{},
 		&TopologyList{},
 	}

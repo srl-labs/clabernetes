@@ -8,6 +8,7 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    revision: "{{ .Release.Revision }}"
     clabernetes/app: {{ .Values.appName }}
     clabernetes/name: "{{ .Values.appName }}-manager"
     clabernetes/component: manager
@@ -41,6 +42,7 @@ spec:
         chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
         release: {{ .Release.Name }}
         heritage: {{ .Release.Service }}
+        revision: "{{ .Release.Revision }}"
         clabernetes/app: {{ .Values.appName }}
         clabernetes/name: "{{ .Values.appName }}-manager"
         clabernetes/component: manager
@@ -92,20 +94,7 @@ spec:
           imagePullPolicy: {{ .Values.manager.imagePullPolicy }}
           command: ["/clabernetes/manager", "run", "--initializer"]
           env:
-            - name: APP_NAME
-              value: {{ .Values.appName }}
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            {{- if .Values.manager.managerLogLevel }}
-            - name: MANAGER_LOGGER_LEVEL
-              value: {{ .Values.manager.managerLogLevel }}
-            {{- end }}
+{{ include "managerContainerCommonEnv" . | indent 12 }}
           resources:
             requests:
               memory: {{ .Values.manager.resources.requests.memory }}
@@ -126,38 +115,7 @@ spec:
           imagePullPolicy: {{ .Values.manager.imagePullPolicy }}
           command: ["/clabernetes/manager", "run"]
           env:
-            - name: APP_NAME
-              value: {{ .Values.appName }}
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: CLIENT_OPERATION_TIMEOUT_MULTIPLIER
-              value: "{{ .Values.manager.clientOperationTimeoutMultiplier }}"
-            - name:  IN_CLUSTER_DNS_SUFFIX
-              value: {{ .Values.manager.inClusterDNSSuffix }}
-            - name: MANAGER_LOGGER_LEVEL
-              value: {{ .Values.manager.managerLogLevel }}
-            - name: CONTROLLER_LOGGER_LEVEL
-              value: {{ .Values.manager.controllerLogLevel }}
-            - name: LAUNCHER_LOGGER_LEVEL
-              value: {{ .Values.launcher.logLevel }}
-            - name: LAUNCHER_PULL_POLICY
-              value: "{{ .Values.launcher.imagePullPolicy }}"
-            - name: LAUNCHER_IMAGE
-              {{- if .Values.launcher.image }}
-              value: {{ .Values.launcher.image }}
-              {{- else if eq .Chart.Version "0.0.0" }}
-              value: "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:dev-latest"
-              {{- else }}
-              value: "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:{{ .Chart.Version }}"
-              {{- end }}
-            - name: LAUNCHER_IMAGE_PULL_THROUGH_MODE
-              value: {{ .Values.launcher.imagePullThroughMode }}
+{{ include "managerContainerCommonEnv" . | indent 12 }}
           resources:
             requests:
               memory: {{ .Values.manager.resources.requests.memory }}

@@ -141,10 +141,7 @@ func (r *ServiceNodeAliasReconciler) renderServiceBase(
 				"%s.%s.%s",
 				deploymentName,
 				owningTopologyNamespace,
-				clabernetesutil.GetEnvStrOrDefault(
-					clabernetesconstants.InClusterDNSSuffixEnv,
-					clabernetesconstants.DefaultInClusterDNSSuffix,
-				),
+				r.configManagerGetter().GetInClusterDNSSuffix(),
 			),
 			Selector: selectorLabels,
 		},

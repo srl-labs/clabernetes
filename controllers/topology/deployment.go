@@ -27,18 +27,16 @@ import (
 func NewDeploymentReconciler(
 	log claberneteslogging.Instance,
 	managerAppName,
-	managerNamespace string,
+	managerNamespace,
+	criKind string,
 	configManagerGetter clabernetesconfig.ManagerGetterFunc,
-	criKind,
-	imagePullThroughMode string,
 ) *DeploymentReconciler {
 	return &DeploymentReconciler{
-		log:                  log,
-		managerAppName:       managerAppName,
-		managerNamespace:     managerNamespace,
-		configManagerGetter:  configManagerGetter,
-		criKind:              criKind,
-		imagePullThroughMode: imagePullThroughMode,
+		log:                 log,
+		managerAppName:      managerAppName,
+		managerNamespace:    managerNamespace,
+		criKind:             criKind,
+		configManagerGetter: configManagerGetter,
 	}
 }
 
@@ -46,12 +44,11 @@ func NewDeploymentReconciler(
 // purposes. This is the component responsible for rendering/validating deployments for a
 // clabernetes topology resource.
 type DeploymentReconciler struct {
-	log                  claberneteslogging.Instance
-	managerAppName       string
-	managerNamespace     string
-	configManagerGetter  clabernetesconfig.ManagerGetterFunc
-	criKind              string
-	imagePullThroughMode string
+	log                 claberneteslogging.Instance
+	managerAppName      string
+	managerNamespace    string
+	criKind             string
+	configManagerGetter clabernetesconfig.ManagerGetterFunc
 }
 
 // Resolve accepts a mapping of clabernetes configs and a list of deployments that are -- by owner
@@ -193,7 +190,9 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 
 	// if we have containerd cri *and* pull through mode is auto or always, we need to mount the
 	// containerd sock
-	if r.imagePullThroughMode != clabernetesconstants.ImagePullThroughModeNever &&
+	if r.configManagerGetter().
+		GetImagePullThroughMode() !=
+		clabernetesconstants.ImagePullThroughModeNever &&
 		owningTopology.Spec.ImagePull.PullThroughOverride != clabernetesconstants.ImagePullThroughModeNever { //nolint:lll
 		var path string
 
@@ -292,15 +291,23 @@ func (r *DeploymentReconciler) renderDeploymentContainer(
 	nodeName,
 	configVolumeName string,
 	volumeMountsFromCommonSpec []k8scorev1.VolumeMount,
+	owningTopology *clabernetesapisv1alpha1.Topology,
 ) {
+	image := owningTopology.Spec.Deployment.LauncherImage
+	if image == "" {
+		image = r.configManagerGetter().GetLauncherImage()
+	}
+
+	imagePullPolicy := owningTopology.Spec.Deployment.LauncherImagePullPolicy
+	if imagePullPolicy == "" {
+		imagePullPolicy = r.configManagerGetter().GetLauncherImagePullPolicy()
+	}
+
 	container := k8scorev1.Container{
 		Name:       nodeName,
 		WorkingDir: "/clabernetes",
-		Image: clabernetesutil.GetEnvStrOrDefault(
-			clabernetesconstants.LauncherImageEnv,
-			clabernetesconstants.LauncherDefaultImage,
-		),
-		Command: []string{"/clabernetes/manager", "launch"},
+		Image:      image,
+		Command:    []string{"/clabernetes/manager", "launch"},
 		Ports: []k8scorev1.ContainerPort{
 			{
 				Name:          "vxlan",
@@ -336,12 +343,7 @@ func (r *DeploymentReconciler) renderDeploymentContainer(
 		},
 		TerminationMessagePath:   "/dev/termination-log",
 		TerminationMessagePolicy: "File",
-		ImagePullPolicy: k8scorev1.PullPolicy(
-			clabernetesutil.GetEnvStrOrDefault(
-				clabernetesconstants.LauncherPullPolicyEnv,
-				"IfNotPresent",
-			),
-		),
+		ImagePullPolicy:          k8scorev1.PullPolicy(imagePullPolicy),
 	}
 
 	container.VolumeMounts = append(container.VolumeMounts, volumeMountsFromCommonSpec...)
@@ -356,18 +358,14 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 	owningTopology *clabernetesapisv1alpha1.Topology,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 ) {
-	launcherLogLevel := clabernetesutil.GetEnvStrOrDefault(
-		clabernetesconstants.LauncherLoggerLevelEnv,
-		clabernetesconstants.Info,
-	)
-
-	if owningTopology.Spec.Deployment.LauncherLogLevel != "" {
-		launcherLogLevel = owningTopology.Spec.Deployment.LauncherLogLevel
+	launcherLogLevel := owningTopology.Spec.Deployment.LauncherLogLevel
+	if launcherLogLevel == "" {
+		launcherLogLevel = r.configManagerGetter().GetLauncherLogLevel()
 	}
 
-	imagePullThroughMode := r.imagePullThroughMode
-	if owningTopology.Spec.ImagePull.PullThroughOverride != "" {
-		imagePullThroughMode = owningTopology.Spec.ImagePull.PullThroughOverride
+	imagePullThroughMode := owningTopology.Spec.ImagePull.PullThroughOverride
+	if owningTopology.Spec.ImagePull.PullThroughOverride == "" {
+		imagePullThroughMode = r.configManagerGetter().GetImagePullThroughMode()
 	}
 
 	envs := []k8scorev1.EnvVar{
@@ -432,7 +430,10 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		},
 	}
 
-	if owningTopology.Spec.Deployment.ContainerlabDebug {
+	if ResolveGlobalVsTopologyBool(
+		r.configManagerGetter().GetContainerlabDebug(),
+		owningTopology.Spec.Deployment.ContainerlabDebug,
+	) {
 		envs = append(
 			envs,
 			k8scorev1.EnvVar{
@@ -452,7 +453,10 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		)
 	}
 
-	if owningTopology.Spec.Deployment.PrivilegedLauncher {
+	if ResolveGlobalVsTopologyBool(
+		r.configManagerGetter().GetPrivilegedLauncher(),
+		owningTopology.Spec.Deployment.PrivilegedLauncher,
+	) {
 		envs = append(
 			envs,
 			k8scorev1.EnvVar{
@@ -499,7 +503,10 @@ func (r *DeploymentReconciler) renderDeploymentContainerPrivileges(
 	nodeName string,
 	owningTopology *clabernetesapisv1alpha1.Topology,
 ) {
-	if owningTopology.Spec.Deployment.PrivilegedLauncher {
+	if ResolveGlobalVsTopologyBool(
+		r.configManagerGetter().GetPrivilegedLauncher(),
+		owningTopology.Spec.Deployment.PrivilegedLauncher,
+	) {
 		deployment.Spec.Template.Spec.Containers[0].SecurityContext = &k8scorev1.SecurityContext{
 			Privileged: clabernetesutil.ToPointer(true),
 			RunAsUser:  clabernetesutil.ToPointer(int64(0)),
@@ -580,7 +587,10 @@ func (r *DeploymentReconciler) renderDeploymentDevices(
 	deployment *k8sappsv1.Deployment,
 	owningTopology *clabernetesapisv1alpha1.Topology,
 ) {
-	if owningTopology.Spec.Deployment.PrivilegedLauncher {
+	if ResolveGlobalVsTopologyBool(
+		r.configManagerGetter().GetPrivilegedLauncher(),
+		owningTopology.Spec.Deployment.PrivilegedLauncher,
+	) {
 		// launcher is privileged, no need to mount devices explicitly
 		return
 	}
@@ -708,6 +718,7 @@ func (r *DeploymentReconciler) Render(
 		nodeName,
 		configVolumeName,
 		volumeMountsFromCommonSpec,
+		owningTopology,
 	)
 
 	r.renderDeploymentContainerEnv(

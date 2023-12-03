@@ -16,3 +16,14 @@ func GetTopologyKind(t *clabernetesapisv1alpha1.Topology) string {
 	// kind, itll be containerlab kind
 	return clabernetesapis.TopologyKindContainerlab
 }
+
+// ResolveGlobalVsTopologyBool accepts a pointer to bool value from the global config as well as
+// from a topology spec, and returns a normal bool of the proper value. Meaning, if the topology
+// value is unset, use the global value, but if the topology value is set always return that value.
+func ResolveGlobalVsTopologyBool(globalValue bool, topologyValue *bool) bool {
+	if topologyValue != nil {
+		return *topologyValue
+	}
+
+	return globalValue
+}

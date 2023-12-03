@@ -21,6 +21,16 @@ const (
 )
 
 const (
+	// KubernetesDefaultInClusterDNSSuffix is the default in cluster dns suffix (duh).
+	KubernetesDefaultInClusterDNSSuffix = "svc.cluster.local"
+)
+
+const (
+	// KubernetesImagePullIfNotPresent holds the constant for "IfNotPresent" image pull policy.
+	KubernetesImagePullIfNotPresent = "IfNotPresent"
+)
+
+const (
 	// KubernetesCRIUnknown is a const for when we dont know what the CRI type is in a cluster.
 	KubernetesCRIUnknown = "unknown"
 	// KubernetesCRIContainerd is a const for the "containerd" type of CRI in a cluster.

@@ -25,10 +25,9 @@ manager:
   podAnnotations: {}
   podLabels: {}
 
-  imagePullPolicy: IfNotPresent
-
   # defaults to .Chart.Version, if 0.0.0 version defaults to 'dev-latest' tag
   image: "" # ghcr.io/srl-labs/clabernetes/clabernetes-manager:{{ .Chart.Version }}
+  imagePullPolicy: IfNotPresent
 
   replicaCount: 3
   resources:
@@ -40,52 +39,86 @@ manager:
   clientOperationTimeoutMultiplier: 1
   managerLogLevel: info
   controllerLogLevel: info
-  inClusterDNSSuffix: svc.cluster.local
 
   # pod affinity settings, directly inserted into manager deployment spec; if not provided basic
   # common-sense anti-affinity is applied.
   affinity: {}
 
-
 #
-# launcher options
+# global config
 #
-# the launcher is the actual "worker" pod where the nos is running/launched
+# disable this if you are using argocd/flux -- in that case you should probably manage a single
+# manifest file with the config singleton and your configs in it. otherwise, this will be deployed
+# into a configmap, which will then be processed by init containers in the manager deployment. the
+# init containers will take this data and merge the configs into the global config custom resource
+# singleton. once complete, the configmap will be deleted (hence why you don't want this if you are
+# using argocd/flux). the idea here is this makes helm deploys simple, while still giving us the
+# ability to add fields to the CR (without versioning) without helm having a heart attack. we delete
+# the configmap after merging because we don't want there to be any ambiguity about where to config
+# global things (that should only be in the CR singleton). note that the `mergeMode` will define
+# how this config data is merged into an existing config CR singleton.
 #
-launcher:
-  imagePullPolicy: IfNotPresent
+globalConfig:
+  enabled: true
 
-  image: "" #" ghcr.io/srl-labs/clabernetes/clabernetes-launcher:{{ .Chart.Version }}
+  # can be "merge" or "overwrite" -- if "merge" any values from this bootstrap config data *not*
+  # present in a potentially existing global config CR are copied over to the CR, while any data
+  # that is already set in the CR is left alone. This is the default and "safe" option. You can
+  # also set this to "overwrite" for a more declarative option where this bootstrap config data
+  # replaces the existing CR entirely.
+  #
+  # note: bool values are completely ignored in "merge" mode as we do *not* have pointers to bools
+  # in the config CR; put another way, the bool values (ex: deployment.privilegedLauncher) are
+  # totally ignored in merge mode. if you want to update those values in the config CR you can do
+  # so directly, or use the "overwrite" merge mode.
+  mergeMode: merge
 
-  logLevel: info
+  inClusterDNSSuffix: svc.cluster.local
 
-  # default resources is a mapping of containerlab kind/type -> k8s resources/requests to apply to
-  # the launcher pod(s); note that the "default" keyword under the parent "defaultResources" key
-  # specifies the default/fallthrough resources -- this expects a normal looking k8s requests/limits
-  # block. the "byContainerlabKind" key holds a map[string]map[string]k8sresource mapping -- the
-  # outer keys are the containerlab *kind* and the inner keys *type* -- you can specify a "default"
-  # key in the types level as well to just have default resources for a given kind.
-  # for reference fields should be formatted like "normal" k8s resources:
-  # https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#example-1
-  defaultResources:
-    default:
+  imagePull:
+    # imagePullThroughMode defines how the launcher pod tries to pull the image specified in the
+    # topology. The options are: "auto" (default), "always", "never". The "auto" option will
+    # instruct the manager to mount the CRI socket in the launcher pods, and the launcher to always
+    # try to pull via the CRI first; if this fails for some reason, the launcher will try to pull
+    # via the docker daemon in the launcher pod itself. "always" indicates the launcher should
+    # "always" (*only*) ever pull from the CRI socket -- if the CRI is determined (by the manager)
+    # to *not* be homogenous at manager start time (not all nodes in cluster are the same CRI type),
+    # then this mode will cause the launcher to fail since it won't be setup to pull via the CRI
+    # (and in this mode it *only* pulls via the CRI). Lastly, "never" means the launcher should only
+    # ever pull via the docker daemon in the launcher pod itself (bypassing the cluster). Note that
+    # "pull through mode" currently only supports containerd as a CRI.
+    imagePullThroughMode: auto
+
+  deployment:
+    # resourcesDefault hold the default resources to apply to clabernetes launcher pods.
+    # for reference fields should be formatted like "normal" k8s resources:
+    # https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#example-1
+    resourcesDefault:
       requests:
         memory: 512Mi
         cpu: 200m
-    byContainerlabKind: {}
 
-  # imagePullThroughMode defines how the launcher pod tries to pull the image specified in the
-  # topology. The options are: "auto" (default), "always", "never". The "auto" option will instruct
-  # the manager to mount the CRI socket in the launcher pods, and the launcher to always try to pull
-  # via the CRI first; if this fails for some reason, the launcher will try to pull via the docker
-  # daemon in the launcher pod itself. "always" indicates the launcher should "always" (*only*)
-  # ever pull from the CRI socket -- if the CRI is determined (by the manager) to *not* be
-  # homogenous at manager start time (not all nodes in cluster are the same CRI type), then this
-  # mode will cause the launcher to fail since it won't be setup to pull via the CRI (and in this
-  # mode it *only* pulls via the CRI). Lastly, "never" means the launcher should only ever pull via
-  # the docker daemon in the launcher pod itself (bypassing the cluster). Note that "pull through
-  # mode" currently only supports containerd as a CRI.
-  imagePullThroughMode: auto
+    # resourcesByContainerlabKind is a mapping of containerlab kind/type -> k8s resources/requests
+    # to apply to the launcher pod(s). this expects a normal looking k8s requests/limits block.
+    # the "resourcesByContainerlabKind" key holds a map[string]map[string]k8sresource mapping -- the
+    # outer keys are the containerlab *kind* and the inner keys *type* -- you can specify a
+    # "default" key in the types level as well to just have default resources for a given kind.
+    resourcesByContainerlabKind: {}
+
+    # privilegedLauncher sets the global default value for "privilegedLauncher" -- that is, if the
+    # launcher pods should run in privileged mode or not.
+    privilegedLauncher: false
+
+    # containerlabDebug sets the global default value for whether launcher pods should have the
+    # containerlab debug flag set.
+    containerlabDebug: false
+
+    # default image for launcher deployments; if not set here, manager will have this set to a sane
+    # default as an env var that will be applied (this follows same patter as the manager image
+    # itself), so this is here just if you want to override that yourself.
+    launcherImage: ""
+    launcherImagePullPolicy: IfNotPresent
+    launcherLogLevel: info
 
 #
 # clicker

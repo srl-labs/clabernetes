@@ -61,6 +61,8 @@ spec:
                   containerlabDebug:
                     description: ContainerlabDebug sets the `--debug` flag when invoking
                       containerlab in the launcher pods. This is disabled by default.
+                      If this value is unset, the global config value (default of
+                      "false") will be used.
                     type: boolean
                   filesFromConfigMap:
                     additionalProperties:
@@ -120,6 +122,23 @@ spec:
                       that the file should be downloaded to. This is useful for configs
                       that are larger than the ConfigMap (etcd) 1Mb size limit.
                     type: object
+                  launcherImage:
+                    description: LauncherImage sets the default launcher image to
+                      use when spawning launcher deployments for this Topology. This
+                      is optional, the launcher image will default to whatever is
+                      set in the global config CR.
+                    type: string
+                  launcherImagePullPolicy:
+                    description: 'LauncherImagePullPolicy sets the default launcher
+                      image pull policy to use when spawning launcher deployments
+                      for this Topology. This is also optional and defaults to whatever
+                      is set in the global config CR (typically "IfNotPresent"). Note:
+                      omitempty because empty str does not satisfy enum of course.'
+                    enum:
+                    - IfNotPresent
+                    - Always
+                    - Never
+                    type: string
                   launcherLogLevel:
                     description: 'LauncherLogLevel sets the launcher clabernetes worker
                       log level -- this overrides whatever is set on the controllers
@@ -166,7 +185,8 @@ spec:
                       need, however its possible that some containers launched by
                       the launcher may need/want more capabilities, so this flag exists
                       for users to bypass the default settings and enable fully privileged
-                      launcher pods.
+                      launcher pods. If this value is unset, the global config value
+                      (default of "false") will be used.
                     type: boolean
                   resources:
                     additionalProperties:

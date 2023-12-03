@@ -9,6 +9,7 @@ metadata:
     chart: "clabernetes-0.0.0"
     release: release-name
     heritage: Helm
+    revision: "1"
     clabernetes/app: clabernetes
     clabernetes/name: "clabernetes-manager"
     clabernetes/component: manager
@@ -29,6 +30,7 @@ spec:
         chart: "clabernetes-0.0.0"
         release: release-name
         heritage: Helm
+        revision: "1"
         clabernetes/app: clabernetes
         clabernetes/name: "clabernetes-manager"
         clabernetes/component: manager
@@ -70,8 +72,14 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: CLIENT_OPERATION_TIMEOUT_MULTIPLIER
+              value: "1"
             - name: MANAGER_LOGGER_LEVEL
               value: info
+            - name: CONTROLLER_LOGGER_LEVEL
+              value: info
+            - name: LAUNCHER_IMAGE
+              value: "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:dev-latest"
           resources:
             requests:
               memory: 128Mi
@@ -94,20 +102,12 @@ spec:
                   fieldPath: metadata.namespace
             - name: CLIENT_OPERATION_TIMEOUT_MULTIPLIER
               value: "1"
-            - name:  IN_CLUSTER_DNS_SUFFIX
-              value: svc.cluster.local
             - name: MANAGER_LOGGER_LEVEL
               value: info
             - name: CONTROLLER_LOGGER_LEVEL
               value: info
-            - name: LAUNCHER_LOGGER_LEVEL
-              value: info
-            - name: LAUNCHER_PULL_POLICY
-              value: "IfNotPresent"
             - name: LAUNCHER_IMAGE
               value: "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:dev-latest"
-            - name: LAUNCHER_IMAGE_PULL_THROUGH_MODE
-              value: auto
           resources:
             requests:
               memory: 128Mi

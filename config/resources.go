@@ -5,13 +5,6 @@ import (
 	k8scorev1 "k8s.io/api/core/v1"
 )
 
-type resources struct {
-	Default            *k8scorev1.ResourceRequirements `yaml:"default"`
-	ByContainerlabKind resourceMapByKindType           `yaml:"byContainerlabKind"`
-}
-
-type resourceMapByKindType map[string]map[string]*k8scorev1.ResourceRequirements
-
 func (m *manager) resourcesForContainerlabKind(
 	containerlabKind, containerlabType string,
 ) *k8scorev1.ResourceRequirements {
@@ -21,16 +14,16 @@ func (m *manager) resourcesForContainerlabKind(
 		containerlabType,
 	)
 
-	r := m.config.defaultResources
+	r := m.config.Deployment.ResourcesByContainerlabKind
 
-	kindResources, kindOk := r.ByContainerlabKind[containerlabKind]
+	kindResources, kindOk := r[containerlabKind]
 	if !kindOk {
 		m.logger.Debugf(
 			"no kind %q found, returning default resources (if set)",
 			containerlabKind,
 		)
 
-		return r.Default
+		return m.config.Deployment.ResourcesDefault
 	}
 
 	explicitTypeResources, explicitTypeOk := kindResources[containerlabType]
@@ -62,5 +55,5 @@ func (m *manager) resourcesForContainerlabKind(
 		containerlabKind,
 	)
 
-	return r.Default
+	return m.config.Deployment.ResourcesDefault
 }

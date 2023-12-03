@@ -3,8 +3,12 @@ package config
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
+
+	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+	clabernetesgeneratedclientset "github.com/srl-labs/clabernetes/generated/clientset"
 
 	apimachinerywatch "k8s.io/apimachinery/pkg/watch"
 
@@ -17,7 +21,6 @@ import (
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
 var (
@@ -30,7 +33,11 @@ type ManagerGetterFunc func() Manager
 
 // InitManager initializes the config manager -- it does this once only, its a no-op if the manager
 // is already initialized.
-func InitManager(ctx context.Context, appName, namespace string, client *kubernetes.Clientset) {
+func InitManager(
+	ctx context.Context,
+	appName, namespace string,
+	client *clabernetesgeneratedclientset.Clientset,
+) {
 	managerInstanceOnce.Do(func() {
 		logManager := claberneteslogging.GetManager()
 
@@ -43,18 +50,35 @@ func InitManager(ctx context.Context, appName, namespace string, client *kuberne
 		)
 
 		m := &manager{
-			ctx:        ctx,
-			logger:     logger,
-			appName:    appName,
-			namespace:  namespace,
-			kubeClient: client,
-			lock:       &sync.RWMutex{},
-			config: &global{
-				globalAnnotations: make(map[string]string),
-				globalLabels:      make(map[string]string),
-				defaultResources: resources{
-					Default:            nil,
-					ByContainerlabKind: nil,
+			ctx:                   ctx,
+			logger:                logger,
+			appName:               appName,
+			namespace:             namespace,
+			kubeClabernetesClient: client,
+			lock:                  &sync.RWMutex{},
+			config: &clabernetesapisv1alpha1.ConfigSpec{
+				InClusterDNSSuffix: clabernetesconstants.KubernetesDefaultInClusterDNSSuffix,
+				Metadata: clabernetesapisv1alpha1.ConfigMetadata{
+					Annotations: nil,
+					Labels:      nil,
+				},
+				Deployment: clabernetesapisv1alpha1.ConfigDeployment{
+					ResourcesDefault: &k8scorev1.ResourceRequirements{
+						Limits:   nil,
+						Requests: nil,
+						Claims:   nil,
+					},
+					ResourcesByContainerlabKind: make(
+						map[string]map[string]*k8scorev1.ResourceRequirements,
+					),
+					PrivilegedLauncher:      false,
+					ContainerlabDebug:       false,
+					LauncherImage:           os.Getenv(clabernetesconstants.LauncherImageEnv),
+					LauncherImagePullPolicy: clabernetesconstants.KubernetesImagePullIfNotPresent,
+					LauncherLogLevel:        clabernetesconstants.Info,
+				},
+				ImagePull: clabernetesapisv1alpha1.ConfigImagePull{
+					PullThroughOverride: clabernetesconstants.ImagePullThroughModeAuto,
 				},
 			},
 		}
@@ -98,24 +122,38 @@ type Manager interface {
 		containerlabKind string,
 		containerlabType string,
 	) *k8scorev1.ResourceRequirements
+	// GetPrivilegedLauncher returns the global config value for the privileged launcher mode.
+	GetPrivilegedLauncher() bool
+	// GetContainerlabDebug returns the global config value for containerlabDebug.
+	GetContainerlabDebug() bool
+	// GetInClusterDNSSuffix returns the in cluster dns suffix as set by the global config.
+	GetInClusterDNSSuffix() string
+	// GetImagePullThroughMode returns the image pull through mode in the global config.
+	GetImagePullThroughMode() string
+	// GetLauncherImage returns the global default launcher image.
+	GetLauncherImage() string
+	// GetLauncherImagePullPolicy returns the global default launcher image pull policy.
+	GetLauncherImagePullPolicy() string
+	// GetLauncherLogLevel returns the default launcher log level.
+	GetLauncherLogLevel() string
 }
 
 type manager struct {
-	ctx        context.Context
-	logger     claberneteslogging.Instance
-	appName    string
-	namespace  string
-	kubeClient *kubernetes.Clientset
-	lock       *sync.RWMutex
-	started    bool
-	lastHash   string
-	config     *global
+	ctx                   context.Context
+	logger                claberneteslogging.Instance
+	appName               string
+	namespace             string
+	kubeClabernetesClient *clabernetesgeneratedclientset.Clientset
+	lock                  *sync.RWMutex
+	started               bool
+	lastHash              string
+	config                *clabernetesapisv1alpha1.ConfigSpec
 }
 
-func (m *manager) load(configMap *k8scorev1.ConfigMap) {
+func (m *manager) load(config *clabernetesapisv1alpha1.Config) {
 	m.logger.Debug("re-loading config contents...")
 
-	dataBytes, err := yaml.Marshal(configMap.Data)
+	dataBytes, err := yaml.Marshal(config.Spec)
 	if err != nil {
 		m.logger.Warnf("failed marshaling config contents to bytes, error: %s", err)
 
@@ -133,24 +171,19 @@ func (m *manager) load(configMap *k8scorev1.ConfigMap) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 
-	newConfig, err := configFromMap(configMap.Data)
-	if err != nil {
-		m.logger.Warnf(
-			"encountered one or more errors parsing global config configmap, errors: %s", err,
-		)
-	}
+	newConfig := config.Spec.DeepCopy()
 
 	// filter out any "reserved" labels (we dont use annotations for anything so those can be left
 	// alone) -- this means anything starting w/ "appname/" i guess
-	for k := range newConfig.globalLabels {
+	for k := range newConfig.Metadata.Labels {
 		if strings.HasPrefix(k, fmt.Sprintf("%s/", m.appName)) {
 			m.logger.Warnf(
-				"removing user provided global label '%s' labels starting with '%s/' are reserved",
+				"ignoring user provided global label '%s' labels starting with '%s/' are reserved",
 				k,
 				m.appName,
 			)
 
-			delete(newConfig.globalLabels, k)
+			delete(newConfig.Metadata.Labels, k)
 		}
 	}
 
@@ -166,58 +199,60 @@ func (m *manager) Start() error {
 
 	found := true
 
-	configMap, err := m.kubeClient.CoreV1().
-		ConfigMaps(m.namespace).
-		Get(m.ctx, fmt.Sprintf("%s-config", m.appName), metav1.GetOptions{})
+	config, err := m.kubeClabernetesClient.ClabernetesV1alpha1().
+		Configs(m.namespace).
+		Get(m.ctx, clabernetesconstants.Clabernetes, metav1.GetOptions{})
 	if err != nil {
 		if apimachineryerrors.IsNotFound(err) {
 			m.logger.Warn(
-				"did not find clabernetes global config configmap, will continue but no global" +
-					" configs will be applied until/unless this configmap shows up!",
+				"did not find clabernetes global config, will continue but no global" +
+					" configs will be applied until/unless this config shows up!",
 			)
 
 			found = false
 		} else {
-			m.logger.Criticalf("encountered error fetching global config configmap, err: ", err)
+			m.logger.Criticalf("encountered error fetching global config, err: ", err)
 
 			return err
 		}
 	}
 
 	if found {
-		// if we found the configmap we always load it up or at least check if the hash changed and
+		// if we found the config we always load it up or at least check if the hash changed and
 		// then load it up
-		m.load(configMap)
+		m.load(config)
 	}
 
 	m.started = true
 
 	m.logger.Debug("starting config watch go routine and running forever or until sigint...")
 
-	go m.watchConfigMap()
+	go m.watchConfig()
 
 	return nil
 }
 
-func (m *manager) watchConfigMap() {
+func (m *manager) watchConfig() {
 	listOptions := metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("metadata.name=%s-config", m.appName),
+		FieldSelector: fmt.Sprintf("metadata.name=%s", clabernetesconstants.Clabernetes),
 		Watch:         true,
 	}
 
-	watch, err := m.kubeClient.CoreV1().ConfigMaps(m.namespace).Watch(m.ctx, listOptions)
+	watch, err := m.kubeClabernetesClient.ClabernetesV1alpha1().
+		Configs(m.namespace).
+		Watch(m.ctx, listOptions)
 	if err != nil {
-		m.logger.Criticalf("failed watching clabernetes config configmap, err: %s", err)
+		m.logger.Criticalf("failed watching clabernetes config, err: %s", err)
 	}
 
 	for event := range watch.ResultChan() {
 		switch event.Type { //nolint:exhaustive
 		case apimachinerywatch.Added, apimachinerywatch.Modified:
-			m.logger.Info("processing global config configmap add or modification event")
+			m.logger.Info("processing global config add or modification event")
 
-			configMap, ok := event.Object.(*k8scorev1.ConfigMap)
+			configMap, ok := event.Object.(*clabernetesapisv1alpha1.Config)
 			if !ok {
-				m.logger.Warn("failed casting event object to configmap, this is probably a bug")
+				m.logger.Warn("failed casting event object to config, this is probably a bug")
 
 				continue
 			}
@@ -225,10 +260,10 @@ func (m *manager) watchConfigMap() {
 			m.load(configMap)
 		case apimachinerywatch.Deleted:
 			m.logger.Warn(
-				"global config configmap was *deleted*, will continue with empty config...",
+				"global config was *deleted*, will continue with empty config...",
 			)
 
-			m.load(&k8scorev1.ConfigMap{})
+			m.load(&clabernetesapisv1alpha1.Config{})
 		}
 	}
 }

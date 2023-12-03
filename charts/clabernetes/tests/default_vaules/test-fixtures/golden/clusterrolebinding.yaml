@@ -8,6 +8,7 @@ metadata:
     chart: "clabernetes-0.0.0"
     release: release-name
     heritage: Helm
+    revision: "1"
     clabernetes/app: clabernetes
     clabernetes/name: "clabernetes-cluster-role-binding"
     clabernetes/component: cluster-role-binding

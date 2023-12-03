@@ -100,9 +100,8 @@ func TestResolveDeployment(t *testing.T) {
 					&claberneteslogging.FakeInstance{},
 					"clabernetes",
 					"clabernetes",
-					clabernetesconfig.GetFakeManager,
 					testCase.criKind,
-					testCase.imagePullThroughMode,
+					clabernetesconfig.GetFakeManager,
 				)
 
 				got, err := reconciler.Resolve(
@@ -208,7 +207,7 @@ func TestRenderDeployment(t *testing.T) {
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Deployment: clabernetesapisv1alpha1.Deployment{
-						PrivilegedLauncher: true,
+						PrivilegedLauncher: clabernetesutil.ToPointer(true),
 					},
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
@@ -268,7 +267,7 @@ func TestRenderDeployment(t *testing.T) {
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Deployment: clabernetesapisv1alpha1.Deployment{
-						ContainerlabDebug: true,
+						ContainerlabDebug: clabernetesutil.ToPointer(true),
 					},
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
@@ -451,9 +450,8 @@ func TestRenderDeployment(t *testing.T) {
 					&claberneteslogging.FakeInstance{},
 					"clabernetes",
 					"clabernetes",
-					clabernetesconfig.GetFakeManager,
 					testCase.criKind,
-					testCase.imagePullThroughMode,
+					clabernetesconfig.GetFakeManager,
 				)
 
 				got := reconciler.Render(
@@ -1033,9 +1031,8 @@ func TestDeploymentConforms(t *testing.T) {
 					&claberneteslogging.FakeInstance{},
 					"clabernetes",
 					"clabernetes",
+					"",
 					clabernetesconfig.GetFakeManager,
-					"",
-					"",
 				)
 
 				actual := reconciler.Conforms(

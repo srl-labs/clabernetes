@@ -9,20 +9,30 @@ metadata:
     chart: "clabernetes-0.0.0"
     release: release-name
     heritage: Helm
+    revision: "1"
     clabernetes/app: clabernetes
     clabernetes/name: "clabernetes-config"
     clabernetes/component: config
 data:
+  mergeMode: merge
   globalAnnotations: |-
     ---
     {}
   globalLabels: |-
     ---
     {}
-  defaultResources: |-
+  resourcesDefault: |-
     ---
-    byContainerlabKind: {}
-    default:
-      requests:
-        cpu: 200m
-        memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 512Mi
+  resourcesByContainerlabKind: |-
+    ---
+    {}
+  privilegedLauncher: "false"
+  containerlabDebug: "false"
+  inClusterDNSSuffix: svc.cluster.local
+  imagePullThroughMode: auto
+  launcherImage: 
+  launcherImagePullPolicy: IfNotPresent
+  launcherLogLevel: info
