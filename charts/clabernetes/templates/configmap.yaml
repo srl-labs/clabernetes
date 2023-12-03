@@ -38,4 +38,7 @@ data:
   containerlabDebug: "{{ .Values.globalConfig.deployment.containerlabDebug }}"
   inClusterDNSSuffix: {{ .Values.globalConfig.inClusterDNSSuffix }}
   imagePullThroughMode: {{ .Values.globalConfig.imagePull.imagePullThroughMode }}
+  launcherImage: {{ .Values.globalConfig.deployment.launcherImage }}
+  launcherImagePullPolicy: {{ .Values.globalConfig.deployment.launcherImagePullPolicy }}
+  launcherLogLevel: {{ .Values.globalConfig.deployment.launcherLogLevel }}
 {{- end }}

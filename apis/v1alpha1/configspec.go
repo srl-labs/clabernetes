@@ -51,6 +51,14 @@ type ConfigDeployment struct {
 	// This is disabled by default.
 	// +optional
 	ContainerlabDebug bool `json:"containerlabDebug"`
+	// LauncherImage sets the default launcher image to use when spawning launcher deployments.
+	// +kubebuilder:default="ghcr.io/srl-labs/clabernetes/clabernetes-launcher:latest"
+	LauncherImage string `json:"launcherImage"`
+	// LauncherImagePullPolicy sets the default launcher image pull policy to use when spawning
+	// launcher deployments.
+	// +kubebuilder:validation:Enum=IfNotPresent;Always;Never
+	// +kubebuilder:default=IfNotPresent
+	LauncherImagePullPolicy string `json:"launcherImagePullPolicy"`
 	// LauncherLogLevel sets the launcher clabernetes worker log level -- this overrides whatever
 	// is set on the controllers env vars for this topology. Note: omitempty because empty str does
 	// not satisfy enum of course.

@@ -122,6 +122,23 @@ spec:
                       that the file should be downloaded to. This is useful for configs
                       that are larger than the ConfigMap (etcd) 1Mb size limit.
                     type: object
+                  launcherImage:
+                    description: LauncherImage sets the default launcher image to
+                      use when spawning launcher deployments for this Topology. This
+                      is optional, the launcher image will default to whatever is
+                      set in the global config CR.
+                    type: string
+                  launcherImagePullPolicy:
+                    description: 'LauncherImagePullPolicy sets the default launcher
+                      image pull policy to use when spawning launcher deployments
+                      for this Topology. This is also optional and defaults to whatever
+                      is set in the global config CR (typically "IfNotPresent"). Note:
+                      omitempty because empty str does not satisfy enum of course.'
+                    enum:
+                    - IfNotPresent
+                    - Always
+                    - Never
+                    type: string
                   launcherLogLevel:
                     description: 'LauncherLogLevel sets the launcher clabernetes worker
                       log level -- this overrides whatever is set on the controllers

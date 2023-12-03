@@ -85,9 +85,10 @@ deployments:
         manager:
           image: ${MANAGER_IMAGE}
           imagePullPolicy: ${PULL_POLICY}
-        launcher:
-          image: ${LAUNCHER_IMAGE}
-          imagePullPolicy: ${PULL_POLICY}
+        globalConfig:
+          deployment:
+            launcherImage: ${LAUNCHER_IMAGE}
+            launcherImagePullPolicy: ${PULL_POLICY}
         clicker:
           image: ${MANAGER_IMAGE}
           imagePullPolicy: ${PULL_POLICY}
@@ -118,7 +119,7 @@ profiles:
         path: deployments.clabernetes.helm.values.manager.controllerLogLevel
         value: debug
       - op: add
-        path: deployments.clabernetes.helm.values.launcher.logLevel
+        path: deployments.clabernetes.helm.values.globalConfig.deployment.launcherLogLevel
         value: debug
 
   - name: single-manager
@@ -138,7 +139,7 @@ profiles:
         path: deployments.clabernetes.helm.values.manager.imagePullPolicy
         value: Always
       - op: replace
-        path: deployments.clabernetes.helm.values.launcher.imagePullPolicy
+        path: deployments.clabernetes.helm.values.globalConfig.deployment.launcherImagePullPolicy
         value: Always
       - op: replace
         path: deployments.clabernetes.helm.values.clicker.imagePullPolicy

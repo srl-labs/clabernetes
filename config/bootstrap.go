@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
@@ -23,13 +24,21 @@ type bootstrapConfig struct {
 	containerlabDebug           bool
 	inClusterDNSSuffix          string
 	imagePullThroughMode        string
+	launcherImage               string
+	launcherImagePullPolicy     string
+	launcherLogLevel            string
 }
 
-func bootstrapFromConfigMap(inMap map[string]string) (*bootstrapConfig, error) { //nolint:gocyclo
+func bootstrapFromConfigMap( //nolint:gocyclo,funlen
+	inMap map[string]string,
+) (*bootstrapConfig, error) {
 	bc := &bootstrapConfig{
-		mergeMode:            "merge",
-		inClusterDNSSuffix:   "svc.cluster.local",
-		imagePullThroughMode: "auto",
+		mergeMode:               "merge",
+		inClusterDNSSuffix:      clabernetesconstants.KubernetesDefaultInClusterDNSSuffix,
+		imagePullThroughMode:    clabernetesconstants.ImagePullThroughModeAuto,
+		launcherImage:           os.Getenv(clabernetesconstants.LauncherImageEnv),
+		launcherImagePullPolicy: clabernetesconstants.KubernetesImagePullIfNotPresent,
+		launcherLogLevel:        clabernetesconstants.Info,
 	}
 
 	var outErrors []string
@@ -93,6 +102,21 @@ func bootstrapFromConfigMap(inMap map[string]string) (*bootstrapConfig, error) {
 	imagePullThroughMode, imagePullThroughModeOk := inMap["imagePullThroughMode"]
 	if imagePullThroughModeOk {
 		bc.imagePullThroughMode = imagePullThroughMode
+	}
+
+	launcherImage, launcherImageOk := inMap["launcherImage"]
+	if launcherImageOk {
+		bc.launcherImage = launcherImage
+	}
+
+	launcherImagePullPolicy, launcherImagePullPolicyOk := inMap["launcherImagePullPolicy"]
+	if launcherImagePullPolicyOk {
+		bc.launcherImagePullPolicy = launcherImagePullPolicy
+	}
+
+	launcherLogLevel, launcherLogLevelOk := inMap["launcherLogLevel"]
+	if launcherLogLevelOk {
+		bc.launcherLogLevel = launcherLogLevel
 	}
 
 	var err error
@@ -175,6 +199,18 @@ func mergeFromBootstrapConfigMerge(
 
 		config.Spec.Deployment.ResourcesByContainerlabKind[k] = v
 	}
+
+	if config.Spec.Deployment.LauncherImage == "" {
+		config.Spec.Deployment.LauncherImage = bootstrap.launcherImage
+	}
+
+	if config.Spec.Deployment.LauncherImagePullPolicy == "" {
+		config.Spec.Deployment.LauncherImagePullPolicy = bootstrap.launcherImagePullPolicy
+	}
+
+	if config.Spec.Deployment.LauncherLogLevel == "" {
+		config.Spec.Deployment.LauncherLogLevel = bootstrap.launcherLogLevel
+	}
 }
 
 func mergeFromBootstrapConfigReplace(
@@ -195,6 +231,9 @@ func mergeFromBootstrapConfigReplace(
 			ResourcesByContainerlabKind: bootstrap.resourcesByContainerlabKind,
 			PrivilegedLauncher:          bootstrap.privilegedLauncher,
 			ContainerlabDebug:           bootstrap.containerlabDebug,
+			LauncherImage:               bootstrap.launcherImage,
+			LauncherImagePullPolicy:     bootstrap.launcherImagePullPolicy,
+			LauncherLogLevel:            bootstrap.launcherLogLevel,
 		},
 	}
 }

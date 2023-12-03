@@ -45,6 +45,20 @@ spec:
                     description: ContainerlabDebug sets the `--debug` flag when invoking
                       containerlab in the launcher pods. This is disabled by default.
                     type: boolean
+                  launcherImage:
+                    default: ghcr.io/srl-labs/clabernetes/clabernetes-launcher:latest
+                    description: LauncherImage sets the default launcher image to
+                      use when spawning launcher deployments.
+                    type: string
+                  launcherImagePullPolicy:
+                    default: IfNotPresent
+                    description: LauncherImagePullPolicy sets the default launcher
+                      image pull policy to use when spawning launcher deployments.
+                    enum:
+                    - IfNotPresent
+                    - Always
+                    - Never
+                    type: string
                   launcherLogLevel:
                     description: 'LauncherLogLevel sets the launcher clabernetes worker
                       log level -- this overrides whatever is set on the controllers
@@ -183,6 +197,9 @@ spec:
                           Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                     type: object
+                required:
+                - launcherImage
+                - launcherImagePullPolicy
                 type: object
               imagePull:
                 description: ImagePull holds configurations relevant to how clabernetes

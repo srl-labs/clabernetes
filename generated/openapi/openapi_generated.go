@@ -207,6 +207,22 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigDeployment(
 							Format:      "",
 						},
 					},
+					"launcherImage": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LauncherImage sets the default launcher image to use when spawning launcher deployments.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"launcherImagePullPolicy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LauncherImagePullPolicy sets the default launcher image pull policy to use when spawning launcher deployments.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"launcherLogLevel": {
 						SchemaProps: spec.SchemaProps{
 							Description: "LauncherLogLevel sets the launcher clabernetes worker log level -- this overrides whatever is set on the controllers env vars for this topology. Note: omitempty because empty str does not satisfy enum of course.",
@@ -215,6 +231,7 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigDeployment(
 						},
 					},
 				},
+				Required: []string{"launcherImage", "launcherImagePullPolicy"},
 			},
 		},
 		Dependencies: []string{
@@ -529,6 +546,20 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_Deployment(
 						SchemaProps: spec.SchemaProps{
 							Description: "ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods. This is disabled by default. If this value is unset, the global config value (default of \"false\") will be used.",
 							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"launcherImage": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LauncherImage sets the default launcher image to use when spawning launcher deployments for this Topology. This is optional, the launcher image will default to whatever is set in the global config CR.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"launcherImagePullPolicy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LauncherImagePullPolicy sets the default launcher image pull policy to use when spawning launcher deployments for this Topology. This is also optional and defaults to whatever is set in the global config CR (typically \"IfNotPresent\"). Note: omitempty because empty str does not satisfy enum of course.",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},

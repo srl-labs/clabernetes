@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 
@@ -56,7 +57,7 @@ func InitManager(
 			kubeClabernetesClient: client,
 			lock:                  &sync.RWMutex{},
 			config: &clabernetesapisv1alpha1.ConfigSpec{
-				InClusterDNSSuffix: "",
+				InClusterDNSSuffix: clabernetesconstants.KubernetesDefaultInClusterDNSSuffix,
 				Metadata: clabernetesapisv1alpha1.ConfigMetadata{
 					Annotations: nil,
 					Labels:      nil,
@@ -70,12 +71,14 @@ func InitManager(
 					ResourcesByContainerlabKind: make(
 						map[string]map[string]*k8scorev1.ResourceRequirements,
 					),
-					PrivilegedLauncher: false,
-					ContainerlabDebug:  false,
-					LauncherLogLevel:   "",
+					PrivilegedLauncher:      false,
+					ContainerlabDebug:       false,
+					LauncherImage:           os.Getenv(clabernetesconstants.LauncherImageEnv),
+					LauncherImagePullPolicy: clabernetesconstants.KubernetesImagePullIfNotPresent,
+					LauncherLogLevel:        clabernetesconstants.Info,
 				},
 				ImagePull: clabernetesapisv1alpha1.ConfigImagePull{
-					PullThroughOverride: "",
+					PullThroughOverride: clabernetesconstants.ImagePullThroughModeAuto,
 				},
 			},
 		}
@@ -125,8 +128,14 @@ type Manager interface {
 	GetContainerlabDebug() bool
 	// GetInClusterDNSSuffix returns the in cluster dns suffix as set by the global config.
 	GetInClusterDNSSuffix() string
-	// GetImagePullThroughOverride returns the image pull through mode in the global config.
-	GetImagePullThroughOverride() string
+	// GetImagePullThroughMode returns the image pull through mode in the global config.
+	GetImagePullThroughMode() string
+	// GetLauncherImage returns the global default launcher image.
+	GetLauncherImage() string
+	// GetLauncherImagePullPolicy returns the global default launcher image pull policy.
+	GetLauncherImagePullPolicy() string
+	// GetLauncherLogLevel returns the default launcher log level.
+	GetLauncherLogLevel() string
 }
 
 type manager struct {

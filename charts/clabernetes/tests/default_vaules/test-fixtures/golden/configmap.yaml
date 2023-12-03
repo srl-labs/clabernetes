@@ -33,3 +33,6 @@ data:
   containerlabDebug: "false"
   inClusterDNSSuffix: svc.cluster.local
   imagePullThroughMode: auto
+  launcherImage: 
+  launcherImagePullPolicy: IfNotPresent
+  launcherLogLevel: info

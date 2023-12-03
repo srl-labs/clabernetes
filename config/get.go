@@ -85,9 +85,30 @@ func (m *manager) GetInClusterDNSSuffix() string {
 	return m.config.InClusterDNSSuffix
 }
 
-func (m *manager) GetImagePullThroughOverride() string {
+func (m *manager) GetImagePullThroughMode() string {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
 	return m.config.ImagePull.PullThroughOverride
+}
+
+func (m *manager) GetLauncherImage() string {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	return m.config.Deployment.LauncherImage
+}
+
+func (m *manager) GetLauncherImagePullPolicy() string {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	return m.config.Deployment.LauncherImagePullPolicy
+}
+
+func (m *manager) GetLauncherLogLevel() string {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	return m.config.Deployment.LauncherLogLevel
 }

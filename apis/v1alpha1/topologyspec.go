@@ -144,6 +144,18 @@ type Deployment struct {
 	// "false") will be used.
 	// +optional
 	ContainerlabDebug *bool `json:"containerlabDebug"`
+	// LauncherImage sets the default launcher image to use when spawning launcher deployments for
+	// this Topology. This is optional, the launcher image will default to whatever is set in the
+	// global config CR.
+	// +optional
+	LauncherImage string `json:"launcherImage,omitempty"`
+	// LauncherImagePullPolicy sets the default launcher image pull policy to use when spawning
+	// launcher deployments for this Topology. This is also optional and defaults to whatever is set
+	// in the global config CR (typically "IfNotPresent"). Note: omitempty because empty str does
+	// not satisfy enum of course.
+	// +kubebuilder:validation:Enum=IfNotPresent;Always;Never
+	// +optional
+	LauncherImagePullPolicy string `json:"launcherImagePullPolicy,omitempty"`
 	// LauncherLogLevel sets the launcher clabernetes worker log level -- this overrides whatever
 	// is set on the controllers env vars for this topology. Note: omitempty because empty str does
 	// not satisfy enum of course.

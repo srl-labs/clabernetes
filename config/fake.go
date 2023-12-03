@@ -1,6 +1,7 @@
 package config
 
 import (
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	k8scorev1 "k8s.io/api/core/v1"
 )
 
@@ -49,6 +50,18 @@ func (f fakeManager) GetInClusterDNSSuffix() string {
 	return "svc.cluster.local"
 }
 
-func (f fakeManager) GetImagePullThroughOverride() string {
+func (f fakeManager) GetImagePullThroughMode() string {
 	return "auto"
+}
+
+func (f fakeManager) GetLauncherImage() string {
+	return "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:latest"
+}
+
+func (f fakeManager) GetLauncherImagePullPolicy() string {
+	return clabernetesconstants.KubernetesImagePullIfNotPresent
+}
+
+func (f fakeManager) GetLauncherLogLevel() string {
+	return clabernetesconstants.Info
 }

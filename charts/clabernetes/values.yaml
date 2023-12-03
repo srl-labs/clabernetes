@@ -44,18 +44,6 @@ manager:
   # common-sense anti-affinity is applied.
   affinity: {}
 
-
-#
-# launcher options
-#
-# the launcher is the actual "worker" pod where the nos is running/launched
-#
-launcher:
-  # defaults to .Chart.Version, if 0.0.0 version defaults to 'dev-latest' tag
-  image: "" # ghcr.io/srl-labs/clabernetes/clabernetes-launcher:{{ .Chart.Version }}
-  imagePullPolicy: IfNotPresent
-  logLevel: info
-
 #
 # global config
 #
@@ -124,6 +112,13 @@ globalConfig:
     # containerlabDebug sets the global default value for whether launcher pods should have the
     # containerlab debug flag set.
     containerlabDebug: false
+
+    # default image for launcher deployments; if not set here, manager will have this set to a sane
+    # default as an env var that will be applied (this follows same patter as the manager image
+    # itself), so this is here just if you want to override that yourself.
+    launcherImage: ""
+    launcherImagePullPolicy: IfNotPresent
+    launcherLogLevel: info
 
 #
 # clicker
