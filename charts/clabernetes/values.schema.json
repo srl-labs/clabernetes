@@ -1,0 +1,137 @@
+{
+  "type": "object",
+  "properties": {
+    "appName": {
+      "type": "string"
+    },
+    "globalAnnotations": {
+      "type": "object"
+    },
+    "globalLabels": {
+      "type": "object"
+    },
+    "manager": {
+      "type": "object",
+      "properties": {
+        "deploymentAnnotations": {
+          "type": "object"
+        },
+        "deploymentLabels": {
+          "type": "object"
+        },
+        "podAnnotations": {
+          "type": "object"
+        },
+        "podLabels": {
+          "type": "object"
+        },
+        "image": {
+          "type": "string"
+        },
+        "imagePullPolicy": {
+          "type": "string",
+          "enum": ["Never", "IfNotPresent", "Always"]
+        },
+        "replicaCount": {
+          "type": "integer"
+        },
+        "resources": {
+          "type": "object"
+        },
+        "clientOperationTimeoutMultiplier": {
+          "type": "integer"
+        },
+        "managerLogLevel": {
+          "type": "string",
+          "enum": ["disabled", "critical", "warn", "info", "debug"]
+        },
+        "controllerLogLevel": {
+          "type": "string",
+          "enum": ["disabled", "critical", "warn", "info", "debug"]
+        },
+        "affinity": {
+          "type": "object"
+        }
+      }
+    },
+    "globalConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "mergeMode": {
+          "type": "string"
+        },
+        "inClusterDNSSuffix": {
+          "type": "string"
+        },
+        "imagePull": {
+          "type": "object",
+          "properties": {
+            "imagePullThroughMode": {
+              "type": "string",
+              "enum": ["never", "auto", "always"]
+            },
+            "criSockOverride": {
+              "type": "string",
+              "pattern": "(.*containerd\\.sock)"
+            },
+            "criKindOverride": {
+              "type": "string",
+              "enum": ["containerd"]
+            }
+          }
+        },
+        "deployment": {
+          "type": "object",
+          "properties": {
+            "resourcesDefault": {
+              "type": "object"
+            },
+            "resourcesByContainerlabKind": {
+              "type": "object"
+            },
+            "privilegedLauncher": {
+              "type": "boolean"
+            },
+            "containerlabDebug": {
+              "type": "boolean"
+            },
+            "launcherImage": {
+              "type": "string"
+            },
+            "launcherImagePullPolicy": {
+              "type": "string",
+              "enum": ["Never", "IfNotPresent", "Always"]
+            },
+            "launcherLogLevel": {
+              "type": "string",
+              "enum": ["disabled", "critical", "warn", "info", "debug"]
+            }
+          }
+        }
+      }
+    },
+    "clicker": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "appName": {
+          "type": "string"
+        },
+        "globalAnnotations": {
+          "type": "object"
+        },
+        "globalLabels": {
+          "type": "object"
+        }
+      }
+    }
+  },
+  "required": [
+    "appName"
+  ]
+}
