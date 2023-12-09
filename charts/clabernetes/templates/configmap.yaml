@@ -41,4 +41,10 @@ data:
   launcherImage: {{ .Values.globalConfig.deployment.launcherImage }}
   launcherImagePullPolicy: {{ .Values.globalConfig.deployment.launcherImagePullPolicy }}
   launcherLogLevel: {{ .Values.globalConfig.deployment.launcherLogLevel }}
+  {{- if .Values.globalConfig.imagePull.criSockOverride }}
+  criSockOverride: {{ .Values.globalConfig.imagePull.criSockOverride }}
+  {{- end }}
+  {{- if .Values.globalConfig.imagePull.criKindOverride }}
+  criKindOverride: {{ .Values.globalConfig.imagePull.criKindOverride }}
+  {{- end }}
 {{- end }}
