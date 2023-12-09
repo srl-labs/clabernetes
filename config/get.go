@@ -92,6 +92,20 @@ func (m *manager) GetImagePullThroughMode() string {
 	return m.config.ImagePull.PullThroughOverride
 }
 
+func (m *manager) GetImagePullCriSockOverride() string {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	return m.config.ImagePull.CRISockOverride
+}
+
+func (m *manager) GetImagePullCriKindOverride() string {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	return m.config.ImagePull.CRIKindOverride
+}
+
 func (m *manager) GetLauncherImage() string {
 	m.lock.RLock()
 	defer m.lock.RUnlock()

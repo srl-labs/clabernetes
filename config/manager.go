@@ -130,6 +130,10 @@ type Manager interface {
 	GetInClusterDNSSuffix() string
 	// GetImagePullThroughMode returns the image pull through mode in the global config.
 	GetImagePullThroughMode() string
+	// GetImagePullCriSockOverride returns the cri sock path override.
+	GetImagePullCriSockOverride() string
+	// GetImagePullCriKindOverride returns the cri kind override.
+	GetImagePullCriKindOverride() string
 	// GetLauncherImage returns the global default launcher image.
 	GetLauncherImage() string
 	// GetLauncherImagePullPolicy returns the global default launcher image pull policy.

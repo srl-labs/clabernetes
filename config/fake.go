@@ -58,6 +58,14 @@ func (f fakeManager) GetLauncherImage() string {
 	return "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:latest"
 }
 
+func (f fakeManager) GetImagePullCriSockOverride() string {
+	return ""
+}
+
+func (f fakeManager) GetImagePullCriKindOverride() string {
+	return ""
+}
+
 func (f fakeManager) GetLauncherImagePullPolicy() string {
 	return clabernetesconstants.KubernetesImagePullIfNotPresent
 }

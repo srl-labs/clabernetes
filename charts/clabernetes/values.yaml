@@ -88,6 +88,16 @@ globalConfig:
     # ever pull via the docker daemon in the launcher pod itself (bypassing the cluster). Note that
     # "pull through mode" currently only supports containerd as a CRI.
     imagePullThroughMode: auto
+    # criSockOverride allows for overriding the path of the CRI sock that is mounted in the
+    # launcher pods (if/when image pull through mode is auto or always). This can be useful if,
+    # for example, the CRI sock is in a "non-standard" location like K3s which puts the containerd
+    # sock at `/run/k3s/containerd/containerd.sock` rather than the "normal" (whatever that means)
+    # location of `/run/containerd/containerd.sock`.
+    # criSockOverride: ""
+    # criKindOverride allows for overriding teh auto discovered cri kind. Probably/hopefully this
+    # won't be needed often, but could come in handy in multi-cri clusters or if nodes for some
+    # reason do not properly report their cri flavor (or we incorrectly parse it?!)
+    # criKindOverride: ""
 
   deployment:
     # resourcesDefault hold the default resources to apply to clabernetes launcher pods.
