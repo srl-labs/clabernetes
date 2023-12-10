@@ -78,22 +78,11 @@ func (c *clabernetes) image() {
 		return
 	}
 
-	if len(configuredPullSecrets) == 0 {
-		c.logger.Info("no pull secrets configured, pulling image ourselves with no credentials...")
+	err = c.requestImagePull(imageManager, configuredPullSecrets)
+	if err != nil {
+		handleImagePullThroughModeAlwaysPanic(c.imagePullThroughMode)
 
-		err = imageManager.Pull(c.imageName)
-		if err != nil {
-			handleImagePullThroughModeAlwaysPanic(c.imagePullThroughMode)
-
-			return
-		}
-	} else {
-		err = c.requestImagePull(imageManager, configuredPullSecrets)
-		if err != nil {
-			handleImagePullThroughModeAlwaysPanic(c.imagePullThroughMode)
-
-			return
-		}
+		return
 	}
 
 	c.copyImageFromCRI(imageManager)

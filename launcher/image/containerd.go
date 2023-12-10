@@ -37,30 +37,6 @@ func (m *containerdManager) Present(imageName string) (bool, error) {
 	return true, nil
 }
 
-func (m *containerdManager) Pull(imageName string) error {
-	pullCmd := exec.Command(
-		"nerdctl",
-		"--address",
-		"/clabernetes/.node/containerd.sock",
-		"--namespace",
-		"k8s.io",
-		"image",
-		"pull",
-		imageName,
-		"--quiet",
-	)
-
-	pullCmd.Stdout = m.logger
-	pullCmd.Stderr = m.logger
-
-	err := pullCmd.Run()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (m *containerdManager) Export(imageName, destination string) error {
 	exportCmd := exec.Command(
 		"nerdctl",
