@@ -15,9 +15,7 @@ const (
 )
 
 // Run executes a clabernetes e2e test.
-func Run(t *testing.T, steps []Step, testName string) { //nolint: thelper
-	namespace := clabernetestesthelper.NewTestNamespace(testName)
-
+func Run(t *testing.T, steps []Step, namespace string) { //nolint: thelper
 	clabernetestesthelper.KubectlCreateNamespace(t, namespace)
 
 	defer func() {

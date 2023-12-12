@@ -211,7 +211,7 @@ func (m *manager) Start() error {
 
 			found = false
 		} else {
-			m.logger.Criticalf("encountered error fetching global config, err: ", err)
+			m.logger.Criticalf("encountered error fetching global config, err: %s", err)
 
 			return err
 		}

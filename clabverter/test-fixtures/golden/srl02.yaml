@@ -1,4 +1,4 @@
-apiVersion: topologies.containerlab.dev/v1alpha1
+apiVersion: clabernetes.containerlab.dev/v1alpha1
 kind: Topology
 metadata:
   creationTimestamp: null

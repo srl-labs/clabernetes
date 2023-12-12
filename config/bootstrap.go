@@ -105,7 +105,13 @@ func bootstrapFromConfigMap( //nolint:gocyclo,funlen
 	}
 
 	launcherImage, launcherImageOk := inMap["launcherImage"]
-	if launcherImageOk {
+	if launcherImageOk && launcherImage != "" {
+		// check for empty string too -- the config map by default (w/ default values) will always
+		// have just "" for launcher image, config bootstrapping will use the value set in the
+		// LAUNCHER_IMAGE env which will be the same kind of resolution we have for manager image
+		// where user provided value takes precedent, then if unset and "0.0.0" chart version it
+		// results in dev-latest image tag, finally, resulting in just the image w/ the tag the same
+		// as the chart version.
 		bc.launcherImage = launcherImage
 	}
 
