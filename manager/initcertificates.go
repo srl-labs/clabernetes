@@ -8,7 +8,6 @@ import (
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
-
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

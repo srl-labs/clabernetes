@@ -4,7 +4,6 @@ import (
 	"reflect"
 
 	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
-
 	k8scorev1 "k8s.io/api/core/v1"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 )

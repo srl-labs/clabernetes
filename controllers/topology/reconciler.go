@@ -6,22 +6,18 @@ import (
 	"slices"
 	"time"
 
-	clabernetesconfig "github.com/srl-labs/clabernetes/config"
-
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-
-	claberneteserrors "github.com/srl-labs/clabernetes/errors"
-	k8sappsv1 "k8s.io/api/apps/v1"
-
+	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
-	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
+	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
+	k8sappsv1 "k8s.io/api/apps/v1"
 	k8scorev1 "k8s.io/api/core/v1"
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // NewReconciler creates a new generic Reconciler (TopologyReconciler).

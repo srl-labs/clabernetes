@@ -7,21 +7,17 @@ import (
 	"strings"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-
-	claberneteslogging "github.com/srl-labs/clabernetes/logging"
-
-	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
-
-	apimachinerytypes "k8s.io/apimachinery/pkg/types"
-
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
 	k8sappsv1 "k8s.io/api/apps/v1"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 )
 
 // NewDeploymentReconciler returns an instance of DeploymentReconciler.

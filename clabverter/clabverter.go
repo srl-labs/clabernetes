@@ -10,12 +10,10 @@ import (
 	"strings"
 	"text/template"
 
-	clabernetesutil "github.com/srl-labs/clabernetes/util"
-
-	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
-
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
+	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 )
 
 const (

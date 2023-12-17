@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-
 	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

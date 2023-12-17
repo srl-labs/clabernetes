@@ -3,16 +3,13 @@ package topology
 import (
 	"fmt"
 
-	clabernetesconfig "github.com/srl-labs/clabernetes/config"
-
-	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-	claberneteslogging "github.com/srl-labs/clabernetes/logging"
-
-	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
-
 	knetopologyproto "github.com/openconfig/kne/proto/topo"
+	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
+	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	clabernetesutilkne "github.com/srl-labs/clabernetes/util/kne"
 )
 

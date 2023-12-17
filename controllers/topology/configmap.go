@@ -5,14 +5,11 @@ import (
 	"reflect"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-
-	claberneteslogging "github.com/srl-labs/clabernetes/logging"
-
-	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
-
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
 	"gopkg.in/yaml.v3"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

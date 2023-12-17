@@ -3,9 +3,8 @@ package election
 import (
 	"os"
 
-	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
-
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
 )
 
 const (

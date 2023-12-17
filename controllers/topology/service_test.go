@@ -4,14 +4,11 @@ import (
 	"testing"
 
 	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
-
-	"k8s.io/apimachinery/pkg/util/intstr"
-
 	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	k8scorev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func TestServiceConforms(t *testing.T) {

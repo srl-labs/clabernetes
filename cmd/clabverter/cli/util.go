@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
-
 	"github.com/urfave/cli/v2"
 )
 

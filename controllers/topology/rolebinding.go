@@ -6,20 +6,16 @@ import (
 	"reflect"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-
-	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
-
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
 	k8srbacv1 "k8s.io/api/rbac/v1"
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
-
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // NewRoleBindingReconciler returns an instance of RoleBindingReconciler.

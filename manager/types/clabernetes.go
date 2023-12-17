@@ -4,18 +4,12 @@ import (
 	"context"
 
 	clabernetesgeneratedclientset "github.com/srl-labs/clabernetes/generated/clientset"
-
-	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
-
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
-
-	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
-
-	ctrlruntime "sigs.k8s.io/controller-runtime"
-
-	"k8s.io/client-go/rest"
-
+	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	ctrlruntime "sigs.k8s.io/controller-runtime"
+	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Clabernetes is an interface that defines the publicly available methods of the manager object.

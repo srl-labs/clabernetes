@@ -11,13 +11,10 @@ import (
 	"testing"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-
-	"sigs.k8s.io/yaml"
-
 	clabernetesclabverter "github.com/srl-labs/clabernetes/clabverter"
-
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
+	"sigs.k8s.io/yaml"
 )
 
 func TestClabvert(t *testing.T) {

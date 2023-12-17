@@ -4,19 +4,17 @@ import (
 	"context"
 	"fmt"
 
-	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
-
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
 	k8scorev1 "k8s.io/api/core/v1"
+	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	clabernetesconfig "github.com/srl-labs/clabernetes/config"
-	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 )
 
 // NewServiceAccountReconciler returns an instance of ServiceAccountReconciler.

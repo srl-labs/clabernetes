@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"k8s.io/apimachinery/pkg/api/resource"
-	apimachinerytypes "k8s.io/apimachinery/pkg/types"
-
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
@@ -17,7 +14,9 @@ import (
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	k8scorev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 )
 
 const renderPersistentVolumeClaimTestName = "persistentvolumeclaim/render-pvc"

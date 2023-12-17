@@ -3,11 +3,10 @@ package manager
 import (
 	"context"
 
-	clabernetescontrollersimagerequest "github.com/srl-labs/clabernetes/controllers/imagerequest"
-	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
-
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
+	clabernetescontrollersimagerequest "github.com/srl-labs/clabernetes/controllers/imagerequest"
+	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
 	k8sappsv1 "k8s.io/api/apps/v1"

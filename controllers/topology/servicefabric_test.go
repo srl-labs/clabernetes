@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"testing"
 
-	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
-	clabernetesutil "github.com/srl-labs/clabernetes/util"
-	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
-
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
+	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

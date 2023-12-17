@@ -4,9 +4,8 @@ import (
 	"context"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-	clabernetesutil "github.com/srl-labs/clabernetes/util"
-
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )

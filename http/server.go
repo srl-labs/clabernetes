@@ -9,13 +9,11 @@ import (
 	"sync"
 	"time"
 
-	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
-	"k8s.io/client-go/kubernetes"
-
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
+	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
-
+	"k8s.io/client-go/kubernetes"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 

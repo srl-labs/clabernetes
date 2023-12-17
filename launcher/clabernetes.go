@@ -8,13 +8,11 @@ import (
 	"time"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-	clabernetesgeneratedclientset "github.com/srl-labs/clabernetes/generated/clientset"
-
-	"sigs.k8s.io/yaml"
-
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	clabernetesgeneratedclientset "github.com/srl-labs/clabernetes/generated/clientset"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
+	"sigs.k8s.io/yaml"
 )
 
 const (

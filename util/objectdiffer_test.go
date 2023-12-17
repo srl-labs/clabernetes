@@ -3,9 +3,8 @@ package util_test
 import (
 	"testing"
 
-	clabernetesutil "github.com/srl-labs/clabernetes/util"
-
 	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
 
 func TestObjectDifferGetCurrentObjectNames(t *testing.T) {

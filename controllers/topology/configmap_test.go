@@ -5,22 +5,16 @@ import (
 	"fmt"
 	"testing"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	claberneteslogging "github.com/srl-labs/clabernetes/logging"
-
-	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
-
-	apimachinerytypes "k8s.io/apimachinery/pkg/types"
-
-	clabernetesconfig "github.com/srl-labs/clabernetes/config"
-
-	k8scorev1 "k8s.io/api/core/v1"
-
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+	clabernetesconfig "github.com/srl-labs/clabernetes/config"
+	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
+	k8scorev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 )
 
 var defaultPorts = []string{

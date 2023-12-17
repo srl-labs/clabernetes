@@ -9,19 +9,15 @@ import (
 	"sync"
 	"time"
 
-	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
-
-	"gopkg.in/yaml.v3"
-
-	claberneteserrors "github.com/srl-labs/clabernetes/errors"
-
-	apimachinerytypes "k8s.io/apimachinery/pkg/types"
-
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+	"gopkg.in/yaml.v3"
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )

@@ -8,18 +8,14 @@ import (
 	"time"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
-
-	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"gopkg.in/yaml.v3"
-
-	claberneteserrors "github.com/srl-labs/clabernetes/errors"
-
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 	claberneteslauncherimage "github.com/srl-labs/clabernetes/launcher/image"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+	"gopkg.in/yaml.v3"
+	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (

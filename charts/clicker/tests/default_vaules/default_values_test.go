@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
-
 	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
 )
 

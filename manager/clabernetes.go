@@ -6,24 +6,18 @@ import (
 	"os"
 	"time"
 
-	"k8s.io/klog/v2"
-
-	clabernetesgeneratedclientset "github.com/srl-labs/clabernetes/generated/clientset"
-
-	claberneteshttp "github.com/srl-labs/clabernetes/http"
-
-	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
-
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
-	ctrlruntimelog "sigs.k8s.io/controller-runtime/pkg/log"
-
+	clabernetesgeneratedclientset "github.com/srl-labs/clabernetes/generated/clientset"
+	claberneteshttp "github.com/srl-labs/clabernetes/http"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
-
+	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/klog/v2"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
+	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlruntimelog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (

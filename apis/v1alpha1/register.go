@@ -3,7 +3,6 @@ package v1alpha1
 import (
 	clabernetesapis "github.com/srl-labs/clabernetes/apis"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 	apimachineryscheme "k8s.io/apimachinery/pkg/runtime/schema"
 )

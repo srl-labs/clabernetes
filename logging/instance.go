@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	clabernetesutil "github.com/srl-labs/clabernetes/util"
-
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
 
 // Instance is a logging instance managed by the Manager.

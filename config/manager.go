@@ -8,19 +8,15 @@ import (
 	"sync"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-	clabernetesgeneratedclientset "github.com/srl-labs/clabernetes/generated/clientset"
-
-	apimachinerywatch "k8s.io/apimachinery/pkg/watch"
-
-	"gopkg.in/yaml.v3"
-
-	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
-
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	clabernetesgeneratedclientset "github.com/srl-labs/clabernetes/generated/clientset"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
+	"gopkg.in/yaml.v3"
 	k8scorev1 "k8s.io/api/core/v1"
+	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apimachinerywatch "k8s.io/apimachinery/pkg/watch"
 )
 
 var (

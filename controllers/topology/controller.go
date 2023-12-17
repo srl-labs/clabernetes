@@ -3,22 +3,18 @@ package topology
 import (
 	"context"
 
-	clabernetesconfig "github.com/srl-labs/clabernetes/config"
-
 	clabernetesapis "github.com/srl-labs/clabernetes/apis"
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-	apimachinerytypes "k8s.io/apimachinery/pkg/types"
-	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
-	ctrlruntimereconcile "sigs.k8s.io/controller-runtime/pkg/reconcile"
-
+	clabernetesconfig "github.com/srl-labs/clabernetes/config"
+	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
 	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
-
 	k8scorev1 "k8s.io/api/core/v1"
+	apimachinerytypes "k8s.io/apimachinery/pkg/types"
+	ctrlruntime "sigs.k8s.io/controller-runtime"
+	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlruntimecontroller "sigs.k8s.io/controller-runtime/pkg/controller"
 	ctrlruntimehandler "sigs.k8s.io/controller-runtime/pkg/handler"
-
-	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
-	ctrlruntime "sigs.k8s.io/controller-runtime"
+	ctrlruntimereconcile "sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // NewController returns a new Controller.

@@ -5,9 +5,8 @@ import (
 	"os"
 	"strings"
 
-	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
-
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 	"gopkg.in/yaml.v3"
 	k8scorev1 "k8s.io/api/core/v1"

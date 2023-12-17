@@ -11,7 +11,7 @@ help:
 
 fmt: ## Run formatters
 	gofumpt -w .
-	goimports -w .
+	gci write --skip-generated .
 	golines -w .
 
 lint: fmt ## Run linters
@@ -33,7 +33,7 @@ cov:  ## Produce html coverage report
 
 install-tools: ## Install lint/test tools
 	go install mvdan.cc/gofumpt@latest
-	go install golang.org/x/tools/cmd/goimports@latest
+	go install github.com/daixiang0/gci@latest@latest
 	go install github.com/segmentio/golines@latest
 	go install gotest.tools/gotestsum@latest
 
