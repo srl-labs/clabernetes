@@ -187,4 +187,10 @@ type ImagePull struct {
 	// +listType=set
 	// +optional
 	PullSecrets []string `json:"pullSecrets"`
+	// DockerDaemonConfig allows for setting the docker daemon config for all launchers in this
+	// topology. The secret *must be present in the namespace of this topology*. The secret *must*
+	// contain a key "daemon.json" -- as this secret will be mounted to /etc/docker and docker will
+	// be expecting the config at /etc/docker/daemon.json.
+	// +optional
+	DockerDaemonConfig string `json:"dockerDaemonConfig,omitempty"`
 }

@@ -374,7 +374,7 @@ func TestRenderDeployment(t *testing.T) {
 			nodeName: "srl1",
 		},
 		{
-			name: "insecure-registries",
+			name: "docker-daemon",
 			owningTopology: &clabernetesapisv1alpha1.Topology{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "render-deployment-test",
@@ -382,7 +382,7 @@ func TestRenderDeployment(t *testing.T) {
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
 					ImagePull: clabernetesapisv1alpha1.ImagePull{
-						InsecureRegistries: []string{"1.2.3.4", "potato.com"},
+						DockerDaemonConfig: "sneakydockerdaemonconfig",
 					},
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
