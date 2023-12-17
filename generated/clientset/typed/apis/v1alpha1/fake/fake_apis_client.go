@@ -32,6 +32,10 @@ func (c *FakeClabernetesV1alpha1) Configs(namespace string) v1alpha1.ConfigInter
 	return &FakeConfigs{c, namespace}
 }
 
+func (c *FakeClabernetesV1alpha1) ImageRequests(namespace string) v1alpha1.ImageRequestInterface {
+	return &FakeImageRequests{c, namespace}
+}
+
 func (c *FakeClabernetesV1alpha1) Topologies(namespace string) v1alpha1.TopologyInterface {
 	return &FakeTopologies{c, namespace}
 }

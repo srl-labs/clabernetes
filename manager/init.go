@@ -2,7 +2,6 @@ package manager
 
 import (
 	"context"
-	"fmt"
 )
 
 func (c *clabernetes) init(ctx context.Context) {
@@ -14,11 +13,7 @@ func (c *clabernetes) init(ctx context.Context) {
 
 	err := initializeCertificates(c)
 	if err != nil {
-		msg := fmt.Sprintf("failed initializing certificates, err: %s", err)
-
-		c.logger.Critical(msg)
-
-		c.Panic(err.Error())
+		c.logger.Fatalf("failed initializing certificates, err: %s", err)
 	}
 
 	c.logger.Debug("initializing certificates complete...")
@@ -27,11 +22,7 @@ func (c *clabernetes) init(ctx context.Context) {
 
 	err = initializeCrds(c)
 	if err != nil {
-		msg := fmt.Sprintf("failed initializing crds, err: %s", err)
-
-		c.logger.Critical(msg)
-
-		c.Panic(err.Error())
+		c.logger.Fatalf("failed initializing crds, err: %s", err)
 	}
 
 	c.logger.Debug("initializing crds complete...")

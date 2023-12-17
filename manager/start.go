@@ -3,6 +3,7 @@ package manager
 import (
 	"context"
 
+	clabernetescontrollersimagerequest "github.com/srl-labs/clabernetes/controllers/imagerequest"
 	clabernetescontrollerstopology "github.com/srl-labs/clabernetes/controllers/topology"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
@@ -42,6 +43,7 @@ func (c *clabernetes) startLeading(ctx context.Context) {
 
 	controllersToRegisterFuncs := []clabernetescontrollers.NewController{
 		clabernetescontrollerstopology.NewController,
+		clabernetescontrollersimagerequest.NewController,
 	}
 
 	for _, newF := range controllersToRegisterFuncs {

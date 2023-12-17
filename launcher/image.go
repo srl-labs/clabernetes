@@ -1,20 +1,19 @@
 package launcher
 
 import (
-	"bytes"
 	"context"
-	"crypto/tls"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"time"
 
-	"gopkg.in/yaml.v3"
+	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
 
-	claberneteshttptypes "github.com/srl-labs/clabernetes/http/types"
+	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"gopkg.in/yaml.v3"
 
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 
@@ -29,6 +28,13 @@ const (
 	imageCheckLogCounter   = 6
 )
 
+func generateImageRequestCRName(nodeName, imageName string) string {
+	// hash the image name so it doesn't contain invalid chars for k8s name
+	return clabernetesutilkubernetes.SafeConcatNameKubernetes(
+		nodeName, clabernetesutil.HashBytes([]byte(imageName)),
+	)
+}
+
 func (c *clabernetes) image() {
 	abort, imageManager := c.prepareImagePullThrough()
 	if abort {
@@ -40,7 +46,7 @@ func (c *clabernetes) image() {
 		c.logger.Warnf("failed image pull through (check), err: %s", err)
 
 		if c.imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
-			clabernetesutil.Panic(
+			c.logger.Fatal(
 				"image pull through failed and pull through mode is always, cannot continue",
 			)
 		}
@@ -143,14 +149,8 @@ func (c *clabernetes) prepareImagePullThrough() (
 		c.logger.Warnf("error creating image manager, err: %s", err)
 
 		if c.imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
-			msg := fmt.Sprintf(
-				"image pull through mode is always, but criKind is unset or unknown," +
-					" cannot continue...",
-			)
-
-			c.logger.Critical(msg)
-
-			clabernetesutil.Panic(msg)
+			c.logger.Fatal("image pull through mode is always, but criKind is unset or unknown," +
+				" cannot continue...")
 		}
 
 		c.logger.Warn(
@@ -163,14 +163,10 @@ func (c *clabernetes) prepareImagePullThrough() (
 
 	if c.imageName == "" {
 		if c.imagePullThroughMode == clabernetesconstants.ImagePullThroughModeAlways {
-			msg := fmt.Sprintf(
+			c.logger.Fatal(
 				"image pull through mode is always, node image is unknown," +
 					" cannot continue...",
 			)
-
-			c.logger.Critical(msg)
-
-			clabernetesutil.Panic(msg)
 		}
 
 		c.logger.Warn(
@@ -196,16 +192,27 @@ func (c *clabernetes) requestImagePull(
 	imageManager claberneteslauncherimage.Manager,
 	configuredPullSecrets []string,
 ) error {
-	err := c.sendImagePullRequest(configuredPullSecrets)
+	nodeName := os.Getenv(clabernetesconstants.NodeNameEnv)
+
+	imageRequestCRName := generateImageRequestCRName(nodeName, c.imageName)
+
+	err := c.createImageRequestCR(nodeName, imageRequestCRName, configuredPullSecrets)
 	if err != nil {
-		c.logger.Warnf("failed image pull through (request pull), err: %s", err)
+		c.logger.Warnf("failed image pull through (create request), err: %s", err)
+
+		return err
+	}
+
+	err = c.waitImageRequestCRAccepted(imageRequestCRName)
+	if err != nil {
+		c.logger.Warnf("failed image pull through (wait accepted), err: %s", err)
 
 		return err
 	}
 
 	err = c.waitForImage(imageManager)
 	if err != nil {
-		c.logger.Warnf("failed image pull through (wait), err: %s", err)
+		c.logger.Warnf("failed image pull through (wait image present), err: %s", err)
 
 		return err
 	}
@@ -213,79 +220,84 @@ func (c *clabernetes) requestImagePull(
 	return nil
 }
 
-func (c *clabernetes) sendImagePullRequest(configuredPullSecrets []string) error {
-	imageRequest := claberneteshttptypes.ImageRequest{
-		TopologyName:          os.Getenv(clabernetesconstants.LauncherTopologyNameEnv),
-		TopologyNamespace:     os.Getenv(clabernetesconstants.PodNamespaceEnv),
-		TopologyNodeName:      os.Getenv(clabernetesconstants.LauncherNodeNameEnv),
-		KubernetesNodeName:    os.Getenv(clabernetesconstants.NodeNameEnv),
-		RequestingPodName:     os.Getenv(clabernetesconstants.PodNameEnv),
-		RequestedImageName:    c.imageName,
-		ConfiguredPullSecrets: configuredPullSecrets,
-	}
-
-	requestJSON, err := json.Marshal(imageRequest)
-	if err != nil {
-		c.logger.Criticalf("failed marshaling image pull request, error: %s", err)
-
-		return err
-	}
-
-	body := bytes.NewReader(requestJSON)
-
-	ctx, cancel := context.WithTimeout(c.ctx, clabernetesconstants.DefaultClientOperationTimeout)
+func (c *clabernetes) createImageRequestCR(
+	nodeName, imageRequestCRName string,
+	configuredPullSecrets []string,
+) error {
+	ctx, cancel := context.WithTimeout(c.ctx, clientDefaultTimeout)
 	defer cancel()
 
-	request, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodPost,
-		fmt.Sprintf(
-			"https://%s.%s/image",
-			fmt.Sprintf("%s-http", os.Getenv(clabernetesconstants.AppNameEnv)),
-			os.Getenv(clabernetesconstants.ManagerNamespaceEnv),
-		),
-		body,
-	)
-	if err != nil {
-		c.logger.Criticalf("failed building image pull request, error: %s", err)
-
-		return err
-	}
-
-	request.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{Transport: &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
-	}}
-
-	response, err := client.Do(request)
-	if err != nil {
-		c.logger.Criticalf("failed executing image pull request, error: %s", err)
-
-		return err
-	}
-
-	responseBody, err := io.ReadAll(response.Body)
-	if err != nil {
-		c.logger.Criticalf("failed reading image pull request response, error: %s", err)
-
-		return err
-	}
-
-	if response.StatusCode != http.StatusOK {
-		msg := fmt.Sprintf(
-			"received non 200 status code from image pull request, response body: %s",
-			string(responseBody),
+	_, err := c.kubeClabernetesClient.ClabernetesV1alpha1().
+		ImageRequests(os.Getenv(clabernetesconstants.PodNamespaceEnv)).
+		Create(
+			ctx,
+			&clabernetesapisv1alpha1.ImageRequest{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: imageRequestCRName,
+				},
+				Spec: clabernetesapisv1alpha1.ImageRequestSpec{
+					TopologyName: os.Getenv(
+						clabernetesconstants.LauncherTopologyNameEnv,
+					),
+					TopologyNodeName:          os.Getenv(clabernetesconstants.LauncherNodeNameEnv),
+					KubernetesNode:            nodeName,
+					RequestedImage:            c.imageName,
+					RequestedImagePullSecrets: configuredPullSecrets,
+				},
+			},
+			metav1.CreateOptions{},
 		)
+	if err != nil {
+		if apimachineryerrors.IsAlreadyExists(err) {
+			// if it already exists some other launcher has requested this image for this node
+			return nil
+		}
 
-		c.logger.Criticalf(msg)
-
-		return fmt.Errorf("%w: %s", claberneteserrors.ErrLaunch, msg)
+		// any other error would be a bad bingo
+		return err
 	}
-
-	_ = response.Body.Close()
 
 	return nil
+}
+
+func (c *clabernetes) waitImageRequestCRAccepted(imageRequestCRName string) error {
+	startTime := time.Now()
+
+	ticker := time.NewTicker(imageCheckPollInterval)
+
+	for range ticker.C {
+		if time.Since(startTime) > clabernetesconstants.PullerPodTimeout {
+			break
+		}
+
+		ctx, cancel := context.WithTimeout(c.ctx, clientDefaultTimeout)
+
+		imageRequestCR, err := c.kubeClabernetesClient.ClabernetesV1alpha1().
+			ImageRequests(os.Getenv(clabernetesconstants.PodNamespaceEnv)).
+			Get(
+				ctx,
+				imageRequestCRName,
+				metav1.GetOptions{},
+			)
+
+		cancel()
+
+		if err != nil {
+			return err
+		}
+
+		if imageRequestCR.Status.Accepted {
+			// cr has been "accepted" meaning controller will handle getting the image pulled on
+			// our node.
+			return nil
+		}
+	}
+
+	return fmt.Errorf(
+		"%w: timed out waiting for image request cr %q to change to accepted state",
+		claberneteserrors.ErrLaunch,
+		imageRequestCRName,
+	)
 }
 
 func (c *clabernetes) waitForImage(

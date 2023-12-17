@@ -41,6 +41,7 @@ rules:
       - services
       - pods
       - persistentvolumeclaims
+      - serviceaccounts
     verbs:
       - get
       - list
@@ -73,3 +74,37 @@ rules:
       - delete
       - patch
       - watch
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - rolebindings
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - delete
+      - patch
+      - watch
+---
+# Source: clabernetes/templates/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    chart: "clabernetes-0.0.0"
+    release: release-name
+    heritage: Helm
+    revision: "1"
+    clabernetes/app: clabernetes
+    clabernetes/name: "clabernetes-launcher-role"
+    clabernetes/component: launcher-role
+  name: "clabernetes-launcher-role"
+rules:
+  - apiGroups:
+      - clabernetes.containerlab.dev
+    resources:
+      - imagerequests
+    verbs:
+      - get
+      - create

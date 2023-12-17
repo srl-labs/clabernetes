@@ -6,17 +6,19 @@ import (
 	"os"
 	"time"
 
+	"k8s.io/klog/v2"
+
 	clabernetesgeneratedclientset "github.com/srl-labs/clabernetes/generated/clientset"
 
 	claberneteshttp "github.com/srl-labs/clabernetes/http"
 
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 
-	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
-
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlruntimelog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
@@ -52,10 +54,12 @@ func StartClabernetes(initializer bool) {
 
 	err := createNewKlogLogger(logManager)
 	if err != nil {
-		clabernetesLogger.Criticalf("failed patching klog, err: %s", err)
-
-		clabernetesutil.Panic(err.Error())
+		clabernetesLogger.Fatalf("failed patching klog, err: %s", err)
 	}
+
+	// set controller-runtime log too; we just use klogr since we'll patch it to be wrapped in our
+	// log manager anyway
+	ctrlruntimelog.SetLogger(klog.NewKlogr())
 
 	ctx, cancel := clabernetesutil.SignalHandledContext(clabernetesLogger.Criticalf)
 
@@ -232,10 +236,4 @@ func (c *clabernetes) Exit(exitCode int) {
 	claberneteslogging.GetManager().Flush()
 
 	os.Exit(exitCode)
-}
-
-func (c *clabernetes) Panic(msg string) {
-	claberneteslogging.GetManager().Flush()
-
-	clabernetesutil.Panic(msg)
 }

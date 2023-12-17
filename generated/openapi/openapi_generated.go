@@ -72,6 +72,18 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/srl-labs/clabernetes/apis/v1alpha1.ImagePull": schema_srl_labs_clabernetes_apis_v1alpha1_ImagePull(
 			ref,
 		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.ImageRequest": schema_srl_labs_clabernetes_apis_v1alpha1_ImageRequest(
+			ref,
+		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.ImageRequestList": schema_srl_labs_clabernetes_apis_v1alpha1_ImageRequestList(
+			ref,
+		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.ImageRequestSpec": schema_srl_labs_clabernetes_apis_v1alpha1_ImageRequestSpec(
+			ref,
+		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.ImageRequestStatus": schema_srl_labs_clabernetes_apis_v1alpha1_ImageRequestStatus(
+			ref,
+		),
 		"github.com/srl-labs/clabernetes/apis/v1alpha1.LinkEndpoint": schema_srl_labs_clabernetes_apis_v1alpha1_LinkEndpoint(
 			ref,
 		),
@@ -805,6 +817,217 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ImagePull(
 						},
 					},
 				},
+			},
+		},
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_ImageRequest(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ImageRequest is an object that represents a request (from a launcher pod) to pull an image on a given kubernetes node such that the image can be \"pulled through\" into the launcher docker daemon.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.ImageRequestSpec",
+							),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.ImageRequestStatus",
+							),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.ImageRequestSpec", "github.com/srl-labs/clabernetes/apis/v1alpha1.ImageRequestStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_ImageRequestList(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ImageRequestList is a list of ImageRequest objects.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref: ref(
+											"github.com/srl-labs/clabernetes/apis/v1alpha1.ImageRequest",
+										),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.ImageRequest", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_ImageRequestSpec(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ImageRequestSpec is the spec for a Config resource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"topologyName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TopologyName is the name of the topology requesting the image.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"topologyNodeName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TopologyNodeName is the name of the node in the topology (i.e. the router name in a containerlab topology) that the image is being requested for.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"kubernetesNode": {
+						SchemaProps: spec.SchemaProps{
+							Description: "KubernetesNode is the node where the launcher pod is running and where the image should be pulled too.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"requestedImage": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RequestedImage is the image that the launcher pod wants the controller to get pulled onto the specified node.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"requestedImagePullSecrets": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "RequestedImagePullSecrets is a list of configured pull secrets to set in the pull pod spec.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{
+					"topologyName",
+					"topologyNodeName",
+					"kubernetesNode",
+					"requestedImage",
+				},
+			},
+		},
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_ImageRequestStatus(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ImageRequestStatus is the status for a ImageRequest resource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"accepted": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Accepted indicates that the ImageRequest controller has seen this image request and is going to process it. This can be useful to let the requesting pod know that \"yep, this is in the works, and i can go watch the cri images on this node now\".",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"complete": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Complete indicates that the ImageRequest controller has seen that the puller pod has done its job and that the image has been pulled onto the requested node.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"accepted", "complete"},
 			},
 		},
 	}

@@ -154,7 +154,7 @@ func (r *DeploymentReconciler) renderDeploymentBase(
 				Spec: k8scorev1.PodSpec{
 					Containers:         []k8scorev1.Container{},
 					RestartPolicy:      "Always",
-					ServiceAccountName: "default",
+					ServiceAccountName: launcherServiceAccountName(),
 					Volumes:            []k8scorev1.Volume{},
 					Hostname:           nodeName,
 				},
