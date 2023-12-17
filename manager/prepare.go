@@ -1,9 +1,5 @@
 package manager
 
-import (
-	"fmt"
-)
-
 // prepare handles preparation tasks that happen before running the clabernetes.start method.
 func (c *clabernetes) prepare() {
 	c.logger.Info("begin prepare...")
@@ -12,11 +8,7 @@ func (c *clabernetes) prepare() {
 
 	err := prepareCertificates(c)
 	if err != nil {
-		msg := fmt.Sprintf("failed preparing certificates, err: %s", err)
-
-		c.logger.Critical(msg)
-
-		c.Panic(msg)
+		c.logger.Fatalf("failed preparing certificates, err: %s", err)
 	}
 
 	c.logger.Debug("preparing certificates complete...")
@@ -25,11 +17,7 @@ func (c *clabernetes) prepare() {
 
 	err = registerToScheme(c)
 	if err != nil {
-		msg := fmt.Sprintf("failed registering apis to scheme, err: %s", err)
-
-		c.logger.Critical(msg)
-
-		c.Panic(msg)
+		c.logger.Fatalf("failed registering apis to scheme, err: %s", err)
 	}
 
 	c.logger.Debug("preparing scheme complete...")

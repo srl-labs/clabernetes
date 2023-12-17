@@ -17,33 +17,25 @@ func (c *clabernetes) preInit() {
 
 	c.namespace, err = clabernetesutilkubernetes.CurrentNamespace()
 	if err != nil {
-		c.logger.Criticalf("failed getting current namespace, err: %s", err)
-
-		c.Panic(err.Error())
+		c.logger.Fatalf("failed getting current namespace, err: %s", err)
 	}
 
 	c.kubeConfig, err = rest.InClusterConfig()
 	if err != nil {
-		c.logger.Criticalf("failed getting in cluster kubeconfig, err: %s", err)
-
-		c.Panic(err.Error())
+		c.logger.Fatalf("failed getting in cluster kubeconfig, err: %s", err)
 	}
 
 	c.kubeClient, err = kubernetes.NewForConfig(c.kubeConfig)
 	if err != nil {
-		c.logger.Criticalf("failed creating kube client from in cluster kubeconfig, err: %s", err)
-
-		c.Panic(err.Error())
+		c.logger.Fatalf("failed creating kube client from in cluster kubeconfig, err: %s", err)
 	}
 
 	c.kubeClabernetesClient, err = clabernetesgeneratedclientset.NewForConfig(c.kubeConfig)
 	if err != nil {
-		c.logger.Criticalf(
+		c.logger.Fatalf(
 			"failed creating clabernetes kube client from in cluster kubeconfig, err: %s",
 			err,
 		)
-
-		c.Panic(err.Error())
 	}
 
 	c.scheme = apimachineryruntime.NewScheme()

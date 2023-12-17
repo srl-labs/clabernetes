@@ -24,13 +24,6 @@ import (
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// ResourceListerFunc represents a function that can list the objects that a topology controller
-// is responsible for.
-type ResourceListerFunc func(
-	ctx context.Context,
-	client ctrlruntimeclient.Client,
-) ([]ctrlruntimeclient.Object, error)
-
 // NewReconciler creates a new generic Reconciler (TopologyReconciler).
 func NewReconciler(
 	log claberneteslogging.Instance,
@@ -43,7 +36,17 @@ func NewReconciler(
 	return &Reconciler{
 		Log:    log,
 		Client: client,
-
+		serviceAccountReconciler: NewServiceAccountReconciler(
+			log,
+			client,
+			configManagerGetter,
+		),
+		roleBindingReconciler: NewRoleBindingReconciler(
+			log,
+			client,
+			configManagerGetter,
+			managerAppName,
+		),
 		configMapReconciler: NewConfigMapReconciler(
 			log,
 			configManagerGetter,
@@ -79,16 +82,62 @@ func NewReconciler(
 // common/standard resources that represent a clabernetes object (configmap, deployments,
 // services, etc.).
 type Reconciler struct {
-	Log          claberneteslogging.Instance
-	Client       ctrlruntimeclient.Client
-	ResourceKind string
+	Log    claberneteslogging.Instance
+	Client ctrlruntimeclient.Client
 
+	serviceAccountReconciler        *ServiceAccountReconciler
+	roleBindingReconciler           *RoleBindingReconciler
 	configMapReconciler             *ConfigMapReconciler
 	serviceNodeAliasReconciler      *ServiceNodeAliasReconciler
 	serviceFabricReconciler         *ServiceFabricReconciler
 	serviceExposeReconciler         *ServiceExposeReconciler
 	persistentVolumeClaimReconciler *PersistentVolumeClaimReconciler
 	deploymentReconciler            *DeploymentReconciler
+}
+
+// ReconcileNamespaceResources reconciles resources that exist in a Topology's namespace but are not
+// 1:1 with a Topology -- for example ServiceAccount and RoleBinding resources which are created at
+// the point the first Topology in a namespace is created and exist until the final Topology in a
+// namespace is being removed.
+func (r *Reconciler) ReconcileNamespaceResources(
+	ctx context.Context,
+	owningTopology *clabernetesapisv1alpha1.Topology,
+) error {
+	err := r.ReconcileServiceAccount(ctx, owningTopology)
+	if err != nil {
+		return err
+	}
+
+	err = r.ReconcileRoleBinding(ctx, owningTopology)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ReconcileServiceAccount reconciles the service account for the given namespace -- note that there
+// is only *one* service account per namespace, but its simply reconciled each time a Topology is
+// reconciled to make life easy. This and the RoleBinding are the only resources we need to worry
+// about when deleting, a Topology resource, hence there is `deleting` arg to indicate if we should
+// see if we should clean things up.
+func (r *Reconciler) ReconcileServiceAccount(
+	ctx context.Context,
+	owningTopology *clabernetesapisv1alpha1.Topology,
+) error {
+	return r.serviceAccountReconciler.Reconcile(ctx, owningTopology)
+}
+
+// ReconcileRoleBinding reconciles the role binding for the given namespace -- note that there
+// is only *one* role binding per namespace, but its simply reconciled each time a Topology is
+// reconciled to make life easy. This and the ServiceAccount are the only resources we need to worry
+// about when deleting, a Topology resource, hence there is `deleting` arg to indicate if we should
+// see if we should clean things up.
+func (r *Reconciler) ReconcileRoleBinding(
+	ctx context.Context,
+	owningTopology *clabernetesapisv1alpha1.Topology,
+) error {
+	return r.roleBindingReconciler.Reconcile(ctx, owningTopology)
 }
 
 // ReconcileConfigMap reconciles the primary configmap containing clabernetes configs, tunnel

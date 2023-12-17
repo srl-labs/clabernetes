@@ -71,7 +71,7 @@ func ServiceConforms(
 	}
 
 	if len(existingService.ObjectMeta.OwnerReferences) != 1 {
-		// we should have only one owner reference, the extractor
+		// we should have only one owner reference, the topology
 		return false
 	}
 

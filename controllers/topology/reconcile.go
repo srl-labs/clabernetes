@@ -3,6 +3,8 @@ package topology
 import (
 	"context"
 
+	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
 )
@@ -37,6 +39,15 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, nil
 	}
 
+	// we always reconcile the "namespace" resources first -- meaning the resources that exist in
+	// the namespace that are not 1:1 to a Topology -- for example: service account and role
+	// binding. These resources are created for the namespace on creation of the first Topology in
+	// the namespace, and are removed when the last Topology is removed from the namespace.
+	err = c.TopologyReconciler.ReconcileNamespaceResources(ctx, topology)
+	if err != nil {
+		return ctrlruntime.Result{}, err
+	}
+
 	reconcileData, err := NewReconcileData(topology)
 	if err != nil {
 		c.BaseController.Log.Criticalf(
@@ -53,49 +64,8 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, err
 	}
 
-	err = c.TopologyReconciler.ReconcileConfigMap(
-		ctx,
-		topology,
-		reconcileData,
-	)
+	err = c.reconcileResources(ctx, topology, reconcileData)
 	if err != nil {
-		c.BaseController.Log.Criticalf(
-			"failed reconciling clabernetes config map, error: %s",
-			err,
-		)
-
-		return ctrlruntime.Result{}, err
-	}
-
-	err = c.TopologyReconciler.ReconcileServices(
-		ctx,
-		topology,
-		reconcileData,
-	)
-	if err != nil {
-		// error already logged
-		return ctrlruntime.Result{}, err
-	}
-
-	err = c.TopologyReconciler.ReconcilePersistentVolumeClaim(
-		ctx,
-		topology,
-		reconcileData,
-	)
-	if err != nil {
-		c.BaseController.Log.Criticalf("failed reconciling clabernetes pvcs, error: %s", err)
-
-		return ctrlruntime.Result{}, err
-	}
-
-	err = c.TopologyReconciler.ReconcileDeployments(
-		ctx,
-		topology,
-		reconcileData,
-	)
-	if err != nil {
-		c.BaseController.Log.Criticalf("failed reconciling clabernetes deployments, error: %s", err)
-
 		return ctrlruntime.Result{}, err
 	}
 
@@ -130,4 +100,58 @@ func (c *Controller) Reconcile(
 	c.BaseController.LogReconcileCompleteSuccess(req)
 
 	return ctrlruntime.Result{}, nil
+}
+
+func (c *Controller) reconcileResources(
+	ctx context.Context,
+	topology *clabernetesapisv1alpha1.Topology,
+	reconcileData *ReconcileData,
+) error {
+	err := c.TopologyReconciler.ReconcileConfigMap(
+		ctx,
+		topology,
+		reconcileData,
+	)
+	if err != nil {
+		c.BaseController.Log.Criticalf(
+			"failed reconciling clabernetes config map, error: %s",
+			err,
+		)
+
+		return err
+	}
+
+	err = c.TopologyReconciler.ReconcileServices(
+		ctx,
+		topology,
+		reconcileData,
+	)
+	if err != nil {
+		// error already logged
+		return err
+	}
+
+	err = c.TopologyReconciler.ReconcilePersistentVolumeClaim(
+		ctx,
+		topology,
+		reconcileData,
+	)
+	if err != nil {
+		c.BaseController.Log.Criticalf("failed reconciling clabernetes pvcs, error: %s", err)
+
+		return err
+	}
+
+	err = c.TopologyReconciler.ReconcileDeployments(
+		ctx,
+		topology,
+		reconcileData,
+	)
+	if err != nil {
+		c.BaseController.Log.Criticalf("failed reconciling clabernetes deployments, error: %s", err)
+
+		return err
+	}
+
+	return nil
 }

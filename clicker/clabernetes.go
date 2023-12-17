@@ -99,21 +99,17 @@ func (c *clabernetes) run() error {
 
 	err := c.setup()
 	if err != nil {
-		clabernetesutil.Panic(err.Error())
+		c.logger.Fatal(err.Error())
 	}
 
 	selfPod, err := c.getSelfPod()
 	if err != nil {
-		c.logger.Criticalf("failed fetching our own pod info, err: %s", err)
-
-		clabernetesutil.Panic(err.Error())
+		c.logger.Fatalf("failed fetching our own pod info, err: %s", err)
 	}
 
 	targetNodes, err := c.getInvokeNodes()
 	if err != nil {
-		c.logger.Criticalf("failed fetching cluster nodes, err: %s", err)
-
-		clabernetesutil.Panic(err.Error())
+		c.logger.Fatalf("failed fetching cluster nodes, err: %s", err)
 	}
 
 	configMap := c.buildConfigMap()
@@ -122,9 +118,7 @@ func (c *clabernetes) run() error {
 		ConfigMaps(c.namespace).
 		Create(c.ctx, configMap, metav1.CreateOptions{})
 	if err != nil {
-		c.logger.Criticalf("failed creating clicker configmap %q, err: %s", configMap.Name, err)
-
-		clabernetesutil.Panic(err.Error())
+		c.logger.Fatalf("failed creating clicker configmap %q, err: %s", configMap.Name, err)
 	}
 
 	if !c.args.SkipConfigMapCleanup {

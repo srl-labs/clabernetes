@@ -1,7 +1,6 @@
 package manager
 
 import (
-	"fmt"
 	"strings"
 
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
@@ -21,11 +20,7 @@ func (c *clabernetes) preStart() {
 		// we *shouldn't* actually ever hit this as the config manager can start and *not* find a
 		// config that it manages just fine, but i guess its possible that something terrible
 		// could happen that would prevent us from continuing.
-		msg := fmt.Sprintf("failed starting config manager, err: %s", err)
-
-		c.logger.Critical(msg)
-
-		clabernetesutil.Panic(msg)
+		c.logger.Fatalf("failed starting config manager, err: %s", err)
 	}
 
 	c.logger.Debug("config manager started...")
@@ -34,11 +29,7 @@ func (c *clabernetes) preStart() {
 
 	nodeCriKind, err := cri(c)
 	if err != nil {
-		msg := fmt.Sprintf("failed dermining cri sameness, err: %s", err)
-
-		c.logger.Critical(msg)
-
-		clabernetesutil.Panic(msg)
+		c.logger.Fatalf("failed dermining cri sameness, err: %s", err)
 	}
 
 	c.criKind = nodeCriKind

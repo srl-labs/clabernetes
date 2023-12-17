@@ -2,7 +2,6 @@ package manager
 
 import (
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-
 	"k8s.io/apimachinery/pkg/labels"
 	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
@@ -33,6 +32,7 @@ func newManager(scheme *apimachineryruntime.Scheme, appName string) (ctrlruntime
 						// about anything else (for now -- and we can override it with opts.ByObject
 						// anyway?! and... who the hell calls their app "clabernetes" so this should
 						// really limit the cache nicely :)
+						// currently this matters for launcher service accounts and role bindings
 						"clabernetes/app": appName,
 					},
 				)
@@ -40,6 +40,14 @@ func newManager(scheme *apimachineryruntime.Scheme, appName string) (ctrlruntime
 				opts.ByObject = map[ctrlruntimeclient.Object]ctrlruntimecache.ByObject{
 					// obviously we need to cache all "our" topology objects, so do that
 					&clabernetesapisv1alpha1.Topology{}: {
+						Namespaces: map[string]ctrlruntimecache.Config{
+							ctrlruntimecache.AllNamespaces: {
+								LabelSelector: labels.Everything(),
+							},
+						},
+					},
+					// we need to cache all our image request crs too of course
+					&clabernetesapisv1alpha1.ImageRequest{}: {
 						Namespaces: map[string]ctrlruntimecache.Config{
 							ctrlruntimecache.AllNamespaces: {
 								LabelSelector: labels.Everything(),

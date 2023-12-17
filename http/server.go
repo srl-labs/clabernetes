@@ -100,11 +100,6 @@ func (m *manager) Start() {
 		m.aliveHandler,
 	)
 
-	mux.HandleFunc(
-		imageRoute,
-		m.imageHandler,
-	)
-
 	m.server = &http.Server{
 		BaseContext: func(_ net.Listener) context.Context {
 			return m.ctx

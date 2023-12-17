@@ -8,6 +8,7 @@ import (
 	"time"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+	clabernetesgeneratedclientset "github.com/srl-labs/clabernetes/generated/clientset"
 
 	"sigs.k8s.io/yaml"
 
@@ -21,7 +22,7 @@ const (
 	containerCheckInterval  = 5 * time.Second
 )
 
-// StartClabernetes is a function that starts the clabernetes launcher.
+// StartClabernetes is a function that starts the clabernetes launcher. It cannot fail, only panic.
 func StartClabernetes() {
 	if clabernetesInstance != nil {
 		clabernetesutil.Panic("clabernetes instance already created...")
@@ -54,8 +55,9 @@ func StartClabernetes() {
 	ctx, cancel := clabernetesutil.SignalHandledContext(clabernetesLogger.Criticalf)
 
 	clabernetesInstance = &clabernetes{
-		ctx:    ctx,
-		cancel: cancel,
+		ctx:                   ctx,
+		cancel:                cancel,
+		kubeClabernetesClient: mustNewKubeClabernetesClient(clabernetesLogger),
 		appName: clabernetesutil.GetEnvStrOrDefault(
 			clabernetesconstants.AppNameEnv,
 			clabernetesconstants.AppNameDefault,
@@ -75,6 +77,8 @@ var clabernetesInstance *clabernetes //nolint:gochecknoglobals
 type clabernetes struct {
 	ctx    context.Context
 	cancel context.CancelFunc
+
+	kubeClabernetesClient *clabernetesgeneratedclientset.Clientset
 
 	appName string
 
@@ -120,9 +124,7 @@ func (c *clabernetes) setup() {
 
 	err := c.handleInsecureRegistries()
 	if err != nil {
-		c.logger.Criticalf("failed configuring insecure docker registries, err: %s", err)
-
-		clabernetesutil.Panic(err.Error())
+		c.logger.Fatalf("failed configuring insecure docker registries, err: %s", err)
 	}
 
 	c.logger.Debug("ensuring docker is running...")
@@ -136,16 +138,12 @@ func (c *clabernetes) setup() {
 		// see https://github.com/srl-labs/clabernetes/issues/47
 		err = c.enableLegacyIPTables()
 		if err != nil {
-			c.logger.Criticalf("failed enabling legacy ip tables, err: %s", err)
-
-			clabernetesutil.Panic(err.Error())
+			c.logger.Fatalf("failed enabling legacy ip tables, err: %s", err)
 		}
 
 		err = c.startDocker()
 		if err != nil {
-			c.logger.Criticalf("failed ensuring docker is running, err: %s", err)
-
-			clabernetesutil.Panic(err.Error())
+			c.logger.Fatalf("failed ensuring docker is running, err: %s", err)
 		}
 
 		c.logger.Warn("docker started, but using legacy ip tables")
@@ -155,9 +153,7 @@ func (c *clabernetes) setup() {
 
 	err = c.getFilesFromURL()
 	if err != nil {
-		c.logger.Criticalf("failed getting file(s) from remote url, err: %s", err)
-
-		clabernetesutil.Panic(err.Error())
+		c.logger.Fatalf("failed getting file(s) from remote url, err: %s", err)
 	}
 }
 
@@ -166,9 +162,7 @@ func (c *clabernetes) launch() {
 
 	err := c.runContainerlab()
 	if err != nil {
-		c.logger.Criticalf("failed launching containerlab, err: %s", err)
-
-		clabernetesutil.Panic(err.Error())
+		c.logger.Fatalf("failed launching containerlab, err: %s", err)
 	}
 
 	c.containerIDs = c.getContainerIDs()
@@ -188,18 +182,14 @@ func (c *clabernetes) launch() {
 
 	tunnelBytes, err := os.ReadFile("tunnels.yaml")
 	if err != nil {
-		c.logger.Criticalf("failed loading tunnels yaml file content, err: %s", err)
-
-		clabernetesutil.Panic(err.Error())
+		c.logger.Fatalf("failed loading tunnels yaml file content, err: %s", err)
 	}
 
 	var tunnelObj []*clabernetesapisv1alpha1.Tunnel
 
 	err = yaml.Unmarshal(tunnelBytes, &tunnelObj)
 	if err != nil {
-		c.logger.Criticalf("failed unmarshalling tunnels config, err: %s", err)
-
-		clabernetesutil.Panic(err.Error())
+		c.logger.Fatalf("failed unmarshalling tunnels config, err: %s", err)
 	}
 
 	for _, tunnel := range tunnelObj {
@@ -210,14 +200,12 @@ func (c *clabernetes) launch() {
 			tunnel.ID,
 		)
 		if err != nil {
-			c.logger.Criticalf(
+			c.logger.Fatalf(
 				"failed setting up tunnel to remote node '%s' for local interface '%s', error: %s",
 				tunnel.RemoteNodeName,
 				tunnel.LocalLinkName,
 				err,
 			)
-
-			clabernetesutil.Panic(err.Error())
 		}
 	}
 }

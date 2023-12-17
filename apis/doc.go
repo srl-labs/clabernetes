@@ -13,6 +13,6 @@ const (
 	// TopologyKindKne is the "kne" kind of topology.
 	TopologyKindKne = "kne"
 
-	// TopologyKindUnknown is the kind of topology for unknown topologies.
-	TopologyKindUnknown = "unknown"
+	// ImageRequest is the Kind of the ImageRequest custom resource.
+	ImageRequest = "imageRequest"
 )

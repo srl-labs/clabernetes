@@ -224,7 +224,7 @@
                     }
                 ],
                 "restartPolicy": "Always",
-                "serviceAccountName": "default",
+                "serviceAccountName": "clabernetes-launcher-service-account",
                 "hostname": "srl1"
             }
         },
