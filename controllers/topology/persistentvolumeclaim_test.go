@@ -348,7 +348,7 @@ func TestPersistentVolumeClaimConforms(t *testing.T) {
 					},
 				},
 				Spec: k8scorev1.PersistentVolumeClaimSpec{
-					Resources: k8scorev1.ResourceRequirements{
+					Resources: k8scorev1.VolumeResourceRequirements{
 						Requests: k8scorev1.ResourceList{
 							"storage": resource.MustParse("1Gi"),
 						},
@@ -357,7 +357,7 @@ func TestPersistentVolumeClaimConforms(t *testing.T) {
 			},
 			rendered: &k8scorev1.PersistentVolumeClaim{
 				Spec: k8scorev1.PersistentVolumeClaimSpec{
-					Resources: k8scorev1.ResourceRequirements{
+					Resources: k8scorev1.VolumeResourceRequirements{
 						Requests: k8scorev1.ResourceList{
 							"storage": resource.MustParse("1Gi"),
 						},
@@ -378,7 +378,7 @@ func TestPersistentVolumeClaimConforms(t *testing.T) {
 					},
 				},
 				Spec: k8scorev1.PersistentVolumeClaimSpec{
-					Resources: k8scorev1.ResourceRequirements{
+					Resources: k8scorev1.VolumeResourceRequirements{
 						Requests: k8scorev1.ResourceList{
 							"storage": resource.MustParse("1Gi"),
 						},
@@ -387,7 +387,7 @@ func TestPersistentVolumeClaimConforms(t *testing.T) {
 			},
 			rendered: &k8scorev1.PersistentVolumeClaim{
 				Spec: k8scorev1.PersistentVolumeClaimSpec{
-					Resources: k8scorev1.ResourceRequirements{
+					Resources: k8scorev1.VolumeResourceRequirements{
 						Requests: k8scorev1.ResourceList{
 							"storage": resource.MustParse("99Gi"),
 						},

@@ -163,7 +163,7 @@ func (r *PersistentVolumeClaimReconciler) renderPVCSpec(
 		AccessModes: []k8scorev1.PersistentVolumeAccessMode{
 			k8scorev1.ReadWriteOnce,
 		},
-		Resources: k8scorev1.ResourceRequirements{
+		Resources: k8scorev1.VolumeResourceRequirements{
 			Requests: k8scorev1.ResourceList{
 				"storage": pvcSize,
 			},
