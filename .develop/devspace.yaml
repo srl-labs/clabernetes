@@ -232,3 +232,5 @@ pipelines:
       purge_deployments --all
       kubectl delete leases -n ${DEVSPACE_NAMESPACE} \
         $(kubectl get leases -n ${DEVSPACE_NAMESPACE} 2> /dev/null | grep "clabernetes" | awk '{print $1}') 2> /dev/null || true
+      kubectl delete crds \
+        $(kubectl get crds 2> /dev/null | grep "clabernetes" | awk '{print $1}') 2> /dev/null || true
