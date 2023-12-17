@@ -14,7 +14,24 @@ import (
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 )
 
+const (
+	dockerDaemonConfig = "/etc/docker/daemon.json"
+)
+
+func daemonConfigExists() bool {
+	_, err := os.Stat(dockerDaemonConfig)
+
+	return err == nil
+}
+
 func (c *clabernetes) handleInsecureRegistries() error {
+	if daemonConfigExists() {
+		// user has provided a docker daemon config, we ignore insecure
+		c.logger.Infof("%q exists, skipping insecure registries", dockerDaemonConfig)
+
+		return nil
+	}
+
 	insecureRegistries := os.Getenv(clabernetesconstants.LauncherInsecureRegistries)
 
 	if insecureRegistries == "" {
@@ -48,7 +65,7 @@ func (c *clabernetes) handleInsecureRegistries() error {
 	}
 
 	err = os.WriteFile(
-		"/etc/docker/daemon.json",
+		dockerDaemonConfig,
 		rendered.Bytes(),
 		clabernetesconstants.PermissionsEveryoneRead,
 	)

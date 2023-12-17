@@ -91,4 +91,14 @@ type ConfigImagePull struct {
 	// +kubebuilder:validation:Enum=containerd
 	// +optional
 	CRIKindOverride string `json:"criKindOverride,omitempty"`
+	// DockerDaemonConfig allows for setting a default docker daemon config for launcher pods
+	// with the specified secret. The secret *must be present in the namespace of any given
+	// topology* -- so if you are configuring this at the "global config" level, ensure that you are
+	// deploying topologies into a specific namespace, or have ensured there is a secret of the
+	// given name in every namespace you wish to deploy a topology to. When set, insecure registries
+	// config option is ignored as it is assumed you are handling that in the given docker config.
+	// Note that the secret *must* contain a key "daemon.json" -- as this secret will be mounted to
+	// /etc/docker and docker will be expecting the config at /etc/docker/daemon.json.
+	// +optional
+	DockerDaemonConfig string `json:"dockerDaemonConfig,omitempty"`
 }

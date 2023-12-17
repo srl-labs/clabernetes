@@ -66,6 +66,10 @@ func (f fakeManager) GetImagePullCriKindOverride() string {
 	return ""
 }
 
+func (f fakeManager) GetDockerDaemonConfig() string {
+	return ""
+}
+
 func (f fakeManager) GetLauncherImagePullPolicy() string {
 	return clabernetesconstants.KubernetesImagePullIfNotPresent
 }
