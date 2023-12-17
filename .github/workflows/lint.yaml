@@ -25,7 +25,7 @@ jobs:
       - name: install go lint tools
         run: |
           go install mvdan.cc/gofumpt@${{ vars.GOFUMPT_VERSION }}
-          go install golang.org/x/tools/cmd/goimports@${{ vars.GOIMPORTS_VERSION }}
+          go install github.com/daixiang0/gci@${{ vars.GCI_VERSION }}
           go install github.com/segmentio/golines@${{ vars.GOLINES_VERSION }}
           curl -sSfL \
             https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh |
