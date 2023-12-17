@@ -27,6 +27,8 @@ type bootstrapConfig struct {
 	launcherImage               string
 	launcherImagePullPolicy     string
 	launcherLogLevel            string
+	criSockOverride             string
+	criKindOverride             string
 }
 
 func bootstrapFromConfigMap( //nolint:gocyclo,funlen
@@ -125,6 +127,16 @@ func bootstrapFromConfigMap( //nolint:gocyclo,funlen
 		bc.launcherLogLevel = launcherLogLevel
 	}
 
+	criSockOverride, criSockOverrideOk := inMap["criSockOverride"]
+	if criSockOverrideOk {
+		bc.criSockOverride = criSockOverride
+	}
+
+	criKindOverride, criKindOverrideOk := inMap["criKindOverride"]
+	if criKindOverrideOk {
+		bc.criKindOverride = criKindOverride
+	}
+
 	var err error
 
 	if len(outErrors) > 0 {
@@ -217,6 +229,14 @@ func mergeFromBootstrapConfigMerge(
 	if config.Spec.Deployment.LauncherLogLevel == "" {
 		config.Spec.Deployment.LauncherLogLevel = bootstrap.launcherLogLevel
 	}
+
+	if config.Spec.ImagePull.CRISockOverride == "" {
+		config.Spec.ImagePull.CRISockOverride = bootstrap.criSockOverride
+	}
+
+	if config.Spec.ImagePull.CRIKindOverride == "" {
+		config.Spec.ImagePull.CRIKindOverride = bootstrap.criKindOverride
+	}
 }
 
 func mergeFromBootstrapConfigReplace(
@@ -231,6 +251,8 @@ func mergeFromBootstrapConfigReplace(
 		InClusterDNSSuffix: bootstrap.inClusterDNSSuffix,
 		ImagePull: clabernetesapisv1alpha1.ConfigImagePull{
 			PullThroughOverride: bootstrap.imagePullThroughMode,
+			CRISockOverride:     bootstrap.criSockOverride,
+			CRIKindOverride:     bootstrap.criKindOverride,
 		},
 		Deployment: clabernetesapisv1alpha1.ConfigDeployment{
 			ResourcesDefault:            bootstrap.resourcesDefault,

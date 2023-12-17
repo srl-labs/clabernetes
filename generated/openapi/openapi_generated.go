@@ -267,6 +267,20 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigImagePull(
 							Format:      "",
 						},
 					},
+					"criSockOverride": {
+						SchemaProps: spec.SchemaProps{
+							Description: "CRISockOverride allows for overriding the path of the CRI sock that is mounted in the launcher pods (if/when image pull through mode is auto or always). This can be useful if, for example, the CRI sock is in a \"non-standard\" location like K3s which puts the containerd sock at `/run/k3s/containerd/containerd.sock` rather than the \"normal\" (whatever that means) location of `/run/containerd/containerd.sock`. The value must end with \"containerd.sock\" for now, in the future maybe crio support will be added.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"criKindOverride": {
+						SchemaProps: spec.SchemaProps{
+							Description: "CRIKindOverride allows for overriding the auto discovered cri flavor of the cluster -- this may be useful if we fail to parse the cri kind for some reason, or in mixed cri flavor clusters -- however in the latter case, make sure that if you are using image pull through that clabernetes workloads are only run on the nodes of the cri kind specified here!",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},

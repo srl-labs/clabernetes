@@ -2,6 +2,7 @@ package topology
 
 import (
 	"fmt"
+	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -188,57 +189,35 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 
 	volumeMountsFromCommonSpec := make([]k8scorev1.VolumeMount, 0)
 
-	// if we have containerd cri *and* pull through mode is auto or always, we need to mount the
-	// containerd sock
-	if r.configManagerGetter().
-		GetImagePullThroughMode() !=
-		clabernetesconstants.ImagePullThroughModeNever &&
-		owningTopology.Spec.ImagePull.PullThroughOverride != clabernetesconstants.ImagePullThroughModeNever { //nolint:lll
-		var path string
+	criPath, criSubPath := r.renderDeploymentVolumesGetCRISockPath(owningTopology)
 
-		var subPath string
-
-		switch r.criKind {
-		case clabernetesconstants.KubernetesCRIContainerd:
-			path = clabernetesconstants.KubernetesCRISockContainerdPath
-
-			subPath = clabernetesconstants.KubernetesCRISockContainerd
-		default:
-			r.log.Warnf(
-				"image pull through mode is auto or always but cri kind is not containerd!"+
-					" got cri kind %q",
-				r.criKind,
-			)
-		}
-
-		if path != "" && subPath != "" {
-			volumes = append(
-				volumes,
-				k8scorev1.Volume{
-					Name: "cri-sock",
-					VolumeSource: k8scorev1.VolumeSource{
-						HostPath: &k8scorev1.HostPathVolumeSource{
-							Path: path,
-							Type: clabernetesutil.ToPointer(k8scorev1.HostPathType("")),
-						},
+	if criPath != "" && criSubPath != "" {
+		volumes = append(
+			volumes,
+			k8scorev1.Volume{
+				Name: "cri-sock",
+				VolumeSource: k8scorev1.VolumeSource{
+					HostPath: &k8scorev1.HostPathVolumeSource{
+						Path: criPath,
+						Type: clabernetesutil.ToPointer(k8scorev1.HostPathType("")),
 					},
 				},
-			)
+			},
+		)
 
-			volumeMountsFromCommonSpec = append(
-				volumeMountsFromCommonSpec,
-				k8scorev1.VolumeMount{
-					Name:     "cri-sock",
-					ReadOnly: true,
-					MountPath: fmt.Sprintf(
-						"%s/%s",
-						clabernetesconstants.LauncherCRISockPath,
-						subPath,
-					),
-					SubPath: subPath,
-				},
-			)
-		}
+		volumeMountsFromCommonSpec = append(
+			volumeMountsFromCommonSpec,
+			k8scorev1.VolumeMount{
+				Name:     "cri-sock",
+				ReadOnly: true,
+				MountPath: fmt.Sprintf(
+					"%s/%s",
+					clabernetesconstants.LauncherCRISockPath,
+					criSubPath,
+				),
+				SubPath: criSubPath,
+			},
+		)
 	}
 
 	volumesFromConfigMaps := make([]clabernetesapisv1alpha1.FileFromConfigMap, 0)
@@ -284,6 +263,51 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 	deployment.Spec.Template.Spec.Volumes = volumes
 
 	return volumeMountsFromCommonSpec
+}
+
+func (r *DeploymentReconciler) renderDeploymentVolumesGetCRISockPath(
+	owningTopology *clabernetesapisv1alpha1.Topology,
+) (path, subPath string) {
+	if owningTopology.Spec.ImagePull.PullThroughOverride == clabernetesconstants.ImagePullThroughModeNever { //nolint:lll
+		// obviously the topology is set to *never*, so nothing to do...
+		return path, subPath
+	}
+
+	if owningTopology.Spec.ImagePull.PullThroughOverride == "" && r.configManagerGetter().
+		GetImagePullThroughMode() == clabernetesconstants.ImagePullThroughModeNever {
+		// our specific topology is setting is unset, so we default to the global value, if that
+		// is never then we are obviously done here
+		return path, subPath
+	}
+
+	criSockOverrideFullPath := r.configManagerGetter().GetImagePullCriSockOverride()
+	if criSockOverrideFullPath != "" {
+		path, subPath = filepath.Split(criSockOverrideFullPath)
+
+		if path == "" {
+			r.log.Warn(
+				"image pull cri path override is set, but failed to parse path/subpath," +
+					" will skip mounting cri sock",
+			)
+
+			return path, subPath
+		}
+	} else {
+		switch r.criKind {
+		case clabernetesconstants.KubernetesCRIContainerd:
+			path = clabernetesconstants.KubernetesCRISockContainerdPath
+
+			subPath = clabernetesconstants.KubernetesCRISockContainerd
+		default:
+			r.log.Warnf(
+				"image pull through mode is auto or always but cri kind is not containerd!"+
+					" got cri kind %q",
+				r.criKind,
+			)
+		}
+	}
+
+	return path, subPath
 }
 
 func (r *DeploymentReconciler) renderDeploymentContainer(
@@ -368,6 +392,11 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		imagePullThroughMode = r.configManagerGetter().GetImagePullThroughMode()
 	}
 
+	criKind := r.configManagerGetter().GetImagePullCriKindOverride()
+	if criKind == "" {
+		criKind = r.criKind
+	}
+
 	envs := []k8scorev1.EnvVar{
 		{
 			Name: clabernetesconstants.NodeNameEnv,
@@ -406,7 +435,7 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		},
 		{
 			Name:  clabernetesconstants.LauncherCRIKindEnv,
-			Value: r.criKind,
+			Value: criKind,
 		},
 		{
 			Name:  clabernetesconstants.LauncherImagePullThroughModeEnv,

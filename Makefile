@@ -14,7 +14,7 @@ fmt: ## Run formatters
 	goimports -w .
 	golines -w .
 
-lint: fmt ## Run linters; runs with GOOS env var for linting on darwin
+lint: fmt ## Run linters
 	golangci-lint run
 	helm lint --quiet charts/clabernetes
 	helm lint --quiet charts/clicker
