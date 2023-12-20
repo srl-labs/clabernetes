@@ -65,6 +65,8 @@ func (t *Topology) GetNodeKindType(nodeName string) (
 
 // GetNodeImage returns the resolved image for the given node.
 func (t *Topology) GetNodeImage(nodeName string) string {
+	containerlabKind, _ := t.GetNodeKindType(nodeName)
+
 	nodeDefinition, nodeDefinitionOk := t.Nodes[nodeName]
 	if nodeDefinitionOk {
 		if nodeDefinition.Image != "" {
@@ -72,7 +74,7 @@ func (t *Topology) GetNodeImage(nodeName string) string {
 		}
 	}
 
-	kindDefinition, kindDefinitionOk := t.Kinds[nodeName]
+	kindDefinition, kindDefinitionOk := t.Kinds[containerlabKind]
 	if kindDefinitionOk {
 		if kindDefinition.Image != "" {
 			return kindDefinition.Image
