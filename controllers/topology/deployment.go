@@ -1,6 +1,7 @@
 package topology
 
 import (
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"reflect"
@@ -424,6 +425,21 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		criKind = r.criKind
 	}
 
+	nodeImage := clabernetesConfigs[nodeName].Topology.GetNodeImage(nodeName)
+	if nodeImage == "" {
+		r.log.Warnf(
+			"could not parse image for node %q, topology in question printined in debug log",
+			nodeName,
+		)
+
+		subTopologyBytes, err := json.MarshalIndent(clabernetesConfigs[nodeName], "", "    ")
+		if err != nil {
+			r.log.Warnf("failed marshaling topology, error: %s", err)
+		} else {
+			r.log.Debugf("node topology:\n%s", string(subTopologyBytes))
+		}
+	}
+
 	envs := []k8scorev1.EnvVar{
 		{
 			Name: clabernetesconstants.NodeNameEnv,
@@ -482,7 +498,7 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		},
 		{
 			Name:  clabernetesconstants.LauncherNodeImageEnv,
-			Value: clabernetesConfigs[nodeName].Topology.GetNodeImage(nodeName),
+			Value: nodeImage,
 		},
 	}
 
