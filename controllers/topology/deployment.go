@@ -389,12 +389,6 @@ func (r *DeploymentReconciler) renderDeploymentContainer(
 			{
 				Name:      configVolumeName,
 				ReadOnly:  true,
-				MountPath: "/clabernetes/tunnels.yaml",
-				SubPath:   fmt.Sprintf("%s-tunnels", nodeName),
-			},
-			{
-				Name:      configVolumeName,
-				ReadOnly:  true,
 				MountPath: "/clabernetes/files-from-url.yaml",
 				SubPath:   fmt.Sprintf("%s-files-from-url", nodeName),
 			},

@@ -108,3 +108,9 @@ rules:
     verbs:
       - get
       - create
+  - apiGroups:
+      - clabernetes.containerlab.dev
+    resources:
+      - connectivities
+    verbs:
+      - get

@@ -77,7 +77,7 @@ func (c *Controller) processKneDefinition(
 	// load the kne topo to make sure its all good
 	kneTopo, err := clabernetesutilkne.LoadKneTopology(topology.Spec.Definition.Kne)
 	if err != nil {
-		c.BaseController.Log.Criticalf("failed parsing kne topology, error: ", err)
+		c.BaseController.Log.Criticalf("failed parsing kne topology, error: %s", err)
 
 		return err
 	}

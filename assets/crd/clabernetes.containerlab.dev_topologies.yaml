@@ -406,8 +406,7 @@ spec:
             - definition
             type: object
           status:
-            description: TopologyStatus is the status for a Containerlab topology
-              resource.
+            description: TopologyStatus is the status for a Topology resource.
             properties:
               configs:
                 additionalProperties:
@@ -487,18 +486,11 @@ spec:
                     description: ImagePullSecrets is the hash of hte last stored image
                       pull secrets for this Topology.
                     type: string
-                  tunnels:
-                    description: |-
-                      Tunnels is the last stored hash of the tunnels that provided connectivity between the
-                      launcher nodes. As this can change due to the dns suffix changing and not just the config
-                      changing we need to independently track this state.
-                    type: string
                 required:
                 - config
                 - exposedPorts
                 - filesFromURL
                 - imagePullSecrets
-                - tunnels
                 type: object
             required:
             - configs

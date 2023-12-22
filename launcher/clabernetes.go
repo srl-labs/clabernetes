@@ -7,12 +7,10 @@ import (
 	"strings"
 	"time"
 
-	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetesgeneratedclientset "github.com/srl-labs/clabernetes/generated/clientset"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
-	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -178,30 +176,23 @@ func (c *clabernetes) launch() {
 
 	c.logger.Info("containerlab started, setting up any required tunnels...")
 
-	tunnelBytes, err := os.ReadFile("tunnels.yaml")
+	tunnels, err := c.getTunnels()
 	if err != nil {
-		c.logger.Fatalf("failed loading tunnels yaml file content, err: %s", err)
+		c.logger.Fatalf("failed loading tunnels content, err: %s", err)
 	}
 
-	var tunnelObj []*clabernetesapisv1alpha1.Tunnel
-
-	err = yaml.Unmarshal(tunnelBytes, &tunnelObj)
-	if err != nil {
-		c.logger.Fatalf("failed unmarshalling tunnels config, err: %s", err)
-	}
-
-	for _, tunnel := range tunnelObj {
+	for _, tunnel := range tunnels {
 		err = c.runContainerlabVxlanTools(
-			tunnel.LocalNodeName,
-			tunnel.LocalLinkName,
-			tunnel.RemoteName,
-			tunnel.ID,
+			tunnel.LocalNode,
+			tunnel.LocalInterface,
+			tunnel.Destination,
+			tunnel.TunnelID,
 		)
 		if err != nil {
 			c.logger.Fatalf(
 				"failed setting up tunnel to remote node '%s' for local interface '%s', error: %s",
-				tunnel.RemoteNodeName,
-				tunnel.LocalLinkName,
+				tunnel.RemoteNode,
+				tunnel.LocalInterface,
 				err,
 			)
 		}
