@@ -72,4 +72,3 @@ status:
     exposedPorts: ""
     filesFromURL: null
     imagePullSecrets: ""
-    tunnels: ""

@@ -19,8 +19,7 @@ type ReconcileData struct {
 	ResolvedConfigs      map[string]*clabernetesutilcontainerlab.Config
 	ResolvedConfigsBytes []byte
 
-	PreviousTunnels map[string][]*clabernetesapisv1alpha1.Tunnel
-	ResolvedTunnels map[string][]*clabernetesapisv1alpha1.Tunnel
+	ResolvedTunnels map[string][]*clabernetesapisv1alpha1.PointToPointTunnel
 
 	ResolvedExposedPorts map[string]*clabernetesapisv1alpha1.ExposedPorts
 
@@ -43,7 +42,7 @@ func NewReconcileData(
 		PreviousConfigs: make(map[string]*clabernetesutilcontainerlab.Config),
 		ResolvedConfigs: make(map[string]*clabernetesutilcontainerlab.Config),
 
-		ResolvedTunnels: make(map[string][]*clabernetesapisv1alpha1.Tunnel),
+		ResolvedTunnels: make(map[string][]*clabernetesapisv1alpha1.PointToPointTunnel),
 
 		ResolvedExposedPorts: map[string]*clabernetesapisv1alpha1.ExposedPorts{},
 
@@ -92,10 +91,6 @@ func (r *ReconcileData) SetStatus(
 // verbose/clear what we are checking rather than having a giant conditional in the Reconciler.
 func (r *ReconcileData) ConfigMapHasChanges() bool {
 	if r.PreviousHashes.Config != r.ResolvedHashes.Config {
-		return true
-	}
-
-	if r.PreviousHashes.Tunnels != r.ResolvedHashes.Tunnels {
 		return true
 	}
 

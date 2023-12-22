@@ -40,7 +40,7 @@ type TopologySpec struct {
 	ImagePull ImagePull `json:"imagePull"`
 }
 
-// TopologyStatus is the status for a Containerlab topology resource.
+// TopologyStatus is the status for a Topology resource.
 type TopologyStatus struct {
 	// Kind is the topology kind this CR represents -- for example "containerlab".
 	// +kubebuilder:validation:Enum=containerlab;kne

@@ -9,10 +9,6 @@ type ReconcileHashes struct {
 	// Config is the last stored hash of the rendered config(s) -- that is, the map of "sub
 	// topologies" representing the overall Topology.Spec.Definition.
 	Config string `json:"config"`
-	// Tunnels is the last stored hash of the tunnels that provided connectivity between the
-	// launcher nodes. As this can change due to the dns suffix changing and not just the config
-	// changing we need to independently track this state.
-	Tunnels string `json:"tunnels"`
 	// ExposedPorts is the last stored hash of the exposed ports mapping for this Topology. Note
 	// that while we obviously care about the exposed ports on a *per node basis*, we don't need to
 	// track that here -- this is here strictly to track differences in the load balancer service --
@@ -34,22 +30,6 @@ type LinkEndpoint struct {
 	NodeName string `json:"nodeName"`
 	// InterfaceName is the name of the interface on the node this link is on.
 	InterfaceName string `json:"interfaceName"`
-}
-
-// Tunnel represents a VXLAN tunnel between clabernetes nodes (as configured by containerlab).
-type Tunnel struct {
-	// ID is the VXLAN ID (vnid) for the tunnel.
-	ID int `json:"id"             yaml:"id"`
-	// LocalNodeName is the name of the local node for this tunnel.
-	LocalNodeName string `json:"localNodeName"  yaml:"localNodeName"`
-	// RemoteName is the name of the service to contact the remote end of the tunnel.
-	RemoteName string `json:"remoteName"     yaml:"remoteName"`
-	// RemoteNodeName is the name of the remote node.
-	RemoteNodeName string `json:"remoteNodeName" yaml:"remoteNodeName"`
-	// LocalLinkName is the local link name for the local end of the tunnel.
-	LocalLinkName string `json:"localLinkName"  yaml:"localLinkName"`
-	// RemoteLinkName is the remote link name for the remote end of the tunnel.
-	RemoteLinkName string `json:"remoteLinkName" yaml:"remoteLinkName"`
 }
 
 // ExposedPorts holds information about exposed ports.
