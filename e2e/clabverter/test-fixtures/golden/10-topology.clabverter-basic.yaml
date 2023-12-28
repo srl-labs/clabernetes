@@ -25,6 +25,7 @@ spec:
     persistence:
       enabled: false
     scheduling: {}
+  enableSlurpeeth: false
   expose:
     disableAutoExpose: false
     disableExpose: false

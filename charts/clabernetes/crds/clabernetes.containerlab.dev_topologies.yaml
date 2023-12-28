@@ -310,6 +310,10 @@ spec:
                         type: array
                     type: object
                 type: object
+              enableSlurpeeth:
+                description: EnableSlurpeeth enables experimental slurpeeth for connectivity
+                  between nodes on different launchers.
+                type: boolean
               expose:
                 description: Expose holds configurations relevant to how clabernetes
                   exposes a topology.

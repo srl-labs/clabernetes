@@ -1640,6 +1640,14 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologySpec(
 							),
 						},
 					},
+					"enableSlurpeeth": {
+						SchemaProps: spec.SchemaProps{
+							Description: "EnableSlurpeeth enables experimental slurpeeth for connectivity between nodes on different launchers.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"definition"},
 			},

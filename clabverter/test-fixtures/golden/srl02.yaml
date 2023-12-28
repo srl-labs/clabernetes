@@ -57,6 +57,7 @@ spec:
     resources: null
     scheduling:
       tolerations: null
+  enableSlurpeeth: false
   expose:
     disableAutoExpose: false
     disableExpose: false

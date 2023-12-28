@@ -80,6 +80,10 @@ const (
 	// LauncherNodeImageEnv is the env var that holds the image name of the node in the original
 	// topology that a given launcher is responsible for.
 	LauncherNodeImageEnv = "LAUNCHER_NODE_IMAGE"
+
+	// LauncherConnectivityKind is the env var that holds the flavor cf connectivity the launcher
+	// should run (vxlan/slurpeeth).
+	LauncherConnectivityKind = "LAUNCHER_CONNECTIVITY_KIND"
 )
 
 const (

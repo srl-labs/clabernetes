@@ -16,6 +16,7 @@ import (
 const (
 	maxDockerLaunchAttempts = 10
 	containerCheckInterval  = 5 * time.Second
+	clientDefaultTimeout    = time.Minute
 )
 
 // StartClabernetes is a function that starts the clabernetes launcher. It cannot fail, only panic.
@@ -96,6 +97,7 @@ func (c *clabernetes) startup() {
 	c.setup()
 	c.image()
 	c.launch()
+	c.connectivity()
 
 	go c.watchContainers()
 
@@ -174,29 +176,7 @@ func (c *clabernetes) launch() {
 		)
 	}
 
-	c.logger.Info("containerlab started, setting up any required tunnels...")
-
-	tunnels, err := c.getTunnels()
-	if err != nil {
-		c.logger.Fatalf("failed loading tunnels content, err: %s", err)
-	}
-
-	for _, tunnel := range tunnels {
-		err = c.runContainerlabVxlanTools(
-			tunnel.LocalNode,
-			tunnel.LocalInterface,
-			tunnel.Destination,
-			tunnel.TunnelID,
-		)
-		if err != nil {
-			c.logger.Fatalf(
-				"failed setting up tunnel to remote node '%s' for local interface '%s', error: %s",
-				tunnel.RemoteNode,
-				tunnel.LocalInterface,
-				err,
-			)
-		}
-	}
+	c.logger.Debug("containerlab launched successfully")
 }
 
 func (c *clabernetes) watchContainers() {

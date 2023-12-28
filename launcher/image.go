@@ -137,7 +137,7 @@ func (c *clabernetes) prepareImagePullThrough() (
 
 	c.logger.Debug("handling image pull through...")
 
-	imageManager, err := claberneteslauncherimage.NewImageManager(
+	imageManager, err := claberneteslauncherimage.NewManager(
 		c.logger,
 		os.Getenv(clabernetesconstants.LauncherCRIKindEnv),
 	)
