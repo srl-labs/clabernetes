@@ -38,6 +38,10 @@ type TopologySpec struct {
 	// images.
 	// +optional
 	ImagePull ImagePull `json:"imagePull"`
+	// EnableSlurpeeth enables experimental slurpeeth for connectivity between nodes on different
+	// launchers.
+	// +optional
+	EnableSlurpeeth bool `json:"enableSlurpeeth"`
 }
 
 // TopologyStatus is the status for a Topology resource.

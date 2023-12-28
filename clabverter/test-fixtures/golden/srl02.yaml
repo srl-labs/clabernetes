@@ -55,6 +55,7 @@ spec:
       enabled: false
     privilegedLauncher: null
     resources: null
+  enableSlurpeeth: false
   expose:
     disableAutoExpose: false
     disableExpose: false

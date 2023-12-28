@@ -25,13 +25,12 @@ const (
 	// VXLANServicePort is the port number for vxlan that we use in the kubernetes service.
 	VXLANServicePort = 14789
 
+	// SlurpeethServicePort is the port number for slurpeeth that we use in the kubernetes service.
+	SlurpeethServicePort = 4799
+
 	// TCP is... TCP.
 	TCP = "TCP"
 
 	// UDP is... UDP.
 	UDP = "UDP"
-
-	// LauncherDefaultImage is the default image for launchers -- this shouldn't be used normally
-	// since the clabernetes chart has a default value for this.
-	LauncherDefaultImage = "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:latest"
 )

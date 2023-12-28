@@ -294,6 +294,11 @@ func (r *Reconciler) ReconcileConnectivity(
 		return nil
 	}
 
+	// great explanation of why this:
+	// https://github.com/kubernetes-sigs/controller-runtime/issues/736
+	// tl;dr -- cr doesnt allow unconditional update so we *must* have resource version set
+	renderedConnectivity.ResourceVersion = existingConnectivity.ResourceVersion
+
 	return r.updateObj(ctx, renderedConnectivity, clabernetesapis.Connectivity)
 }
 
@@ -747,6 +752,7 @@ func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 	r.Log.Debug("determining nodes needing restart")
 
 	r.deploymentReconciler.DetermineNodesNeedingRestart(
+		owningTopology,
 		reconcileData,
 	)
 

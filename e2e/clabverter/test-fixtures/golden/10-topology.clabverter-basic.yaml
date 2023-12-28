@@ -24,6 +24,7 @@ spec:
   deployment:
     persistence:
       enabled: false
+  enableSlurpeeth: false
   expose:
     disableAutoExpose: false
     disableExpose: false

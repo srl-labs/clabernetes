@@ -114,3 +114,4 @@ rules:
       - connectivities
     verbs:
       - get
+      - watch
