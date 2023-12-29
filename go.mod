@@ -4,9 +4,9 @@ go 1.21
 
 require (
 	github.com/carlmontanari/difflibgo v0.0.0-20231101235608-20f26fe20f37
-	github.com/carlmontanari/slurpeeth v0.0.0-20231226222321-b2201fc741d4
+	github.com/carlmontanari/slurpeeth v0.0.0-20231229184151-828f7aa61b21
 	github.com/openconfig/kne v0.1.16
-	github.com/urfave/cli/v2 v2.26.0
+	github.com/urfave/cli/v2 v2.27.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.29.0
