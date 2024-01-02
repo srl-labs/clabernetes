@@ -64,14 +64,14 @@ jobs:
           helm package charts/clabernetes --version $RELEASE_VERSION
 
       - name: archive packaged helm clicker chart
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: clicker-0.0.0.tgz
           path: clicker-0.0.0.tgz
           retention-days: 30
 
       - name: archive packaged helm clabernetes chart
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: clabernetes-0.0.0.tgz
           path: clabernetes-0.0.0.tgz
