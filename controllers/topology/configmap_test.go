@@ -43,7 +43,6 @@ func TestRenderConfigMap(t *testing.T) {
 		name               string
 		owningTopology     *clabernetesapisv1alpha1.Topology
 		clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config
-		tunnels            map[string][]*clabernetesapisv1alpha1.Tunnel
 		filesFromURL       map[string][]clabernetesapisv1alpha1.FileFromURL
 		imagePullSecrets   string
 	}{
@@ -107,28 +106,6 @@ func TestRenderConfigMap(t *testing.T) {
 					Debug: false,
 				},
 			},
-			tunnels: map[string][]*clabernetesapisv1alpha1.Tunnel{
-				"srl1": {
-					{
-						ID:             1,
-						LocalNodeName:  "srl1",
-						RemoteName:     "unitTest-srl2-vx.clabernetes.svc.cluster.local",
-						RemoteNodeName: "srl2",
-						LocalLinkName:  "e1-1",
-						RemoteLinkName: "e1-1",
-					},
-				},
-				"srl2": {
-					{
-						ID:             1,
-						LocalNodeName:  "srl2",
-						RemoteName:     "unitTest-srl1-vx.clabernetes.svc.cluster.local",
-						RemoteNodeName: "srl1",
-						LocalLinkName:  "e1-1",
-						RemoteLinkName: "e1-1",
-					},
-				},
-			},
 			filesFromURL: map[string][]clabernetesapisv1alpha1.FileFromURL{},
 		},
 		{
@@ -173,10 +150,6 @@ func TestRenderConfigMap(t *testing.T) {
 					Debug: false,
 				},
 			},
-			tunnels: map[string][]*clabernetesapisv1alpha1.Tunnel{
-				"srl1": {},
-				"srl2": {},
-			},
 			filesFromURL: map[string][]clabernetesapisv1alpha1.FileFromURL{},
 		},
 		{
@@ -205,9 +178,6 @@ func TestRenderConfigMap(t *testing.T) {
 					Debug: false,
 				},
 			},
-			tunnels: map[string][]*clabernetesapisv1alpha1.Tunnel{
-				"srl1": {},
-			},
 			filesFromURL:     map[string][]clabernetesapisv1alpha1.FileFromURL{},
 			imagePullSecrets: "- some-secret\n-another-secret",
 		},
@@ -227,7 +197,6 @@ func TestRenderConfigMap(t *testing.T) {
 				got, err := reconciler.Render(
 					testCase.owningTopology,
 					testCase.clabernetesConfigs,
-					testCase.tunnels,
 					testCase.filesFromURL,
 					testCase.imagePullSecrets,
 				)

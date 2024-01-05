@@ -1,15 +1,9 @@
 package launcher
 
 import (
-	"time"
-
 	clabernetesgeneratedclientset "github.com/srl-labs/clabernetes/generated/clientset"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	"k8s.io/client-go/rest"
-)
-
-const (
-	clientDefaultTimeout = time.Minute
 )
 
 func mustNewKubeClabernetesClient(

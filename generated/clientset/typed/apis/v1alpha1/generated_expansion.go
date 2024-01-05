@@ -20,6 +20,8 @@ package v1alpha1
 
 type ConfigExpansion interface{}
 
+type ConnectivityExpansion interface{}
+
 type ImageRequestExpansion interface{}
 
 type TopologyExpansion interface{}

@@ -120,6 +120,20 @@ func (c *Controller) reconcileResources(
 		return err
 	}
 
+	err = c.TopologyReconciler.ReconcileConnectivity(
+		ctx,
+		topology,
+		reconcileData,
+	)
+	if err != nil {
+		c.BaseController.Log.Criticalf(
+			"failed reconciling clabernetes connectivity resource, error: %s",
+			err,
+		)
+
+		return err
+	}
+
 	err = c.TopologyReconciler.ReconcileServices(
 		ctx,
 		topology,

@@ -38,9 +38,13 @@ type TopologySpec struct {
 	// images.
 	// +optional
 	ImagePull ImagePull `json:"imagePull"`
+	// EnableSlurpeeth enables experimental slurpeeth for connectivity between nodes on different
+	// launchers.
+	// +optional
+	EnableSlurpeeth bool `json:"enableSlurpeeth"`
 }
 
-// TopologyStatus is the status for a Containerlab topology resource.
+// TopologyStatus is the status for a Topology resource.
 type TopologyStatus struct {
 	// Kind is the topology kind this CR represents -- for example "containerlab".
 	// +kubebuilder:validation:Enum=containerlab;kne

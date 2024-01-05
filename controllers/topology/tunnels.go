@@ -10,8 +10,8 @@ import (
 // given status object by iterating over the freshly processed tunnels (as processed during a
 // reconciliation) and assigning any tunnels in the status without a vnid the next valid vnid.
 func AllocateTunnelIDs(
-	statusTunnels map[string][]*clabernetesapisv1alpha1.Tunnel,
-	processedTunnels map[string][]*clabernetesapisv1alpha1.Tunnel,
+	statusTunnels map[string][]*clabernetesapisv1alpha1.PointToPointTunnel,
+	processedTunnels map[string][]*clabernetesapisv1alpha1.PointToPointTunnel,
 ) {
 	// we want to allocate ids deterministically, so lets iterate over the maps in *order* by
 	// getting a sorted list of keys and then iterating over those
@@ -40,11 +40,11 @@ func AllocateTunnelIDs(
 
 		for _, newTunnel := range nodeTunnels {
 			for _, existingTunnel := range existingNodeTunnels {
-				if newTunnel.LocalLinkName == existingTunnel.LocalLinkName &&
-					newTunnel.RemoteName == existingTunnel.RemoteName {
-					newTunnel.ID = existingTunnel.ID
+				if newTunnel.LocalInterface == existingTunnel.LocalInterface &&
+					newTunnel.RemoteNode == existingTunnel.RemoteNode {
+					newTunnel.TunnelID = existingTunnel.TunnelID
 
-					allocatedTunnelIds[newTunnel.ID] = true
+					allocatedTunnelIds[newTunnel.TunnelID] = true
 
 					break
 				}
@@ -56,7 +56,7 @@ func AllocateTunnelIDs(
 		nodeTunnels := processedTunnels[nodeName]
 
 		for _, tunnel := range nodeTunnels {
-			if tunnel.ID != 0 {
+			if tunnel.TunnelID != 0 {
 				continue
 			}
 
@@ -64,14 +64,14 @@ func AllocateTunnelIDs(
 			// if *yes* we need to re-use that vnid obviously!
 			idToAssign := findAllocatedIDIfExists(
 				nodeName,
-				tunnel.RemoteNodeName,
-				tunnel.LocalLinkName,
+				tunnel.RemoteNode,
+				tunnel.LocalInterface,
 				processedTunnelsSortedKeys,
 				processedTunnels,
 			)
 
 			if idToAssign != 0 {
-				tunnel.ID = idToAssign
+				tunnel.TunnelID = idToAssign
 				allocatedTunnelIds[idToAssign] = true
 
 				continue
@@ -85,7 +85,7 @@ func AllocateTunnelIDs(
 					continue
 				}
 
-				tunnel.ID = i
+				tunnel.TunnelID = i
 				allocatedTunnelIds[i] = true
 
 				break
@@ -97,7 +97,7 @@ func AllocateTunnelIDs(
 func findAllocatedIDIfExists(
 	nodeName, tunnelRemoteNodeName, tunnelLocalLinkName string,
 	sortedKeys []string,
-	processedTunnels map[string][]*clabernetesapisv1alpha1.Tunnel,
+	processedTunnels map[string][]*clabernetesapisv1alpha1.PointToPointTunnel,
 ) int {
 	for _, remoteNodeName := range sortedKeys {
 		if nodeName == remoteNodeName {
@@ -112,23 +112,23 @@ func findAllocatedIDIfExists(
 		}
 
 		for _, remoteTunnel := range processedTunnels[remoteNodeName] {
-			if remoteTunnel.RemoteNodeName != nodeName {
+			if remoteTunnel.RemoteNode != nodeName {
 				// tunnel not between this node pair
 				continue
 			}
 
-			if tunnelLocalLinkName != remoteTunnel.RemoteLinkName {
+			if tunnelLocalLinkName != remoteTunnel.RemoteInterface {
 				// this specific tunnel does not match our local tunnel
 				continue
 			}
 
-			if remoteTunnel.ID == 0 {
+			if remoteTunnel.TunnelID == 0 {
 				// we found our remote tunnel but vnid is not set yet, so we'll just keep
 				// doing our thing
 				return 0
 			}
 
-			return remoteTunnel.ID
+			return remoteTunnel.TunnelID
 		}
 	}
 

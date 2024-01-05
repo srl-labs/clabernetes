@@ -29,7 +29,7 @@ RUN CGO_ENABLED=0 \
 FROM --platform=linux/amd64 debian:bookworm-slim
 
 ARG CONTAINERLAB_VERSION="0.48.*"
-ARG NERDCTL_VERSION="1.7.0"
+ARG NERDCTL_VERSION="1.7.2"
 
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \

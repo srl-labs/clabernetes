@@ -6,6 +6,7 @@ import (
 	"slices"
 	"time"
 
+	clabernetesapis "github.com/srl-labs/clabernetes/apis"
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
@@ -47,6 +48,10 @@ func NewReconciler(
 			log,
 			configManagerGetter,
 		),
+		connectivityReconciler: NewConnectivityReconciler(
+			log,
+			configManagerGetter,
+		),
 		serviceNodeAliasReconciler: NewServiceNodeAliasReconciler(
 			log,
 			configManagerGetter,
@@ -84,6 +89,7 @@ type Reconciler struct {
 	serviceAccountReconciler        *ServiceAccountReconciler
 	roleBindingReconciler           *RoleBindingReconciler
 	configMapReconciler             *ConfigMapReconciler
+	connectivityReconciler          *ConnectivityReconciler
 	serviceNodeAliasReconciler      *ServiceNodeAliasReconciler
 	serviceFabricReconciler         *ServiceFabricReconciler
 	serviceExposeReconciler         *ServiceExposeReconciler
@@ -155,15 +161,6 @@ func (r *Reconciler) ReconcileConfigMap(
 	reconcileData.ResolvedConfigsBytes = configBytes
 	reconcileData.ResolvedHashes.Config = configHash
 
-	_, tunnelHash, err := clabernetesutil.HashObjectYAML(
-		reconcileData.ResolvedConfigs,
-	)
-	if err != nil {
-		return err
-	}
-
-	reconcileData.ResolvedHashes.Tunnels = tunnelHash
-
 	for nodeName, nodeFilesFromURL := range owningTopology.Spec.Deployment.FilesFromURL {
 		var nodeFilesFromURLHash string
 
@@ -191,20 +188,8 @@ func (r *Reconciler) ReconcileConfigMap(
 	reconcileData.ResolvedHashes.ImagePullSecrets = imagePullSecretsHash
 
 	if !reconcileData.ConfigMapHasChanges() {
-		// the configs hashes match, nothing to do, should reconcile is false, and no error, *but*
-		// because the services may force us to update the cr we are reconciling, and we haven't
-		// processed the tunnel ids yet (because its slow and we are lazy), we need to copy the
-		// *previous* tunnel data into our "current" tunnel data so we make sure to not update the
-		// cr status with tunnel data with all zero for the tunnel ids
-		reconcileData.ResolvedTunnels = reconcileData.PreviousTunnels
-
 		return nil
 	}
-
-	AllocateTunnelIDs(
-		reconcileData.PreviousTunnels,
-		reconcileData.ResolvedTunnels,
-	)
 
 	// we need to tell the controller to update the originating CR because obviously our hashes
 	// dont match which means we had some changes from the previous reconcile
@@ -218,7 +203,6 @@ func (r *Reconciler) ReconcileConfigMap(
 	renderedConfigMap, err := r.configMapReconciler.Render(
 		owningTopology,
 		reconcileData.ResolvedConfigs,
-		reconcileData.ResolvedTunnels,
 		owningTopology.Spec.Deployment.FilesFromURL,
 		string(imagePullSecretsBytes),
 	)
@@ -255,6 +239,67 @@ func (r *Reconciler) ReconcileConfigMap(
 	}
 
 	return r.updateObj(ctx, renderedConfigMap, clabernetesconstants.KubernetesConfigMap)
+}
+
+// ReconcileConnectivity reconciles the inter-launcher-pod connectivity cr for the topology.
+func (r *Reconciler) ReconcileConnectivity(
+	ctx context.Context,
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	reconcileData *ReconcileData,
+) error {
+	namespacedName := apimachinerytypes.NamespacedName{
+		Namespace: owningTopology.GetNamespace(),
+		Name:      owningTopology.GetName(),
+	}
+
+	renderedConnectivity := r.connectivityReconciler.Render(
+		owningTopology,
+		reconcileData.ResolvedTunnels,
+	)
+
+	existingConnectivity := &clabernetesapisv1alpha1.Connectivity{}
+
+	err := r.Client.Get(
+		ctx,
+		namespacedName,
+		existingConnectivity,
+	)
+	if err != nil && !apimachineryerrors.IsNotFound(err) {
+		return err
+	}
+
+	AllocateTunnelIDs(
+		// we either have an empty object because we didnt find it, or we have the previous tunnels
+		// either way, we can now allocate tunnel ids
+		existingConnectivity.Spec.PointToPointTunnels,
+		reconcileData.ResolvedTunnels,
+	)
+
+	if err != nil {
+		// get error was not found, we need to create
+		return r.createObj(
+			ctx,
+			owningTopology,
+			renderedConnectivity,
+			clabernetesapis.Connectivity,
+		)
+	}
+
+	// otherwise we continue to check if the connectivity info conforms and if not we update
+	if r.connectivityReconciler.Conforms(
+		existingConnectivity,
+		renderedConnectivity,
+		owningTopology.GetUID(),
+	) {
+		return nil
+	}
+
+	// great explanation of why this:
+	// https://github.com/kubernetes-sigs/controller-runtime/issues/736
+	// tl;dr -- cr doesnt allow unconditional update so we *must* have resource version set
+	renderedConnectivity.ResourceVersion = existingConnectivity.ResourceVersion
+
+	return r.updateObj(ctx, renderedConnectivity, clabernetesapis.Connectivity)
 }
 
 // ReconcileServices reconciles all the services for a clabernetes Topology.
@@ -707,6 +752,7 @@ func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 	r.Log.Debug("determining nodes needing restart")
 
 	r.deploymentReconciler.DetermineNodesNeedingRestart(
+		owningTopology,
 		reconcileData,
 	)
 

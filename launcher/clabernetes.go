@@ -7,17 +7,16 @@ import (
 	"strings"
 	"time"
 
-	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetesgeneratedclientset "github.com/srl-labs/clabernetes/generated/clientset"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
-	"sigs.k8s.io/yaml"
 )
 
 const (
 	maxDockerLaunchAttempts = 10
 	containerCheckInterval  = 5 * time.Second
+	clientDefaultTimeout    = time.Minute
 )
 
 // StartClabernetes is a function that starts the clabernetes launcher. It cannot fail, only panic.
@@ -98,6 +97,7 @@ func (c *clabernetes) startup() {
 	c.setup()
 	c.image()
 	c.launch()
+	c.connectivity()
 
 	go c.watchContainers()
 
@@ -176,36 +176,7 @@ func (c *clabernetes) launch() {
 		)
 	}
 
-	c.logger.Info("containerlab started, setting up any required tunnels...")
-
-	tunnelBytes, err := os.ReadFile("tunnels.yaml")
-	if err != nil {
-		c.logger.Fatalf("failed loading tunnels yaml file content, err: %s", err)
-	}
-
-	var tunnelObj []*clabernetesapisv1alpha1.Tunnel
-
-	err = yaml.Unmarshal(tunnelBytes, &tunnelObj)
-	if err != nil {
-		c.logger.Fatalf("failed unmarshalling tunnels config, err: %s", err)
-	}
-
-	for _, tunnel := range tunnelObj {
-		err = c.runContainerlabVxlanTools(
-			tunnel.LocalNodeName,
-			tunnel.LocalLinkName,
-			tunnel.RemoteName,
-			tunnel.ID,
-		)
-		if err != nil {
-			c.logger.Fatalf(
-				"failed setting up tunnel to remote node '%s' for local interface '%s', error: %s",
-				tunnel.RemoteNodeName,
-				tunnel.LocalLinkName,
-				err,
-			)
-		}
-	}
+	c.logger.Debug("containerlab launched successfully")
 }
 
 func (c *clabernetes) watchContainers() {

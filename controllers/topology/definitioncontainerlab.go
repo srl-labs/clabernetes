@@ -428,18 +428,18 @@ func processConfigForNode(
 
 		reconcileData.ResolvedTunnels[nodeName] = append(
 			reconcileData.ResolvedTunnels[nodeName],
-			&clabernetesapisv1alpha1.Tunnel{
-				LocalNodeName:  nodeName,
-				RemoteNodeName: uninterestingEndpoint.NodeName,
-				RemoteName: fmt.Sprintf(
+			&clabernetesapisv1alpha1.PointToPointTunnel{
+				LocalNode:  nodeName,
+				RemoteNode: uninterestingEndpoint.NodeName,
+				Destination: fmt.Sprintf(
 					"%s-%s-vx.%s.%s",
 					topology.Name,
 					uninterestingEndpoint.NodeName,
 					topology.Namespace,
 					clabernetesconfig.GetManager().GetInClusterDNSSuffix(),
 				),
-				LocalLinkName:  interestingEndpoint.InterfaceName,
-				RemoteLinkName: uninterestingEndpoint.InterfaceName,
+				LocalInterface:  interestingEndpoint.InterfaceName,
+				RemoteInterface: uninterestingEndpoint.InterfaceName,
 			},
 		)
 	}

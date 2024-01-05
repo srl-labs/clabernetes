@@ -12,4 +12,10 @@ const (
 	// ImagePullThroughModeAuto a constant representing the "auto" image pull through mode for
 	// the launcher pods.
 	ImagePullThroughModeAuto = "auto"
+
+	// ConnectivityVXLAN is a constant for the vxlan connectivity flavor.
+	ConnectivityVXLAN = "vxlan"
+
+	// ConnectivitySlurpeeth is a constant for the slurpeeth connectivity flavor.
+	ConnectivitySlurpeeth = "slurpeeth"
 )
