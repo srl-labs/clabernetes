@@ -109,10 +109,11 @@ func (r *DeploymentReconciler) renderDeploymentBase(
 	deploymentName := fmt.Sprintf("%s-%s", owningTopologyName, nodeName)
 
 	selectorLabels := map[string]string{
-		clabernetesconstants.LabelApp:           clabernetesconstants.Clabernetes,
-		clabernetesconstants.LabelName:          deploymentName,
-		clabernetesconstants.LabelTopologyOwner: owningTopologyName,
-		clabernetesconstants.LabelTopologyNode:  nodeName,
+		clabernetesconstants.LabelKubernetesName: deploymentName,
+		clabernetesconstants.LabelApp:            clabernetesconstants.Clabernetes,
+		clabernetesconstants.LabelName:           deploymentName,
+		clabernetesconstants.LabelTopologyOwner:  owningTopologyName,
+		clabernetesconstants.LabelTopologyNode:   nodeName,
 	}
 
 	labels := map[string]string{}

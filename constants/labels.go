@@ -1,6 +1,10 @@
 package constants
 
 const (
+	// LabelKubernetesName is the key for the standard kubernetes app.kubernetes.io/name label --
+	// some tools use this label so we want to put it on all the deployments we spawn.
+	LabelKubernetesName = "app.kubernetes.io/name"
+
 	// LabelApp is the label key for the simple app name.
 	LabelApp = "clabernetes/app"
 
