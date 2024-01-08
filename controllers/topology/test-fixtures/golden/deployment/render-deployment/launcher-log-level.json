@@ -4,6 +4,7 @@
         "namespace": "clabernetes",
         "creationTimestamp": null,
         "labels": {
+            "app.kubernetes.io/name": "render-deployment-test-srl1",
             "clabernetes/app": "clabernetes",
             "clabernetes/name": "render-deployment-test-srl1",
             "clabernetes/topologyNode": "srl1",
@@ -17,6 +18,7 @@
         "replicas": 1,
         "selector": {
             "matchLabels": {
+                "app.kubernetes.io/name": "render-deployment-test-srl1",
                 "clabernetes/app": "clabernetes",
                 "clabernetes/name": "render-deployment-test-srl1",
                 "clabernetes/topologyNode": "srl1",
@@ -27,6 +29,7 @@
             "metadata": {
                 "creationTimestamp": null,
                 "labels": {
+                    "app.kubernetes.io/name": "render-deployment-test-srl1",
                     "clabernetes/app": "clabernetes",
                     "clabernetes/name": "render-deployment-test-srl1",
                     "clabernetes/topologyNode": "srl1",
