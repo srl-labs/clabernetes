@@ -127,14 +127,14 @@ func (r *ConfigMapReconciler) Conforms(
 		return false
 	}
 
-	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
 		existingConfigMap.ObjectMeta.Annotations,
 		renderedConfigMap.ObjectMeta.Annotations,
 	) {
 		return false
 	}
 
-	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
 		existingConfigMap.ObjectMeta.Labels,
 		renderedConfigMap.ObjectMeta.Labels,
 	) {

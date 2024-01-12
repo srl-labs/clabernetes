@@ -70,7 +70,7 @@ func TestContainersEqualAnnotationsOrLabelsConform(t *testing.T) {
 			func(t *testing.T) {
 				t.Logf("%s: starting", testCase.name)
 
-				actual := clabernetesutilkubernetes.AnnotationsOrLabelsConform(
+				actual := clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
 					testCase.a,
 					testCase.b,
 				)

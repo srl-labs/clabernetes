@@ -1,8 +1,12 @@
 package kubernetes
 
-// AnnotationsOrLabelsConform returns false if the existing labels/annotations (or really just map)
-// does *not* have all the keys/values from the expected/rendered labels/annotations.
-func AnnotationsOrLabelsConform(existing, expected map[string]string) bool {
+// ExistingMapStringStringContainsAllExpectedKeyValues returns false if the existing map of strings
+// does *not* have all the keys/values from the expected/rendered labels/annotations. Basically --
+// if the existing map has what we expect and anything else return true. If the existing map does
+// not contain all the things we expected, return false.
+func ExistingMapStringStringContainsAllExpectedKeyValues(
+	existing, expected map[string]string,
+) bool {
 	if len(existing) == 0 && len(expected) > 0 {
 		// obviously our annotations don't exist, so we need to enforce that
 		return false

@@ -493,6 +493,61 @@ func TestRenderDeployment(t *testing.T) {
 			},
 			nodeName: "srl1",
 		},
+		{
+			name: "scheduling",
+			owningTopology: &clabernetesapisv1alpha1.Topology{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "render-deployment-test",
+					Namespace: "clabernetes",
+				},
+				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Deployment: clabernetesapisv1alpha1.Deployment{
+						Scheduling: clabernetesapisv1alpha1.Scheduling{
+							NodeSelector: map[string]string{
+								"somelabel": "somevalue",
+							},
+							Tolerations: []k8scorev1.Toleration{
+								{
+									Key:      "sometaintkey",
+									Operator: "Equal",
+									Value:    "sometaintvalue",
+									Effect:   "NoSchedule",
+								},
+							},
+						},
+					},
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
+		   name: test
+		   topology:
+		     nodes:
+		       srl1:
+		         kind: srl
+		         image: ghcr.io/nokia/srlinux
+		`,
+					},
+				},
+			},
+			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
+				"srl1": {
+					Name:   "srl1",
+					Prefix: clabernetesutil.ToPointer(""),
+					Topology: &clabernetesutilcontainerlab.Topology{
+						Defaults: &clabernetesutilcontainerlab.NodeDefinition{},
+						Kinds:    nil,
+						Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
+							"srl1": {
+								Kind:  "srl",
+								Image: "ghcr.io/nokia/srlinux",
+							},
+						},
+						Links: nil,
+					},
+					Debug: false,
+				},
+			},
+			nodeName: "srl1",
+		},
 	}
 
 	for _, testCase := range cases {
@@ -1071,6 +1126,146 @@ func TestDeploymentConforms(t *testing.T) {
 				},
 			},
 			rendered: &k8sappsv1.Deployment{},
+			ownerUID: apimachinerytypes.UID("clabernetes-testing"),
+			conforms: false,
+		},
+
+		// scheduling things
+		{
+			name: "mismatched-node-selector-simple",
+			existing: &k8sappsv1.Deployment{
+				Spec: k8sappsv1.DeploymentSpec{
+					Template: k8scorev1.PodTemplateSpec{
+						Spec: k8scorev1.PodSpec{
+							NodeSelector: map[string]string{
+								"somenodekey": "somenodevalue",
+							},
+						},
+					},
+				},
+			},
+			rendered: &k8sappsv1.Deployment{},
+			ownerUID: apimachinerytypes.UID("clabernetes-testing"),
+			conforms: false,
+		},
+		{
+			name: "mismatched-node-selector",
+			existing: &k8sappsv1.Deployment{
+				Spec: k8sappsv1.DeploymentSpec{
+					Template: k8scorev1.PodTemplateSpec{
+						Spec: k8scorev1.PodSpec{
+							NodeSelector: map[string]string{
+								"somenodekey": "somenodevalue",
+							},
+						},
+					},
+				},
+			},
+			rendered: &k8sappsv1.Deployment{
+				Spec: k8sappsv1.DeploymentSpec{
+					Template: k8scorev1.PodTemplateSpec{
+						Spec: k8scorev1.PodSpec{
+							NodeSelector: map[string]string{
+								"somenodekey": "somenodevalue",
+								"anotherkey":  "anothervalue",
+							},
+						},
+					},
+				},
+			},
+			ownerUID: apimachinerytypes.UID("clabernetes-testing"),
+			conforms: false,
+		},
+		{
+			name: "node-selector-ignore-extras",
+			existing: &k8sappsv1.Deployment{
+				Spec: k8sappsv1.DeploymentSpec{
+					Template: k8scorev1.PodTemplateSpec{
+						Spec: k8scorev1.PodSpec{
+							NodeSelector: map[string]string{
+								"somenodekey": "somenodevalue",
+								"anotherkey":  "anothervalue",
+							},
+						},
+					},
+				},
+			},
+			rendered: &k8sappsv1.Deployment{
+				Spec: k8sappsv1.DeploymentSpec{
+					Template: k8scorev1.PodTemplateSpec{
+						Spec: k8scorev1.PodSpec{
+							NodeSelector: map[string]string{
+								"somenodekey": "somenodevalue",
+							},
+						},
+					},
+				},
+			},
+			ownerUID: apimachinerytypes.UID("clabernetes-testing"),
+			conforms: false,
+		},
+		{
+			name: "mismatched-tolerations-simple",
+			existing: &k8sappsv1.Deployment{
+				Spec: k8sappsv1.DeploymentSpec{
+					Template: k8scorev1.PodTemplateSpec{
+						Spec: k8scorev1.PodSpec{
+							Tolerations: []k8scorev1.Toleration{
+								{
+									Key:      "sometoleration",
+									Operator: "Equal",
+									Value:    "something",
+									Effect:   "NoSchedule",
+								},
+							},
+						},
+					},
+				},
+			},
+			rendered: &k8sappsv1.Deployment{},
+			ownerUID: apimachinerytypes.UID("clabernetes-testing"),
+			conforms: false,
+		},
+		{
+			name: "mismatched-tolerations",
+			existing: &k8sappsv1.Deployment{
+				Spec: k8sappsv1.DeploymentSpec{
+					Template: k8scorev1.PodTemplateSpec{
+						Spec: k8scorev1.PodSpec{
+							Tolerations: []k8scorev1.Toleration{
+								{
+									Key:      "sometoleration",
+									Operator: "Equal",
+									Value:    "something",
+									Effect:   "NoSchedule",
+								},
+							},
+						},
+					},
+				},
+			},
+			rendered: &k8sappsv1.Deployment{
+				Spec: k8sappsv1.DeploymentSpec{
+					Template: k8scorev1.PodTemplateSpec{
+						Spec: k8scorev1.PodSpec{
+							Tolerations: []k8scorev1.Toleration{
+								{
+									Key:      "sometoleration",
+									Operator: "Equal",
+									Value:    "something",
+									Effect:   "NoSchedule",
+								},
+								{
+									Key:      "extratoleration",
+									Operator: "Equal",
+									Value:    "foobar",
+									Effect:   "NoSchedule",
+								},
+							},
+						},
+					},
+				},
+			},
 			ownerUID: apimachinerytypes.UID("clabernetes-testing"),
 			conforms: false,
 		},

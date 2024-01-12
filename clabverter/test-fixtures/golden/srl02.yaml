@@ -55,6 +55,8 @@ spec:
       enabled: false
     privilegedLauncher: null
     resources: null
+    scheduling:
+      tolerations: null
   expose:
     disableAutoExpose: false
     disableExpose: false

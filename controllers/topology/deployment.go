@@ -162,6 +162,17 @@ func (r *DeploymentReconciler) renderDeploymentBase(
 	}
 }
 
+func (r *DeploymentReconciler) renderDeploymentScheduling(
+	deployment *k8sappsv1.Deployment,
+	owningTopology *clabernetesapisv1alpha1.Topology,
+) {
+	nodeSelector := owningTopology.Spec.Deployment.Scheduling.NodeSelector
+	tolerations := owningTopology.Spec.Deployment.Scheduling.Tolerations
+
+	deployment.Spec.Template.Spec.NodeSelector = nodeSelector
+	deployment.Spec.Template.Spec.Tolerations = tolerations
+}
+
 func (r *DeploymentReconciler) renderDeploymentVolumes(
 	deployment *k8sappsv1.Deployment,
 	nodeName,
@@ -778,6 +789,11 @@ func (r *DeploymentReconciler) Render(
 		nodeName,
 	)
 
+	r.renderDeploymentScheduling(
+		deployment,
+		owningTopology,
+	)
+
 	volumeMountsFromCommonSpec := r.renderDeploymentVolumes(
 		deployment,
 		nodeName,
@@ -851,7 +867,7 @@ func (r *DeploymentReconciler) RenderAll(
 }
 
 // Conforms checks if the existingDeployment conforms with the renderedDeployment.
-func (r *DeploymentReconciler) Conforms(
+func (r *DeploymentReconciler) Conforms( //nolint: gocyclo
 	existingDeployment,
 	renderedDeployment *k8sappsv1.Deployment,
 	expectedOwnerUID apimachinerytypes.UID,
@@ -866,6 +882,20 @@ func (r *DeploymentReconciler) Conforms(
 
 	if renderedDeployment.Spec.Template.Spec.Hostname !=
 		existingDeployment.Spec.Template.Spec.Hostname {
+		return false
+	}
+
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
+		existingDeployment.Spec.Template.Spec.NodeSelector,
+		renderedDeployment.Spec.Template.Spec.NodeSelector,
+	) {
+		return false
+	}
+
+	if !reflect.DeepEqual(
+		existingDeployment.Spec.Template.Spec.Tolerations,
+		renderedDeployment.Spec.Template.Spec.Tolerations,
+	) {
 		return false
 	}
 
@@ -897,28 +927,28 @@ func (r *DeploymentReconciler) Conforms(
 		return false
 	}
 
-	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
 		existingDeployment.ObjectMeta.Annotations,
 		renderedDeployment.ObjectMeta.Annotations,
 	) {
 		return false
 	}
 
-	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
 		existingDeployment.ObjectMeta.Labels,
 		renderedDeployment.ObjectMeta.Labels,
 	) {
 		return false
 	}
 
-	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
 		existingDeployment.Spec.Template.ObjectMeta.Annotations,
 		renderedDeployment.Spec.Template.ObjectMeta.Annotations,
 	) {
 		return false
 	}
 
-	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
 		existingDeployment.Spec.Template.ObjectMeta.Labels,
 		renderedDeployment.Spec.Template.ObjectMeta.Labels,
 	) {

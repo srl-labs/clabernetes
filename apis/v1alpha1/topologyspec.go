@@ -116,6 +116,10 @@ type Deployment struct {
 	// mapping applied.
 	// +optional
 	Resources map[string]k8scorev1.ResourceRequirements `json:"resources"`
+	// Scheduling holds information about how the launcher pod(s) should be configured with respect
+	// to "scheduling" things (affinity/node selector/tolerations).
+	// +optional
+	Scheduling Scheduling `json:"scheduling"`
 	// PrivilegedLauncher, when true, sets the launcher containers to privileged. By default, we do
 	// our best to *not* need this/set this, and instead set only the capabilities we need, however
 	// its possible that some containers launched by the launcher may need/want more capabilities,
@@ -162,6 +166,18 @@ type Deployment struct {
 	// +kubebuilder:validation:Enum=disabled;critical;warn;info;debug
 	// +optional
 	LauncherLogLevel string `json:"launcherLogLevel,omitempty"`
+}
+
+// Scheduling holds information about how the launcher pod(s) should be configured with respect
+// to "scheduling" things (affinity/node selector/tolerations).
+type Scheduling struct {
+	// NodeSelector sets the node selector that will be configured on all launcher pods for this
+	// Topology.
+	// +optional
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	// Tolerations is a list of Tolerations that will be set on the launcher pod spec.
+	// +optional
+	Tolerations []k8scorev1.Toleration `json:"tolerations"`
 }
 
 // ImagePull holds configurations relevant to how clabernetes launcher pods handle pulling

@@ -225,14 +225,14 @@ func (r *RoleBindingReconciler) Conforms(
 		return false
 	}
 
-	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
 		existingRoleBinding.ObjectMeta.Annotations,
 		renderedRoleBinding.ObjectMeta.Annotations,
 	) {
 		return false
 	}
 
-	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
 		existingRoleBinding.ObjectMeta.Labels,
 		renderedRoleBinding.ObjectMeta.Labels,
 	) {

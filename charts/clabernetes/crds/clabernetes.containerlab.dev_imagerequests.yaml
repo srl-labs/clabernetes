@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: imagerequests.clabernetes.containerlab.dev
 spec:
   group: clabernetes.containerlab.dev
@@ -17,19 +17,25 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: ImageRequest is an object that represents a request (from a launcher
-          pod) to pull an image on a given kubernetes node such that the image can
-          be "pulled through" into the launcher docker daemon.
+        description: |-
+          ImageRequest is an object that represents a request (from a launcher pod) to pull an image on a
+          given kubernetes node such that the image can be "pulled through" into the launcher docker
+          daemon.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -37,12 +43,14 @@ spec:
             description: ImageRequestSpec is the spec for a Config resource.
             properties:
               kubernetesNode:
-                description: KubernetesNode is the node where the launcher pod is
-                  running and where the image should be pulled too.
+                description: |-
+                  KubernetesNode is the node where the launcher pod is running and where the image should be
+                  pulled too.
                 type: string
               requestedImage:
-                description: RequestedImage is the image that the launcher pod wants
-                  the controller to get pulled onto the specified node.
+                description: |-
+                  RequestedImage is the image that the launcher pod wants the controller to get pulled onto
+                  the specified node.
                 type: string
               requestedImagePullSecrets:
                 description: RequestedImagePullSecrets is a list of configured pull
@@ -56,9 +64,9 @@ spec:
                   image.
                 type: string
               topologyNodeName:
-                description: TopologyNodeName is the name of the node in the topology
-                  (i.e. the router name in a containerlab topology) that the image
-                  is being requested for.
+                description: |-
+                  TopologyNodeName is the name of the node in the topology (i.e. the router name in a
+                  containerlab topology) that the image is being requested for.
                 type: string
             required:
             - kubernetesNode
@@ -70,15 +78,15 @@ spec:
             description: ImageRequestStatus is the status for a ImageRequest resource.
             properties:
               accepted:
-                description: Accepted indicates that the ImageRequest controller has
-                  seen this image request and is going to process it. This can be
-                  useful to let the requesting pod know that "yep, this is in the
+                description: |-
+                  Accepted indicates that the ImageRequest controller has seen this image request and is going
+                  to process it. This can be useful to let the requesting pod know that "yep, this is in the
                   works, and i can go watch the cri images on this node now".
                 type: boolean
               complete:
-                description: Complete indicates that the ImageRequest controller has
-                  seen that the puller pod has done its job and that the image has
-                  been pulled onto the requested node.
+                description: |-
+                  Complete indicates that the ImageRequest controller has seen that the puller pod has done its
+                  job and that the image has been pulled onto the requested node.
                 type: boolean
             required:
             - accepted
