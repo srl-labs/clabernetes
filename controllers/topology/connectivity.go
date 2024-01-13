@@ -74,14 +74,14 @@ func (r *ConnectivityReconciler) Conforms(
 		return false
 	}
 
-	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
 		existingConnectivity.ObjectMeta.Annotations,
 		renderedConnectivity.ObjectMeta.Annotations,
 	) {
 		return false
 	}
 
-	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
 		existingConnectivity.ObjectMeta.Labels,
 		renderedConnectivity.ObjectMeta.Labels,
 	) {
