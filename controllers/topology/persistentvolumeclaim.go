@@ -244,14 +244,14 @@ func (r *PersistentVolumeClaimReconciler) Conforms(
 		)
 	}
 
-	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
 		existingPVC.ObjectMeta.Annotations,
 		renderedPVC.ObjectMeta.Annotations,
 	) {
 		return false
 	}
 
-	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
 		existingPVC.ObjectMeta.Labels,
 		renderedPVC.ObjectMeta.Labels,
 	) {

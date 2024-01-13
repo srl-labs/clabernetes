@@ -205,14 +205,14 @@ func (r *ServiceAccountReconciler) Conforms(
 	renderedServiceAccount *k8scorev1.ServiceAccount,
 	expectedOwnerUID apimachinerytypes.UID,
 ) bool {
-	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
 		existingServiceAccount.ObjectMeta.Annotations,
 		renderedServiceAccount.ObjectMeta.Annotations,
 	) {
 		return false
 	}
 
-	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
 		existingServiceAccount.ObjectMeta.Labels,
 		renderedServiceAccount.ObjectMeta.Labels,
 	) {

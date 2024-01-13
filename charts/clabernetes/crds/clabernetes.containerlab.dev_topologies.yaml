@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: topologies.clabernetes.containerlab.dev
 spec:
   group: clabernetes.containerlab.dev
@@ -21,19 +21,24 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: 'Topology is an object that holds information about a clabernetes
-          Topology -- that is, a valid topology file (ex: containerlab topology),
-          and any associated configurations.'
+        description: |-
+          Topology is an object that holds information about a clabernetes Topology -- that is, a valid
+          topology file (ex: containerlab topology), and any associated configurations.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -41,11 +46,11 @@ spec:
             description: TopologySpec is the spec for a Topology resource.
             properties:
               definition:
-                description: Definition defines the actual set of nodes (network ones,
-                  not k8s ones!) that this Topology CR represents. Historically, and
-                  probably most often, this means Topology holds a "normal" containerlab
-                  topology file that will be "clabernetsified", however this could
-                  also be a "kne" config, or perhaps others in the future.
+                description: |-
+                  Definition defines the actual set of nodes (network ones, not k8s ones!) that this Topology
+                  CR represents. Historically, and probably most often, this means Topology holds a "normal"
+                  containerlab topology file that will be "clabernetsified", however this could also be a "kne"
+                  config, or perhaps others in the future.
                 properties:
                   containerlab:
                     description: Containerlab holds a valid containerlab topology.
@@ -55,30 +60,31 @@ spec:
                     type: string
                 type: object
               deployment:
-                description: Deployment holds configurations relevant to how clabernetes
-                  configures deployments that make up a given topology.
+                description: |-
+                  Deployment holds configurations relevant to how clabernetes configures deployments that make
+                  up a given topology.
                 properties:
                   containerlabDebug:
-                    description: ContainerlabDebug sets the `--debug` flag when invoking
-                      containerlab in the launcher pods. This is disabled by default.
-                      If this value is unset, the global config value (default of
+                    description: |-
+                      ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods.
+                      This is disabled by default. If this value is unset, the global config value (default of
                       "false") will be used.
                     type: boolean
                   filesFromConfigMap:
                     additionalProperties:
                       items:
-                        description: FileFromConfigMap represents a file that you
-                          would like to mount (from a configmap) in the launcher pod
-                          for a given node.
+                        description: |-
+                          FileFromConfigMap represents a file that you would like to mount (from a configmap) in the
+                          launcher pod for a given node.
                         properties:
                           configMapName:
                             description: ConfigMapName is the name of the configmap
                               to mount.
                             type: string
                           configMapPath:
-                            description: ConfigMapPath is the path/key in the configmap
-                              to mount, if not specified the configmap will be mounted
-                              without a sub-path.
+                            description: |-
+                              ConfigMapPath is the path/key in the configmap to mount, if not specified the configmap will
+                              be mounted without a sub-path.
                             type: string
                           filePath:
                             description: FilePath is the path to mount the file.
@@ -88,62 +94,60 @@ spec:
                         - filePath
                         type: object
                       type: array
-                    description: FilesFromConfigMap is a slice of FileFromConfigMap
-                      that define the configmap/path and node and path on a launcher
-                      node that the file should be mounted to. If the path is not
-                      provided the configmap is mounted in its entirety (like normal
-                      k8s things), so you *probably* want to specify the sub path
-                      unless you are sure what you're doing!
+                    description: |-
+                      FilesFromConfigMap is a slice of FileFromConfigMap that define the configmap/path and node
+                      and path on a launcher node that the file should be mounted to. If the path is not provided
+                      the configmap is mounted in its entirety (like normal k8s things), so you *probably* want
+                      to specify the sub path unless you are sure what you're doing!
                     type: object
                   filesFromURL:
                     additionalProperties:
                       items:
-                        description: FileFromURL represents a file that you would
-                          like to mount from a URL in the launcher pod for a given
-                          node.
+                        description: |-
+                          FileFromURL represents a file that you would like to mount from a URL in the launcher pod for
+                          a given node.
                         properties:
                           filePath:
                             description: FilePath is the path to mount the file.
                             type: string
                           url:
-                            description: URL is the url to fetch and mount at the
-                              provided FilePath. This URL must be a url that can be
-                              simply downloaded and dumped to disk -- meaning a normal
-                              file server type endpoint or if using GitHub or similar
-                              a "raw" path.
+                            description: |-
+                              URL is the url to fetch and mount at the provided FilePath. This URL must be a url that can
+                              be simply downloaded and dumped to disk -- meaning a normal file server type endpoint or if
+                              using GitHub or similar a "raw" path.
                             type: string
                         required:
                         - filePath
                         - url
                         type: object
                       type: array
-                    description: FilesFromURL is a mapping of FileFromURL that define
-                      a URL at which to fetch a file, and path on a launcher node
-                      that the file should be downloaded to. This is useful for configs
-                      that are larger than the ConfigMap (etcd) 1Mb size limit.
+                    description: |-
+                      FilesFromURL is a mapping of FileFromURL that define a URL at which to fetch a file, and path
+                      on a launcher node that the file should be downloaded to. This is useful for configs that are
+                      larger than the ConfigMap (etcd) 1Mb size limit.
                     type: object
                   launcherImage:
-                    description: LauncherImage sets the default launcher image to
-                      use when spawning launcher deployments for this Topology. This
-                      is optional, the launcher image will default to whatever is
-                      set in the global config CR.
+                    description: |-
+                      LauncherImage sets the default launcher image to use when spawning launcher deployments for
+                      this Topology. This is optional, the launcher image will default to whatever is set in the
+                      global config CR.
                     type: string
                   launcherImagePullPolicy:
-                    description: 'LauncherImagePullPolicy sets the default launcher
-                      image pull policy to use when spawning launcher deployments
-                      for this Topology. This is also optional and defaults to whatever
-                      is set in the global config CR (typically "IfNotPresent"). Note:
-                      omitempty because empty str does not satisfy enum of course.'
+                    description: |-
+                      LauncherImagePullPolicy sets the default launcher image pull policy to use when spawning
+                      launcher deployments for this Topology. This is also optional and defaults to whatever is set
+                      in the global config CR (typically "IfNotPresent"). Note: omitempty because empty str does
+                      not satisfy enum of course.
                     enum:
                     - IfNotPresent
                     - Always
                     - Never
                     type: string
                   launcherLogLevel:
-                    description: 'LauncherLogLevel sets the launcher clabernetes worker
-                      log level -- this overrides whatever is set on the controllers
-                      env vars for this topology. Note: omitempty because empty str
-                      does not satisfy enum of course.'
+                    description: |-
+                      LauncherLogLevel sets the launcher clabernetes worker log level -- this overrides whatever
+                      is set on the controllers env vars for this topology. Note: omitempty because empty str does
+                      not satisfy enum of course.
                     enum:
                     - disabled
                     - critical
@@ -152,41 +156,40 @@ spec:
                     - debug
                     type: string
                   persistence:
-                    description: Persistence holds configurations relating to persisting
-                      each nodes working containerlab directory.
+                    description: |-
+                      Persistence holds configurations relating to persisting each nodes working containerlab
+                      directory.
                     properties:
                       claimSize:
-                        description: ClaimSize is the size of the PVC for this topology
-                          -- if not provided this defaults to 5Gi. If provided, the
-                          string value must be a valid kubernetes storage requests
-                          style string. Note the claim size *cannot be made smaller*
-                          once created, but it *can* be expanded. If you need to make
-                          the claim smaller you must delete the topology (or the node
-                          from the topology) and re-add it.
+                        description: |-
+                          ClaimSize is the size of the PVC for this topology -- if not provided this defaults to 5Gi.
+                          If provided, the string value must be a valid kubernetes storage requests style string. Note
+                          the claim size *cannot be made smaller* once created, but it *can* be expanded. If you need
+                          to make the claim smaller you must delete the topology (or the node from the topology) and
+                          re-add it.
                         type: string
                       enabled:
-                        description: Enabled indicates if persistence of hte containerlab
-                          lab/working directory will be placed in a mounted PVC.
+                        description: |-
+                          Enabled indicates if persistence of hte containerlab lab/working directory will be placed in
+                          a mounted PVC.
                         type: boolean
                       storageClassName:
-                        description: StorageClassName is the storage class to set
-                          in the PVC -- if not provided this will be left empty which
-                          will end up using your default storage class. Note that
-                          currently we assume you have (as default) or provide a dynamically
-                          provisionable storage class, hence no selector.
+                        description: |-
+                          StorageClassName is the storage class to set in the PVC -- if not provided this will be left
+                          empty which will end up using your default storage class. Note that currently we assume you
+                          have (as default) or provide a dynamically provisionable storage class, hence no selector.
                         type: string
                     required:
                     - enabled
                     type: object
                   privilegedLauncher:
-                    description: PrivilegedLauncher, when true, sets the launcher
-                      containers to privileged. By default, we do our best to *not*
-                      need this/set this, and instead set only the capabilities we
-                      need, however its possible that some containers launched by
-                      the launcher may need/want more capabilities, so this flag exists
-                      for users to bypass the default settings and enable fully privileged
-                      launcher pods. If this value is unset, the global config value
-                      (default of "false") will be used.
+                    description: |-
+                      PrivilegedLauncher, when true, sets the launcher containers to privileged. By default, we do
+                      our best to *not* need this/set this, and instead set only the capabilities we need, however
+                      its possible that some containers launched by the launcher may need/want more capabilities,
+                      so this flag exists for users to bypass the default settings and enable fully privileged
+                      launcher pods. If this value is unset, the global config value (default of "false") will be
+                      used.
                     type: boolean
                   resources:
                     additionalProperties:
@@ -194,18 +197,23 @@ spec:
                         requirements.
                       properties:
                         claims:
-                          description: "Claims lists the names of resources, defined
-                            in spec.resourceClaims, that are used by this container.
-                            \n This is an alpha field and requires enabling the DynamicResourceAllocation
-                            feature gate. \n This field is immutable. It can only
-                            be set for containers."
+                          description: |-
+                            Claims lists the names of resources, defined in spec.resourceClaims,
+                            that are used by this container.
+
+
+                            This is an alpha field and requires enabling the
+                            DynamicResourceAllocation feature gate.
+
+
+                            This field is immutable. It can only be set for containers.
                           items:
                             description: ResourceClaim references one entry in PodSpec.ResourceClaims.
                             properties:
                               name:
-                                description: Name must match the name of one entry
-                                  in pod.spec.resourceClaims of the Pod where this
-                                  field is used. It makes that resource available
+                                description: |-
+                                  Name must match the name of one entry in pod.spec.resourceClaims of
+                                  the Pod where this field is used. It makes that resource available
                                   inside a container.
                                 type: string
                             required:
@@ -222,8 +230,9 @@ spec:
                             - type: string
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
-                          description: 'Limits describes the maximum amount of compute
-                            resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                          description: |-
+                            Limits describes the maximum amount of compute resources allowed.
+                            More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                           type: object
                         requests:
                           additionalProperties:
@@ -232,21 +241,73 @@ spec:
                             - type: string
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
-                          description: 'Requests describes the minimum amount of compute
-                            resources required. If Requests is omitted for a container,
-                            it defaults to Limits if that is explicitly specified,
-                            otherwise to an implementation-defined value. Requests
-                            cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                          description: |-
+                            Requests describes the minimum amount of compute resources required.
+                            If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                            otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                            More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                           type: object
                       type: object
-                    description: Resources is a mapping of nodeName (or "default")
-                      to kubernetes resource requirements -- any value set here overrides
-                      the "global" config resource definitions. If a key "default"
-                      is set, those resource values will be preferred over *all global
-                      settings* for this topology -- meaning, the "global" resource
-                      settings will never be looked up for this topology, and any
-                      kind/type that is *not* in this resources map will have the
-                      "default" resources from this mapping applied.
+                    description: |-
+                      Resources is a mapping of nodeName (or "default") to kubernetes resource requirements -- any
+                      value set here overrides the "global" config resource definitions. If a key "default" is set,
+                      those resource values will be preferred over *all global settings* for this topology --
+                      meaning, the "global" resource settings will never be looked up for this topology, and any
+                      kind/type that is *not* in this resources map will have the "default" resources from this
+                      mapping applied.
+                    type: object
+                  scheduling:
+                    description: |-
+                      Scheduling holds information about how the launcher pod(s) should be configured with respect
+                      to "scheduling" things (affinity/node selector/tolerations).
+                    properties:
+                      nodeSelector:
+                        additionalProperties:
+                          type: string
+                        description: |-
+                          NodeSelector sets the node selector that will be configured on all launcher pods for this
+                          Topology.
+                        type: object
+                      tolerations:
+                        description: Tolerations is a list of Tolerations that will
+                          be set on the launcher pod spec.
+                        items:
+                          description: |-
+                            The pod this Toleration is attached to tolerates any taint that matches
+                            the triple <key,value,effect> using the matching operator <operator>.
+                          properties:
+                            effect:
+                              description: |-
+                                Effect indicates the taint effect to match. Empty means match all taint effects.
+                                When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.
+                              type: string
+                            key:
+                              description: |-
+                                Key is the taint key that the toleration applies to. Empty means match all taint keys.
+                                If the key is empty, operator must be Exists; this combination means to match all values and all keys.
+                              type: string
+                            operator:
+                              description: |-
+                                Operator represents a key's relationship to the value.
+                                Valid operators are Exists and Equal. Defaults to Equal.
+                                Exists is equivalent to wildcard for value, so that a pod can
+                                tolerate all taints of a particular category.
+                              type: string
+                            tolerationSeconds:
+                              description: |-
+                                TolerationSeconds represents the period of time the toleration (which must be
+                                of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
+                                it is not set, which means tolerate the taint forever (do not evict). Zero and
+                                negative values will be treated as 0 (evict immediately) by the system.
+                              format: int64
+                              type: integer
+                            value:
+                              description: |-
+                                Value is the taint value the toleration matches to.
+                                If the operator is Exists, the value should be empty, otherwise just a regular string.
+                              type: string
+                          type: object
+                        type: array
                     type: object
                 type: object
               expose:
@@ -254,79 +315,87 @@ spec:
                   exposes a topology.
                 properties:
                   disableAutoExpose:
-                    description: "DisableAutoExpose disables the automagic exposing
-                      of ports for a given topology. When this setting is disabled
-                      clabernetes will not auto add ports so if you want to expose
-                      (via a load balancer service) you will need to have ports outlined
-                      in your containerlab config (or equivalent for kne). When this
-                      is `false` (default), clabernetes will add and expose the following
-                      list of ports to whatever ports you have already defined: \n
-                      21    - tcp - ftp 22    - tcp - ssh 23    - tcp - telnet 80
-                      \   - tcp - http 161   - udp - snmp 443   - tcp - https 830
-                      \  - tcp - netconf (over ssh) 5000  - tcp - telnet for vrnetlab
-                      qemu host 5900  - tcp - vnc 6030  - tcp - gnmi (arista default)
-                      9339  - tcp - gnmi/gnoi 9340  - tcp - gribi 9559  - tcp - p4rt
-                      57400 - tcp - gnmi (nokia srl/sros default) \n This setting
-                      is *ignored completely* if `DisableExpose` is true!"
+                    description: |-
+                      DisableAutoExpose disables the automagic exposing of ports for a given topology. When this
+                      setting is disabled clabernetes will not auto add ports so if you want to expose (via a
+                      load balancer service) you will need to have ports outlined in your containerlab config
+                      (or equivalent for kne). When this is `false` (default), clabernetes will add and expose the
+                      following list of ports to whatever ports you have already defined:
+
+
+                      21    - tcp - ftp
+                      22    - tcp - ssh
+                      23    - tcp - telnet
+                      80    - tcp - http
+                      161   - udp - snmp
+                      443   - tcp - https
+                      830   - tcp - netconf (over ssh)
+                      5000  - tcp - telnet for vrnetlab qemu host
+                      5900  - tcp - vnc
+                      6030  - tcp - gnmi (arista default)
+                      9339  - tcp - gnmi/gnoi
+                      9340  - tcp - gribi
+                      9559  - tcp - p4rt
+                      57400 - tcp - gnmi (nokia srl/sros default)
+
+
+                      This setting is *ignored completely* if `DisableExpose` is true!
                     type: boolean
                   disableExpose:
-                    description: DisableExpose indicates if exposing nodes via LoadBalancer
-                      service should be disabled, by default any mapped ports in a
-                      containerlab topology will be exposed.
+                    description: |-
+                      DisableExpose indicates if exposing nodes via LoadBalancer service should be disabled, by
+                      default any mapped ports in a containerlab topology will be exposed.
                     type: boolean
                   disableNodeAliasService:
-                    description: DisableNodeAliasService indicates if headless services
-                      for each node in a containerlab topology should *not* be created.
-                      By default, clabernetes creates these headless services for
-                      each node so that "normal" docker and containerlab service discovery
-                      works -- this means you can simply resolve "my-neat-node" from
-                      within the namespace of a topology like you would in docker
-                      locally. You may wish to disable this feature though if you
-                      have no need of it and just don't want the extra services around.
-                      Additionally, you may want to disable this feature if you are
-                      running multiple labs in the same namespace (which is not generally
-                      recommended by the way!) as you may end up in a situation where
-                      a name (i.e. "leaf1") is duplicated in more than one topology
-                      -- this will cause some problems for clabernetes!
+                    description: |-
+                      DisableNodeAliasService indicates if headless services for each node in a containerlab
+                      topology should *not* be created. By default, clabernetes creates these headless services for
+                      each node so that "normal" docker and containerlab service discovery works -- this means you
+                      can simply resolve "my-neat-node" from within the namespace of a topology like you would in
+                      docker locally. You may wish to disable this feature though if you have no need of it and
+                      just don't want the extra services around. Additionally, you may want to disable this feature
+                      if you are running multiple labs in the same namespace (which is not generally recommended by
+                      the way!) as you may end up in a situation where a name (i.e. "leaf1") is duplicated in more
+                      than one topology -- this will cause some problems for clabernetes!
                     type: boolean
                 type: object
               imagePull:
-                description: ImagePull holds configurations relevant to how clabernetes
-                  launcher pods handle pulling images.
+                description: |-
+                  ImagePull holds configurations relevant to how clabernetes launcher pods handle pulling
+                  images.
                 properties:
                   dockerDaemonConfig:
-                    description: DockerDaemonConfig allows for setting the docker
-                      daemon config for all launchers in this topology. The secret
-                      *must be present in the namespace of this topology*. The secret
-                      *must* contain a key "daemon.json" -- as this secret will be
-                      mounted to /etc/docker and docker will be expecting the config
-                      at /etc/docker/daemon.json.
+                    description: |-
+                      DockerDaemonConfig allows for setting the docker daemon config for all launchers in this
+                      topology. The secret *must be present in the namespace of this topology*. The secret *must*
+                      contain a key "daemon.json" -- as this secret will be mounted to /etc/docker and docker will
+                      be expecting the config at /etc/docker/daemon.json.
                     type: string
                   insecureRegistries:
-                    description: InsecureRegistries is a slice of strings of insecure
-                      registries to configure in the launcher pods.
+                    description: |-
+                      InsecureRegistries is a slice of strings of insecure registries to configure in the launcher
+                      pods.
                     items:
                       type: string
                     type: array
                   pullSecrets:
-                    description: PullSecrets allows for providing secret(s) to use
-                      when pulling the image. This is only applicable *if* ImagePullThrough
-                      mode is auto or always. The secret is used by the launcher pod
-                      to pull the image via the cluster CRI. The secret is *not* mounted
-                      to the pod, but instead is used in conjunction with a job that
-                      spawns a pod using the specified secret. The job will kill the
-                      pod as soon as the image has been pulled -- we do this because
-                      we don't care if the pod runs, we only care that the image gets
-                      pulled on a specific node. Note that just like "normal" pull
-                      secrets, the secret needs to be in the namespace that the topology
+                    description: |-
+                      PullSecrets allows for providing secret(s) to use when pulling the image. This is only
+                      applicable *if* ImagePullThrough mode is auto or always. The secret is used by the launcher
+                      pod to pull the image via the cluster CRI. The secret is *not* mounted to the pod, but
+                      instead is used in conjunction with a job that spawns a pod using the specified secret. The
+                      job will kill the pod as soon as the image has been pulled -- we do this because we don't
+                      care if the pod runs, we only care that the image gets pulled on a specific node. Note that
+                      just like "normal" pull secrets, the secret needs to be in the namespace that the topology
                       is in.
                     items:
                       type: string
                     type: array
                     x-kubernetes-list-type: set
                   pullThroughOverride:
-                    description: PullThroughOverride allows for overriding the image
-                      pull through mode for this particular topology.
+                    description: |-
+                      PullThroughOverride allows for overriding the image pull through mode for this
+                      particular topology.
                     enum:
                     - auto
                     - always
@@ -343,19 +412,20 @@ spec:
               configs:
                 additionalProperties:
                   type: string
-                description: Configs is a map of node name -> containerlab config
-                  -- in other words, this is the original Topology.Spec.Definition
-                  converted to containerlab "sub-topologies" The actual "sub-topologies"/"sub-configs"
-                  are stored as a string -- this is the actual containerlab topology
-                  that gets mounted in the launcher pod.
+                description: |-
+                  Configs is a map of node name -> containerlab config -- in other words, this is the original
+                  Topology.Spec.Definition converted to containerlab "sub-topologies" The actual
+                  "sub-topologies"/"sub-configs" are stored as a string -- this is the actual containerlab
+                  topology that gets mounted in the launcher pod.
                 type: object
               exposedPorts:
                 additionalProperties:
                   description: ExposedPorts holds information about exposed ports.
                   properties:
                     loadBalancerAddress:
-                      description: LoadBalancerAddress holds the address assigned
-                        to the load balancer exposing ports for a given node.
+                      description: |-
+                        LoadBalancerAddress holds the address assigned to the load balancer exposing ports for a
+                        given node.
                       type: string
                     tcpPorts:
                       description: TCPPorts is a list of TCP ports exposed on the
@@ -376,8 +446,9 @@ spec:
                   - tcpPorts
                   - udpPorts
                   type: object
-                description: ExposedPorts holds a map of (containerlab not k8s!) nodes
-                  and their exposed ports (via load balancer).
+                description: |-
+                  ExposedPorts holds a map of (containerlab not k8s!) nodes and their exposed ports
+                  (via load balancer).
                 type: object
               kind:
                 description: Kind is the topology kind this CR represents -- for example
@@ -391,37 +462,35 @@ spec:
                   run.
                 properties:
                   config:
-                    description: Config is the last stored hash of the rendered config(s)
-                      -- that is, the map of "sub topologies" representing the overall
-                      Topology.Spec.Definition.
+                    description: |-
+                      Config is the last stored hash of the rendered config(s) -- that is, the map of "sub
+                      topologies" representing the overall Topology.Spec.Definition.
                     type: string
                   exposedPorts:
-                    description: ExposedPorts is the last stored hash of the exposed
-                      ports mapping for this Topology. Note that while we obviously
-                      care about the exposed ports on a *per node basis*, we don't
-                      need to track that here -- this is here strictly to track differences
-                      in the load balancer service -- the actual sub-topologies (or
-                      sub-configs) effectively track the expose port status per node.
+                    description: |-
+                      ExposedPorts is the last stored hash of the exposed ports mapping for this Topology. Note
+                      that while we obviously care about the exposed ports on a *per node basis*, we don't need to
+                      track that here -- this is here strictly to track differences in the load balancer service --
+                      the actual sub-topologies (or sub-configs) effectively track the expose port status per node.
                     type: string
                   filesFromURL:
                     additionalProperties:
                       type: string
-                    description: FilesFromURL is the hash of the last stored mapping
-                      of files from URL (to node mapping). Note that this is tracked
-                      on a *per node basis* because the URL of a file could be updated
-                      without any change to the actual config/topology (or sub-config/sub-topology);
-                      as such we need to explicitly track this per node to know when
-                      a node needs to be restarted such that the new URL is "picked
-                      up" by the node/launcher.
+                    description: |-
+                      FilesFromURL is the hash of the last stored mapping of files from URL (to node mapping). Note
+                      that this is tracked on a *per node basis* because the URL of a file could be updated without
+                      any change to the actual config/topology (or sub-config/sub-topology); as such we need to
+                      explicitly track this per node to know when a node needs to be restarted such that the new
+                      URL is "picked up" by the node/launcher.
                     type: object
                   imagePullSecrets:
                     description: ImagePullSecrets is the hash of hte last stored image
                       pull secrets for this Topology.
                     type: string
                   tunnels:
-                    description: Tunnels is the last stored hash of the tunnels that
-                      provided connectivity between the launcher nodes. As this can
-                      change due to the dns suffix changing and not just the config
+                    description: |-
+                      Tunnels is the last stored hash of the tunnels that provided connectivity between the
+                      launcher nodes. As this can change due to the dns suffix changing and not just the config
                       changing we need to independently track this state.
                     type: string
                 required:

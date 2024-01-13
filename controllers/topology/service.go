@@ -55,14 +55,14 @@ func ServiceConforms(
 		}
 	}
 
-	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
 		existingService.ObjectMeta.Annotations,
 		renderedService.ObjectMeta.Annotations,
 	) {
 		return false
 	}
 
-	if !clabernetesutilkubernetes.AnnotationsOrLabelsConform(
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
 		existingService.ObjectMeta.Labels,
 		renderedService.ObjectMeta.Labels,
 	) {

@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: configs.clabernetes.containerlab.dev
 spec:
   group: clabernetes.containerlab.dev
@@ -17,20 +17,26 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Config is an object that holds global clabernetes config information.
-          Note that this CR is expected to effectively be a global singleton -- that
-          is, there should be only *one* of these, and it *must* be named `clabernetes`
-          -- CRD metadata spec will enforce this (via x-validation rules).
+        description: |-
+          Config is an object that holds global clabernetes config information. Note that this CR is
+          expected to effectively be a global singleton -- that is, there should be only *one* of these,
+          and it *must* be named `clabernetes` -- CRD metadata spec will enforce this (via x-validation
+          rules).
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -42,8 +48,9 @@ spec:
                   settings.
                 properties:
                   containerlabDebug:
-                    description: ContainerlabDebug sets the `--debug` flag when invoking
-                      containerlab in the launcher pods. This is disabled by default.
+                    description: |-
+                      ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods.
+                      This is disabled by default.
                     type: boolean
                   launcherImage:
                     default: ghcr.io/srl-labs/clabernetes/clabernetes-launcher:latest
@@ -52,18 +59,19 @@ spec:
                     type: string
                   launcherImagePullPolicy:
                     default: IfNotPresent
-                    description: LauncherImagePullPolicy sets the default launcher
-                      image pull policy to use when spawning launcher deployments.
+                    description: |-
+                      LauncherImagePullPolicy sets the default launcher image pull policy to use when spawning
+                      launcher deployments.
                     enum:
                     - IfNotPresent
                     - Always
                     - Never
                     type: string
                   launcherLogLevel:
-                    description: 'LauncherLogLevel sets the launcher clabernetes worker
-                      log level -- this overrides whatever is set on the controllers
-                      env vars for this topology. Note: omitempty because empty str
-                      does not satisfy enum of course.'
+                    description: |-
+                      LauncherLogLevel sets the launcher clabernetes worker log level -- this overrides whatever
+                      is set on the controllers env vars for this topology. Note: omitempty because empty str does
+                      not satisfy enum of course.
                     enum:
                     - disabled
                     - critical
@@ -72,12 +80,11 @@ spec:
                     - debug
                     type: string
                   privilegedLauncher:
-                    description: PrivilegedLauncher, when true, sets the launcher
-                      containers to privileged. By default, we do our best to *not*
-                      need this/set this, and instead set only the capabilities we
-                      need, however its possible that some containers launched by
-                      the launcher may need/want more capabilities, so this flag exists
-                      for users to bypass the default settings and enable fully privileged
+                    description: |-
+                      PrivilegedLauncher, when true, sets the launcher containers to privileged. By default, we do
+                      our best to *not* need this/set this, and instead set only the capabilities we need, however
+                      its possible that some containers launched by the launcher may need/want more capabilities,
+                      so this flag exists for users to bypass the default settings and enable fully privileged
                       launcher pods.
                     type: boolean
                   resourcesByContainerlabKind:
@@ -87,18 +94,23 @@ spec:
                           requirements.
                         properties:
                           claims:
-                            description: "Claims lists the names of resources, defined
-                              in spec.resourceClaims, that are used by this container.
-                              \n This is an alpha field and requires enabling the
-                              DynamicResourceAllocation feature gate. \n This field
-                              is immutable. It can only be set for containers."
+                            description: |-
+                              Claims lists the names of resources, defined in spec.resourceClaims,
+                              that are used by this container.
+
+
+                              This is an alpha field and requires enabling the
+                              DynamicResourceAllocation feature gate.
+
+
+                              This field is immutable. It can only be set for containers.
                             items:
                               description: ResourceClaim references one entry in PodSpec.ResourceClaims.
                               properties:
                                 name:
-                                  description: Name must match the name of one entry
-                                    in pod.spec.resourceClaims of the Pod where this
-                                    field is used. It makes that resource available
+                                  description: |-
+                                    Name must match the name of one entry in pod.spec.resourceClaims of
+                                    the Pod where this field is used. It makes that resource available
                                     inside a container.
                                   type: string
                               required:
@@ -115,8 +127,9 @@ spec:
                               - type: string
                               pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                               x-kubernetes-int-or-string: true
-                            description: 'Limits describes the maximum amount of compute
-                              resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                            description: |-
+                              Limits describes the maximum amount of compute resources allowed.
+                              More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                             type: object
                           requests:
                             additionalProperties:
@@ -125,46 +138,53 @@ spec:
                               - type: string
                               pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                               x-kubernetes-int-or-string: true
-                            description: 'Requests describes the minimum amount of
-                              compute resources required. If Requests is omitted for
-                              a container, it defaults to Limits if that is explicitly
-                              specified, otherwise to an implementation-defined value.
-                              Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                            description: |-
+                              Requests describes the minimum amount of compute resources required.
+                              If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                              otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                              More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                             type: object
                         type: object
                       type: object
-                    description: 'ResourcesByContainerlabKind is a mapping of container
-                      lab kind -> type -> default resource settings. Note that a key
-                      value of "default" in the inner map will apply the given resources
-                      for any pod of that containerlab *kind*. For example: { "srl":
-                      { "default": DEFAULT RESOURCES FOR KIND "srl", "ixr10": RESOURCES
-                      FOR KIND "srl", TYPE "ixr10" } Given resources as above, a containerlab
-                      node of kind "srl" and "type" ixr10" would get the specific
-                      resources as allocated in the ixr10 key, whereas a containerlab
-                      kind of "srl" and "type" unset or "ixr6" would get the "default"
-                      resource settings. To apply global default resources, regardless
-                      of containerlab kind/type, use the `resourcesDefault` field.'
+                    description: |-
+                      ResourcesByContainerlabKind is a mapping of container lab kind -> type -> default resource
+                      settings. Note that a key value of "default" in the inner map will apply the given resources
+                      for any pod of that containerlab *kind*. For example:
+                      {
+                        "srl": {
+                          "default": DEFAULT RESOURCES FOR KIND "srl",
+                          "ixr10": RESOURCES FOR KIND "srl", TYPE "ixr10"
+                      }
+                      Given resources as above, a containerlab node of kind "srl" and "type" ixr10" would get the
+                      specific resources as allocated in the ixr10 key, whereas a containerlab kind of "srl" and
+                      "type" unset or "ixr6" would get the "default" resource settings. To apply global default
+                      resources, regardless of containerlab kind/type, use the `resourcesDefault` field.
                     type: object
                   resourcesDefault:
-                    description: ResourcesDefault is the default set of resources
-                      for clabernetes launcher pods. This is used only as a last option
-                      if a Topology does not have resources, and there are no resources
-                      for the given containerlab kind/type
+                    description: |-
+                      ResourcesDefault is the default set of resources for clabernetes launcher pods. This is used
+                      only as a last option if a Topology does not have resources, and there are no resources for
+                      the given containerlab kind/type
                     properties:
                       claims:
-                        description: "Claims lists the names of resources, defined
-                          in spec.resourceClaims, that are used by this container.
-                          \n This is an alpha field and requires enabling the DynamicResourceAllocation
-                          feature gate. \n This field is immutable. It can only be
-                          set for containers."
+                        description: |-
+                          Claims lists the names of resources, defined in spec.resourceClaims,
+                          that are used by this container.
+
+
+                          This is an alpha field and requires enabling the
+                          DynamicResourceAllocation feature gate.
+
+
+                          This field is immutable. It can only be set for containers.
                         items:
                           description: ResourceClaim references one entry in PodSpec.ResourceClaims.
                           properties:
                             name:
-                              description: Name must match the name of one entry in
-                                pod.spec.resourceClaims of the Pod where this field
-                                is used. It makes that resource available inside a
-                                container.
+                              description: |-
+                                Name must match the name of one entry in pod.spec.resourceClaims of
+                                the Pod where this field is used. It makes that resource available
+                                inside a container.
                               type: string
                           required:
                           - name
@@ -180,8 +200,9 @@ spec:
                           - type: string
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
-                        description: 'Limits describes the maximum amount of compute
-                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        description: |-
+                          Limits describes the maximum amount of compute resources allowed.
+                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                         type: object
                       requests:
                         additionalProperties:
@@ -190,11 +211,11 @@ spec:
                           - type: string
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
-                        description: 'Requests describes the minimum amount of compute
-                          resources required. If Requests is omitted for a container,
-                          it defaults to Limits if that is explicitly specified, otherwise
-                          to an implementation-defined value. Requests cannot exceed
-                          Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        description: |-
+                          Requests describes the minimum amount of compute resources required.
+                          If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                          otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                         type: object
                     type: object
                 required:
@@ -202,47 +223,44 @@ spec:
                 - launcherImagePullPolicy
                 type: object
               imagePull:
-                description: ImagePull holds configurations relevant to how clabernetes
-                  launcher pods handle pulling images.
+                description: |-
+                  ImagePull holds configurations relevant to how clabernetes launcher pods handle pulling
+                  images.
                 properties:
                   criKindOverride:
-                    description: CRIKindOverride allows for overriding the auto discovered
-                      cri flavor of the cluster -- this may be useful if we fail to
-                      parse the cri kind for some reason, or in mixed cri flavor clusters
-                      -- however in the latter case, make sure that if you are using
-                      image pull through that clabernetes workloads are only run on
-                      the nodes of the cri kind specified here!
+                    description: |-
+                      CRIKindOverride allows for overriding the auto discovered cri flavor of the cluster -- this
+                      may be useful if we fail to parse the cri kind for some reason, or in mixed cri flavor
+                      clusters -- however in the latter case, make sure that if you are using image pull through
+                      that clabernetes workloads are only run on the nodes of the cri kind specified here!
                     enum:
                     - containerd
                     type: string
                   criSockOverride:
-                    description: CRISockOverride allows for overriding the path of
-                      the CRI sock that is mounted in the launcher pods (if/when image
-                      pull through mode is auto or always). This can be useful if,
-                      for example, the CRI sock is in a "non-standard" location like
-                      K3s which puts the containerd sock at `/run/k3s/containerd/containerd.sock`
-                      rather than the "normal" (whatever that means) location of `/run/containerd/containerd.sock`.
-                      The value must end with "containerd.sock" for now, in the future
-                      maybe crio support will be added.
+                    description: |-
+                      CRISockOverride allows for overriding the path of the CRI sock that is mounted in the
+                      launcher pods (if/when image pull through mode is auto or always). This can be useful if,
+                      for example, the CRI sock is in a "non-standard" location like K3s which puts the containerd
+                      sock at `/run/k3s/containerd/containerd.sock` rather than the "normal" (whatever that means)
+                      location of `/run/containerd/containerd.sock`. The value must end with "containerd.sock" for
+                      now, in the future maybe crio support will be added.
                     pattern: (.*containerd\.sock)
                     type: string
                   dockerDaemonConfig:
-                    description: DockerDaemonConfig allows for setting a default docker
-                      daemon config for launcher pods with the specified secret. The
-                      secret *must be present in the namespace of any given topology*
-                      -- so if you are configuring this at the "global config" level,
-                      ensure that you are deploying topologies into a specific namespace,
-                      or have ensured there is a secret of the given name in every
-                      namespace you wish to deploy a topology to. When set, insecure
-                      registries config option is ignored as it is assumed you are
-                      handling that in the given docker config. Note that the secret
-                      *must* contain a key "daemon.json" -- as this secret will be
-                      mounted to /etc/docker and docker will be expecting the config
-                      at /etc/docker/daemon.json.
+                    description: |-
+                      DockerDaemonConfig allows for setting a default docker daemon config for launcher pods
+                      with the specified secret. The secret *must be present in the namespace of any given
+                      topology* -- so if you are configuring this at the "global config" level, ensure that you are
+                      deploying topologies into a specific namespace, or have ensured there is a secret of the
+                      given name in every namespace you wish to deploy a topology to. When set, insecure registries
+                      config option is ignored as it is assumed you are handling that in the given docker config.
+                      Note that the secret *must* contain a key "daemon.json" -- as this secret will be mounted to
+                      /etc/docker and docker will be expecting the config at /etc/docker/daemon.json.
                     type: string
                   pullThroughOverride:
-                    description: PullThroughOverride allows for overriding the image
-                      pull through mode for this particular topology.
+                    description: |-
+                      PullThroughOverride allows for overriding the image pull through mode for this
+                      particular topology.
                     enum:
                     - auto
                     - always
@@ -254,23 +272,24 @@ spec:
                   suffix used when resolving services.
                 type: string
               metadata:
-                description: Metadata holds "global" metadata -- that is, metadata
-                  that is applied to all objects created by the clabernetes controller.
+                description: |-
+                  Metadata holds "global" metadata -- that is, metadata that is applied to all objects created
+                  by the clabernetes controller.
                 properties:
                   annotations:
                     additionalProperties:
                       type: string
-                    description: Annotations holds key/value pairs that should be
-                      set as annotations on clabernetes created resources. Note that
-                      (currently?) there is no input validation here, but this data
-                      must be valid kubernetes annotation data.
+                    description: |-
+                      Annotations holds key/value pairs that should be set as annotations on clabernetes created
+                      resources. Note that (currently?) there is no input validation here, but this data must be
+                      valid kubernetes annotation data.
                     type: object
                   labels:
                     additionalProperties:
                       type: string
-                    description: Labels holds key/value pairs that should be set as
-                      labels on clabernetes created resources. Note that (currently?)
-                      there is no input validation here, but this data must be valid
+                    description: |-
+                      Labels holds key/value pairs that should be set as labels on clabernetes created resources.
+                      Note that (currently?) there is no input validation here, but this data must be valid
                       kubernetes label data.
                     type: object
                 type: object

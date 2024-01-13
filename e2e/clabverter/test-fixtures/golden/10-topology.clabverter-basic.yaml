@@ -24,6 +24,7 @@ spec:
   deployment:
     persistence:
       enabled: false
+    scheduling: {}
   expose:
     disableAutoExpose: false
     disableExpose: false
