@@ -451,11 +451,6 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		}
 	}
 
-	connectivityKind := clabernetesconstants.ConnectivityVXLAN
-	if owningTopology.Spec.EnableSlurpeeth {
-		connectivityKind = clabernetesconstants.ConnectivitySlurpeeth
-	}
-
 	envs := []k8scorev1.EnvVar{
 		{
 			Name: clabernetesconstants.NodeNameEnv,
@@ -518,7 +513,7 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		},
 		{
 			Name:  clabernetesconstants.LauncherConnectivityKind,
-			Value: connectivityKind,
+			Value: owningTopology.Spec.Connectivity,
 		},
 	}
 
@@ -989,7 +984,7 @@ func (r *DeploymentReconciler) DetermineNodesNeedingRestart(
 			continue
 		}
 
-		if owningTopology.Spec.EnableSlurpeeth {
+		if owningTopology.Spec.Connectivity == clabernetesconstants.ConnectivitySlurpeeth {
 			determineNodeNeedsRestartSlurpeeth(reconcileData, nodeName)
 		} else if !reflect.DeepEqual(nodeConfig, reconcileData.PreviousConfigs[nodeName]) {
 			reconcileData.NodesNeedingReboot.Add(nodeName)

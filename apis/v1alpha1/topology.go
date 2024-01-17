@@ -38,10 +38,13 @@ type TopologySpec struct {
 	// images.
 	// +optional
 	ImagePull ImagePull `json:"imagePull"`
-	// EnableSlurpeeth enables experimental slurpeeth for connectivity between nodes on different
-	// launchers.
-	// +optional
-	EnableSlurpeeth bool `json:"enableSlurpeeth"`
+	// Connectivity defines the type of connectivity to use between nodes in the topology. The
+	// default behavior is to use vxlan tunnels, alternatively you can enable a more experimental
+	// "slurpeeth" connectivity flavor that stuffs traffic into tcp tunnels to avoid any vxlan mtu
+	// and/or fragmentation challenges.
+	// +kubebuilder:validation:Enum=vxlan;slurpeeth
+	// +kubebuilder:default=vxlan
+	Connectivity string `json:"connectivity"`
 }
 
 // TopologyStatus is the status for a Topology resource.

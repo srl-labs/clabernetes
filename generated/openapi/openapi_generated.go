@@ -1640,16 +1640,16 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologySpec(
 							),
 						},
 					},
-					"enableSlurpeeth": {
+					"connectivity": {
 						SchemaProps: spec.SchemaProps{
-							Description: "EnableSlurpeeth enables experimental slurpeeth for connectivity between nodes on different launchers.",
-							Default:     false,
-							Type:        []string{"boolean"},
+							Description: "Connectivity defines the type of connectivity to use between nodes in the topology. The default behavior is to use vxlan tunnels, alternatively you can enable a more experimental \"slurpeeth\" connectivity flavor that stuffs traffic into tcp tunnels to avoid any vxlan mtu and/or fragmentation challenges.",
+							Default:     "",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 				},
-				Required: []string{"definition"},
+				Required: []string{"definition", "connectivity"},
 			},
 		},
 		Dependencies: []string{
