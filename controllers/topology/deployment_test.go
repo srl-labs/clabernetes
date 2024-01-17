@@ -144,6 +144,7 @@ func TestRenderDeployment(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Connectivity: clabernetesconstants.ConnectivityVXLAN,
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
     name: test
@@ -201,6 +202,7 @@ func TestRenderDeployment(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Connectivity: clabernetesconstants.ConnectivityVXLAN,
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						PrivilegedLauncher: clabernetesutil.ToPointer(true),
 					},
@@ -261,6 +263,7 @@ func TestRenderDeployment(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Connectivity: clabernetesconstants.ConnectivityVXLAN,
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						ContainerlabDebug: clabernetesutil.ToPointer(true),
 					},
@@ -321,6 +324,7 @@ func TestRenderDeployment(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Connectivity: clabernetesconstants.ConnectivityVXLAN,
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						LauncherLogLevel: "debug",
 					},
@@ -381,6 +385,7 @@ func TestRenderDeployment(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Connectivity: clabernetesconstants.ConnectivityVXLAN,
 					ImagePull: clabernetesapisv1alpha1.ImagePull{
 						InsecureRegistries: []string{"1.2.3.4", "potato.com"},
 					},
@@ -441,6 +446,7 @@ func TestRenderDeployment(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Connectivity: clabernetesconstants.ConnectivityVXLAN,
 					ImagePull: clabernetesapisv1alpha1.ImagePull{
 						DockerDaemonConfig: "sneakydockerdaemonconfig",
 					},
@@ -501,6 +507,7 @@ func TestRenderDeployment(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Connectivity: clabernetesconstants.ConnectivityVXLAN,
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						Scheduling: clabernetesapisv1alpha1.Scheduling{
 							NodeSelector: map[string]string{

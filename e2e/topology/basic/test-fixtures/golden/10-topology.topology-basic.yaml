@@ -5,6 +5,7 @@ metadata:
   name: topology-basic
   namespace: NAMESPACE
 spec:
+  connectivity: vxlan
   definition:
     containerlab: |-
       name: topology-basic
@@ -18,7 +19,6 @@ spec:
     persistence:
       enabled: false
     scheduling: {}
-  enableSlurpeeth: false
   expose:
     disableAutoExpose: false
     disableExpose: false

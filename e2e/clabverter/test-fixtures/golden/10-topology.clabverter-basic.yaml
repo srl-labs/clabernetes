@@ -5,6 +5,7 @@ metadata:
   name: clabverter-basic
   namespace: NAMESPACE
 spec:
+  connectivity: vxlan
   definition:
     containerlab: |-
       ---
@@ -25,7 +26,6 @@ spec:
     persistence:
       enabled: false
     scheduling: {}
-  enableSlurpeeth: false
   expose:
     disableAutoExpose: false
     disableExpose: false

@@ -5,6 +5,7 @@ metadata:
   name: srl02
   namespace: notclabernetes
 spec:
+  connectivity: vxlan
   definition:
     containerlab: |-
       name: srl02
@@ -57,7 +58,6 @@ spec:
     resources: null
     scheduling:
       tolerations: null
-  enableSlurpeeth: false
   expose:
     disableAutoExpose: false
     disableExpose: false
