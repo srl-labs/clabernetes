@@ -5,6 +5,7 @@ metadata:
   name: srl02
   namespace: notclabernetes
 spec:
+  connectivity: vxlan
   definition:
     containerlab: |-
       name: srl02
@@ -74,4 +75,3 @@ status:
     exposedPorts: ""
     filesFromURL: null
     imagePullSecrets: ""
-    tunnels: ""

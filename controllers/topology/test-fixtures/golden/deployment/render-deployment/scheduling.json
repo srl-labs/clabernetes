@@ -84,6 +84,11 @@
                                 "name": "vxlan",
                                 "containerPort": 14789,
                                 "protocol": "UDP"
+                            },
+                            {
+                                "name": "slurpeeth",
+                                "containerPort": 4799,
+                                "protocol": "TCP"
                             }
                         ],
                         "env": [
@@ -144,6 +149,10 @@
                             {
                                 "name": "LAUNCHER_NODE_IMAGE",
                                 "value": "ghcr.io/nokia/srlinux"
+                            },
+                            {
+                                "name": "LAUNCHER_CONNECTIVITY_KIND",
+                                "value": "vxlan"
                             }
                         ],
                         "resources": {},
@@ -153,12 +162,6 @@
                                 "readOnly": true,
                                 "mountPath": "/clabernetes/topo.clab.yaml",
                                 "subPath": "srl1"
-                            },
-                            {
-                                "name": "render-deployment-test-config",
-                                "readOnly": true,
-                                "mountPath": "/clabernetes/tunnels.yaml",
-                                "subPath": "srl1-tunnels"
                             },
                             {
                                 "name": "render-deployment-test-config",

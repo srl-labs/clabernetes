@@ -42,7 +42,6 @@ type ConfigMapReconciler struct {
 func (r *ConfigMapReconciler) Render(
 	owningTopology *clabernetesapisv1alpha1.Topology,
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
-	tunnels map[string][]*clabernetesapisv1alpha1.Tunnel,
 	filesFromURL map[string][]clabernetesapisv1alpha1.FileFromURL,
 	imagePullSecretsString string,
 ) (*k8scorev1.ConfigMap, error) {
@@ -68,10 +67,9 @@ func (r *ConfigMapReconciler) Render(
 	}
 
 	for nodeName, nodeTopo := range clabernetesConfigs {
-		// always initialize the tunnels and files from url keys in the configmap, this way we don't
-		// have to have any special handling for no tunnels and things always look consistent;
-		// we'll override this down below if the node has tunnels of course!
-		data[fmt.Sprintf("%s-tunnels", nodeName)] = ""
+		// always initialize the files from url keys in the configmap, this way we don't have to
+		// have any special handling for no tunnels and things always look consistent; we'll
+		// override this down below if the node has files to be mounted course!
 		data[fmt.Sprintf("%s-files-from-url", nodeName)] = ""
 
 		yamlNodeTopo, err := yaml.Marshal(nodeTopo)
@@ -80,15 +78,6 @@ func (r *ConfigMapReconciler) Render(
 		}
 
 		data[nodeName] = string(yamlNodeTopo)
-	}
-
-	for nodeName, nodeTunnels := range tunnels {
-		yamlNodeTunnels, err := yaml.Marshal(nodeTunnels)
-		if err != nil {
-			return nil, err
-		}
-
-		data[fmt.Sprintf("%s-tunnels", nodeName)] = string(yamlNodeTunnels)
 	}
 
 	for nodeName, nodeFilesFromURL := range filesFromURL {

@@ -19,6 +19,12 @@
                 "protocol": "UDP",
                 "port": 14789,
                 "targetPort": 14789
+            },
+            {
+                "name": "slurpeeth",
+                "protocol": "TCP",
+                "port": 4799,
+                "targetPort": 4799
             }
         ],
         "selector": {

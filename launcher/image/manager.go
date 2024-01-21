@@ -8,8 +8,8 @@ import (
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 )
 
-// NewImageManager returns an image Manager for the given cri.
-func NewImageManager(logger claberneteslogging.Instance, criKind string) (Manager, error) {
+// NewManager returns an image Manager for the given cri.
+func NewManager(logger claberneteslogging.Instance, criKind string) (Manager, error) {
 	switch criKind {
 	case clabernetesconstants.KubernetesCRIContainerd:
 		return &containerdManager{

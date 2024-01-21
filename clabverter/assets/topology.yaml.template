@@ -36,7 +36,7 @@ spec:
       {{- end }}
     {{- end }}
   {{- end }}
-
+  connectivity: vxlan
   definition:
     containerlab: |-
       {{- .ClabConfig }}

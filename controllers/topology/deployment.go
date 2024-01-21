@@ -374,9 +374,14 @@ func (r *DeploymentReconciler) renderDeploymentContainer(
 		Command:    []string{"/clabernetes/manager", "launch"},
 		Ports: []k8scorev1.ContainerPort{
 			{
-				Name:          "vxlan",
+				Name:          clabernetesconstants.ConnectivityVXLAN,
 				ContainerPort: clabernetesconstants.VXLANServicePort,
-				Protocol:      "UDP",
+				Protocol:      clabernetesconstants.UDP,
+			},
+			{
+				Name:          clabernetesconstants.ConnectivitySlurpeeth,
+				ContainerPort: clabernetesconstants.SlurpeethServicePort,
+				Protocol:      clabernetesconstants.TCP,
 			},
 		},
 		VolumeMounts: []k8scorev1.VolumeMount{
@@ -385,12 +390,6 @@ func (r *DeploymentReconciler) renderDeploymentContainer(
 				ReadOnly:  true,
 				MountPath: "/clabernetes/topo.clab.yaml",
 				SubPath:   nodeName,
-			},
-			{
-				Name:      configVolumeName,
-				ReadOnly:  true,
-				MountPath: "/clabernetes/tunnels.yaml",
-				SubPath:   fmt.Sprintf("%s-tunnels", nodeName),
 			},
 			{
 				Name:      configVolumeName,
@@ -511,6 +510,10 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		{
 			Name:  clabernetesconstants.LauncherNodeImageEnv,
 			Value: nodeImage,
+		},
+		{
+			Name:  clabernetesconstants.LauncherConnectivityKind,
+			Value: owningTopology.Spec.Connectivity,
 		},
 	}
 
@@ -972,6 +975,7 @@ func (r *DeploymentReconciler) Conforms( //nolint: gocyclo
 // rendered sub-topologies) and updates the reconcile data NodesNeedingReboot set with each node
 // that needs restarting due to configuration changes.
 func (r *DeploymentReconciler) DetermineNodesNeedingRestart(
+	owningTopology *clabernetesapisv1alpha1.Topology,
 	reconcileData *ReconcileData,
 ) {
 	for nodeName, nodeConfig := range reconcileData.ResolvedConfigs {
@@ -980,8 +984,77 @@ func (r *DeploymentReconciler) DetermineNodesNeedingRestart(
 			continue
 		}
 
-		if !reflect.DeepEqual(nodeConfig, reconcileData.PreviousConfigs[nodeName]) {
+		if owningTopology.Spec.Connectivity == clabernetesconstants.ConnectivitySlurpeeth {
+			determineNodeNeedsRestartSlurpeeth(reconcileData, nodeName)
+		} else if !reflect.DeepEqual(nodeConfig, reconcileData.PreviousConfigs[nodeName]) {
 			reconcileData.NodesNeedingReboot.Add(nodeName)
 		}
+	}
+}
+
+func determineNodeNeedsRestartSlurpeeth(
+	reconcileData *ReconcileData,
+	nodeName string,
+) {
+	previousConfig := reconcileData.PreviousConfigs[nodeName]
+	currentConfig := reconcileData.ResolvedConfigs[nodeName]
+
+	if previousConfig.Debug != currentConfig.Debug {
+		reconcileData.NodesNeedingReboot.Add(nodeName)
+
+		return
+	}
+
+	if previousConfig.Name != currentConfig.Name {
+		reconcileData.NodesNeedingReboot.Add(nodeName)
+
+		return
+	}
+
+	if !reflect.DeepEqual(previousConfig.Mgmt, currentConfig.Mgmt) {
+		reconcileData.NodesNeedingReboot.Add(nodeName)
+
+		return
+	}
+
+	if !reflect.DeepEqual(previousConfig.Prefix, currentConfig.Prefix) {
+		reconcileData.NodesNeedingReboot.Add(nodeName)
+
+		return
+	}
+
+	if !reflect.DeepEqual(previousConfig.Topology.Nodes, currentConfig.Topology.Nodes) {
+		reconcileData.NodesNeedingReboot.Add(nodeName)
+
+		return
+	}
+
+	if !reflect.DeepEqual(previousConfig.Topology.Kinds, currentConfig.Topology.Kinds) {
+		reconcileData.NodesNeedingReboot.Add(nodeName)
+
+		return
+	}
+
+	if !reflect.DeepEqual(previousConfig.Topology.Defaults, currentConfig.Topology.Defaults) {
+		reconcileData.NodesNeedingReboot.Add(nodeName)
+
+		return
+	}
+
+	// we know (because we set this) that topology will never be nil and links will always be slices
+	// that are len 2... so we are a little risky here but its probably ok :)
+	for idx := range previousConfig.Topology.Links {
+		previousASide := previousConfig.Topology.Links[idx].Endpoints[0]
+		currentASide := currentConfig.Topology.Links[idx].Endpoints[0]
+
+		if previousASide == currentASide {
+			// as long as "a" side is the same, slurpeeth will auto update itself since launcher is
+			// watching the connectivity cr
+			continue
+		}
+
+		reconcileData.NodesNeedingReboot.Add(nodeName)
+
+		return
 	}
 }

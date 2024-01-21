@@ -51,6 +51,18 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/srl-labs/clabernetes/apis/v1alpha1.ConfigStatus": schema_srl_labs_clabernetes_apis_v1alpha1_ConfigStatus(
 			ref,
 		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.Connectivity": schema_srl_labs_clabernetes_apis_v1alpha1_Connectivity(
+			ref,
+		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.ConnectivityList": schema_srl_labs_clabernetes_apis_v1alpha1_ConnectivityList(
+			ref,
+		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.ConnectivitySpec": schema_srl_labs_clabernetes_apis_v1alpha1_ConnectivitySpec(
+			ref,
+		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.ConnectivityStatus": schema_srl_labs_clabernetes_apis_v1alpha1_ConnectivityStatus(
+			ref,
+		),
 		"github.com/srl-labs/clabernetes/apis/v1alpha1.Definition": schema_srl_labs_clabernetes_apis_v1alpha1_Definition(
 			ref,
 		),
@@ -90,6 +102,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/srl-labs/clabernetes/apis/v1alpha1.Persistence": schema_srl_labs_clabernetes_apis_v1alpha1_Persistence(
 			ref,
 		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.PointToPointTunnel": schema_srl_labs_clabernetes_apis_v1alpha1_PointToPointTunnel(
+			ref,
+		),
 		"github.com/srl-labs/clabernetes/apis/v1alpha1.ReconcileHashes": schema_srl_labs_clabernetes_apis_v1alpha1_ReconcileHashes(
 			ref,
 		),
@@ -106,9 +121,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 			ref,
 		),
 		"github.com/srl-labs/clabernetes/apis/v1alpha1.TopologyStatus": schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
-			ref,
-		),
-		"github.com/srl-labs/clabernetes/apis/v1alpha1.Tunnel": schema_srl_labs_clabernetes_apis_v1alpha1_Tunnel(
 			ref,
 		),
 	}
@@ -455,6 +467,166 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigStatus(
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "ConfigStatus is the status for a Config resource.",
+				Type:        []string{"object"},
+			},
+		},
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_Connectivity(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Connectivity is an object that holds information about a connectivity between launcher pods in a clabernetes Topology.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.ConnectivitySpec",
+							),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.ConnectivityStatus",
+							),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.ConnectivitySpec", "github.com/srl-labs/clabernetes/apis/v1alpha1.ConnectivityStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_ConnectivityList(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConnectivityList is a list of Connectivity objects.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref: ref(
+											"github.com/srl-labs/clabernetes/apis/v1alpha1.Connectivity",
+										),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.Connectivity", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_ConnectivitySpec(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConnectivitySpec is the spec for a Connectivity resource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"pointToPointTunnels": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PointToPointTunnels holds point-to-point connectivity information for a given topology. The mapping is nodeName (i.e. srl1) -> p2p tunnel data. Both sides of the tunnel should be able to use this information to establish connectivity between Topology nodes.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Ref: ref(
+														"github.com/srl-labs/clabernetes/apis/v1alpha1.PointToPointTunnel",
+													),
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"pointToPointTunnels"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.PointToPointTunnel"},
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_ConnectivityStatus(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConnectivityStatus is the status for a Connectivity resource.",
 				Type:        []string{"object"},
 			},
 		},
@@ -1143,6 +1315,77 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_Persistence(
 	}
 }
 
+func schema_srl_labs_clabernetes_apis_v1alpha1_PointToPointTunnel(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "PointToPointTunnel holds information necessary for creating a tunnel between two interfaces on different nodes of a clabernetes Topology. This connection can be established by using clab tools (vxlan) or the experimental slurpeeth (tcp tunnel magic).",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"tunnelID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TunnelID is the id number of the tunnel (vnid or segment id).",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"destination": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Destination is the destination service to connect to (qualified k8s service name).",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"localNode": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LocalNodeName is the name (in the clabernetes topology) of the local node for this side of the tunnel.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"localInterface": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LocalInterface is the local termination of this tunnel.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"remoteNode": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RemoteNode is the name (in the clabernetes topology) of the remote node for this side of the tunnel.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"remoteInterface": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RemoteInterface is the remote termination interface of this tunnel -- necessary to store so can properly align tunnels (and ids!) between nodes; basically to know which tunnels are \"paired up\".",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{
+					"tunnelID",
+					"destination",
+					"localNode",
+					"localInterface",
+					"remoteNode",
+					"remoteInterface",
+				},
+			},
+		},
+	}
+}
+
 func schema_srl_labs_clabernetes_apis_v1alpha1_ReconcileHashes(
 	ref common.ReferenceCallback,
 ) common.OpenAPIDefinition {
@@ -1155,14 +1398,6 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ReconcileHashes(
 					"config": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Config is the last stored hash of the rendered config(s) -- that is, the map of \"sub topologies\" representing the overall Topology.Spec.Definition.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"tunnels": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Tunnels is the last stored hash of the tunnels that provided connectivity between the launcher nodes. As this can change due to the dns suffix changing and not just the config changing we need to independently track this state.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -1201,13 +1436,7 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ReconcileHashes(
 						},
 					},
 				},
-				Required: []string{
-					"config",
-					"tunnels",
-					"exposedPorts",
-					"filesFromURL",
-					"imagePullSecrets",
-				},
+				Required: []string{"config", "exposedPorts", "filesFromURL", "imagePullSecrets"},
 			},
 		},
 	}
@@ -1411,8 +1640,16 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologySpec(
 							),
 						},
 					},
+					"connectivity": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Connectivity defines the type of connectivity to use between nodes in the topology. The default behavior is to use vxlan tunnels, alternatively you can enable a more experimental \"slurpeeth\" connectivity flavor that stuffs traffic into tcp tunnels to avoid any vxlan mtu and/or fragmentation challenges.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
-				Required: []string{"definition"},
+				Required: []string{"definition", "connectivity"},
 			},
 		},
 		Dependencies: []string{
@@ -1426,7 +1663,7 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "TopologyStatus is the status for a Containerlab topology resource.",
+				Description: "TopologyStatus is the status for a Topology resource.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -1484,76 +1721,5 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 		},
 		Dependencies: []string{
 			"github.com/srl-labs/clabernetes/apis/v1alpha1.ExposedPorts", "github.com/srl-labs/clabernetes/apis/v1alpha1.ReconcileHashes"},
-	}
-}
-
-func schema_srl_labs_clabernetes_apis_v1alpha1_Tunnel(
-	ref common.ReferenceCallback,
-) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Tunnel represents a VXLAN tunnel between clabernetes nodes (as configured by containerlab).",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"id": {
-						SchemaProps: spec.SchemaProps{
-							Description: "ID is the VXLAN ID (vnid) for the tunnel.",
-							Default:     0,
-							Type:        []string{"integer"},
-							Format:      "int32",
-						},
-					},
-					"localNodeName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "LocalNodeName is the name of the local node for this tunnel.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"remoteName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "RemoteName is the name of the service to contact the remote end of the tunnel.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"remoteNodeName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "RemoteNodeName is the name of the remote node.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"localLinkName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "LocalLinkName is the local link name for the local end of the tunnel.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"remoteLinkName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "RemoteLinkName is the remote link name for the remote end of the tunnel.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{
-					"id",
-					"localNodeName",
-					"remoteName",
-					"remoteNodeName",
-					"localLinkName",
-					"remoteLinkName",
-				},
-			},
-		},
 	}
 }

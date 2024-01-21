@@ -1,90 +1,90 @@
 {
     "srl1": [
         {
-            "id": 1,
-            "localNodeName": "srl1",
-            "remoteName": "topo-1-srl2.clabernetes.svc.cluster.local",
-            "remoteNodeName": "srl2",
-            "localLinkName": "e1-1",
-            "remoteLinkName": "e1-1"
+            "tunnelID": 1,
+            "destination": "topo-1-srl2.clabernetes.svc.cluster.local",
+            "localNode": "srl1",
+            "localInterface": "e1-1",
+            "remoteNode": "srl2",
+            "remoteInterface": "e1-1"
         },
         {
-            "id": 2,
-            "localNodeName": "srl1",
-            "remoteName": "topo-1-srl3.clabernetes.svc.cluster.local",
-            "remoteNodeName": "srl3",
-            "localLinkName": "e1-2",
-            "remoteLinkName": "e1-1"
+            "tunnelID": 2,
+            "destination": "topo-1-srl3.clabernetes.svc.cluster.local",
+            "localNode": "srl1",
+            "localInterface": "e1-2",
+            "remoteNode": "srl3",
+            "remoteInterface": "e1-1"
         }
     ],
     "srl2": [
         {
-            "id": 1,
-            "localNodeName": "srl2",
-            "remoteName": "topo-1-srl1.clabernetes.svc.cluster.local",
-            "remoteNodeName": "srl1",
-            "localLinkName": "e1-1",
-            "remoteLinkName": "e1-1"
+            "tunnelID": 1,
+            "destination": "topo-1-srl1.clabernetes.svc.cluster.local",
+            "localNode": "srl2",
+            "localInterface": "e1-1",
+            "remoteNode": "srl1",
+            "remoteInterface": "e1-1"
         },
         {
-            "id": 3,
-            "localNodeName": "srl2",
-            "remoteName": "topo-1-srl3.clabernetes.svc.cluster.local",
-            "remoteNodeName": "srl3",
-            "localLinkName": "e1-2",
-            "remoteLinkName": "e1-2"
+            "tunnelID": 3,
+            "destination": "topo-1-srl3.clabernetes.svc.cluster.local",
+            "localNode": "srl2",
+            "localInterface": "e1-2",
+            "remoteNode": "srl3",
+            "remoteInterface": "e1-2"
         },
         {
-            "id": 4,
-            "localNodeName": "srl2",
-            "remoteName": "topo-1-srl4.clabernetes.svc.cluster.local",
-            "remoteNodeName": "srl4",
-            "localLinkName": "e1-3",
-            "remoteLinkName": "e1-1"
+            "tunnelID": 4,
+            "destination": "topo-1-srl4.clabernetes.svc.cluster.local",
+            "localNode": "srl2",
+            "localInterface": "e1-3",
+            "remoteNode": "srl4",
+            "remoteInterface": "e1-1"
         }
     ],
     "srl3": [
         {
-            "id": 2,
-            "localNodeName": "srl3",
-            "remoteName": "topo-1-srl1.clabernetes.svc.cluster.local",
-            "remoteNodeName": "srl1",
-            "localLinkName": "e1-1",
-            "remoteLinkName": "e1-2"
+            "tunnelID": 2,
+            "destination": "topo-1-srl1.clabernetes.svc.cluster.local",
+            "localNode": "srl3",
+            "localInterface": "e1-1",
+            "remoteNode": "srl1",
+            "remoteInterface": "e1-2"
         },
         {
-            "id": 3,
-            "localNodeName": "srl3",
-            "remoteName": "topo-1-srl2.clabernetes.svc.cluster.local",
-            "remoteNodeName": "srl2",
-            "localLinkName": "e1-2",
-            "remoteLinkName": "e1-2"
+            "tunnelID": 3,
+            "destination": "topo-1-srl2.clabernetes.svc.cluster.local",
+            "localNode": "srl3",
+            "localInterface": "e1-2",
+            "remoteNode": "srl2",
+            "remoteInterface": "e1-2"
         },
         {
-            "id": 5,
-            "localNodeName": "srl3",
-            "remoteName": "topo-1-srl4.clabernetes.svc.cluster.local",
-            "remoteNodeName": "srl4",
-            "localLinkName": "e1-3",
-            "remoteLinkName": "e1-2"
+            "tunnelID": 5,
+            "destination": "topo-1-srl4.clabernetes.svc.cluster.local",
+            "localNode": "srl3",
+            "localInterface": "e1-3",
+            "remoteNode": "srl4",
+            "remoteInterface": "e1-2"
         }
     ],
     "srl4": [
         {
-            "id": 4,
-            "localNodeName": "srl4",
-            "remoteName": "topo-1-srl2.clabernetes.svc.cluster.local",
-            "remoteNodeName": "srl2",
-            "localLinkName": "e1-1",
-            "remoteLinkName": "e1-3"
+            "tunnelID": 4,
+            "destination": "topo-1-srl2.clabernetes.svc.cluster.local",
+            "localNode": "srl4",
+            "localInterface": "e1-1",
+            "remoteNode": "srl2",
+            "remoteInterface": "e1-3"
         },
         {
-            "id": 5,
-            "localNodeName": "srl4",
-            "remoteName": "topo-1-srl3.clabernetes.svc.cluster.local",
-            "remoteNodeName": "srl3",
-            "localLinkName": "e1-2",
-            "remoteLinkName": "e1-3"
+            "tunnelID": 5,
+            "destination": "topo-1-srl3.clabernetes.svc.cluster.local",
+            "localNode": "srl4",
+            "localInterface": "e1-2",
+            "remoteNode": "srl3",
+            "remoteInterface": "e1-3"
         }
     ]
 }

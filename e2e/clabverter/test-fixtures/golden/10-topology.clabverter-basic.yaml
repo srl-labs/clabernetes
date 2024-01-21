@@ -5,6 +5,7 @@ metadata:
   name: clabverter-basic
   namespace: NAMESPACE
 spec:
+  connectivity: vxlan
   definition:
     containerlab: |-
       ---
@@ -132,4 +133,3 @@ status:
     config: 25ea403243c3741d3013049756aa02db0ad8dc3d0d9bf803dc1576f9dda33649
     filesFromURL: {}
     imagePullSecrets: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570
-    tunnels: 25ea403243c3741d3013049756aa02db0ad8dc3d0d9bf803dc1576f9dda33649
