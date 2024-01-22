@@ -28,6 +28,7 @@ RUN CGO_ENABLED=0 \
 
 FROM --platform=linux/amd64 debian:bookworm-slim
 
+ARG DOCKER_VERSION="5:24.*"
 ARG CONTAINERLAB_VERSION="0.48.*"
 ARG NERDCTL_VERSION="1.7.2"
 
@@ -59,8 +60,8 @@ RUN echo \
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
             containerlab=${CONTAINERLAB_VERSION} \
-            docker-ce \
-            docker-ce-cli && \
+            docker-ce=${DOCKER_VERSION} \
+            docker-ce-cli=${DOCKER_VERSION} && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/apt/archive/*.deb
 
