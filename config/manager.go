@@ -67,7 +67,7 @@ func InitManager(
 					ResourcesByContainerlabKind: make(
 						map[string]map[string]*k8scorev1.ResourceRequirements,
 					),
-					PrivilegedLauncher:      false,
+					PrivilegedLauncher:      true,
 					ContainerlabDebug:       false,
 					LauncherImage:           os.Getenv(clabernetesconstants.LauncherImageEnv),
 					LauncherImagePullPolicy: clabernetesconstants.KubernetesImagePullIfNotPresent,

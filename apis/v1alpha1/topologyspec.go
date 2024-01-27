@@ -120,12 +120,16 @@ type Deployment struct {
 	// to "scheduling" things (affinity/node selector/tolerations).
 	// +optional
 	Scheduling Scheduling `json:"scheduling"`
-	// PrivilegedLauncher, when true, sets the launcher containers to privileged. By default, we do
-	// our best to *not* need this/set this, and instead set only the capabilities we need, however
-	// its possible that some containers launched by the launcher may need/want more capabilities,
-	// so this flag exists for users to bypass the default settings and enable fully privileged
-	// launcher pods. If this value is unset, the global config value (default of "false") will be
-	// used.
+	// PrivilegedLauncher, when true, sets the launcher containers to privileged. Historically we
+	// tried very hard to *not* need to set privileged mode on pods, however the reality is it is
+	// much, much easier to get various network operating system images booting with this enabled,
+	// so, the default mode is to set the privileged flag on pods. Disabling this option causes
+	// clabernetes to try to run the pods for this topology in the "not so privileged" mode -- this
+	// basically means we mount all capabilities we think should be available, set apparmor to
+	// "unconfined", and mount paths like /dev/kvm and dev/net/tun. With this "not so privileged"
+	// mode, Nokia SRL devices and Arista cEOS devices have been able to boot on some clusters, but
+	// your mileage may vary. In short: if you don't care about having some privileged pods, just
+	// leave this alone.
 	// +optional
 	PrivilegedLauncher *bool `json:"privilegedLauncher"`
 	// FilesFromConfigMap is a slice of FileFromConfigMap that define the configmap/path and node

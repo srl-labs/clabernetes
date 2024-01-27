@@ -39,7 +39,7 @@ func (f fakeManager) GetResourcesForContainerlabKind(
 }
 
 func (f fakeManager) GetPrivilegedLauncher() bool {
-	return false
+	return true
 }
 
 func (f fakeManager) GetContainerlabDebug() bool {
