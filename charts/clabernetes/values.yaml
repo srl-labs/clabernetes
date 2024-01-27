@@ -117,7 +117,7 @@ globalConfig:
 
     # privilegedLauncher sets the global default value for "privilegedLauncher" -- that is, if the
     # launcher pods should run in privileged mode or not.
-    privilegedLauncher: false
+    privilegedLauncher: true
 
     # containerlabDebug sets the global default value for whether launcher pods should have the
     # containerlab debug flag set.
