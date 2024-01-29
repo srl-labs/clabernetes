@@ -28,7 +28,7 @@ RUN CGO_ENABLED=0 \
 
 FROM --platform=linux/amd64 debian:bookworm-slim
 
-ARG DOCKER_VERSION="5:24.*"
+ARG DOCKER_VERSION="5:25.*"
 ARG CONTAINERLAB_VERSION="0.48.*"
 ARG NERDCTL_VERSION="1.7.2"
 
@@ -66,6 +66,9 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/apt/archive/*.deb
 
 RUN wget -c https://github.com/containerd/nerdctl/releases/download/v${NERDCTL_VERSION}/nerdctl-${NERDCTL_VERSION}-linux-amd64.tar.gz -O - | tar -xz -C /usr/bin/ && rm /usr/bin/containerd-rootless*.sh
+
+# https://github.com/docker/cli/issues/4807
+RUN sed -i 's/ulimit -Hn/# ulimit -Hn/g' /etc/init.d/docker
 
 # copy a basic but nicer than standard bashrc for the user
 COPY build/launcher/.bashrc /root/.bashrc
