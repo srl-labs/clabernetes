@@ -44,6 +44,7 @@ spec:
         release: {{ .Release.Name }}
         heritage: {{ .Release.Service }}
         revision: "{{ .Release.Revision }}"
+        app.kubernetes.io/name: "{{ .Values.appName }}-manager"
         clabernetes/app: {{ .Values.appName }}
         clabernetes/name: "{{ .Values.appName }}-manager"
         clabernetes/component: manager
