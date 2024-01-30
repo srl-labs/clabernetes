@@ -32,6 +32,7 @@ spec:
         release: release-name
         heritage: Helm
         revision: "1"
+        app.kubernetes.io/name: "clabernetes-manager"
         clabernetes/app: clabernetes
         clabernetes/name: "clabernetes-manager"
         clabernetes/component: manager
