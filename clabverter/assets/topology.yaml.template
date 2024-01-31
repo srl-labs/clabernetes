@@ -22,7 +22,7 @@ spec:
           - filePath: {{ $nodeFile.FilePath }}
             configMapName: {{ $nodeFile.ConfigMapName }}
             configMapPath: {{ $nodeFile.FileName }}
-            mode: read
+            Mode: {{ $nodeFile.FileMode }}
           {{- end }}
       {{- end }}
     {{- end }}

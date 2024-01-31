@@ -20,7 +20,14 @@ const (
 	bindPartsLen    = 2
 	bindClabNodeDir = "__clabNodeDir__"
 	bindClabDir     = "__clabDir__"
+	fileModeRead    = "read"
+	fileModeExecute = "execute"
 )
+
+type extraFile struct {
+	mode    string
+	content []byte
+}
 
 func parseBindString(bind, nodeName, topologyPathParent string) (sourceDestinationPathPair, error) {
 	parsedBind := sourceDestinationPathPair{}
@@ -36,6 +43,10 @@ func parseBindString(bind, nodeName, topologyPathParent string) (sourceDestinati
 
 	parsedBind.sourcePath = bindParts[0]
 	parsedBind.destinationPath = bindParts[1]
+	// default mode of a bind file is read
+	// it gets set to execute in resolveExtraFilesLocal func
+	// if the file is executable
+	parsedBind.mode = fileModeRead
 
 	// handle special bind path vars
 	parsedBind.sourcePath = strings.Replace(
@@ -75,6 +86,7 @@ func getExtraFilesForNode(
 			sourceDestinationPathPair{
 				sourcePath:      nodeConfig.License,
 				destinationPath: nodeConfig.License,
+				mode:            fileModeRead,
 			},
 		)
 	} else if defaults != nil && defaults.License != "" {
@@ -83,6 +95,7 @@ func getExtraFilesForNode(
 			sourceDestinationPathPair{
 				sourcePath:      defaults.License,
 				destinationPath: defaults.License,
+				mode:            fileModeRead,
 			},
 		)
 	}
@@ -198,6 +211,7 @@ func (c *Clabverter) handleStartupConfigs() error {
 			ConfigMapName: configMapName,
 			FilePath:      c.clabConfig.Topology.Nodes[nodeName].StartupConfig,
 			FileName:      "startup-config",
+			FileMode:      fileModeRead,
 		}
 	}
 
@@ -323,12 +337,19 @@ func (c *Clabverter) resolveExtraFilesLocal(
 			)
 		}
 
+		// if the file is executable by either user/group/other, we need
+		// to reflect this in the configmap so we can set the permissions accordingly
+		if strings.Contains(fileInfo.Mode().String(), "x") {
+			extraFilePath.mode = fileModeExecute
+		}
+
 		if !fileInfo.IsDir() {
 			resolvedExtraFilePaths = append(
 				resolvedExtraFilePaths,
 				sourceDestinationPathPair{
 					sourcePath:      extraFilePath.sourcePath,
 					destinationPath: extraFilePath.destinationPath,
+					mode:            extraFilePath.mode,
 				},
 			)
 
@@ -399,7 +420,7 @@ func (c *Clabverter) handleExtraFileTooLarge(
 func (c *Clabverter) handleExtraFiles() error {
 	c.logger.Info("handling containerlab extra file(s) if present...")
 
-	extraFiles := make(map[string]map[string][]byte)
+	extraFiles := make(map[string]map[string]extraFile)
 
 	for nodeName := range c.clabConfig.Topology.Nodes {
 		extraFilePaths, err := getExtraFilesForNode(c.clabConfig, nodeName, c.topologyPathParent)
@@ -435,14 +456,15 @@ func (c *Clabverter) handleExtraFiles() error {
 			return err
 		}
 
-		extraFiles[nodeName] = make(map[string][]byte)
+		extraFiles[nodeName] = make(map[string]extraFile)
 
 		for _, extraFilePath := range resolvedExtraFiles {
 			c.logger.Debugf(
-				"loading node '%s' extra file '%s' for destination '%s'...",
+				"loading node '%s' extra file '%s' for destination '%s' with mode '%q'...",
 				nodeName,
 				extraFilePath.sourcePath,
 				extraFilePath.destinationPath,
+				extraFilePath.mode,
 			)
 
 			var extraFileContent []byte
@@ -462,7 +484,10 @@ func (c *Clabverter) handleExtraFiles() error {
 			if len(extraFileContent) > maxBytesForConfigMap {
 				c.handleExtraFileTooLarge(nodeName, extraFilePath)
 			} else {
-				extraFiles[nodeName][extraFilePath.sourcePath] = extraFileContent
+				extraFiles[nodeName][extraFilePath.sourcePath] = extraFile{
+					mode:    extraFilePath.mode,
+					content: extraFileContent,
+				}
 			}
 		}
 	}
@@ -488,14 +513,14 @@ func (c *Clabverter) handleExtraFiles() error {
 
 		c.extraFilesConfigMaps[nodeName] = make([]topologyConfigMapTemplateVars, 0)
 
-		for extraFilePath, extraFileContent := range nodeExtraFiles {
+		for extraFilePath, extraFile := range nodeExtraFiles {
 			safeFileName := clabernetesutilkubernetes.SafeConcatNameKubernetes(
 				strings.Split(extraFilePath, "/")...)
 
 			safeFileName = strings.TrimPrefix(safeFileName, "-")
 
 			templateVars.ExtraFiles[safeFileName] = "\n" + clabernetesutil.Indent(
-				string(extraFileContent),
+				string(extraFile.content),
 				specIndentSpaces,
 			)
 
@@ -506,6 +531,7 @@ func (c *Clabverter) handleExtraFiles() error {
 					ConfigMapName: configMapName,
 					FilePath:      extraFilePath,
 					FileName:      safeFileName,
+					FileMode:      extraFile.mode,
 				},
 			)
 		}

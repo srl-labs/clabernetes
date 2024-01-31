@@ -17,6 +17,7 @@ type topologyConfigMapTemplateVars struct {
 	ConfigMapName string
 	FilePath      string
 	FileName      string
+	FileMode      string
 }
 
 type topologyFileFromURLTemplateVars struct {
@@ -42,6 +43,10 @@ type renderedContent struct {
 type sourceDestinationPathPair struct {
 	sourcePath      string
 	destinationPath string
+	// mode is either "read" (default) or "execute"
+	// and reflects the mode of the source file
+	// referenced by the sourcePath
+	mode string
 }
 
 type gitHubPathInfo struct {
