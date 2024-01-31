@@ -180,7 +180,10 @@ func (c *Clabverter) ensureOutputDirectory() error {
 		return err
 	}
 
-	err = os.MkdirAll(c.outputDirectory, clabernetesconstants.PermissionsEveryoneRead)
+	err = os.MkdirAll(
+		c.outputDirectory,
+		clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute,
+	)
 	if err != nil {
 		c.logger.Criticalf("failed ensuring output directory exists, error: %s", err)
 
@@ -407,7 +410,7 @@ func (c *Clabverter) output() error {
 			err := os.WriteFile(
 				rendered.fileName,
 				rendered.content,
-				clabernetesconstants.PermissionsEveryoneRead,
+				clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute,
 			)
 			if err != nil {
 				c.logger.Criticalf(

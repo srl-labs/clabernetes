@@ -14,11 +14,19 @@ const (
 	// read, write, and execute permissions.
 	PermissionsEveryoneAllPermissions = 0o777
 
-	// PermissionsEveryoneRead is 0755 permissions for files/directories -- everyone can read, and
-	// execute, and owner can write.
-	PermissionsEveryoneRead = 0o755
+	// PermissionsEveryoneReadWriteOwnerExecute is 0755 permissions for files/directories --
+	// everyone can read, and execute, and owner can write.
+	PermissionsEveryoneReadWriteOwnerExecute = 0o755
 
 	// PermissionsEveryoneReadWrite is 0666 permissions for files/directories -- everyone has read
 	// and write permissions.
 	PermissionsEveryoneReadWrite = 0o666
+
+	// PermissionsEveryoneReadExecute is 0555 permissions for files/directories -- everyone has read
+	// and execute permissions.
+	PermissionsEveryoneReadExecute = 0o555
+
+	// PermissionsEveryoneRead is 0444 permissions for files/directories -- everyone has read
+	// permissions.
+	PermissionsEveryoneRead = 0o444
 )

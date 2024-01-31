@@ -189,7 +189,7 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 						Name: owningTopologyName,
 					},
 					DefaultMode: clabernetesutil.ToPointer(
-						int32(clabernetesconstants.PermissionsEveryoneRead),
+						int32(clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute),
 					),
 				},
 			},
@@ -243,7 +243,7 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 					Secret: &k8scorev1.SecretVolumeSource{
 						SecretName: dockerDaemonConfigSecret,
 						DefaultMode: clabernetesutil.ToPointer(
-							int32(clabernetesconstants.PermissionsEveryoneRead),
+							int32(clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute),
 						),
 					},
 				},
@@ -272,6 +272,21 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 			podVolume.ConfigMapName,
 			volumes,
 		) {
+			var mode *int32
+
+			switch podVolume.Mode {
+			case clabernetesconstants.Read:
+				mode = clabernetesutil.ToPointer(
+					int32(clabernetesconstants.PermissionsEveryoneRead),
+				)
+			case clabernetesconstants.Execute:
+				mode = clabernetesutil.ToPointer(
+					int32(clabernetesconstants.PermissionsEveryoneReadExecute),
+				)
+			default:
+				mode = nil
+			}
+
 			volumes = append(
 				volumes,
 				k8scorev1.Volume{
@@ -281,6 +296,7 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 							LocalObjectReference: k8scorev1.LocalObjectReference{
 								Name: podVolume.ConfigMapName,
 							},
+							DefaultMode: mode,
 						},
 					},
 				},

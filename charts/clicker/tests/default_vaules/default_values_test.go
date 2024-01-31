@@ -28,7 +28,7 @@ func TestDefaultValues(t *testing.T) {
 	actualRootDir := fmt.Sprintf("test-fixtures/%s-actual", testName)
 	actualDir := fmt.Sprintf("%s/clicker/templates", actualRootDir)
 
-	err := os.MkdirAll(actualDir, clabernetesconstants.PermissionsEveryoneRead)
+	err := os.MkdirAll(actualDir, clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute)
 	if err != nil {
 		t.Fatalf(
 			"failed creating actual output directory %q, error: %s", actualDir, err,

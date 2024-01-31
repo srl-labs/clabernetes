@@ -13,6 +13,11 @@ type FileFromConfigMap struct {
 	// be mounted without a sub-path.
 	// +optional
 	ConfigMapPath string `json:"configMapPath"`
+	// Mode sets the file permissions when mounting the configmap. Since the configmap will be read
+	// only filesystem anyway, we basically just want to expose if the file should be mounted as
+	// executable or not. So, default permissions would be 0o444 (read) and execute would be 0o555.
+	// +kubebuilder:validation:Enum=read;execute
+	Mode string `json:"mode"`
 }
 
 // FileFromURL represents a file that you would like to mount from a URL in the launcher pod for
