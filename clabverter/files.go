@@ -10,18 +10,17 @@ import (
 	"strings"
 	"text/template"
 
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
 )
 
 const (
-	bindSeperator   = ":"
+	bindSeparator   = ":"
 	bindPartsLen    = 2
 	bindClabNodeDir = "__clabNodeDir__"
 	bindClabDir     = "__clabDir__"
-	fileModeRead    = "read"
-	fileModeExecute = "execute"
 )
 
 type extraFile struct {
@@ -32,7 +31,7 @@ type extraFile struct {
 func parseBindString(bind, nodeName, topologyPathParent string) (sourceDestinationPathPair, error) {
 	parsedBind := sourceDestinationPathPair{}
 
-	bindParts := strings.Split(bind, bindSeperator)
+	bindParts := strings.Split(bind, bindSeparator)
 
 	// we may split on a trailing ro/rw -- we'll ignore it in clabernetes case since this will be
 	// mounted as the pods own configmap anyway and not something we need to care about not getting
@@ -46,7 +45,7 @@ func parseBindString(bind, nodeName, topologyPathParent string) (sourceDestinati
 	// default mode of a bind file is read
 	// it gets set to execute in resolveExtraFilesLocal func
 	// if the file is executable
-	parsedBind.mode = fileModeRead
+	parsedBind.mode = clabernetesconstants.FileModeRead
 
 	// handle special bind path vars
 	parsedBind.sourcePath = strings.Replace(
@@ -86,7 +85,7 @@ func getExtraFilesForNode(
 			sourceDestinationPathPair{
 				sourcePath:      nodeConfig.License,
 				destinationPath: nodeConfig.License,
-				mode:            fileModeRead,
+				mode:            clabernetesconstants.FileModeRead,
 			},
 		)
 	} else if defaults != nil && defaults.License != "" {
@@ -95,7 +94,7 @@ func getExtraFilesForNode(
 			sourceDestinationPathPair{
 				sourcePath:      defaults.License,
 				destinationPath: defaults.License,
-				mode:            fileModeRead,
+				mode:            clabernetesconstants.FileModeRead,
 			},
 		)
 	}
@@ -211,7 +210,7 @@ func (c *Clabverter) handleStartupConfigs() error {
 			ConfigMapName: configMapName,
 			FilePath:      c.clabConfig.Topology.Nodes[nodeName].StartupConfig,
 			FileName:      "startup-config",
-			FileMode:      fileModeRead,
+			FileMode:      clabernetesconstants.FileModeRead,
 		}
 	}
 
@@ -340,7 +339,7 @@ func (c *Clabverter) resolveExtraFilesLocal(
 		// if the file is executable by either user/group/other, we need
 		// to reflect this in the configmap so we can set the permissions accordingly
 		if strings.Contains(fileInfo.Mode().String(), "x") {
-			extraFilePath.mode = fileModeExecute
+			extraFilePath.mode = clabernetesconstants.FileModeExecute
 		}
 
 		if !fileInfo.IsDir() {
@@ -513,14 +512,14 @@ func (c *Clabverter) handleExtraFiles() error {
 
 		c.extraFilesConfigMaps[nodeName] = make([]topologyConfigMapTemplateVars, 0)
 
-		for extraFilePath, extraFile := range nodeExtraFiles {
+		for extraFilePath, extraFileObj := range nodeExtraFiles {
 			safeFileName := clabernetesutilkubernetes.SafeConcatNameKubernetes(
 				strings.Split(extraFilePath, "/")...)
 
 			safeFileName = strings.TrimPrefix(safeFileName, "-")
 
 			templateVars.ExtraFiles[safeFileName] = "\n" + clabernetesutil.Indent(
-				string(extraFile.content),
+				string(extraFileObj.content),
 				specIndentSpaces,
 			)
 
@@ -531,7 +530,7 @@ func (c *Clabverter) handleExtraFiles() error {
 					ConfigMapName: configMapName,
 					FilePath:      extraFilePath,
 					FileName:      safeFileName,
-					FileMode:      extraFile.mode,
+					FileMode:      extraFileObj.mode,
 				},
 			)
 		}

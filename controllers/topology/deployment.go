@@ -276,11 +276,11 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 		var mode *int32
 
 		switch podVolume.Mode {
-		case clabernetesconstants.Read:
+		case clabernetesconstants.FileModeRead:
 			mode = clabernetesutil.ToPointer(
 				int32(clabernetesconstants.PermissionsEveryoneRead),
 			)
-		case clabernetesconstants.Execute:
+		case clabernetesconstants.FileModeExecute:
 			mode = clabernetesutil.ToPointer(
 				int32(clabernetesconstants.PermissionsEveryoneReadExecute),
 			)
