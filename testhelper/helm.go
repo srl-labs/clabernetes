@@ -39,7 +39,7 @@ func HelmTest(t *testing.T, testName, namespace, valuesFileName string) {
 		}
 	}
 
-	err := os.MkdirAll(actualDir, clabernetesconstants.PermissionsEveryoneRead)
+	err := os.MkdirAll(actualDir, clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute)
 	if err != nil {
 		t.Fatalf(
 			"failed creating actual output directory %q, error: %s", actualDir, err,

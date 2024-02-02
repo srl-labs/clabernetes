@@ -33,4 +33,11 @@ const (
 
 	// UDP is... UDP.
 	UDP = "UDP"
+
+	// Read is "read". Used for configmap mount permissions in the TopologySpec/FilesFromConfigMap.
+	Read = "read"
+
+	// Execute is "execute". Used for configmap mount permissions in the
+	// TopologySpec/FilesFromConfigMap.
+	Execute = "execute"
 )

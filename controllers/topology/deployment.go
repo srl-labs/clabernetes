@@ -189,7 +189,7 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 						Name: owningTopologyName,
 					},
 					DefaultMode: clabernetesutil.ToPointer(
-						int32(clabernetesconstants.PermissionsEveryoneRead),
+						int32(clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute),
 					),
 				},
 			},
@@ -243,7 +243,7 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 					Secret: &k8scorev1.SecretVolumeSource{
 						SecretName: dockerDaemonConfigSecret,
 						DefaultMode: clabernetesutil.ToPointer(
-							int32(clabernetesconstants.PermissionsEveryoneRead),
+							int32(clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute),
 						),
 					},
 				},
@@ -268,27 +268,43 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 	)
 
 	for _, podVolume := range volumesFromConfigMaps {
-		if !clabernetesutilkubernetes.VolumeAlreadyMounted(
+		volumeName := clabernetesutilkubernetes.SafeConcatNameKubernetes(
 			podVolume.ConfigMapName,
-			volumes,
-		) {
-			volumes = append(
-				volumes,
-				k8scorev1.Volume{
-					Name: podVolume.ConfigMapName,
-					VolumeSource: k8scorev1.VolumeSource{
-						ConfigMap: &k8scorev1.ConfigMapVolumeSource{
-							LocalObjectReference: k8scorev1.LocalObjectReference{
-								Name: podVolume.ConfigMapName,
-							},
-						},
-					},
-				},
+			podVolume.ConfigMapPath,
+		)
+
+		var mode *int32
+
+		switch podVolume.Mode {
+		case clabernetesconstants.Read:
+			mode = clabernetesutil.ToPointer(
+				int32(clabernetesconstants.PermissionsEveryoneRead),
 			)
+		case clabernetesconstants.Execute:
+			mode = clabernetesutil.ToPointer(
+				int32(clabernetesconstants.PermissionsEveryoneReadExecute),
+			)
+		default:
+			mode = nil
 		}
 
+		volumes = append(
+			volumes,
+			k8scorev1.Volume{
+				Name: volumeName,
+				VolumeSource: k8scorev1.VolumeSource{
+					ConfigMap: &k8scorev1.ConfigMapVolumeSource{
+						LocalObjectReference: k8scorev1.LocalObjectReference{
+							Name: podVolume.ConfigMapName,
+						},
+						DefaultMode: mode,
+					},
+				},
+			},
+		)
+
 		volumeMount := k8scorev1.VolumeMount{
-			Name:      podVolume.ConfigMapName,
+			Name:      volumeName,
 			ReadOnly:  false,
 			MountPath: fmt.Sprintf("/clabernetes/%s", podVolume.FilePath),
 			SubPath:   podVolume.ConfigMapPath,

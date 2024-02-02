@@ -67,7 +67,7 @@ func (c *clabernetes) handleInsecureRegistries() error {
 	err = os.WriteFile(
 		dockerDaemonConfig,
 		rendered.Bytes(),
-		clabernetesconstants.PermissionsEveryoneRead,
+		clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute,
 	)
 	if err != nil {
 		return err

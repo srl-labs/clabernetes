@@ -15,7 +15,7 @@ import (
 func prepareCertificates(c clabernetesmanagertypes.Clabernetes) error {
 	clabernetesutil.MustCreateDirectory(
 		clabernetesconstants.CertificateDirectory,
-		clabernetesconstants.PermissionsEveryoneRead,
+		clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute,
 	)
 
 	caDirectory := ensureCaDirectory()
@@ -117,7 +117,10 @@ func ensureCaDirectory() string {
 		clabernetesconstants.CertificateAuthoritySubDir,
 	)
 
-	clabernetesutil.MustCreateDirectory(caDirectory, clabernetesconstants.PermissionsEveryoneRead)
+	clabernetesutil.MustCreateDirectory(
+		caDirectory,
+		clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute,
+	)
 
 	return caDirectory
 }
@@ -131,7 +134,7 @@ func ensureClientCertDirectory() string {
 
 	clabernetesutil.MustCreateDirectory(
 		clientCertDirectory,
-		clabernetesconstants.PermissionsEveryoneRead,
+		clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute,
 	)
 
 	return clientCertDirectory
@@ -146,7 +149,7 @@ func ensureWebhookCertDirectory() string {
 
 	clabernetesutil.MustCreateDirectory(
 		webhookCertDirectory,
-		clabernetesconstants.PermissionsEveryoneRead,
+		clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute,
 	)
 
 	return webhookCertDirectory

@@ -40,7 +40,10 @@ func TestClabvert(t *testing.T) {
 
 				actualDir := fmt.Sprintf("test-fixtures/%s-actual", testCase.name)
 
-				err := os.MkdirAll(actualDir, clabernetesconstants.PermissionsEveryoneRead)
+				err := os.MkdirAll(
+					actualDir,
+					clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute,
+				)
 				if err != nil {
 					t.Fatalf(
 						"failed creating actual output directory %q, error: %s", actualDir, err,

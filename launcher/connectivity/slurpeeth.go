@@ -173,7 +173,7 @@ func (m *slurpeethManager) renderSlurpeethConfig(
 	err = os.WriteFile(
 		slurpeethConfigPath,
 		slurpeethConfigYAML,
-		clabernetesconstants.PermissionsEveryoneRead,
+		clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute,
 	)
 	if err != nil {
 		m.logger.Fatalf(
