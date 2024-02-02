@@ -17,6 +17,7 @@ type FileFromConfigMap struct {
 	// only filesystem anyway, we basically just want to expose if the file should be mounted as
 	// executable or not. So, default permissions would be 0o444 (read) and execute would be 0o555.
 	// +kubebuilder:validation:Enum=read;execute
+	// +kubebuilder:default=read
 	Mode string `json:"mode"`
 }
 

@@ -101,6 +101,7 @@ spec:
                             description: FilePath is the path to mount the file.
                             type: string
                           mode:
+                            default: read
                             description: |-
                               Mode sets the file permissions when mounting the configmap. Since the configmap will be read
                               only filesystem anyway, we basically just want to expose if the file should be mounted as
