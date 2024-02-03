@@ -268,9 +268,11 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 	)
 
 	for _, podVolume := range volumesFromConfigMaps {
-		volumeName := clabernetesutilkubernetes.SafeConcatNameKubernetes(
-			podVolume.ConfigMapName,
-			podVolume.ConfigMapPath,
+		volumeName := clabernetesutilkubernetes.EnforceDNSLabelConvention(
+			clabernetesutilkubernetes.SafeConcatNameKubernetes(
+				podVolume.ConfigMapName,
+				podVolume.ConfigMapPath,
+			),
 		)
 
 		var mode *int32
