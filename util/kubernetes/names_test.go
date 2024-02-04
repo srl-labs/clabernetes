@@ -94,3 +94,50 @@ func TestSafeConcatNameMax(t *testing.T) {
 			})
 	}
 }
+
+func TestEnforceDNSLabelConvention(t *testing.T) {
+	cases := []struct {
+		name     string
+		in       string
+		expected string
+	}{
+		{
+			name:     "simple",
+			in:       "afinename",
+			expected: "afinename",
+		},
+		{
+			name:     "ending-with-non-alpha",
+			in:       "afinename1",
+			expected: "afinenamez",
+		},
+		{
+			name:     "starting-with-non-alpha",
+			in:       "1afinename",
+			expected: "zafinename",
+		},
+		{
+			name:     "special-chars",
+			in:       "afine.name",
+			expected: "afine-name",
+		},
+		{
+			name:     "ending-starting-with-non-alpha-special-chars",
+			in:       "1afine.name2",
+			expected: "zafine-namez",
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(
+			testCase.name,
+			func(t *testing.T) {
+				t.Logf("%s: starting", testCase.name)
+
+				actual := clabernetesutilkubernetes.EnforceDNSLabelConvention(testCase.in)
+				if actual != testCase.expected {
+					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
+				}
+			})
+	}
+}
