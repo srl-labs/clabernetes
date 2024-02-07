@@ -306,7 +306,7 @@ func (c *Clabverter) load() error {
 	}
 
 	// set the destination namespace to the c9s-<topology name>
-	// if it is was not explicitly set via the cli
+	// if it was not explicitly set via the cli
 	if c.destinationNamespace == "" {
 		c.destinationNamespace = clabernetesutilkubernetes.SafeConcatNameKubernetes(
 			"c9s",
