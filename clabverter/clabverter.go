@@ -14,6 +14,7 @@ import (
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
 )
 
 const (
@@ -305,9 +306,12 @@ func (c *Clabverter) load() error {
 	}
 
 	// set the destination namespace to the c9s-<topology name>
-	// if is was not explicitly set via the cli
+	// if it is was not explicitly set via the cli
 	if c.destinationNamespace == "" {
-		c.destinationNamespace = fmt.Sprintf("c9s-%s", c.clabConfig.Name)
+		c.destinationNamespace = clabernetesutilkubernetes.SafeConcatNameKubernetes(
+			"c9s",
+			c.clabConfig.Name,
+		)
 	}
 
 	if len(c.clabConfig.Topology.Nodes) == 0 {

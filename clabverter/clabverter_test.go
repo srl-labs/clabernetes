@@ -13,6 +13,7 @@ import (
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesclabverter "github.com/srl-labs/clabernetes/clabverter"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
 	"sigs.k8s.io/yaml"
 )
@@ -56,6 +57,11 @@ func TestClabvert(t *testing.T) {
 				}
 
 				defer func() {
+					// there CAN BE ONLY ONE clabverter logger, so clean it up between test cases
+					logManager := claberneteslogging.GetManager()
+
+					logManager.DeleteLogger(clabernetesconstants.Clabverter)
+
 					if !*clabernetestesthelper.SkipCleanup {
 						err = os.RemoveAll(actualDir)
 						if err != nil {
@@ -91,7 +97,11 @@ func TestClabvert(t *testing.T) {
 
 						clabernetestesthelper.WriteTestFixtureFile(
 							t,
-							fmt.Sprintf("golden/%s", filepath.Base(expectedFileName)),
+							fmt.Sprintf(
+								"golden/%s/%s",
+								testCase.name,
+								filepath.Base(expectedFileName),
+							),
 							expectedFileContent,
 						)
 					}
@@ -103,7 +113,7 @@ func TestClabvert(t *testing.T) {
 				for expectedFileName, actualContents := range renderedTemplates {
 					expected := clabernetestesthelper.ReadTestFixtureFile(
 						t,
-						fmt.Sprintf("golden/%s", expectedFileName),
+						fmt.Sprintf("golden/%s/%s", testCase.name, expectedFileName),
 					)
 
 					actualContents = normalizeManifest(t, actualContents)
