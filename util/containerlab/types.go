@@ -2,11 +2,16 @@ package containerlab
 
 // Config defines lab configuration as it is provided in the YAML file.
 type Config struct {
-	Name     string    `yaml:"name"`
-	Prefix   *string   `yaml:"prefix,omitempty"`
-	Mgmt     *MgmtNet  `yaml:"mgmt,omitempty"`
+	// Lab name
+	Name string `yaml:"name"`
+	// Lab prefix
+	Prefix *string `yaml:"prefix,omitempty"`
+	// Management network configuration
+	Mgmt *MgmtNet `yaml:"mgmt,omitempty"`
+	// Topology definition
 	Topology *Topology `yaml:"topology,omitempty"`
-	Debug    bool      `yaml:"debug"`
+	// Debug mode flag
+	Debug bool `yaml:"debug"`
 }
 
 // MgmtNet struct defines the management network options.

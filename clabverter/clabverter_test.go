@@ -30,6 +30,11 @@ func TestClabvert(t *testing.T) {
 			destinationNamespace: "notclabernetes",
 			insecureRegistries:   "1.2.3.4",
 		},
+		{
+			name:               "simple-no-explicit-namespace",
+			topologyFile:       "test-fixtures/clabversiontest/clab.yaml",
+			insecureRegistries: "1.2.3.4",
+		},
 	}
 
 	for _, testCase := range cases {

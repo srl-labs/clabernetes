@@ -43,7 +43,7 @@ If not set, clabverter will look for a file named '*.clab.y*ml'`,
 				Name:     destinationNamespace,
 				Usage:    "set the namespace for the rendered manifest(s)",
 				Required: false,
-				Value:    "clabernetes",
+				Value:    "",
 			},
 			&cli.StringFlag{
 				Name:     insecureRegistries,
