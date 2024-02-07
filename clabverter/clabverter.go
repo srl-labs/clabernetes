@@ -14,6 +14,7 @@ import (
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
+	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
 )
 
 const (
@@ -304,6 +305,15 @@ func (c *Clabverter) load() error {
 		return err
 	}
 
+	// set the destination namespace to the c9s-<topology name>
+	// if it was not explicitly set via the cli
+	if c.destinationNamespace == "" {
+		c.destinationNamespace = clabernetesutilkubernetes.SafeConcatNameKubernetes(
+			"c9s",
+			c.clabConfig.Name,
+		)
+	}
+
 	if len(c.clabConfig.Topology.Nodes) == 0 {
 		c.logger.Info("no nodes in topology file, nothing to do...")
 
@@ -333,6 +343,7 @@ func (c *Clabverter) handleAssociatedFiles() error {
 	return nil
 }
 
+// handleManifest renders the clabernetes Topology CR manifest.
 func (c *Clabverter) handleManifest() error {
 	t, err := template.ParseFS(Assets, "assets/topology.yaml.template")
 	if err != nil {

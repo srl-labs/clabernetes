@@ -1,0 +1,83 @@
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  creationTimestamp: null
+  name: srl02
+  namespace: c9s-srl02
+spec:
+  connectivity: vxlan
+  definition:
+    containerlab: |-
+      name: srl02
+
+      topology:
+        nodes:
+          srl1:
+            kind: srl
+            image: ghcr.io/nokia/srlinux
+            startup-config: srl1.cfg
+            license: taco/srl1.license
+          srl2:
+            kind: srl
+            image: ghcr.io/nokia/srlinux
+            startup-config: srl2.cfg
+            license: srl2.license
+            binds:
+              - __clabDir__/potato.txt:/potato.txt
+              - __clabNodeDir__/potato.txt:/nodedir-potato.txt
+
+        links:
+          - endpoints: ["srl1:e1-1", "srl2:e1-1"]
+  deployment:
+    containerlabDebug: null
+    filesFromConfigMap:
+      srl1:
+      - configMapName: srl02-srl1-startup-config
+        configMapPath: REPLACED
+        filePath: srl1.cfg
+        mode: read
+      - configMapName: srl02-srl1-files
+        configMapPath: REPLACED
+        filePath: taco/srl1.license
+        mode: read
+      srl2:
+      - configMapName: srl02-srl2-files
+        configMapPath: REPLACED
+        filePath: /some/dir/clabernetes/clabverter/test-fixtures/clabversiontest/potato.txt
+        mode: read
+      - configMapName: srl02-srl2-files
+        configMapPath: REPLACED
+        filePath: /some/dir/clabernetes/clabverter/test-fixtures/clabversiontest/srl2/potato.txt
+        mode: read
+      - configMapName: srl02-srl2-startup-config
+        configMapPath: REPLACED
+        filePath: srl2.cfg
+        mode: read
+      - configMapName: srl02-srl2-files
+        configMapPath: REPLACED
+        filePath: srl2.license
+        mode: read
+    filesFromURL: null
+    persistence:
+      enabled: false
+    privilegedLauncher: null
+    resources: null
+    scheduling:
+      tolerations: null
+  expose:
+    disableAutoExpose: false
+    disableExpose: false
+    disableNodeAliasService: false
+  imagePull:
+    insecureRegistries:
+    - 1.2.3.4
+    pullSecrets: null
+status:
+  configs: null
+  exposedPorts: null
+  kind: ""
+  reconcileHashes:
+    config: ""
+    exposedPorts: ""
+    filesFromURL: null
+    imagePullSecrets: ""

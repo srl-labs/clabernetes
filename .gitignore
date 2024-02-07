@@ -34,3 +34,6 @@ cover.out
 
 # devspace cache
 *.devspace
+
+# direnv file
+.envrc
