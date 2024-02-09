@@ -31,6 +31,7 @@ func TestClabverterBasic(t *testing.T) {
 		false,
 		false,
 		false,
+		false,
 	)
 
 	err := c.Clabvert()

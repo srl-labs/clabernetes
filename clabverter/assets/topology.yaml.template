@@ -37,6 +37,10 @@ spec:
       {{- end }}
     {{- end }}
   {{- end }}
+  {{- if .DisableExpose }}
+  expose:
+    disableExpose: true
+  {{- end }}
   connectivity: vxlan
   definition:
     containerlab: |-

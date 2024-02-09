@@ -12,6 +12,7 @@ const (
 	outputDirectory      = "outputDirectory"
 	destinationNamespace = "destinationNamespace"
 	insecureRegistries   = "insecureRegistries"
+	disableExpose        = "disableExpose"
 	debug                = "debug"
 	quiet                = "quiet"
 	stdout               = "stdout"
@@ -52,6 +53,12 @@ If not set, clabverter will look for a file named '*.clab.y*ml'`,
 				Value:    "",
 			},
 			&cli.BoolFlag{
+				Name:     disableExpose,
+				Usage:    "disable exposing nodes via Load Balancer service",
+				Required: false,
+				Value:    false,
+			},
+			&cli.BoolFlag{
 				Name:     debug,
 				Usage:    "enable debug logging",
 				Required: false,
@@ -77,6 +84,7 @@ If not set, clabverter will look for a file named '*.clab.y*ml'`,
 				c.String(outputDirectory),
 				c.String(destinationNamespace),
 				c.String(insecureRegistries),
+				c.Bool(disableExpose),
 				c.Bool(debug),
 				c.Bool(quiet),
 				c.Bool(stdout),
