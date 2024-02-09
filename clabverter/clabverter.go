@@ -29,6 +29,7 @@ func MustNewClabverter(
 	outputDirectory,
 	destinationNamespace,
 	insecureRegistries string,
+	disableExpose,
 	debug,
 	quiet,
 	stdout bool,
@@ -68,6 +69,7 @@ func MustNewClabverter(
 		githubToken:             githubToken,
 		outputDirectory:         outputDirectory,
 		stdout:                  stdout,
+		disableExpose:           disableExpose,
 		destinationNamespace:    destinationNamespace,
 		insecureRegistries:      insecureRegistriesArr,
 		startupConfigConfigMaps: make(map[string]topologyConfigMapTemplateVars),
@@ -90,6 +92,8 @@ type Clabverter struct {
 	destinationNamespace string
 
 	insecureRegistries []string
+
+	disableExpose bool
 
 	topologyPath       string
 	topologyPathParent string
@@ -428,6 +432,7 @@ func (c *Clabverter) handleManifest() error {
 			Files:              files,
 			FilesFromURL:       c.extraFilesFromURL,
 			InsecureRegistries: c.insecureRegistries,
+			DisableExpose:      c.disableExpose,
 		},
 	)
 	if err != nil {
