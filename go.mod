@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/carlmontanari/difflibgo v0.0.0-20231101235608-20f26fe20f37
-	github.com/carlmontanari/slurpeeth v0.0.0-20240113235020-b78c6307581c
+	github.com/carlmontanari/slurpeeth v0.0.0-20240209224827-246fa87e31f3
 	github.com/openconfig/kne v0.1.16
 	github.com/urfave/cli/v2 v2.27.1
 	google.golang.org/protobuf v1.32.0
