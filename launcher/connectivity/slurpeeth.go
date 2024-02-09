@@ -40,6 +40,9 @@ func (m *slurpeethManager) Run() {
 		// to pull/containers to schedule... maybe we want to re-think even setting a timeout and
 		// just let it try over and over and over again
 		slurpeeth.WithDialTimeout(slurpeethDialTimeout),
+		// *probably* we also want to retry if this fails... not sure yet, so we'll try this and see
+		// how it feels
+		slurpeeth.WithWorkerRetry(true),
 	)
 	if err != nil {
 		m.logger.Fatalf(
