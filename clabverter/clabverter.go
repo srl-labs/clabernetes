@@ -151,6 +151,11 @@ func (c *Clabverter) Clabvert() error {
 		return err
 	}
 
+	err = c.handleNamespace()
+	if err != nil {
+		return err
+	}
+
 	err = c.handleAssociatedFiles()
 	if err != nil {
 		return err
@@ -321,6 +326,45 @@ func (c *Clabverter) load() error {
 	}
 
 	c.logger.Debug("loading and validating containerlab topology file complete!")
+
+	return nil
+}
+
+// handleNamespace renders the namespace manifest.
+func (c *Clabverter) handleNamespace() error {
+	t, err := template.ParseFS(Assets, "assets/namespace.yaml.template")
+	if err != nil {
+		c.logger.Criticalf("failed loading namespace manifest template from assets: %s", err)
+
+		return err
+	}
+
+	var rendered bytes.Buffer
+
+	err = t.Execute(
+		&rendered,
+		struct {
+			Name string
+		}{
+			Name: c.destinationNamespace,
+		},
+	)
+	if err != nil {
+		c.logger.Criticalf("failed executing namespace template: %s", err)
+
+		return err
+	}
+
+	fileName := fmt.Sprintf("%s/%s-ns.yaml", c.outputDirectory, c.destinationNamespace)
+
+	c.renderedFiles = append(
+		c.renderedFiles,
+		renderedContent{
+			friendlyName: "namespace manifest",
+			fileName:     fileName,
+			content:      rendered.Bytes(),
+		},
+	)
 
 	return nil
 }
