@@ -12,6 +12,7 @@ import (
 // +k8s:openapi-gen=true
 // +kubebuilder:resource:path="topologies"
 // +kubebuilder:printcolumn:JSONPath=".status.kind",name=Kind,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 type Topology struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
