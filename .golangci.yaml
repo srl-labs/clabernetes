@@ -169,6 +169,11 @@ issues:
         - revive
       text: "package-comments"
 
+    # prefer to sprintf -- feels more consistent overall
+    - linters:
+        - perfsprint
+      text: "can be replaced with string addition"
+
 run:
   go: '1.21'
   skip-dirs:
@@ -179,4 +184,4 @@ output:
   uniq-by-line: false
 
 service:
-  golangci-lint-version: 1.55.x
+  golangci-lint-version: 1.56.x

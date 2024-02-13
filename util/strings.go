@@ -14,7 +14,7 @@ func Indent(s string, n int) string {
 	for idx, l := range ss {
 		outLine := l
 
-		if len(outLine) > 0 {
+		if outLine != "" {
 			outLine = fmt.Sprintf("%s%s", strings.Repeat(" ", n), l)
 		}
 

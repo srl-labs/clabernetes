@@ -122,7 +122,6 @@ func (c *clabernetes) run() error {
 			err = c.kubeClient.CoreV1().
 				ConfigMaps(c.namespace).
 				Delete(c.ctx, createdConfigMap.Name, metav1.DeleteOptions{})
-
 			if err != nil {
 				c.logger.Criticalf(
 					"failed deleting clicker configmap %q, err: %s",
@@ -488,7 +487,7 @@ func (c *clabernetes) watchPods(
 		}
 
 		switch eventPod.Status.Phase { //nolint:exhaustive
-		case "Succeeded":
+		case k8scorev1.PodSucceeded:
 			c.logger.Debugf("pod %q reports succeeded", podName)
 
 			watch.Stop()
@@ -501,7 +500,7 @@ func (c *clabernetes) watchPods(
 			} else {
 				successChan <- podName
 			}
-		case "Failed":
+		case k8scorev1.PodFailed:
 			c.logger.Criticalf("pod %q reports failed", podName)
 
 			watch.Stop()

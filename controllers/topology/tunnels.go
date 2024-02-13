@@ -30,7 +30,7 @@ func AllocateTunnelIDs(
 	// iterate over stored (in status) tunnels and allocate previously assigned ids to any relevant
 	// tunnels -- while doing so, make a map of all allocated tunnel ids so we can make sure to not
 	// re-use things.
-	allocatedTunnelIds := make(map[int]bool)
+	allocatedTunnelIDs := make(map[int]bool)
 
 	for nodeName, nodeTunnels := range processedTunnels {
 		existingNodeTunnels, ok := statusTunnels[nodeName]
@@ -44,7 +44,7 @@ func AllocateTunnelIDs(
 					newTunnel.RemoteNode == existingTunnel.RemoteNode {
 					newTunnel.TunnelID = existingTunnel.TunnelID
 
-					allocatedTunnelIds[newTunnel.TunnelID] = true
+					allocatedTunnelIDs[newTunnel.TunnelID] = true
 
 					break
 				}
@@ -72,21 +72,21 @@ func AllocateTunnelIDs(
 
 			if idToAssign != 0 {
 				tunnel.TunnelID = idToAssign
-				allocatedTunnelIds[idToAssign] = true
+				allocatedTunnelIDs[idToAssign] = true
 
 				continue
 			}
 
 			// dear lord this is probably ridiculous but should be fine for now... :)
 			for i := 1; i < 16_000_000; i++ {
-				_, ok := allocatedTunnelIds[i]
+				_, ok := allocatedTunnelIDs[i]
 				if ok {
 					// already allocated
 					continue
 				}
 
 				tunnel.TunnelID = i
-				allocatedTunnelIds[i] = true
+				allocatedTunnelIDs[i] = true
 
 				break
 			}
