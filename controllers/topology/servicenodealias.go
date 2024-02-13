@@ -139,7 +139,7 @@ func (r *ServiceNodeAliasReconciler) renderServiceBase(
 			Type: "ExternalName",
 			ExternalName: fmt.Sprintf(
 				"%s.%s.%s",
-				deploymentName,
+				name,
 				owningTopologyNamespace,
 				r.configManagerGetter().GetInClusterDNSSuffix(),
 			),
