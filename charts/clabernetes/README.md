@@ -11,3 +11,24 @@
 
   See [clabernetes docs](https://containerlab.dev/manual/clabernetes) for reference.
 </p>
+
+<br/>
+<br/>
+
+## Deploy
+
+Deploying this chart is like deploying any other helm chart! The simplest case looks something like:
+
+```bash
+helm upgrade --install clabernetes oci://ghcr.io/srl-labs/clabernetes/clabernetes
+```
+
+You can select to install a specific version of the chart by adding the `--version` flag -- you can
+find all the versions of the chart stored as a package on the projects GitHub page
+[here](https://github.com/srl-labs/clabernetes/pkgs/container/clabernetes%2Fclabernetes).
+
+## Values
+
+As with most helm charts, this chart is configurable via values -- please refer to the charts
+default values file for reference. You can find it
+[here](https://github.com/srl-labs/clabernetes/blob/main/charts/clabernetes/values.yaml) or on the [Artifact Hub](https://artifacthub.io/packages/helm/clabernetes/clabernetes?modal=values).
