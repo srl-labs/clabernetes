@@ -67,7 +67,7 @@ spec:
   expose:
     disableAutoExpose: false
     disableExpose: false
-    disableNodeAliasService: false
+    enableNodeAliasService: false
   imagePull:
     insecureRegistries:
     - 1.2.3.4

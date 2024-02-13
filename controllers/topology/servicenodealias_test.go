@@ -39,9 +39,15 @@ func TestResolveServiceNodeResolution(t *testing.T) {
 			expectedExtra:      []*k8scorev1.Service{},
 		},
 		{
-			name:           "missing-nodes",
-			owningTopology: &clabernetesapisv1alpha1.Topology{},
-			ownedServices:  &k8scorev1.ServiceList{},
+			name: "missing-nodes",
+			owningTopology: &clabernetesapisv1alpha1.Topology{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Expose: clabernetesapisv1alpha1.Expose{
+						EnableNodeAliasService: true,
+					},
+				},
+			},
+			ownedServices: &k8scorev1.ServiceList{},
 			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
 				"node1": nil,
 				"node2": nil,

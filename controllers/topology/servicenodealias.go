@@ -77,7 +77,7 @@ func (r *ServiceNodeAliasReconciler) Resolve(
 
 	var allNodes []string
 
-	if !owningTopology.Spec.Expose.DisableNodeAliasService {
+	if owningTopology.Spec.Expose.EnableNodeAliasService {
 		allNodes = make([]string, len(clabernetesConfigs))
 
 		idx := 0
@@ -139,7 +139,7 @@ func (r *ServiceNodeAliasReconciler) renderServiceBase(
 			Type: "ExternalName",
 			ExternalName: fmt.Sprintf(
 				"%s.%s.%s",
-				deploymentName,
+				name,
 				owningTopologyNamespace,
 				r.configManagerGetter().GetInClusterDNSSuffix(),
 			),

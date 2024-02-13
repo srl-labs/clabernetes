@@ -29,7 +29,6 @@ spec:
   expose:
     disableAutoExpose: false
     disableExpose: false
-    disableNodeAliasService: false
   imagePull: {}
 status:
   configs:

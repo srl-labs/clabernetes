@@ -20,7 +20,7 @@
             "clabernetes/topologyOwner": "render-service-fabric-test"
         },
         "type": "ExternalName",
-        "externalName": "render-service-fabric-test-srl1.clabernetes.svc.cluster.local"
+        "externalName": "srl1.clabernetes.svc.cluster.local"
     },
     "status": {
         "loadBalancer": {}
