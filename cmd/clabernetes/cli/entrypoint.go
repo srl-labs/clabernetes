@@ -63,7 +63,7 @@ func Entrypoint() *cli.App {
 				Name:  "launch",
 				Usage: "run the launcher",
 				Flags: []cli.Flag{},
-				Action: func(c *cli.Context) error {
+				Action: func(_ *cli.Context) error {
 					claberneteslauncher.StartClabernetes()
 
 					return nil

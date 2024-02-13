@@ -75,7 +75,7 @@ func bootstrapFromConfigMap( //nolint:gocyclo,funlen
 
 	resourcesByKindData, resourcesByKindOk := inMap["resourcesByContainerlabKind"]
 	if resourcesByKindOk {
-		err := sigsyaml.Unmarshal([]byte(resourcesByKindData), &bc.resourcesDefault)
+		err := sigsyaml.Unmarshal([]byte(resourcesByKindData), &bc.resourcesByContainerlabKind)
 		if err != nil {
 			outErrors = append(outErrors, err.Error())
 		}
@@ -174,7 +174,7 @@ func MergeFromBootstrapConfig(
 	return nil
 }
 
-func mergeFromBootstrapConfigMerge(
+func mergeFromBootstrapConfigMerge( //nolint:gocyclo
 	bootstrap *bootstrapConfig,
 	config *clabernetesapisv1alpha1.Config,
 ) {
@@ -206,6 +206,13 @@ func mergeFromBootstrapConfigMerge(
 
 	if config.Spec.Deployment.ResourcesDefault == nil {
 		config.Spec.Deployment.ResourcesDefault = bootstrap.resourcesDefault
+	}
+
+	if len(bootstrap.resourcesByContainerlabKind) > 0 &&
+		config.Spec.Deployment.ResourcesByContainerlabKind == nil {
+		config.Spec.Deployment.ResourcesByContainerlabKind = make(
+			map[string]map[string]*k8scorev1.ResourceRequirements,
+		)
 	}
 
 	for k, v := range bootstrap.resourcesByContainerlabKind {

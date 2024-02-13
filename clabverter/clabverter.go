@@ -57,7 +57,7 @@ func MustNewClabverter(
 
 	// trim insecureRegistries and split into array if not empty
 	var insecureRegistriesArr []string
-	if len(strings.TrimSpace(insecureRegistries)) > 0 {
+	if strings.TrimSpace(insecureRegistries) != "" {
 		insecureRegistriesArr = strings.Split(insecureRegistries, ",")
 	}
 

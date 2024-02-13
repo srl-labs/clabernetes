@@ -11,7 +11,7 @@ import (
 	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
 )
 
-const testAllocateTunnelIdsTestName = "tunnels/allocate-tunnel-ids"
+const testAllocateTunnelIDsTestName = "tunnels/allocate-tunnel-ids"
 
 // TestAllocateTunnelIds ensures that the tunnel clabernetes controllers VXLAN tunnel ID allocation
 // process works as advertised. None of this is "hard" necessarily, but there are a lot of moving
@@ -302,7 +302,7 @@ func TestAllocateTunnelIds(t *testing.T) {
 						t,
 						fmt.Sprintf(
 							"golden/%s/%s.json",
-							testAllocateTunnelIdsTestName,
+							testAllocateTunnelIDsTestName,
 							testCase.name,
 						),
 						got,
@@ -316,7 +316,7 @@ func TestAllocateTunnelIds(t *testing.T) {
 						t,
 						fmt.Sprintf(
 							"golden/%s/%s.json",
-							testAllocateTunnelIdsTestName,
+							testAllocateTunnelIDsTestName,
 							testCase.name,
 						),
 					),
