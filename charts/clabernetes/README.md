@@ -7,7 +7,7 @@ Love containerlab? Want containerlab, just distributed in a kubernetes cluster? 
 clabernetes -- containerlab + kubernetes. clabernetes is a kubernetes controller that deploys valid
 containerlab topologies into a kubernetes cluster.
 
-See [clabernetes docs](http://containerlab.dev/manual/clabernetes) for reference.
+See [clabernetes docs](https://containerlab.dev/manual/clabernetes) for reference.
 
 
 ## Deploy
