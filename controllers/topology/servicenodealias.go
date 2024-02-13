@@ -77,7 +77,7 @@ func (r *ServiceNodeAliasReconciler) Resolve(
 
 	var allNodes []string
 
-	if !owningTopology.Spec.Expose.DisableNodeAliasService {
+	if owningTopology.Spec.Expose.EnableNodeAliasService {
 		allNodes = make([]string, len(clabernetesConfigs))
 
 		idx := 0
