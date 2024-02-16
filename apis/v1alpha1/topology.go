@@ -22,6 +22,7 @@ type Topology struct {
 }
 
 // TopologySpec is the spec for a Topology resource.
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.removeTopologyPrefix) || has(self.removeTopologyPrefix)", message="removeTopologyPrefix is required once set"
 type TopologySpec struct {
 	// Definition defines the actual set of nodes (network ones, not k8s ones!) that this Topology
 	// CR represents. Historically, and probably most often, this means Topology holds a "normal"
@@ -39,6 +40,18 @@ type TopologySpec struct {
 	// images.
 	// +optional
 	ImagePull ImagePull `json:"imagePull"`
+	// RemoveTopologyPrefix tells the clabernetes controller whether it should include the
+	// containerlab topology name as a prefix on resources spawned from this Topology; this includes
+	// the actual (containerlab) node Deployment(s), as well as the Service(s) for the Topology.
+	// This should only be enabled when/if Topologies are deployed in their own namespace -- the
+	// reason for this is simple: if two Topologies exist in the same namespace with a
+	// (containerlab) node named "my-router" there will be a conflicting Deployment and Services for
+	// the "my-router" (containerlab) node. Note that this field is immutable! If you want to change
+	// its value you need to delete the Topology and re-create it.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="removeTopologyPrefix is immutable, to change this value delete and re-create the Topology"
+	// +optional
+	RemoveTopologyPrefix bool `json:"removeTopologyPrefix"`
 	// Connectivity defines the type of connectivity to use between nodes in the topology. The
 	// default behavior is to use vxlan tunnels, alternatively you can enable a more experimental
 	// "slurpeeth" connectivity flavor that stuffs traffic into tcp tunnels to avoid any vxlan mtu

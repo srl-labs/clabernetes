@@ -804,14 +804,6 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_Expose(
 				Description: "Expose holds configurations relevant to how clabernetes exposes a topology.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"disableNodeAliasService": {
-						SchemaProps: spec.SchemaProps{
-							Description: "DisableNodeAliasService indicates if headless services for each node in a containerlab topology should *not* be created. By default, clabernetes creates these headless services for each node so that \"normal\" docker and containerlab service discovery works -- this means you can simply resolve \"my-neat-node\" from within the namespace of a topology like you would in docker locally. You may wish to disable this feature though if you have no need of it and just don't want the extra services around. Additionally, you may want to disable this feature if you are running multiple labs in the same namespace (which is not generally recommended by the way!) as you may end up in a situation where a name (i.e. \"leaf1\") is duplicated in more than one topology -- this will cause some problems for clabernetes!",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 					"disableExpose": {
 						SchemaProps: spec.SchemaProps{
 							Description: "DisableExpose indicates if exposing nodes via LoadBalancer service should be disabled, by default any mapped ports in a containerlab topology will be exposed.",
@@ -1646,6 +1638,14 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologySpec(
 							Ref: ref(
 								"github.com/srl-labs/clabernetes/apis/v1alpha1.ImagePull",
 							),
+						},
+					},
+					"removeTopologyPrefix": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RemoveTopologyPrefix tells the clabernetes controller whether it should include the containerlab topology name as a prefix on resources spawned from this Topology; this includes the actual (containerlab) node Deployment(s), as well as the Service(s) for the Topology. This should only be enabled when/if Topologies are deployed in their own namespace -- the reason for this is simple: if two Topologies exist in the same namespace with a (containerlab) node named \"my-router\" there will be a conflicting Deployment and Services for the \"my-router\" (containerlab) node. Note that this field is immutable! If you want to change its value you need to delete the Topology and re-create it.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 					"connectivity": {

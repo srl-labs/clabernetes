@@ -106,12 +106,10 @@ func (r *DeploymentReconciler) renderDeploymentBase(
 ) *k8sappsv1.Deployment {
 	annotations, globalLabels := r.configManagerGetter().GetAllMetadata()
 
-	deploymentName := fmt.Sprintf("%s-%s", owningTopologyName, nodeName)
-
 	selectorLabels := map[string]string{
-		clabernetesconstants.LabelKubernetesName: deploymentName,
+		clabernetesconstants.LabelKubernetesName: name,
 		clabernetesconstants.LabelApp:            clabernetesconstants.Clabernetes,
-		clabernetesconstants.LabelName:           deploymentName,
+		clabernetesconstants.LabelName:           name,
 		clabernetesconstants.LabelTopologyOwner:  owningTopologyName,
 		clabernetesconstants.LabelTopologyNode:   nodeName,
 	}
@@ -801,10 +799,16 @@ func (r *DeploymentReconciler) Render(
 ) *k8sappsv1.Deployment {
 	owningTopologyName := owningTopology.GetName()
 
+	deploymentName := fmt.Sprintf("%s-%s", owningTopologyName, nodeName)
+
+	if owningTopology.Spec.RemoveTopologyPrefix {
+		deploymentName = nodeName
+	}
+
 	configVolumeName := fmt.Sprintf("%s-config", owningTopologyName)
 
 	deployment := r.renderDeploymentBase(
-		fmt.Sprintf("%s-%s", owningTopologyName, nodeName),
+		deploymentName,
 		owningTopology.GetNamespace(),
 		owningTopologyName,
 		nodeName,

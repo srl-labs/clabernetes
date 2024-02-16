@@ -23,6 +23,7 @@ spec:
     disableAutoExpose: false
     disableExpose: false
   imagePull: {}
+  removeTopologyPrefix: false
 status:
   configs:
     srl1: |

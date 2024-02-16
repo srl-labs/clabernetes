@@ -164,9 +164,15 @@ func (r *ServiceFabricReconciler) Render(
 ) *k8scorev1.Service {
 	owningTopologyName := owningTopology.GetName()
 
+	serviceName := fmt.Sprintf("%s-%s-vx", owningTopologyName, nodeName)
+
+	if owningTopology.Spec.RemoveTopologyPrefix {
+		serviceName = fmt.Sprintf("%s-vx", nodeName)
+	}
+
 	service := r.renderServiceBase(
 		owningTopology,
-		fmt.Sprintf("%s-%s-vx", owningTopologyName, nodeName),
+		serviceName,
 		nodeName,
 	)
 
