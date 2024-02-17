@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2024-02-17T19:41:18.757Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="cazerzHTK7ypnzdfYteQ" version="23.1.4" type="github" pages="7">
+<mxfile host="app.diagrams.net" modified="2024-02-17T19:44:39.125Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="SlfKcXPoTZUuR67tdsHs" version="23.1.4" type="github" pages="7">
   <diagram name="[0] vlan-mtu-diag-1" id="xj_hUvdLybhZtWC5sHic">
     <mxGraphModel dx="619" dy="335" grid="0" gridSize="1" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="#4d5766" math="0" shadow="0">
       <root>
@@ -179,10 +179,10 @@
           <mxGeometry x="162.88999999999993" y="464" width="76.36" height="15" as="geometry" />
         </mxCell>
         <mxCell id="s5tl9UqpKfZww2bR-QK4-24" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=mxgraph.basic.rect;fillColor2=none;strokeWidth=1;size=6.64;indent=0;topLeftStyle=rounded;topRightStyle=rounded;strokeColor=#82b366;rotation=90;fillColor=#d5e8d4;bottomRightStyle=rounded;bottomLeftStyle=rounded;" vertex="1" parent="Hvadh7sFhpXeqMrMuhxV-1">
-          <mxGeometry x="338" y="510.5" width="64.5" height="24" as="geometry" />
+          <mxGeometry x="335" y="507.5" width="70.5" height="24" as="geometry" />
         </mxCell>
-        <mxCell id="s5tl9UqpKfZww2bR-QK4-25" value="&lt;b style=&quot;font-size: 9px;&quot;&gt;vx-client-eth1&lt;/b&gt;&lt;br style=&quot;font-size: 9px;&quot;&gt;&lt;font color=&quot;#97d077&quot; style=&quot;font-size: 9px;&quot;&gt;mtu:&lt;/font&gt;&amp;nbsp;1410" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=none;fillColor=none;spacing=0;align=center;verticalAlign=middle;spacingTop=-2;fontSize=9;rotation=90;fontFamily=Google Sans;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DGoogle%2BSans;" vertex="1" parent="Hvadh7sFhpXeqMrMuhxV-1">
-          <mxGeometry x="340.75" y="515" width="59" height="15" as="geometry" />
+        <mxCell id="s5tl9UqpKfZww2bR-QK4-25" value="&lt;b style=&quot;font-size: 9px;&quot;&gt;vx-client1-eth1&lt;/b&gt;&lt;br style=&quot;font-size: 9px;&quot;&gt;&lt;font color=&quot;#97d077&quot; style=&quot;font-size: 9px;&quot;&gt;mtu:&lt;/font&gt;&amp;nbsp;1410" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=none;fillColor=none;spacing=0;align=center;verticalAlign=middle;spacingTop=-2;fontSize=9;rotation=90;fontFamily=Google Sans;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DGoogle%2BSans;" vertex="1" parent="Hvadh7sFhpXeqMrMuhxV-1">
+          <mxGeometry x="339.63" y="512" width="61.25" height="15" as="geometry" />
         </mxCell>
         <mxCell id="s5tl9UqpKfZww2bR-QK4-26" value="" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontFamily=Manrope;fontSize=12;fontColor=#FFFFFF;endArrow=oval;endFill=1;startArrow=oval;startFill=1;strokeColor=#666666;endSize=3;startSize=3;dashed=1;" edge="1" parent="Hvadh7sFhpXeqMrMuhxV-1">
           <mxGeometry relative="1" as="geometry">
