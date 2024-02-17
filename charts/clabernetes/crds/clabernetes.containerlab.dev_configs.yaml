@@ -293,6 +293,16 @@ spec:
                       kubernetes label data.
                     type: object
                 type: object
+              naming:
+                default: prefixed
+                description: |-
+                  Naming holds the global override for the "naming" setting for Topology objects -- this
+                  controls whether the Topology resources have the containerlab topology name as a prefix.
+                  Of course this is ignored if a Topology sets its Naming field to something not "global".
+                enum:
+                - prefixed
+                - non-prefixed
+                type: string
             type: object
           status:
             description: ConfigStatus is the status for a Config resource.

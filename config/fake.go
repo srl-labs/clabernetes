@@ -77,3 +77,7 @@ func (f fakeManager) GetLauncherImagePullPolicy() string {
 func (f fakeManager) GetLauncherLogLevel() string {
 	return clabernetesconstants.Info
 }
+
+func (f fakeManager) GetRemoveTopologyPrefix() bool {
+	return false
+}

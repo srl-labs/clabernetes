@@ -555,6 +555,52 @@ func TestRenderDeployment(t *testing.T) {
 			},
 			nodeName: "srl1",
 		},
+		{
+			name: "remove-prefix",
+			owningTopology: &clabernetesapisv1alpha1.Topology{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "render-deployment-test",
+					Namespace: "clabernetes",
+				},
+				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Connectivity: clabernetesconstants.ConnectivitySlurpeeth,
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
+		   name: test
+		   topology:
+		     nodes:
+		       srl1:
+		         kind: srl
+		         image: ghcr.io/nokia/srlinux
+		`,
+					},
+				},
+				Status: clabernetesapisv1alpha1.TopologyStatus{
+					// to set naming for test purposes we need to update the *status* of the topo
+					// since this is done very early in the rec
+					RemoveTopologyPrefix: clabernetesutil.ToPointer(true),
+				},
+			},
+			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
+				"srl1": {
+					Name:   "srl1",
+					Prefix: clabernetesutil.ToPointer(""),
+					Topology: &clabernetesutilcontainerlab.Topology{
+						Defaults: &clabernetesutilcontainerlab.NodeDefinition{},
+						Kinds:    nil,
+						Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
+							"srl1": {
+								Kind:  "srl",
+								Image: "ghcr.io/nokia/srlinux",
+							},
+						},
+						Links: nil,
+					},
+					Debug: false,
+				},
+			},
+			nodeName: "srl1",
+		},
 	}
 
 	for _, testCase := range cases {

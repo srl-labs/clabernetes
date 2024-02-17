@@ -169,6 +169,11 @@ issues:
         - revive
       text: "package-comments"
 
+    # ignore long lines for kubebuilder comments
+    - linters:
+        - lll
+      source: "kubebuilder"
+
     # prefer to sprintf -- feels more consistent overall
     - linters:
         - perfsprint

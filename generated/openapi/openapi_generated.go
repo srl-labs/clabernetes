@@ -452,6 +452,14 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigSpec(
 							),
 						},
 					},
+					"naming": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Naming holds the global override for the \"naming\" setting for Topology objects -- this controls whether the Topology resources have the containerlab topology name as a prefix. Of course this is ignored if a Topology sets its Naming field to something not \"global\".",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
@@ -804,14 +812,6 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_Expose(
 				Description: "Expose holds configurations relevant to how clabernetes exposes a topology.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"disableNodeAliasService": {
-						SchemaProps: spec.SchemaProps{
-							Description: "DisableNodeAliasService indicates if headless services for each node in a containerlab topology should *not* be created. By default, clabernetes creates these headless services for each node so that \"normal\" docker and containerlab service discovery works -- this means you can simply resolve \"my-neat-node\" from within the namespace of a topology like you would in docker locally. You may wish to disable this feature though if you have no need of it and just don't want the extra services around. Additionally, you may want to disable this feature if you are running multiple labs in the same namespace (which is not generally recommended by the way!) as you may end up in a situation where a name (i.e. \"leaf1\") is duplicated in more than one topology -- this will cause some problems for clabernetes!",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 					"disableExpose": {
 						SchemaProps: spec.SchemaProps{
 							Description: "DisableExpose indicates if exposing nodes via LoadBalancer service should be disabled, by default any mapped ports in a containerlab topology will be exposed.",
@@ -1648,6 +1648,14 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologySpec(
 							),
 						},
 					},
+					"naming": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Naming tells the clabernetes controller how it should name resources it creates -- that is whether it should include the containerlab topology name as a prefix on resources spawned from this Topology or not; this includes the actual (containerlab) node Deployment(s), as well as the Service(s) for the Topology. This setting has three modes; \"prefixed\" -- which of course includes the containerlab topology name as a prefix, \"non-prefixed\" which does *not* include the containerlab topology name as a prefix, and \"global\" which defers to the global config setting for this (which defaults to \"prefixed\"). \"non-prefixed\" mode should only be enabled when/if Topologies are deployed in their own namespace -- the reason for this is simple: if two Topologies exist in the same namespace with a (containerlab) node named \"my-router\" there will be a conflicting Deployment and Services for the \"my-router\" (containerlab) node. Note that this field is immutable! If you want to change its value you need to delete the Topology and re-create it.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"connectivity": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Connectivity defines the type of connectivity to use between nodes in the topology. The default behavior is to use vxlan tunnels, alternatively you can enable a more experimental \"slurpeeth\" connectivity flavor that stuffs traffic into tcp tunnels to avoid any vxlan mtu and/or fragmentation challenges.",
@@ -1657,7 +1665,7 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologySpec(
 						},
 					},
 				},
-				Required: []string{"definition", "connectivity"},
+				Required: []string{"definition", "naming", "connectivity"},
 			},
 		},
 		Dependencies: []string{
@@ -1679,6 +1687,13 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 							Description: "Kind is the topology kind this CR represents -- for example \"containerlab\".",
 							Default:     "",
 							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"removeTopologyPrefix": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RemoveTopologyPrefix holds the \"resolved\" value of the RemoveTopologyPrefix field -- that is if it is unset (nil) when a Topology is created, the controller will use the default global config value (false); if the field is non-nil, this status field will hold the non-nil value.",
+							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
@@ -1724,7 +1739,13 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 						},
 					},
 				},
-				Required: []string{"kind", "reconcileHashes", "configs", "exposedPorts"},
+				Required: []string{
+					"kind",
+					"removeTopologyPrefix",
+					"reconcileHashes",
+					"configs",
+					"exposedPorts",
+				},
 			},
 		},
 		Dependencies: []string{

@@ -110,6 +110,10 @@
               "enum": ["disabled", "critical", "warn", "info", "debug"]
             }
           }
+        },
+        "removeTopologyPrefix": {
+          "type": "string",
+          "enum": ["prefixed", "non-prefixed"]
         }
       }
     },

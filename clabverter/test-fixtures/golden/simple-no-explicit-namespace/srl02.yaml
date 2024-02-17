@@ -67,11 +67,11 @@ spec:
   expose:
     disableAutoExpose: false
     disableExpose: true
-    enableNodeAliasService: false
   imagePull:
     insecureRegistries:
     - 1.2.3.4
     pullSecrets: null
+  naming: prefixed
 status:
   configs: null
   exposedPorts: null
@@ -81,3 +81,4 @@ status:
     exposedPorts: ""
     filesFromURL: null
     imagePullSecrets: ""
+  removeTopologyPrefix: null

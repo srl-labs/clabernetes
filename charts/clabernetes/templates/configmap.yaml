@@ -47,4 +47,5 @@ data:
   {{- if .Values.globalConfig.imagePull.criKindOverride }}
   criKindOverride: {{ .Values.globalConfig.imagePull.criKindOverride }}
   {{- end }}
+  naming: {{ .Values.globalConfig.naming }}
 {{- end }}

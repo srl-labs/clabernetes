@@ -150,6 +150,33 @@ func TestRenderServiceFabric(t *testing.T) {
 			},
 			nodeName: "srl1",
 		},
+		{
+			name: "simple-no-prefix",
+			owningTopology: &clabernetesapisv1alpha1.Topology{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "render-service-fabric-test",
+					Namespace: "clabernetes",
+				},
+				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
+    name: test
+    topology:
+      nodes:
+        srl1:
+          kind: srl
+          image: ghcr.io/nokia/srlinux
+`,
+					},
+				},
+				Status: clabernetesapisv1alpha1.TopologyStatus{
+					// to set naming for test purposes we need to update the *status* of the topo
+					// since this is done very early in the rec
+					RemoveTopologyPrefix: clabernetesutil.ToPointer(true),
+				},
+			},
+			nodeName: "srl1",
+		},
 	}
 
 	for _, testCase := range cases {

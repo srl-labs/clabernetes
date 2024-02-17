@@ -239,9 +239,15 @@ func (r *ServiceExposeReconciler) Render(
 ) *k8scorev1.Service {
 	owningTopologyName := owningTopology.GetName()
 
+	serviceName := fmt.Sprintf("%s-%s", owningTopologyName, nodeName)
+
+	if ResolveTopologyRemovePrefix(owningTopology) {
+		serviceName = nodeName
+	}
+
 	service := r.renderServiceBase(
 		owningTopology,
-		fmt.Sprintf("%s-%s", owningTopologyName, nodeName),
+		serviceName,
 		nodeName,
 	)
 

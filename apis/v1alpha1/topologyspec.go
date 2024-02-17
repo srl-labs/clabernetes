@@ -69,14 +69,6 @@ type Definition struct {
 
 // Expose holds configurations relevant to how clabernetes exposes a topology.
 type Expose struct {
-	// EnableNodeAliasService indicates if a headless services for each node in a containerlab
-	// topology should be created. Enabling this feature makes things behave more like "normal"
-	// clab/docker setup where node "a" can resolve node "b" simply by name. You likely do *not*
-	// want to enable this if you are running multiple labs in the same namespace as there may be
-	// issues where a clab node name is present in multiple labs which would cause reconciliation
-	// issues.
-	// +optional
-	EnableNodeAliasService bool `json:"enableNodeAliasService"`
 	// DisableExpose indicates if exposing nodes via LoadBalancer service should be disabled, by
 	// default any mapped ports in a containerlab topology will be exposed.
 	// +optional

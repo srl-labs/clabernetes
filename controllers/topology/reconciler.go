@@ -52,10 +52,6 @@ func NewReconciler(
 			log,
 			configManagerGetter,
 		),
-		serviceNodeAliasReconciler: NewServiceNodeAliasReconciler(
-			log,
-			configManagerGetter,
-		),
 		serviceFabricReconciler: NewServiceFabricReconciler(
 			log,
 			configManagerGetter,
@@ -90,7 +86,6 @@ type Reconciler struct {
 	roleBindingReconciler           *RoleBindingReconciler
 	configMapReconciler             *ConfigMapReconciler
 	connectivityReconciler          *ConnectivityReconciler
-	serviceNodeAliasReconciler      *ServiceNodeAliasReconciler
 	serviceFabricReconciler         *ServiceFabricReconciler
 	serviceExposeReconciler         *ServiceExposeReconciler
 	persistentVolumeClaimReconciler *PersistentVolumeClaimReconciler
@@ -116,6 +111,33 @@ func (r *Reconciler) ReconcileNamespaceResources(
 	}
 
 	return nil
+}
+
+// ReconcileNaming resolves the "naming" flavor for the Topology and updates (if needed) the status
+// of the Topology with this resolved value. Note that this field is immutable so once we have set
+// it in the status we never have to do it again -- k8s/openapi validator things enforce that this
+// naming value cannot change.
+func (r *Reconciler) ReconcileNaming(
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	reconcileData *ReconcileData,
+) {
+	if owningTopology.Status.RemoveTopologyPrefix != nil {
+		// already set, nothin to do
+		return
+	}
+
+	reconcileData.ShouldUpdateResource = true
+
+	switch owningTopology.Spec.Naming {
+	case clabernetesconstants.NamingModePrefixed:
+		owningTopology.Status.RemoveTopologyPrefix = clabernetesutil.ToPointer(false)
+	case clabernetesconstants.NamingModeNonPrefixed:
+		owningTopology.Status.RemoveTopologyPrefix = clabernetesutil.ToPointer(true)
+	default:
+		owningTopology.Status.RemoveTopologyPrefix = clabernetesutil.ToPointer(
+			r.deploymentReconciler.configManagerGetter().GetRemoveTopologyPrefix(),
+		)
+	}
 }
 
 // ReconcileServiceAccount reconciles the service account for the given namespace -- note that there
@@ -308,20 +330,7 @@ func (r *Reconciler) ReconcileServices(
 	owningTopology *clabernetesapisv1alpha1.Topology,
 	reconcileData *ReconcileData,
 ) error {
-	err := r.ReconcileServiceNodeAlias(
-		ctx,
-		owningTopology,
-		reconcileData,
-	)
-	if err != nil {
-		r.Log.Criticalf(
-			"failed reconciling clabernetes node alias services, error: %s", err,
-		)
-
-		return err
-	}
-
-	err = r.ReconcileServiceFabric(
+	err := r.ReconcileServiceFabric(
 		ctx,
 		owningTopology,
 		reconcileData,
@@ -350,100 +359,8 @@ func (r *Reconciler) ReconcileServices(
 	return nil
 }
 
-// ReconcileServiceNodeAlias reconciles the service used for "node alias" -- that is,
-// making it so that resolution in c9s is more or less the same as with "normal" containerlab in
-// docker.
-func (r *Reconciler) ReconcileServiceNodeAlias( //nolint: dupl
-	ctx context.Context,
-	owningTopology *clabernetesapisv1alpha1.Topology,
-	reconcileData *ReconcileData,
-) error {
-	serviceTypeName := fmt.Sprintf("nodeAlias %s", clabernetesconstants.KubernetesService)
-
-	services, err := reconcileResolve(
-		ctx,
-		r,
-		&k8scorev1.Service{},
-		&k8scorev1.ServiceList{},
-		serviceTypeName,
-		owningTopology,
-		reconcileData.ResolvedConfigs,
-		r.serviceNodeAliasReconciler.Resolve,
-	)
-	if err != nil {
-		return err
-	}
-
-	r.Log.Info("pruning extraneous nodeAlias services")
-
-	for _, extraService := range services.Extra {
-		err = r.deleteObj(
-			ctx,
-			extraService,
-			serviceTypeName,
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	r.Log.Info("creating missing nodeAlias services")
-
-	renderedMissingServices := r.serviceNodeAliasReconciler.RenderAll(
-		owningTopology,
-		services.Missing,
-	)
-
-	for _, renderedMissingService := range renderedMissingServices {
-		err = r.createObj(
-			ctx,
-			owningTopology,
-			renderedMissingService,
-			serviceTypeName,
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	r.Log.Info("enforcing desired state on nodeAlias services")
-
-	for existingCurrentServiceNodeName, existingCurrentService := range services.Current {
-		renderedCurrentService := r.serviceNodeAliasReconciler.Render(
-			owningTopology,
-			existingCurrentServiceNodeName,
-		)
-
-		err = ctrlruntimeutil.SetOwnerReference(
-			owningTopology,
-			renderedCurrentService,
-			r.Client.Scheme(),
-		)
-		if err != nil {
-			return err
-		}
-
-		if !r.serviceNodeAliasReconciler.Conforms(
-			existingCurrentService,
-			renderedCurrentService,
-			owningTopology.GetUID(),
-		) {
-			err = r.updateObj(
-				ctx,
-				renderedCurrentService,
-				serviceTypeName,
-			)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
 // ReconcileServiceFabric reconciles the service used for "fabric" (inter node) connectivity.
-func (r *Reconciler) ReconcileServiceFabric( //nolint: dupl
+func (r *Reconciler) ReconcileServiceFabric(
 	ctx context.Context,
 	owningTopology *clabernetesapisv1alpha1.Topology,
 	reconcileData *ReconcileData,

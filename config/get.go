@@ -1,6 +1,7 @@
 package config
 
 import (
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	k8scorev1 "k8s.io/api/core/v1"
 )
 
@@ -132,4 +133,11 @@ func (m *manager) GetLauncherLogLevel() string {
 	defer m.lock.RUnlock()
 
 	return m.config.Deployment.LauncherLogLevel
+}
+
+func (m *manager) GetRemoveTopologyPrefix() bool {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	return m.config.Naming != clabernetesconstants.NamingModePrefixed
 }
