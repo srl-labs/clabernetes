@@ -76,6 +76,7 @@ func InitManager(
 				ImagePull: clabernetesapisv1alpha1.ConfigImagePull{
 					PullThroughOverride: clabernetesconstants.ImagePullThroughModeAuto,
 				},
+				Naming: clabernetesconstants.NamingModePrefixed,
 			},
 		}
 
@@ -138,6 +139,9 @@ type Manager interface {
 	GetLauncherImagePullPolicy() string
 	// GetLauncherLogLevel returns the default launcher log level.
 	GetLauncherLogLevel() string
+	// GetRemoveTopologyPrefix returns true if the topology prefix should be removed from Topology
+	// resources, otherwise false.
+	GetRemoveTopologyPrefix() bool
 }
 
 type manager struct {

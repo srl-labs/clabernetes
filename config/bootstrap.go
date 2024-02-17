@@ -28,9 +28,10 @@ type bootstrapConfig struct {
 	launcherLogLevel            string
 	criSockOverride             string
 	criKindOverride             string
+	naming                      string
 }
 
-func bootstrapFromConfigMap( //nolint:gocyclo,funlen
+func bootstrapFromConfigMap( //nolint:gocyclo,funlen,gocognit
 	inMap map[string]string,
 ) (*bootstrapConfig, error) {
 	bc := &bootstrapConfig{
@@ -40,6 +41,7 @@ func bootstrapFromConfigMap( //nolint:gocyclo,funlen
 		launcherImage:           os.Getenv(clabernetesconstants.LauncherImageEnv),
 		launcherImagePullPolicy: clabernetesconstants.KubernetesImagePullIfNotPresent,
 		launcherLogLevel:        clabernetesconstants.Info,
+		naming:                  clabernetesconstants.NamingModePrefixed,
 	}
 
 	var outErrors []string
@@ -134,6 +136,11 @@ func bootstrapFromConfigMap( //nolint:gocyclo,funlen
 	criKindOverride, criKindOverrideOk := inMap["criKindOverride"]
 	if criKindOverrideOk {
 		bc.criKindOverride = criKindOverride
+	}
+
+	naming, namingOk := inMap["naming"]
+	if namingOk {
+		bc.naming = naming
 	}
 
 	var err error
@@ -243,6 +250,10 @@ func mergeFromBootstrapConfigMerge( //nolint:gocyclo
 	if config.Spec.ImagePull.CRIKindOverride == "" {
 		config.Spec.ImagePull.CRIKindOverride = bootstrap.criKindOverride
 	}
+
+	if config.Spec.Naming == "" {
+		config.Spec.Naming = bootstrap.naming
+	}
 }
 
 func mergeFromBootstrapConfigReplace(
@@ -269,5 +280,6 @@ func mergeFromBootstrapConfigReplace(
 			LauncherImagePullPolicy:     bootstrap.launcherImagePullPolicy,
 			LauncherLogLevel:            bootstrap.launcherLogLevel,
 		},
+		Naming: bootstrap.naming,
 	}
 }

@@ -130,6 +130,10 @@ globalConfig:
     launcherImagePullPolicy: IfNotPresent
     launcherLogLevel: info
 
+  # name is the global setting that governs a Topology's "naming" field when set to "global".
+  # valid options are "prefixed" or "non-prefixed", see the api types for more detail.
+  naming: prefixed
+
 #
 # clicker
 #

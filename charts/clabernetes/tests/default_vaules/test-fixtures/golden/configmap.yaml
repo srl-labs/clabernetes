@@ -36,3 +36,4 @@ data:
   launcherImage: 
   launcherImagePullPolicy: IfNotPresent
   launcherLogLevel: info
+  naming: prefixed

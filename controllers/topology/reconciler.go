@@ -134,8 +134,9 @@ func (r *Reconciler) ReconcileNaming(
 	case clabernetesconstants.NamingModeNonPrefixed:
 		owningTopology.Status.RemoveTopologyPrefix = clabernetesutil.ToPointer(true)
 	default:
-		// TODO -- if global obviously we have to get the value from config manager getter
-		panic("NOT IMPLEMENTED (yet)")
+		owningTopology.Status.RemoveTopologyPrefix = clabernetesutil.ToPointer(
+			r.deploymentReconciler.configManagerGetter().GetRemoveTopologyPrefix(),
+		)
 	}
 }
 

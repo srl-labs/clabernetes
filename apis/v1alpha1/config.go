@@ -35,6 +35,13 @@ type ConfigSpec struct {
 	// Deployment holds clabernetes deployment related configuration settings.
 	// +optional
 	Deployment ConfigDeployment `json:"deployment"`
+	// Naming holds the global override for the "naming" setting for Topology objects -- this
+	// controls whether the Topology resources have the containerlab topology name as a prefix.
+	// Of course this is ignored if a Topology sets its Naming field to something not "global".
+	// +kubebuilder:validation:Enum=prefixed;non-prefixed
+	// +kubebuilder:default=prefixed
+	// +optional
+	Naming string `json:"naming"`
 }
 
 // ConfigStatus is the status for a Config resource.

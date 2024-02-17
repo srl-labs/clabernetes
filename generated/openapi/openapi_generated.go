@@ -452,6 +452,14 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigSpec(
 							),
 						},
 					},
+					"naming": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Naming holds the global override for the \"naming\" setting for Topology objects -- this controls whether the Topology resources have the containerlab topology name as a prefix. Of course this is ignored if a Topology sets its Naming field to something not \"global\".",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
