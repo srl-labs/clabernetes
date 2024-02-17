@@ -56,6 +56,9 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, err
 	}
 
+	// reconcile the naming -- we *must* do this to ensure that our status field is set!
+	c.TopologyReconciler.ReconcileNaming(topology, reconcileData)
+
 	err = c.processDefinition(topology, reconcileData)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed processing topology definition, error: %s", err)

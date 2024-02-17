@@ -241,7 +241,7 @@ func (r *ServiceExposeReconciler) Render(
 
 	serviceName := fmt.Sprintf("%s-%s", owningTopologyName, nodeName)
 
-	if owningTopology.Spec.RemoveTopologyPrefix {
+	if ResolveTopologyRemovePrefix(owningTopology) {
 		serviceName = nodeName
 	}
 

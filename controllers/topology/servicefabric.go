@@ -166,7 +166,7 @@ func (r *ServiceFabricReconciler) Render(
 
 	serviceName := fmt.Sprintf("%s-%s-vx", owningTopologyName, nodeName)
 
-	if owningTopology.Spec.RemoveTopologyPrefix {
+	if ResolveTopologyRemovePrefix(owningTopology) {
 		serviceName = fmt.Sprintf("%s-vx", nodeName)
 	}
 

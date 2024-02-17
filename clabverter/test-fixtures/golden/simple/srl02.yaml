@@ -71,7 +71,7 @@ spec:
     insecureRegistries:
     - 1.2.3.4
     pullSecrets: null
-  removeTopologyPrefix: false
+  naming: prefixed
 status:
   configs: null
   exposedPorts: null
@@ -81,3 +81,4 @@ status:
     exposedPorts: ""
     filesFromURL: null
     imagePullSecrets: ""
+  removeTopologyPrefix: null

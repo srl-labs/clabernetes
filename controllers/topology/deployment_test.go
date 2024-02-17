@@ -563,8 +563,7 @@ func TestRenderDeployment(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					Connectivity:         clabernetesconstants.ConnectivitySlurpeeth,
-					RemoveTopologyPrefix: true,
+					Connectivity: clabernetesconstants.ConnectivitySlurpeeth,
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
 		   name: test
@@ -575,6 +574,11 @@ func TestRenderDeployment(t *testing.T) {
 		         image: ghcr.io/nokia/srlinux
 		`,
 					},
+				},
+				Status: clabernetesapisv1alpha1.TopologyStatus{
+					// to set naming for test purposes we need to update the *status* of the topo
+					// since this is done very early in the rec
+					RemoveTopologyPrefix: clabernetesutil.ToPointer(true),
 				},
 			},
 			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{

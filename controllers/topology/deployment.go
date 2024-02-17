@@ -801,7 +801,7 @@ func (r *DeploymentReconciler) Render(
 
 	deploymentName := fmt.Sprintf("%s-%s", owningTopologyName, nodeName)
 
-	if owningTopology.Spec.RemoveTopologyPrefix {
+	if ResolveTopologyRemovePrefix(owningTopology) {
 		deploymentName = nodeName
 	}
 

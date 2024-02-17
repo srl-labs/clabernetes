@@ -41,6 +41,7 @@ spec:
   expose:
     disableExpose: true
   {{- end }}
+  naming: prefixed
   connectivity: vxlan
   definition:
     containerlab: |-

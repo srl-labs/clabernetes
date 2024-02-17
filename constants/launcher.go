@@ -13,6 +13,18 @@ const (
 	// the launcher pods.
 	ImagePullThroughModeAuto = "auto"
 
+	// NamingModePrefixed is a constant representing the "prefixed" enum(ish) value for the naming
+	// field of a Topology.
+	NamingModePrefixed = "prefixed"
+
+	// NamingModeNonPrefixed is a constant representing the "non-prefixed" enum(ish) value for the
+	// naming field of a Topology.
+	NamingModeNonPrefixed = "non-prefixed"
+
+	// NamingModeGlobal is a constant representing the (default) "global" enum(ish) value for the
+	// naming field of a Topology.
+	NamingModeGlobal = "global"
+
 	// ConnectivityVXLAN is a constant for the vxlan connectivity flavor.
 	ConnectivityVXLAN = "vxlan"
 

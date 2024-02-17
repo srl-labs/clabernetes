@@ -253,7 +253,6 @@ func TestRenderServiceExpose(t *testing.T) {
 					Namespace: "clabernetes",
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
-					RemoveTopologyPrefix: true,
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
     name: test
@@ -264,6 +263,11 @@ func TestRenderServiceExpose(t *testing.T) {
           image: ghcr.io/nokia/srlinux
 `,
 					},
+				},
+				Status: clabernetesapisv1alpha1.TopologyStatus{
+					// to set naming for test purposes we need to update the *status* of the topo
+					// since this is done very early in the rec
+					RemoveTopologyPrefix: clabernetesutil.ToPointer(true),
 				},
 			},
 			owningTopologyStatus: &clabernetesapisv1alpha1.TopologyStatus{

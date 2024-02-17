@@ -113,6 +113,32 @@ func (r *Reconciler) ReconcileNamespaceResources(
 	return nil
 }
 
+// ReconcileNaming resolves the "naming" flavor for the Topology and updates (if needed) the status
+// of the Topology with this resolved value. Note that this field is immutable so once we have set
+// it in the status we never have to do it again -- k8s/openapi validator things enforce that this
+// naming value cannot change.
+func (r *Reconciler) ReconcileNaming(
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	reconcileData *ReconcileData,
+) {
+	if owningTopology.Status.RemoveTopologyPrefix != nil {
+		// already set, nothin to do
+		return
+	}
+
+	reconcileData.ShouldUpdateResource = true
+
+	switch owningTopology.Spec.Naming {
+	case clabernetesconstants.NamingModePrefixed:
+		owningTopology.Status.RemoveTopologyPrefix = clabernetesutil.ToPointer(false)
+	case clabernetesconstants.NamingModeNonPrefixed:
+		owningTopology.Status.RemoveTopologyPrefix = clabernetesutil.ToPointer(true)
+	default:
+		// TODO -- if global obviously we have to get the value from config manager getter
+		panic("NOT IMPLEMENTED (yet)")
+	}
+}
+
 // ReconcileServiceAccount reconciles the service account for the given namespace -- note that there
 // is only *one* service account per namespace, but its simply reconciled each time a Topology is
 // reconciled to make life easy. This and the RoleBinding are the only resources we need to worry

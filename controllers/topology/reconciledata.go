@@ -27,7 +27,7 @@ type ReconcileData struct {
 	NodesNeedingReboot   clabernetesutil.StringSet
 }
 
-// NewReconcileData accepts a TopologyCommonObject and returns a ReconcileData object.
+// NewReconcileData accepts a Topology object and returns a ReconcileData object.
 func NewReconcileData(
 	owningTopology *clabernetesapisv1alpha1.Topology,
 ) (*ReconcileData, error) {

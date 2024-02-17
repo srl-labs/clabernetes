@@ -27,3 +27,17 @@ func ResolveGlobalVsTopologyBool(globalValue bool, topologyValue *bool) bool {
 
 	return globalValue
 }
+
+// ResolveTopologyRemovePrefix returns true if the topology resource should strip the containerlab
+// topology prefix from a resource (deployment/service) name. This helper exists primarily for
+// testing reasons as in the "normal" course of operation this value would always be taken from the
+// status of a Topology object as this field as this will hold the resolved value at time of the
+// creation of the Topology object. In the testing case the status field will be nil though, so in
+// that case we'll go with the default "false" here.
+func ResolveTopologyRemovePrefix(t *clabernetesapisv1alpha1.Topology) bool {
+	if t.Status.RemoveTopologyPrefix == nil {
+		return false
+	}
+
+	return *t.Status.RemoveTopologyPrefix
+}
