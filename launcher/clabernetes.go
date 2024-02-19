@@ -94,6 +94,7 @@ func (c *clabernetes) startup() {
 
 	c.logger.Debugf("clabernetes version %s", clabernetesconstants.Version)
 
+	c.containerlabVersion()
 	c.setup()
 	c.image()
 	c.launch()
@@ -106,6 +107,25 @@ func (c *clabernetes) startup() {
 	<-c.ctx.Done()
 
 	claberneteslogging.GetManager().Flush()
+}
+
+func (c *clabernetes) containerlabVersion() {
+	c.logger.Debug("checking containerlab version settings...")
+
+	requestedVersion := os.Getenv(clabernetesconstants.LauncherContainerlabVersion)
+
+	if requestedVersion == "" {
+		c.logger.Debug("no custom containerlab version specified, continuing....")
+
+		return
+	}
+
+	err := c.installContainerlabVersion(requestedVersion)
+	if err != nil {
+		c.logger.Fatalf("failed installing requested containerlab version, err: %s", err)
+	}
+
+	c.logger.Debug("requested containerlab version installed successfully")
 }
 
 func (c *clabernetes) setup() {

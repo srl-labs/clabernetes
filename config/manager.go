@@ -142,6 +142,8 @@ type Manager interface {
 	// GetRemoveTopologyPrefix returns true if the topology prefix should be removed from Topology
 	// resources, otherwise false.
 	GetRemoveTopologyPrefix() bool
+	// GetContainerlabVersion returns the global config containerlab version.
+	GetContainerlabVersion() string
 }
 
 type manager struct {
