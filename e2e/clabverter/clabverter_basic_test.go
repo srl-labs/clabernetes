@@ -27,7 +27,7 @@ func TestClabverterBasic(t *testing.T) {
 		"test-fixtures/basic_clab.yaml",
 		"test-fixtures",
 		namespace,
-		"",
+		"prefixed",
 		"",
 		false,
 		false,
