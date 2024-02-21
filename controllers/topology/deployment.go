@@ -467,6 +467,11 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		}
 	}
 
+	containerlabVersion := owningTopology.Spec.Deployment.ContainerlabVersion
+	if containerlabVersion == "" {
+		containerlabVersion = r.configManagerGetter().GetContainerlabVersion()
+	}
+
 	envs := []k8scorev1.EnvVar{
 		{
 			Name: clabernetesconstants.NodeNameEnv,
@@ -530,6 +535,10 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		{
 			Name:  clabernetesconstants.LauncherConnectivityKind,
 			Value: owningTopology.Spec.Connectivity,
+		},
+		{
+			Name:  clabernetesconstants.LauncherContainerlabVersion,
+			Value: containerlabVersion,
 		},
 	}
 

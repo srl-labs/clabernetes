@@ -51,6 +51,16 @@ type ConfigDeployment struct {
 	// This is disabled by default.
 	// +optional
 	ContainerlabDebug bool `json:"containerlabDebug"`
+	// ContainerlabVersion sets a custom version to use for containerlab -- when set this will cause
+	// the launcher pods to download and use this specific version of containerlab. Setting a bad
+	// version (version that doesnt exist/typo/etc.) will cause pods to fail to launch, so be
+	// careful! You never "need" to this as the publicly available launcher image will always be
+	// built with a (reasonably) up to date containerlab version, this setting exists in case you
+	// want to pin back to an older version for some reason or you want to be bleeding edge with
+	// some new feature (but do note that just because it exists in containerlab doesnt
+	// *necessarily* mean it will be auto-working in clabernetes!
+	// +optional
+	ContainerlabVersion string `json:"containerlabVersion,omitempty"`
 	// LauncherImage sets the default launcher image to use when spawning launcher deployments.
 	// +kubebuilder:default="ghcr.io/srl-labs/clabernetes/clabernetes-launcher:latest"
 	LauncherImage string `json:"launcherImage"`

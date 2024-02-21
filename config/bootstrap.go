@@ -29,6 +29,7 @@ type bootstrapConfig struct {
 	criSockOverride             string
 	criKindOverride             string
 	naming                      string
+	containerlabVersion         string
 }
 
 func bootstrapFromConfigMap( //nolint:gocyclo,funlen,gocognit
@@ -143,6 +144,11 @@ func bootstrapFromConfigMap( //nolint:gocyclo,funlen,gocognit
 		bc.naming = naming
 	}
 
+	containerlabVersion, containerlabVersionOk := inMap["containerlabVersion"]
+	if containerlabVersionOk {
+		bc.containerlabVersion = containerlabVersion
+	}
+
 	var err error
 
 	if len(outErrors) > 0 {
@@ -254,6 +260,10 @@ func mergeFromBootstrapConfigMerge( //nolint:gocyclo
 	if config.Spec.Naming == "" {
 		config.Spec.Naming = bootstrap.naming
 	}
+
+	if config.Spec.Deployment.ContainerlabVersion == "" {
+		config.Spec.Deployment.ContainerlabVersion = bootstrap.containerlabVersion
+	}
 }
 
 func mergeFromBootstrapConfigReplace(
@@ -279,6 +289,7 @@ func mergeFromBootstrapConfigReplace(
 			LauncherImage:               bootstrap.launcherImage,
 			LauncherImagePullPolicy:     bootstrap.launcherImagePullPolicy,
 			LauncherLogLevel:            bootstrap.launcherLogLevel,
+			ContainerlabVersion:         bootstrap.containerlabVersion,
 		},
 		Naming: bootstrap.naming,
 	}

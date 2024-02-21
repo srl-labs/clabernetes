@@ -153,6 +153,9 @@
                             {
                                 "name": "LAUNCHER_CONNECTIVITY_KIND",
                                 "value": "vxlan"
+                            },
+                            {
+                                "name": "LAUNCHER_CONTAINERLAB_VERSION"
                             }
                         ],
                         "resources": {},

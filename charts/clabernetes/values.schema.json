@@ -108,6 +108,9 @@
             "launcherLogLevel": {
               "type": "string",
               "enum": ["disabled", "critical", "warn", "info", "debug"]
+            },
+            "containerlabVersion": {
+              "type": "string"
             }
           }
         },

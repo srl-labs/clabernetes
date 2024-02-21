@@ -48,4 +48,5 @@ data:
   criKindOverride: {{ .Values.globalConfig.imagePull.criKindOverride }}
   {{- end }}
   naming: {{ .Values.globalConfig.naming }}
+  containerlabVersion: {{ .Values.globalConfig.deployment.containerlabVersion }}
 {{- end }}

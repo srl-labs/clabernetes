@@ -81,3 +81,7 @@ func (f fakeManager) GetLauncherLogLevel() string {
 func (f fakeManager) GetRemoveTopologyPrefix() bool {
 	return false
 }
+
+func (f fakeManager) GetContainerlabVersion() string {
+	return ""
+}

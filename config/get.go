@@ -141,3 +141,10 @@ func (m *manager) GetRemoveTopologyPrefix() bool {
 
 	return m.config.Naming != clabernetesconstants.NamingModePrefixed
 }
+
+func (m *manager) GetContainerlabVersion() string {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	return m.config.Deployment.ContainerlabVersion
+}
