@@ -3,11 +3,11 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: srl02-srl2-files
-  namespace:  c9s-srl02
+  namespace: c9s-srl02
 data:
   REPLACED: |-
     this is a good potato
   REPLACED: |-
     this is a good potato
   REPLACED: |-
-    very sneaky and important license
+    very sneaky and important license2

@@ -1,6 +1,9 @@
 name: srl02
 
 topology:
+  kinds:
+    nokia_sros:
+      license: srl2.license
   nodes:
     srl1:
       kind: srl
@@ -15,6 +18,13 @@ topology:
       binds:
         - __clabDir__/potato.txt:/potato.txt
         - __clabNodeDir__/potato.txt:/nodedir-potato.txt
+    sros1:
+      kind: nokia_sros
+      image: nokia_sros:latest
+      license: taco/srl1.license
+    sros2:
+      kind: nokia_sros
+      image: nokia_sros:latest
 
   links:
     - endpoints: ["srl1:e1-1", "srl2:e1-1"]

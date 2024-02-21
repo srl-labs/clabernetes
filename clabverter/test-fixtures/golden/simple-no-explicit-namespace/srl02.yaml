@@ -11,6 +11,9 @@ spec:
       name: srl02
 
       topology:
+        kinds:
+          nokia_sros:
+            license: srl2.license
         nodes:
           srl1:
             kind: srl
@@ -25,6 +28,13 @@ spec:
             binds:
               - __clabDir__/potato.txt:/potato.txt
               - __clabNodeDir__/potato.txt:/nodedir-potato.txt
+          sros1:
+            kind: nokia_sros
+            image: nokia_sros:latest
+            license: taco/srl1.license
+          sros2:
+            kind: nokia_sros
+            image: nokia_sros:latest
 
         links:
           - endpoints: ["srl1:e1-1", "srl2:e1-1"]
@@ -54,6 +64,16 @@ spec:
         filePath: srl2.cfg
         mode: read
       - configMapName: srl02-srl2-files
+        configMapPath: REPLACED
+        filePath: srl2.license
+        mode: read
+      sros1:
+      - configMapName: srl02-sros1-files
+        configMapPath: REPLACED
+        filePath: taco/srl1.license
+        mode: read
+      sros2:
+      - configMapName: srl02-sros2-files
         configMapPath: REPLACED
         filePath: srl2.license
         mode: read

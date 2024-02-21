@@ -2,8 +2,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: srl02-srl1-files
-  namespace: notclabernetes
+  name: srl02-sros1-files
+  namespace: c9s-srl02
 data:
   REPLACED: |-
     very sneaky and important license1
