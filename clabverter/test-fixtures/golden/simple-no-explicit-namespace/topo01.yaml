@@ -91,7 +91,7 @@ spec:
     insecureRegistries:
     - 1.2.3.4
     pullSecrets: null
-  naming: prefixed
+  naming: non-prefixed
 status:
   configs: null
   exposedPorts: null
