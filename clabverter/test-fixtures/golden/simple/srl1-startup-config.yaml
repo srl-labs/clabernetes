@@ -2,8 +2,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-    name: srl02-srl1-startup-config
-    namespace:  notclabernetes
+    name: topo01-srl1-startup-config
+    namespace: notclabernetes
 data:
   REPLACED: |-
     set / interface ethernet-1/1

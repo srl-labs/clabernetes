@@ -79,21 +79,13 @@ func getExtraFilesForNode(
 
 	paths := make([]sourceDestinationPathPair, 0)
 
-	if nodeConfig.License != "" {
+	license := clabConfig.Topology.GetNodeLicense(nodeName)
+	if license != "" {
 		paths = append(
 			paths,
 			sourceDestinationPathPair{
-				sourcePath:      nodeConfig.License,
-				destinationPath: nodeConfig.License,
-				mode:            clabernetesconstants.FileModeRead,
-			},
-		)
-	} else if defaults != nil && defaults.License != "" {
-		paths = append(
-			paths,
-			sourceDestinationPathPair{
-				sourcePath:      defaults.License,
-				destinationPath: defaults.License,
+				sourcePath:      license,
+				destinationPath: license,
 				mode:            clabernetesconstants.FileModeRead,
 			},
 		)

@@ -89,6 +89,27 @@ func (t *Topology) GetNodeImage(nodeName string) string {
 	return t.Defaults.Image
 }
 
+// GetNodeLicense returns the resolved license for the given node.
+func (t *Topology) GetNodeLicense(nodeName string) string {
+	containerlabKind, _ := t.GetNodeKindType(nodeName)
+
+	nodeDefinition, nodeDefinitionOk := t.Nodes[nodeName]
+	if nodeDefinitionOk {
+		if nodeDefinition.License != "" {
+			return nodeDefinition.License
+		}
+	}
+
+	kindDefinition, kindDefinitionOk := t.Kinds[containerlabKind]
+	if kindDefinitionOk {
+		if kindDefinition.License != "" {
+			return kindDefinition.License
+		}
+	}
+
+	return t.Defaults.License
+}
+
 // NodeDefinition represents a configuration a given node can have in the lab definition file.
 type NodeDefinition struct {
 	Kind                 string            `yaml:"kind,omitempty"`
