@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: srl02-sros2-files
+  name: topo01-sros2-files
   namespace: notclabernetes
 data:
   REPLACED: |-

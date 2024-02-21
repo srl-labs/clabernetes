@@ -2,13 +2,13 @@ apiVersion: clabernetes.containerlab.dev/v1alpha1
 kind: Topology
 metadata:
   creationTimestamp: null
-  name: srl02
-  namespace: notclabernetes
+  name: topo01
+  namespace: c9s-topo01
 spec:
   connectivity: vxlan
   definition:
     containerlab: |-
-      name: srl02
+      name: topo01
 
       topology:
         kinds:
@@ -42,38 +42,38 @@ spec:
     containerlabDebug: null
     filesFromConfigMap:
       srl1:
-      - configMapName: srl02-srl1-startup-config
+      - configMapName: topo01-srl1-startup-config
         configMapPath: REPLACED
         filePath: srl1.cfg
         mode: read
-      - configMapName: srl02-srl1-files
+      - configMapName: topo01-srl1-files
         configMapPath: REPLACED
         filePath: taco/srl1.license
         mode: read
       srl2:
-      - configMapName: srl02-srl2-files
+      - configMapName: topo01-srl2-files
         configMapPath: REPLACED
         filePath: /some/dir/clabernetes/clabverter/test-fixtures/clabversiontest/potato.txt
         mode: read
-      - configMapName: srl02-srl2-files
+      - configMapName: topo01-srl2-files
         configMapPath: REPLACED
         filePath: /some/dir/clabernetes/clabverter/test-fixtures/clabversiontest/srl2/potato.txt
         mode: read
-      - configMapName: srl02-srl2-startup-config
+      - configMapName: topo01-srl2-startup-config
         configMapPath: REPLACED
         filePath: srl2.cfg
         mode: read
-      - configMapName: srl02-srl2-files
+      - configMapName: topo01-srl2-files
         configMapPath: REPLACED
         filePath: srl2.license
         mode: read
       sros1:
-      - configMapName: srl02-sros1-files
+      - configMapName: topo01-sros1-files
         configMapPath: REPLACED
         filePath: taco/srl1.license
         mode: read
       sros2:
-      - configMapName: srl02-sros2-files
+      - configMapName: topo01-sros2-files
         configMapPath: REPLACED
         filePath: srl2.license
         mode: read
@@ -86,7 +86,7 @@ spec:
       tolerations: null
   expose:
     disableAutoExpose: false
-    disableExpose: false
+    disableExpose: true
   imagePull:
     insecureRegistries:
     - 1.2.3.4
