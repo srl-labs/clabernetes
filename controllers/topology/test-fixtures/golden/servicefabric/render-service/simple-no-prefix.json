@@ -5,7 +5,7 @@
         "creationTimestamp": null,
         "labels": {
             "clabernetes/app": "clabernetes",
-            "clabernetes/name": "render-service-fabric-test-srl1",
+            "clabernetes/name": "srl1",
             "clabernetes/topologyKind": "containerlab",
             "clabernetes/topologyNode": "srl1",
             "clabernetes/topologyOwner": "render-service-fabric-test",
@@ -29,7 +29,7 @@
         ],
         "selector": {
             "clabernetes/app": "clabernetes",
-            "clabernetes/name": "render-service-fabric-test-srl1",
+            "clabernetes/name": "srl1",
             "clabernetes/topologyNode": "srl1",
             "clabernetes/topologyOwner": "render-service-fabric-test"
         },
