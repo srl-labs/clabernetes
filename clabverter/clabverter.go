@@ -30,6 +30,7 @@ func MustNewClabverter(
 	outputDirectory,
 	destinationNamespace,
 	naming,
+	containerlabVersion,
 	insecureRegistries string,
 	disableExpose,
 	debug,
@@ -87,6 +88,7 @@ func MustNewClabverter(
 		extraFilesConfigMaps:    make(map[string][]topologyConfigMapTemplateVars),
 		extraFilesFromURL:       make(map[string][]topologyFileFromURLTemplateVars),
 		naming:                  naming,
+		containerlabVersion:     containerlabVersion,
 		renderedFiles:           []renderedContent{},
 	}
 }
@@ -107,13 +109,14 @@ type Clabverter struct {
 
 	disableExpose bool
 
-	topologyPath       string
-	topologyPathParent string
-	isRemotePath       bool
-	githubGroup        string
-	githubRepo         string
-	githubToken        string
-	naming             string
+	topologyPath        string
+	topologyPathParent  string
+	isRemotePath        bool
+	githubGroup         string
+	githubRepo          string
+	githubToken         string
+	naming              string
+	containerlabVersion string
 
 	rawClabConfig string
 	clabConfig    *clabernetesutilcontainerlab.Config
@@ -442,11 +445,12 @@ func (c *Clabverter) handleManifest() error {
 				c.rawClabConfig,
 				specDefinitionIndentSpaces,
 			),
-			Files:              files,
-			FilesFromURL:       c.extraFilesFromURL,
-			InsecureRegistries: c.insecureRegistries,
-			DisableExpose:      c.disableExpose,
-			Naming:             c.naming,
+			Files:               files,
+			FilesFromURL:        c.extraFilesFromURL,
+			InsecureRegistries:  c.insecureRegistries,
+			DisableExpose:       c.disableExpose,
+			Naming:              c.naming,
+			ContainerlabVersion: c.containerlabVersion,
 		},
 	)
 	if err != nil {
