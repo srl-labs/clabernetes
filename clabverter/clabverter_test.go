@@ -25,18 +25,21 @@ func TestClabvert(t *testing.T) {
 		destinationNamespace string
 		insecureRegistries   string
 		disableExpose        bool
+		naming               string
 	}{
 		{
 			name:                 "simple",
 			topologyFile:         "test-fixtures/clabversiontest/clab.yaml",
 			destinationNamespace: "notclabernetes",
 			insecureRegistries:   "1.2.3.4",
+			naming:               "prefixed",
 		},
 		{
 			name:               "simple-no-explicit-namespace",
 			topologyFile:       "test-fixtures/clabversiontest/clab.yaml",
 			insecureRegistries: "1.2.3.4",
 			disableExpose:      true,
+			naming:             "non-prefixed",
 		},
 	}
 
@@ -80,6 +83,7 @@ func TestClabvert(t *testing.T) {
 					testCase.topologyFile,
 					actualDir,
 					testCase.destinationNamespace,
+					testCase.naming,
 					testCase.insecureRegistries,
 					testCase.disableExpose,
 					false,

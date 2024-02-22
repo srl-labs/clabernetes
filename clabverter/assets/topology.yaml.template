@@ -41,7 +41,9 @@ spec:
   expose:
     disableExpose: true
   {{- end }}
-  naming: prefixed
+  {{- if .Naming }}
+  naming: {{ .Naming }}
+  {{- end }}
   connectivity: vxlan
   definition:
     containerlab: |-

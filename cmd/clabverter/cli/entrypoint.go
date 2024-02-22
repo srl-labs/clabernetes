@@ -12,6 +12,7 @@ const (
 	outputDirectory      = "outputDirectory"
 	destinationNamespace = "destinationNamespace"
 	insecureRegistries   = "insecureRegistries"
+	naming               = "naming"
 	disableExpose        = "disableExpose"
 	debug                = "debug"
 	quiet                = "quiet"
@@ -58,6 +59,12 @@ If not set, clabverter will look for a file named '*.clab.y*ml'`,
 				Required: false,
 				Value:    false,
 			},
+			&cli.StringFlag{
+				Name:     naming,
+				Usage:    "naming scheme to use for clabernetes resrouces",
+				Required: false,
+				Value:    "prefixed",
+			},
 			&cli.BoolFlag{
 				Name:     debug,
 				Usage:    "enable debug logging",
@@ -83,6 +90,7 @@ If not set, clabverter will look for a file named '*.clab.y*ml'`,
 				c.String(topologyFile),
 				c.String(outputDirectory),
 				c.String(destinationNamespace),
+				c.String(naming),
 				c.String(insecureRegistries),
 				c.Bool(disableExpose),
 				c.Bool(debug),
