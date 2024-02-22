@@ -22,6 +22,10 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      - name: ensure go mod is tidy
+        run: |
+          git diff --exit-code --name-only go.mod go.sum 2>&1
+
       - name: install go lint tools
         run: |
           go install mvdan.cc/gofumpt@${{ vars.GOFUMPT_VERSION }}
