@@ -5,7 +5,6 @@ import (
 
 	knetopologyproto "github.com/openconfig/kne/proto/topo"
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
@@ -18,6 +17,7 @@ func processConfigNodeLinks(
 	nodeName string,
 	link *knetopologyproto.Link,
 	reconcileData *ReconcileData,
+	removeTopologyPrefix bool,
 ) {
 	endpointA := clabernetesapisv1alpha1.LinkEndpoint{
 		NodeName:      link.ANode,
@@ -84,12 +84,11 @@ func processConfigNodeLinks(
 		&clabernetesapisv1alpha1.PointToPointTunnel{
 			LocalNode:  nodeName,
 			RemoteNode: uninterestingEndpoint.NodeName,
-			Destination: fmt.Sprintf(
-				"%s-%s-vx.%s.%s",
+			Destination: resolveConnectivityDestination(
 				topology.Name,
 				uninterestingEndpoint.NodeName,
 				topology.Namespace,
-				clabernetesconfig.GetManager().GetInClusterDNSSuffix(),
+				removeTopologyPrefix,
 			),
 			LocalInterface:  interestingEndpoint.InterfaceName,
 			RemoteInterface: uninterestingEndpoint.InterfaceName,
@@ -102,6 +101,7 @@ func processKneDefinition(
 	topology *clabernetesapisv1alpha1.Topology,
 	kneTopo *knetopologyproto.Topology,
 	reconcileData *ReconcileData,
+	removeTopologyPrefix bool,
 ) (
 	err error,
 ) {
@@ -171,7 +171,7 @@ func processKneDefinition(
 		}
 
 		for _, link := range kneTopo.Links {
-			processConfigNodeLinks(topology, nodeName, link, reconcileData)
+			processConfigNodeLinks(topology, nodeName, link, reconcileData, removeTopologyPrefix)
 		}
 	}
 
