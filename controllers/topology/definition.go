@@ -15,11 +15,16 @@ func (c *Controller) processDefinition(
 	topology *clabernetesapisv1alpha1.Topology,
 	reconcileData *ReconcileData,
 ) error {
+	var removeTopologyPrefix bool
+	if ResolveTopologyRemovePrefix(topology) {
+		removeTopologyPrefix = true
+	}
+
 	switch {
 	case topology.Spec.Definition.Containerlab != "":
-		return c.processContainerlabDefinition(topology, reconcileData)
+		return c.processContainerlabDefinition(topology, reconcileData, removeTopologyPrefix)
 	case topology.Spec.Definition.Kne != "":
-		return c.processKneDefinition(topology, reconcileData)
+		return c.processKneDefinition(topology, reconcileData, removeTopologyPrefix)
 	default:
 		return fmt.Errorf(
 			"%w: unknown or unsupported topology definition knid, this is *probably* a bug",
@@ -31,6 +36,7 @@ func (c *Controller) processDefinition(
 func (c *Controller) processContainerlabDefinition(
 	topology *clabernetesapisv1alpha1.Topology,
 	reconcileData *ReconcileData,
+	removeTopologyPrefix bool,
 ) error {
 	reconcileData.Kind = clabernetesapis.TopologyKindContainerlab
 
@@ -59,6 +65,7 @@ func (c *Controller) processContainerlabDefinition(
 			nodeName,
 			defaultsYAML,
 			reconcileData,
+			removeTopologyPrefix,
 		)
 		if err != nil {
 			return err
@@ -71,6 +78,7 @@ func (c *Controller) processContainerlabDefinition(
 func (c *Controller) processKneDefinition(
 	topology *clabernetesapisv1alpha1.Topology,
 	reconcileData *ReconcileData,
+	removeTopologyPrefix bool,
 ) error {
 	reconcileData.Kind = clabernetesapis.TopologyKindKne
 
@@ -82,5 +90,5 @@ func (c *Controller) processKneDefinition(
 		return err
 	}
 
-	return processKneDefinition(c.Log, topology, kneTopo, reconcileData)
+	return processKneDefinition(c.Log, topology, kneTopo, reconcileData, removeTopologyPrefix)
 }

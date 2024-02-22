@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
@@ -304,6 +303,7 @@ func processConfigForNode(
 	nodeName string,
 	defaultsYAML []byte,
 	reconcileData *ReconcileData,
+	removeTopologyPrefix bool,
 ) error {
 	deepCopiedDefaults := &clabernetesutilcontainerlab.NodeDefinition{}
 
@@ -431,12 +431,11 @@ func processConfigForNode(
 			&clabernetesapisv1alpha1.PointToPointTunnel{
 				LocalNode:  nodeName,
 				RemoteNode: uninterestingEndpoint.NodeName,
-				Destination: fmt.Sprintf(
-					"%s-%s-vx.%s.%s",
+				Destination: resolveConnectivityDestination(
 					topology.Name,
 					uninterestingEndpoint.NodeName,
 					topology.Namespace,
-					clabernetesconfig.GetManager().GetInClusterDNSSuffix(),
+					removeTopologyPrefix,
 				),
 				LocalInterface:  interestingEndpoint.InterfaceName,
 				RemoteInterface: uninterestingEndpoint.InterfaceName,
