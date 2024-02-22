@@ -13,6 +13,7 @@ const (
 	destinationNamespace = "destinationNamespace"
 	insecureRegistries   = "insecureRegistries"
 	naming               = "naming"
+	containerlabVersion  = "containerlabVersion"
 	disableExpose        = "disableExpose"
 	debug                = "debug"
 	quiet                = "quiet"
@@ -65,6 +66,12 @@ If not set, clabverter will look for a file named '*.clab.y*ml'`,
 				Required: false,
 				Value:    "prefixed",
 			},
+			&cli.StringFlag{
+				Name:     containerlabVersion,
+				Usage:    "an explicit containerlab version to use (example: 0.51.1)",
+				Required: false,
+				Value:    "",
+			},
 			&cli.BoolFlag{
 				Name:     debug,
 				Usage:    "enable debug logging",
@@ -91,6 +98,7 @@ If not set, clabverter will look for a file named '*.clab.y*ml'`,
 				c.String(outputDirectory),
 				c.String(destinationNamespace),
 				c.String(naming),
+				c.String(containerlabVersion),
 				c.String(insecureRegistries),
 				c.Bool(disableExpose),
 				c.Bool(debug),
