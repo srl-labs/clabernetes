@@ -32,6 +32,7 @@ func MustNewClabverter(
 	naming,
 	containerlabVersion,
 	insecureRegistries string,
+	imagePullSecrets string,
 	disableExpose,
 	debug,
 	quiet,
@@ -64,6 +65,12 @@ func MustNewClabverter(
 		insecureRegistriesArr = strings.Split(insecureRegistries, ",")
 	}
 
+	// trim imagePullSecrets and split into array if not empty
+	var imagePullSecretsArr []string
+	if strings.TrimSpace(imagePullSecrets) != "" {
+		imagePullSecretsArr = strings.Split(imagePullSecrets, ",")
+	}
+
 	supportedNamings := []string{"prefixed", "non-prefixed"}
 	if !slices.Contains(supportedNamings, naming) {
 		clabverterLogger.Fatalf(
@@ -84,6 +91,7 @@ func MustNewClabverter(
 		disableExpose:           disableExpose,
 		destinationNamespace:    destinationNamespace,
 		insecureRegistries:      insecureRegistriesArr,
+		imagePullSecrets:        imagePullSecretsArr,
 		startupConfigConfigMaps: make(map[string]topologyConfigMapTemplateVars),
 		extraFilesConfigMaps:    make(map[string][]topologyConfigMapTemplateVars),
 		extraFilesFromURL:       make(map[string][]topologyFileFromURLTemplateVars),
@@ -106,6 +114,7 @@ type Clabverter struct {
 	destinationNamespace string
 
 	insecureRegistries []string
+	imagePullSecrets   []string
 
 	disableExpose bool
 
@@ -448,6 +457,7 @@ func (c *Clabverter) handleManifest() error {
 			Files:               files,
 			FilesFromURL:        c.extraFilesFromURL,
 			InsecureRegistries:  c.insecureRegistries,
+			ImagePullSecrets:    c.imagePullSecrets,
 			DisableExpose:       c.disableExpose,
 			Naming:              c.naming,
 			ContainerlabVersion: c.containerlabVersion,

@@ -32,6 +32,7 @@ type containerlabTemplateVars struct {
 	Files               map[string][]topologyConfigMapTemplateVars
 	FilesFromURL        map[string][]topologyFileFromURLTemplateVars
 	InsecureRegistries  []string
+	ImagePullSecrets    []string
 	DisableExpose       bool
 	Naming              string
 	ContainerlabVersion string
