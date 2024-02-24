@@ -41,7 +41,10 @@ func HelmTest(t *testing.T, chartName, testName, namespace, valuesFileName, char
 
 	defer func() {
 		if !*SkipCleanup {
-			os.Chdir(chartsDir)
+			err = os.Chdir(chartsDir)
+			if err != nil {
+				t.Logf("failed changing to a directory %q, error: %s", actualDir, err)
+			}
 
 			err = os.RemoveAll(actualRootDir)
 			if err != nil {
