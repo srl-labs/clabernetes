@@ -5,9 +5,6 @@ on:
   workflow_call: {}
   workflow_dispatch: {}
 
-env:
-  GO_VERSION: "1.21"
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,6 +14,18 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: load env vars for workflow run
+        run: |
+          source .github/vars.env
+          echo "GO_VERSION=$GO_VERSION" >> "$GITHUB_ENV"
+          echo "DEVSPACE_VERSION=$DEVSPACE_VERSION" >> "$GITHUB_ENV"
+          echo "GCI_VERSION=$GCI_VERSION" >> "$GITHUB_ENV"
+          echo "GOFUMPT_VERSION=$GOFUMPT_VERSION" >> "$GITHUB_ENV"
+          echo "GOLANGCI_LINT_VERSION=$GOLANGCI_LINT_VERSION" >> "$GITHUB_ENV"
+          echo "GOLINES_VERSION=$GOLINES_VERSION" >> "$GITHUB_ENV"
+          echo "GOTESTSUM_VERSION=$GOTESTSUM_VERSION" >> "$GITHUB_ENV"
+          echo "HELM_VERSION=$HELM_VERSION" >> "$GITHUB_ENV"
+
       - name: set up go
         uses: actions/setup-go@v5
         with:
@@ -25,14 +34,14 @@ jobs:
       - name: install devspace
         run: |
           curl -L -o devspace \
-            "https://github.com/loft-sh/devspace/releases/download/${{ vars.DEVSPACE_VERSION}}/devspace-linux-amd64" &&
+            "https://github.com/loft-sh/devspace/releases/download/${{ env.DEVSPACE_VERSION}}/devspace-linux-amd64" &&
             install -c -m 0755 devspace /usr/local/bin
         working-directory: /tmp
 
       - name: install helm
         run: |
           curl -L -o helm.tar.gz \
-            "https://get.helm.sh/helm-${{ vars.HELM_VERSION}}-linux-amd64.tar.gz"
+            "https://get.helm.sh/helm-${{ env.HELM_VERSION}}-linux-amd64.tar.gz"
           tar -zxvf helm.tar.gz
           mv linux-amd64/helm /usr/local/bin/helm
         working-directory: /tmp
