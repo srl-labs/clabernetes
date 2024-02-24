@@ -1,7 +1,9 @@
-package default_vaules_test
+package clicker_enabled_test
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
@@ -17,10 +19,23 @@ func TestMain(m *testing.M) {
 // TestDefaultValues -- really just here to ensure that we dont accidentally break our charts; this
 // will probably be *highly* irritating in times of lots of chart updates, but, once we know the
 // template are in a good place we can always just re-generate the "golden" outputs.
-func TestDefaultValues(t *testing.T) {
+func TestClickerEnabled(t *testing.T) {
 	t.Parallel()
 
-	testName := "default-values"
+	testName := "clicker_enabled"
+	chartName := "clabernetes"
 
-	clabernetestesthelper.HelmTest(t, testName, clabernetesconstants.Clabernetes, "")
+	chartsDir, err := filepath.Abs("../../..")
+	if err != nil {
+		t.Error(err)
+	}
+
+	clabernetestesthelper.HelmTest(
+		t,
+		chartName,
+		testName,
+		clabernetesconstants.Clabernetes,
+		fmt.Sprintf("%s-values.yaml", testName),
+		chartsDir,
+	)
 }

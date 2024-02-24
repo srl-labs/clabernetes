@@ -19,24 +19,17 @@ const (
 // HelmTest executes a test against a helm chart -- this is a very simple/dumb test meant only to
 // ensure that we don't accidentally screw up charts. We do this by storing the "golden" output of
 // a rendered chart (and subcharts if applicable) with a given values file.
-func HelmTest(t *testing.T, testName, namespace, valuesFileName string) {
+func HelmTest(t *testing.T, chartName, testName, namespace, valuesFileName, chartsDir string) {
 	t.Helper()
 
 	// we have to make the chartname/templates dir too since thats where helm wants to write things
-	actualRootDir := fmt.Sprintf("test-fixtures/%s-actual", testName)
-	actualDir := fmt.Sprintf("%s/clabernetes/templates", actualRootDir)
+	actualRootDir := fmt.Sprintf("%s/tests/%s/test-fixtures/%s-actual", chartName, testName, testName)
+	actualDir := fmt.Sprintf("%s/%s/templates", actualRootDir, chartName)
 
 	var valuesFile string
 
 	if valuesFileName != "" {
-		var err error
-
-		valuesFile, err = filepath.Abs(fmt.Sprintf("test-fixtures/%s-values.yaml", testName))
-		if err != nil {
-			t.Fatalf(
-				"failed getting abspath for values file, error: %s", err,
-			)
-		}
+		valuesFile = fmt.Sprintf("%s/tests/%s/test-fixtures/%s-values.yaml", chartName, testName, testName)
 	}
 
 	err := os.MkdirAll(actualDir, clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute)
@@ -48,6 +41,11 @@ func HelmTest(t *testing.T, testName, namespace, valuesFileName string) {
 
 	defer func() {
 		if !*SkipCleanup {
+			err = os.Chdir(chartsDir)
+			if err != nil {
+				t.Logf("failed changing to a directory %q, error: %s", actualDir, err)
+			}
+
 			err = os.RemoveAll(actualRootDir)
 			if err != nil {
 				t.Logf("failed cleaning up actual output directory %q, error: %s", actualDir, err)
@@ -57,11 +55,13 @@ func HelmTest(t *testing.T, testName, namespace, valuesFileName string) {
 
 	args := []string{
 		"template",
-		"../../.",
-		"--namespace",
-		namespace,
+		"./" + chartName,
 		"--output-dir",
 		actualRootDir,
+	}
+
+	if namespace != "" {
+		args = append(args, "--namespace", namespace)
 	}
 
 	if valuesFile != "" {
@@ -70,6 +70,7 @@ func HelmTest(t *testing.T, testName, namespace, valuesFileName string) {
 
 	HelmCommand(
 		t,
+		chartsDir,
 		args...,
 	)
 
@@ -101,13 +102,15 @@ func HelmTest(t *testing.T, testName, namespace, valuesFileName string) {
 }
 
 // HelmCommand executes helm with the given arguments.
-func HelmCommand(t *testing.T, args ...string) []byte {
+func HelmCommand(t *testing.T, chartsDir string, args ...string) []byte {
 	t.Helper()
 
 	cmd := exec.Command(
 		helm,
 		args...,
 	)
+
+	cmd.Dir = chartsDir
 
 	return Execute(t, cmd)
 }
