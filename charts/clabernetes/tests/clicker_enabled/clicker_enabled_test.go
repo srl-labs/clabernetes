@@ -1,4 +1,4 @@
-package default_vaules_test
+package clicker_enabled_test
 
 import (
 	"fmt"
