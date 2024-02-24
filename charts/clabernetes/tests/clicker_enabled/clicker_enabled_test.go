@@ -3,6 +3,7 @@ package clicker_enabled_test
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
@@ -21,12 +22,20 @@ func TestMain(m *testing.M) {
 func TestClickerEnabled(t *testing.T) {
 	t.Parallel()
 
-	testName := "clicker-enabled"
+	testName := "clicker_enabled"
+	chartName := "clabernetes"
+
+	chartsDir, err := filepath.Abs("../../..")
+	if err != nil {
+		t.Error(err)
+	}
 
 	clabernetestesthelper.HelmTest(
 		t,
+		chartName,
 		testName,
 		clabernetesconstants.Clabernetes,
 		fmt.Sprintf("%s-values.yaml", testName),
+		chartsDir,
 	)
 }
