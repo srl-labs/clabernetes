@@ -1,4 +1,4 @@
-package default_vaules_test
+package default_values_test
 
 import (
 	"os"
