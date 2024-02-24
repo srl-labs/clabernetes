@@ -12,6 +12,7 @@ const (
 	outputDirectory      = "outputDirectory"
 	destinationNamespace = "destinationNamespace"
 	insecureRegistries   = "insecureRegistries"
+	imagePullSecrets     = "imagePullSecrets"
 	naming               = "naming"
 	containerlabVersion  = "containerlabVersion"
 	disableExpose        = "disableExpose"
@@ -51,6 +52,12 @@ If not set, clabverter will look for a file named '*.clab.y*ml'`,
 			&cli.StringFlag{
 				Name:     insecureRegistries,
 				Usage:    "comma separated list of insecure registries",
+				Required: false,
+				Value:    "",
+			},
+			&cli.StringFlag{
+				Name:     imagePullSecrets,
+				Usage:    "comma separated list of registry secrets",
 				Required: false,
 				Value:    "",
 			},
@@ -100,6 +107,7 @@ If not set, clabverter will look for a file named '*.clab.y*ml'`,
 				c.String(naming),
 				c.String(containerlabVersion),
 				c.String(insecureRegistries),
+				c.String(imagePullSecrets),
 				c.Bool(disableExpose),
 				c.Bool(debug),
 				c.Bool(quiet),
