@@ -1,11 +1,11 @@
 module github.com/srl-labs/clabernetes
 
-go 1.21
+go 1.22
 
 require (
 	github.com/carlmontanari/difflibgo v0.0.0-20231101235608-20f26fe20f37
 	github.com/carlmontanari/slurpeeth v0.0.0-20240209224827-246fa87e31f3
-	github.com/openconfig/kne v0.1.16
+	github.com/openconfig/kne v0.1.17
 	github.com/urfave/cli/v2 v2.27.1
 	google.golang.org/protobuf v1.32.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -14,7 +14,7 @@ require (
 	k8s.io/apimachinery v0.29.2
 	k8s.io/client-go v0.29.2
 	k8s.io/klog/v2 v2.120.1
-	k8s.io/kube-openapi v0.0.0-20240209001042-7a0d5b415232
+	k8s.io/kube-openapi v0.0.0-20240224005224-582cce78233b
 	sigs.k8s.io/controller-runtime v0.17.2
 	sigs.k8s.io/yaml v1.4.0
 )

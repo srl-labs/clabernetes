@@ -5,9 +5,6 @@ on:
   workflow_call: {}
   workflow_dispatch: {}
 
-env:
-  GO_VERSION: "1.21"
-
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -16,6 +13,18 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
+      - name: load env vars for workflow run
+        run: |
+          source .github/vars.env
+          echo "GO_VERSION=$GO_VERSION" >> "$GITHUB_ENV"
+          echo "DEVSPACE_VERSION=$DEVSPACE_VERSION" >> "$GITHUB_ENV"
+          echo "GCI_VERSION=$GCI_VERSION" >> "$GITHUB_ENV"
+          echo "GOFUMPT_VERSION=$GOFUMPT_VERSION" >> "$GITHUB_ENV"
+          echo "GOLANGCI_LINT_VERSION=$GOLANGCI_LINT_VERSION" >> "$GITHUB_ENV"
+          echo "GOLINES_VERSION=$GOLINES_VERSION" >> "$GITHUB_ENV"
+          echo "GOTESTSUM_VERSION=$GOTESTSUM_VERSION" >> "$GITHUB_ENV"
+          echo "HELM_VERSION=$HELM_VERSION" >> "$GITHUB_ENV"
 
       - name: set up go
         uses: actions/setup-go@v5
@@ -28,12 +37,12 @@ jobs:
 
       - name: install go lint tools
         run: |
-          go install mvdan.cc/gofumpt@${{ vars.GOFUMPT_VERSION }}
-          go install github.com/daixiang0/gci@${{ vars.GCI_VERSION }}
-          go install github.com/segmentio/golines@${{ vars.GOLINES_VERSION }}
+          go install mvdan.cc/gofumpt@${{ env.GOFUMPT_VERSION }}
+          go install github.com/daixiang0/gci@${{ env.GCI_VERSION }}
+          go install github.com/segmentio/golines@${{ env.GOLINES_VERSION }}
           curl -sSfL \
             https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh |
-            sh -s -- -b $(go env GOPATH)/bin ${{ vars.GOLANGCI_LINT_VERSION }}
+            sh -s -- -b $(go env GOPATH)/bin ${{ env.GOLANGCI_LINT_VERSION }}
 
       - name: run the linter
         run: make lint
