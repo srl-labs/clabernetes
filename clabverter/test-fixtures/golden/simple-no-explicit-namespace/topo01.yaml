@@ -91,7 +91,8 @@ spec:
   imagePull:
     insecureRegistries:
     - 1.2.3.4
-    pullSecrets: null
+    pullSecrets:
+    - regcred
   naming: non-prefixed
 status:
   configs: null

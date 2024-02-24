@@ -42,19 +42,10 @@ func TestClabvert(t *testing.T) {
 			name:                "simple-no-explicit-namespace",
 			topologyFile:        "test-fixtures/clabversiontest/clab.yaml",
 			insecureRegistries:  "1.2.3.4",
-			imagePullSecrets:    "",
+			imagePullSecrets:    "regcred",
 			disableExpose:       true,
 			naming:              "non-prefixed",
 			containerlabVersion: "0.51.0",
-		},
-		{
-			name:                 "simple-pull-secrets",
-			topologyFile:         "test-fixtures/clabversiontest/clab.yaml",
-			destinationNamespace: "notclabernetes",
-			insecureRegistries:   "1.2.3.4",
-			imagePullSecrets:     "regcred",
-			naming:               "prefixed",
-			containerlabVersion:  "",
 		},
 	}
 
