@@ -1,4 +1,4 @@
-FROM golang:1.21-bookworm as builder
+FROM golang:1.22-bookworm as builder
 
 ARG VERSION
 
@@ -30,7 +30,7 @@ FROM --platform=linux/amd64 debian:bookworm-slim
 
 ARG DOCKER_VERSION="5:25.*"
 ARG CONTAINERLAB_VERSION="0.51.*"
-ARG NERDCTL_VERSION="1.7.2"
+ARG NERDCTL_VERSION="1.7.4"
 
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
