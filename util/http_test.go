@@ -1,6 +1,12 @@
 package util_test
 
 import (
+	"bytes"
+	"context"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
@@ -45,6 +51,59 @@ func TestIsURL(t *testing.T) {
 	}
 }
 
+func TestWriteHTTPContentsFromPath(t *testing.T) {
+	cases := []struct {
+		name    string
+		headers map[string]string
+	}{
+		{
+			name:    "simple",
+			headers: map[string]string{"foo": "bar"},
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(
+			testCase.name,
+			func(t *testing.T) {
+				t.Logf("%s: starting", testCase.name)
+
+				fakeServer := httptest.NewServer(http.HandlerFunc(
+					func(w http.ResponseWriter, r *http.Request) {
+						for k, v := range testCase.headers {
+							actual := r.Header.Get(k)
+							if actual != v {
+								clabernetestesthelper.FailOutput(t, actual, v)
+							}
+						}
+
+						// just write a dummy message, we're just making sure the client sets
+						// headers and actually makes an http call
+						_, _ = fmt.Fprintf(w, "foo")
+					},
+				))
+				defer fakeServer.Close()
+
+				b := make([]byte, 100)
+				w := bytes.NewBuffer(b)
+
+				err := clabernetesutil.WriteHTTPContentsFromPath(
+					context.Background(),
+					fakeServer.URL,
+					w,
+					testCase.headers,
+				)
+				if err != nil {
+					t.Fatalf("unexpected error: %s", err)
+				}
+
+				if !strings.Contains(w.String(), "foo") {
+					t.Fatal("writer did not contain expected content 'foo'")
+				}
+			})
+	}
+}
+
 func TestGitHubNormalLinkToRawLink(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -77,6 +136,45 @@ func TestGitHubNormalLinkToRawLink(t *testing.T) {
 				actual := clabernetesutil.GitHubNormalToRawLink(testCase.in)
 				if actual != testCase.expected {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
+				}
+			})
+	}
+}
+
+func TestGitHubGroupAndRepoFromURL(t *testing.T) {
+	cases := []struct {
+		name          string
+		in            string
+		expectedGroup string
+		expectedRepo  string
+	}{
+		{
+			name:          "not-a-github-link",
+			in:            "http://blah.com",
+			expectedGroup: "",
+			expectedRepo:  "",
+		},
+		{
+			name:          "clabernetes",
+			in:            "https://github.com/srl-labs/clabernetes",
+			expectedGroup: "srl-labs",
+			expectedRepo:  "clabernetes",
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(
+			testCase.name,
+			func(t *testing.T) {
+				t.Logf("%s: starting", testCase.name)
+
+				actualGroup, actualRepo := clabernetesutil.GitHubGroupAndRepoFromURL(testCase.in)
+				if actualGroup != testCase.expectedGroup {
+					clabernetestesthelper.FailOutput(t, actualGroup, testCase.expectedGroup)
+				}
+
+				if actualRepo != testCase.expectedRepo {
+					clabernetestesthelper.FailOutput(t, actualRepo, testCase.expectedRepo)
 				}
 			})
 	}
