@@ -65,7 +65,9 @@ func (r *RoleBindingReconciler) Reconcile(
 		return err
 	}
 
-	renderedRoleBinding, err := r.Render(owningTopology, existingRoleBinding)
+	renderedRoleBinding := r.Render(owningTopology, existingRoleBinding)
+
+	err = ctrlruntimeutil.SetOwnerReference(owningTopology, renderedRoleBinding, r.client.Scheme())
 	if err != nil {
 		r.log.Criticalf(
 			"failed rendering role binding for namespace %q, error: %s",
@@ -125,9 +127,13 @@ func (r *RoleBindingReconciler) reconcileGetAndCreateIfNotExist( //nolint:dupl
 	if apimachineryerrors.IsNotFound(err) {
 		r.log.Infof("no launcher role binding found in namespace %q, creating...", namespace)
 
-		var renderedRoleBinding *k8srbacv1.RoleBinding
+		renderedRoleBinding := r.Render(owningTopology, nil)
 
-		renderedRoleBinding, err = r.Render(owningTopology, nil)
+		err = ctrlruntimeutil.SetOwnerReference(
+			owningTopology,
+			renderedRoleBinding,
+			r.client.Scheme(),
+		)
 		if err != nil {
 			r.log.Criticalf(
 				"failed rendering role binding for namespace %q, error: %s",
@@ -165,7 +171,7 @@ func (r *RoleBindingReconciler) reconcileGetAndCreateIfNotExist( //nolint:dupl
 func (r *RoleBindingReconciler) Render(
 	owningTopology *clabernetesapisv1alpha1.Topology,
 	existingRoleBinding *k8srbacv1.RoleBinding,
-) (*k8srbacv1.RoleBinding, error) {
+) *k8srbacv1.RoleBinding {
 	annotations, globalLabels := r.configManagerGetter().GetAllMetadata()
 
 	labels := map[string]string{
@@ -203,12 +209,7 @@ func (r *RoleBindingReconciler) Render(
 		renderedRoleBinding.OwnerReferences = existingRoleBinding.GetOwnerReferences()
 	}
 
-	err := ctrlruntimeutil.SetOwnerReference(owningTopology, renderedRoleBinding, r.client.Scheme())
-	if err != nil {
-		return nil, err
-	}
-
-	return renderedRoleBinding, nil
+	return renderedRoleBinding
 }
 
 // Conforms returns true if an existing RoleBinding conforms with the rendered RoleBinding.
