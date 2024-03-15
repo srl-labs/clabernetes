@@ -16,6 +16,7 @@ import (
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -443,6 +444,9 @@ func (c *Clabverter) handleManifest() error {
 		})
 	}
 
+	// marshal the clab config to yaml to be included in the manifest
+	clabConfig, _ := yaml.Marshal(c.clabConfig)
+
 	var rendered bytes.Buffer
 
 	err = t.Execute(
@@ -452,7 +456,7 @@ func (c *Clabverter) handleManifest() error {
 			Namespace: c.destinationNamespace,
 			// pad w/ a newline so the template can look prettier :)
 			ClabConfig: "\n" + clabernetesutil.Indent(
-				c.rawClabConfig,
+				string(clabConfig),
 				specDefinitionIndentSpaces,
 			),
 			Files:               files,

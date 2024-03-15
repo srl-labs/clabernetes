@@ -18,18 +18,19 @@ const (
 	NameMaxLen = 63
 )
 
+// ref. https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
 type validDNSLabelConventionPatterns struct {
-	invalidChars       *regexp.Regexp
-	startsWithNonAlpha *regexp.Regexp
-	endsWithNonAlpha   *regexp.Regexp
+	invalidChars          *regexp.Regexp
+	startsWithNonAlphaNum *regexp.Regexp
+	endsWithNonAlphaNum   *regexp.Regexp
 }
 
 func getDNSLabelConventionPatterns() *validDNSLabelConventionPatterns {
 	validNSLabelConventionPatternsObjOnce.Do(func() {
 		validDNSLabelConventionPatternsObj = &validDNSLabelConventionPatterns{
-			invalidChars:       regexp.MustCompile(`[^a-z0-9\-]`),
-			startsWithNonAlpha: regexp.MustCompile(`^[^a-z]`),
-			endsWithNonAlpha:   regexp.MustCompile(`[^a-z]$`),
+			invalidChars:          regexp.MustCompile(`[^a-z0-9\-]`),
+			startsWithNonAlphaNum: regexp.MustCompile(`^[^a-z0-9]`),
+			endsWithNonAlphaNum:   regexp.MustCompile(`[^a-z0-9]$`),
 		}
 	})
 
@@ -64,8 +65,8 @@ func EnforceDNSLabelConvention(s string) string {
 
 	s = strings.ToLower(s)
 	s = p.invalidChars.ReplaceAllString(s, "-")
-	s = p.startsWithNonAlpha.ReplaceAllString(s, "z")
-	s = p.endsWithNonAlpha.ReplaceAllString(s, "z")
+	s = p.startsWithNonAlphaNum.ReplaceAllString(s, "z")
+	s = p.endsWithNonAlphaNum.ReplaceAllString(s, "z")
 
 	return s
 }

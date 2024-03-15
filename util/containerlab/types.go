@@ -1,5 +1,7 @@
 package containerlab
 
+import clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+
 // Config defines lab configuration as it is provided in the YAML file.
 type Config struct {
 	// Lab name
@@ -223,4 +225,50 @@ type LinkConfig struct {
 	Labels    map[string]string      `yaml:"labels,omitempty"`
 	Vars      map[string]interface{} `yaml:"vars,omitempty"`
 	MTU       int                    `yaml:"mtu,omitempty"`
+}
+
+// UnmarshalYAML implements the yaml.Unmarshaler interface for the Config type
+// to perform custom unmarshalling of the Name field to implement the EnforceDNSLabelConvention.
+func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type Alias Config
+
+	aux := (*Alias)(c)
+
+	if err := unmarshal(&aux); err != nil {
+		return err
+	}
+
+	// Apply the EnforceDNSLabelConvention function to the Name field
+	aux.Name = clabernetesutilkubernetes.EnforceDNSLabelConvention(aux.Name)
+
+	*c = Config(*aux)
+
+	return nil
+}
+
+// UnmarshalYAML implements the yaml.Unmarshaler interface for the Topology type
+// to perform custom unmarshalling of the node names to implement the EnforceDNSLabelConvention.
+func (t *Topology) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type Alias Topology
+
+	aux := (*Alias)(t)
+
+	if err := unmarshal(aux); err != nil {
+		return err
+	}
+
+	// Create a new map to hold the sanitized keys
+	sanitizedMap := make(map[string]*NodeDefinition)
+
+	for k, v := range aux.Nodes {
+		sanitizedKey := clabernetesutilkubernetes.EnforceDNSLabelConvention(k)
+		sanitizedMap[sanitizedKey] = v
+	}
+
+	// Replace the original map with the sanitized one
+	aux.Nodes = sanitizedMap
+
+	*t = Topology(*aux)
+
+	return nil
 }
