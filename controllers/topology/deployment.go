@@ -171,7 +171,7 @@ func (r *DeploymentReconciler) renderDeploymentScheduling(
 	deployment.Spec.Template.Spec.Tolerations = tolerations
 }
 
-func (r *DeploymentReconciler) renderDeploymentVolumes(
+func (r *DeploymentReconciler) renderDeploymentVolumes( //nolint:funlen
 	deployment *k8sappsv1.Deployment,
 	nodeName,
 	configVolumeName,
