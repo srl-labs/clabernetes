@@ -1,3 +1,5 @@
+Include /etc/ssh/ssh_config.d/*.conf
+
 Host *
     # use admin user by default
     User admin
