@@ -122,7 +122,7 @@ func initConfigCreateOrUpdateConfig(
 		return err
 	}
 
-	err = clabernetesconfig.MergeFromBootstrapConfig(bootstrapConfigMap, configCR)
+	err = clabernetesconfig.MergeFromBootstrapConfig(bootstrapConfigMap, configCR, configCRExists)
 	if err != nil {
 		return err
 	}

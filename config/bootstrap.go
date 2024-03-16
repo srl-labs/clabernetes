@@ -171,13 +171,16 @@ func bootstrapFromConfigMap( //nolint:gocyclo,funlen,gocognit
 func MergeFromBootstrapConfig(
 	bootstrapConfigMap *k8scorev1.ConfigMap,
 	config *clabernetesapisv1alpha1.Config,
+	configCRExists bool,
 ) error {
 	bootstrap, err := bootstrapFromConfigMap(bootstrapConfigMap.Data)
 	if err != nil {
 		return err
 	}
 
-	if bootstrap.mergeMode == "overwrite" {
+	// when CR was just created, we act in the overwrite mode since all the values must be
+	// coming from the bootstrap config
+	if bootstrap.mergeMode == "overwrite" || !configCRExists {
 		mergeFromBootstrapConfigReplace(bootstrap, config)
 	} else {
 		// should only ever be "merge" if it isn't "overwrite", but either way, fallback to merge...
