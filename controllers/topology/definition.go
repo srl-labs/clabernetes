@@ -5,90 +5,88 @@ import (
 
 	clabernetesapis "github.com/srl-labs/clabernetes/apis"
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
-	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
-	clabernetesutilkne "github.com/srl-labs/clabernetes/util/kne"
-	"gopkg.in/yaml.v3"
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 )
 
-func (c *Controller) processDefinition(
+// NewDefinitionProcessor returns a definition processor for the given Topology.
+func NewDefinitionProcessor(
+	logger claberneteslogging.Instance,
 	topology *clabernetesapisv1alpha1.Topology,
 	reconcileData *ReconcileData,
-) error {
-	var removeTopologyPrefix bool
-	if ResolveTopologyRemovePrefix(topology) {
-		removeTopologyPrefix = true
-	}
-
+	configManagerGetter clabernetesconfig.ManagerGetterFunc,
+) (DefinitionProcessor, error) {
 	switch {
 	case topology.Spec.Definition.Containerlab != "":
-		return c.processContainerlabDefinition(topology, reconcileData, removeTopologyPrefix)
+		reconcileData.Kind = clabernetesapis.TopologyKindContainerlab
+
+		return &containerlabDefinitionProcessor{
+			&definitionProcessor{
+				logger:              logger,
+				topology:            topology,
+				reconcileData:       reconcileData,
+				configManagerGetter: configManagerGetter,
+			},
+		}, nil
 	case topology.Spec.Definition.Kne != "":
-		return c.processKneDefinition(topology, reconcileData, removeTopologyPrefix)
+		reconcileData.Kind = clabernetesapis.TopologyKindKne
+
+		return &kneDefinitionProcessor{
+			&definitionProcessor{
+				logger:              logger,
+				topology:            topology,
+				reconcileData:       reconcileData,
+				configManagerGetter: configManagerGetter,
+			},
+		}, nil
 	default:
-		return fmt.Errorf(
-			"%w: unknown or unsupported topology definition knid, this is *probably* a bug",
+		return nil, fmt.Errorf(
+			"%w: unknown or unsupported topology definition kind, this is *probably* a bug",
 			claberneteserrors.ErrReconcile,
 		)
 	}
 }
 
-func (c *Controller) processContainerlabDefinition(
-	topology *clabernetesapisv1alpha1.Topology,
-	reconcileData *ReconcileData,
-	removeTopologyPrefix bool,
-) error {
-	reconcileData.Kind = clabernetesapis.TopologyKindContainerlab
-
-	// load the containerlab topo from the CR to make sure its all good
-	containerlabConfig, err := clabernetesutilcontainerlab.LoadContainerlabConfig(
-		topology.Spec.Definition.Containerlab,
-	)
-	if err != nil {
-		c.BaseController.Log.Criticalf("failed parsing containerlab config, error: %s", err)
-
-		return err
-	}
-
-	// we may have *different defaults per "sub-topology" so we do a cheater "deep copy" by just
-	// marshalling here and unmarshalling per node in the process func :)
-	defaultsYAML, err := yaml.Marshal(containerlabConfig.Topology.Defaults)
-	if err != nil {
-		return err
-	}
-
-	for nodeName := range containerlabConfig.Topology.Nodes {
-		err = processConfigForNode(
-			c.Log,
-			topology,
-			containerlabConfig,
-			nodeName,
-			defaultsYAML,
-			reconcileData,
-			removeTopologyPrefix,
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+// DefinitionProcessor is an interface defining a definition processor -- that is, an object that
+// accepts a clabernetes topology to update based on the included (probably containerlab, but maybe
+// kne or others in the future) configuration.
+type DefinitionProcessor interface {
+	// Process processes the topology, updating the given reconcile data object as necessary.
+	Process() error
 }
 
-func (c *Controller) processKneDefinition(
+type definitionProcessor struct {
+	logger              claberneteslogging.Instance
+	topology            *clabernetesapisv1alpha1.Topology
+	reconcileData       *ReconcileData
+	configManagerGetter clabernetesconfig.ManagerGetterFunc
+}
+
+func (p *definitionProcessor) getRemoveTopologyPrefix() bool {
+	var removeTopologyPrefix bool
+	if ResolveTopologyRemovePrefix(p.topology) {
+		removeTopologyPrefix = true
+	}
+
+	return removeTopologyPrefix
+}
+
+func (c *Controller) processDefinition(
 	topology *clabernetesapisv1alpha1.Topology,
 	reconcileData *ReconcileData,
-	removeTopologyPrefix bool,
 ) error {
-	reconcileData.Kind = clabernetesapis.TopologyKindKne
-
-	// load the kne topo to make sure its all good
-	kneTopo, err := clabernetesutilkne.LoadKneTopology(topology.Spec.Definition.Kne)
+	processor, err := NewDefinitionProcessor(
+		c.Log,
+		topology,
+		reconcileData,
+		clabernetesconfig.GetManager,
+	)
 	if err != nil {
-		c.BaseController.Log.Criticalf("failed parsing kne topology, error: %s", err)
+		c.Log.Criticalf("failed creating definition processor, err: %s", err)
 
 		return err
 	}
 
-	return processKneDefinition(c.Log, topology, kneTopo, reconcileData, removeTopologyPrefix)
+	return processor.Process()
 }

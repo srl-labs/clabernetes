@@ -7,11 +7,50 @@ import (
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
-	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	"gopkg.in/yaml.v3"
 )
+
+type containerlabDefinitionProcessor struct {
+	*definitionProcessor
+}
+
+func (p *containerlabDefinitionProcessor) Process() error {
+	// load the containerlab topo from the CR to make sure its all good
+	containerlabConfig, err := clabernetesutilcontainerlab.LoadContainerlabConfig(
+		p.topology.Spec.Definition.Containerlab,
+	)
+	if err != nil {
+		p.logger.Criticalf("failed parsing containerlab config, error: %s", err)
+
+		return err
+	}
+
+	// we may have *different defaults per "sub-topology" so we do a cheater "deep copy" by just
+	// marshalling here and unmarshalling per node in the process func :)
+	defaultsYAML, err := yaml.Marshal(containerlabConfig.Topology.Defaults)
+	if err != nil {
+		return err
+	}
+
+	// check this here so we only have to check it once
+	removeTopologyPrefix := p.getRemoveTopologyPrefix()
+
+	for nodeName := range containerlabConfig.Topology.Nodes {
+		err = p.processConfigForNode(
+			containerlabConfig,
+			nodeName,
+			defaultsYAML,
+			removeTopologyPrefix,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 func getDefaultPorts() []*clabernetesutilcontainerlab.TypedPort {
 	return []*clabernetesutilcontainerlab.TypedPort{
@@ -296,13 +335,10 @@ func getKindsForNode(
 	return nil
 }
 
-func processConfigForNode(
-	logger claberneteslogging.Instance,
-	topology *clabernetesapisv1alpha1.Topology,
+func (p *containerlabDefinitionProcessor) processConfigForNode(
 	containerlabConfig *clabernetesutilcontainerlab.Config,
 	nodeName string,
 	defaultsYAML []byte,
-	reconcileData *ReconcileData,
 	removeTopologyPrefix bool,
 ) error {
 	deepCopiedDefaults := &clabernetesutilcontainerlab.NodeDefinition{}
@@ -314,7 +350,7 @@ func processConfigForNode(
 
 	nodeDefinition := containerlabConfig.Topology.Nodes[nodeName]
 
-	if !topology.Spec.Expose.DisableExpose && !topology.Spec.Expose.DisableAutoExpose {
+	if !p.topology.Spec.Expose.DisableExpose && !p.topology.Spec.Expose.DisableAutoExpose {
 		// disable expose is *not* set and disable auto expose is *not* set, so we want to
 		// automagically add our default expose ports to the topo. we'll simply tack this onto
 		// the clab defaults ports list since that will get merged w/ any user defined ports
@@ -327,7 +363,7 @@ func processConfigForNode(
 		nodeDefinition.Ports = nodePorts
 	}
 
-	reconcileData.ResolvedConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
+	p.reconcileData.ResolvedConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
 		Name: fmt.Sprintf("clabernetes-%s", nodeName),
 		Mgmt: containerlabConfig.Mgmt,
 		Topology: &clabernetesutilcontainerlab.Topology{
@@ -351,7 +387,7 @@ func processConfigForNode(
 				"endpoint '%q' has wrong syntax, unexpected number of items", link.Endpoints,
 			)
 
-			logger.Critical(msg)
+			p.logger.Critical(msg)
 
 			return fmt.Errorf(
 				"%w: %s", claberneteserrors.ErrParse, msg,
@@ -367,7 +403,7 @@ func processConfigForNode(
 				"endpoint '%q' has wrong syntax, bad endpoint:interface config", link.Endpoints,
 			)
 
-			logger.Critical(msg)
+			p.logger.Critical(msg)
 
 			return fmt.Errorf(
 				"%w: %s", claberneteserrors.ErrParse, msg,
@@ -390,8 +426,8 @@ func processConfigForNode(
 
 		if endpointA.NodeName == nodeName && endpointB.NodeName == nodeName {
 			// link loops back to ourselves, no need to do overlay things just append the link
-			reconcileData.ResolvedConfigs[nodeName].Topology.Links = append(
-				reconcileData.ResolvedConfigs[nodeName].Topology.Links,
+			p.reconcileData.ResolvedConfigs[nodeName].Topology.Links = append(
+				p.reconcileData.ResolvedConfigs[nodeName].Topology.Links,
 				link,
 			)
 
@@ -406,8 +442,8 @@ func processConfigForNode(
 			uninterestingEndpoint = endpointA
 		}
 
-		reconcileData.ResolvedConfigs[nodeName].Topology.Links = append(
-			reconcileData.ResolvedConfigs[nodeName].Topology.Links,
+		p.reconcileData.ResolvedConfigs[nodeName].Topology.Links = append(
+			p.reconcileData.ResolvedConfigs[nodeName].Topology.Links,
 			&clabernetesutilcontainerlab.LinkDefinition{
 				LinkConfig: clabernetesutilcontainerlab.LinkConfig{
 					Endpoints: []string{
@@ -426,16 +462,17 @@ func processConfigForNode(
 			},
 		)
 
-		reconcileData.ResolvedTunnels[nodeName] = append(
-			reconcileData.ResolvedTunnels[nodeName],
+		p.reconcileData.ResolvedTunnels[nodeName] = append(
+			p.reconcileData.ResolvedTunnels[nodeName],
 			&clabernetesapisv1alpha1.PointToPointTunnel{
 				LocalNode:  nodeName,
 				RemoteNode: uninterestingEndpoint.NodeName,
 				Destination: resolveConnectivityDestination(
-					topology.Name,
+					p.topology.Name,
 					uninterestingEndpoint.NodeName,
-					topology.Namespace,
+					p.topology.Namespace,
 					removeTopologyPrefix,
+					p.configManagerGetter,
 				),
 				LocalInterface:  interestingEndpoint.InterfaceName,
 				RemoteInterface: uninterestingEndpoint.InterfaceName,
