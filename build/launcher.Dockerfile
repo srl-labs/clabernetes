@@ -82,6 +82,12 @@ RUN chmod 600 /root/.ssh/id_rsa
 # copy custom ssh config to enable easy ssh access from launcher
 COPY build/launcher/ssh_config /etc/ssh/ssh_config
 
+# copy sshin command to simplify ssh access to the containers
+COPY build/launcher/sshin /usr/local/bin/sshin
+
+# copy shellin command to simplify shell access to the containers
+COPY build/launcher/shellin /usr/local/bin/shellin
+
 WORKDIR /clabernetes
 
 RUN mkdir .node
