@@ -171,7 +171,7 @@ func (r *DeploymentReconciler) renderDeploymentScheduling(
 	deployment.Spec.Template.Spec.Tolerations = tolerations
 }
 
-func (r *DeploymentReconciler) renderDeploymentVolumes(
+func (r *DeploymentReconciler) renderDeploymentVolumes( //nolint:funlen
 	deployment *k8sappsv1.Deployment,
 	nodeName,
 	configVolumeName,
@@ -303,10 +303,18 @@ func (r *DeploymentReconciler) renderDeploymentVolumes(
 			},
 		)
 
+		var mountPath string
+		// mount relative paths under /clabernetes, and absolute paths as is
+		if strings.HasPrefix(podVolume.FilePath, "/") {
+			mountPath = podVolume.FilePath
+		} else {
+			mountPath = fmt.Sprintf("/clabernetes/%s", podVolume.FilePath)
+		}
+
 		volumeMount := k8scorev1.VolumeMount{
 			Name:      volumeName,
 			ReadOnly:  false,
-			MountPath: fmt.Sprintf("/clabernetes/%s", podVolume.FilePath),
+			MountPath: mountPath,
 			SubPath:   podVolume.ConfigMapPath,
 		}
 

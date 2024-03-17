@@ -1,6 +1,6 @@
 module github.com/srl-labs/clabernetes
 
-go 1.22
+go 1.22.1
 
 require (
 	github.com/carlmontanari/difflibgo v0.0.0-20231101235608-20f26fe20f37

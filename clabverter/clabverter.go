@@ -247,7 +247,8 @@ func (c *Clabverter) resolveContentAtPath(path string) ([]byte, error) {
 	} else {
 		fullyQualifiedConfigPath := path
 
-		if !strings.HasPrefix(path, c.topologyPathParent) {
+		// set the fully qualified path if the source path is not fully qualified
+		if !strings.HasPrefix(path, "/") && !strings.HasPrefix(path, c.topologyPathParent) {
 			// we may have already set this while processing bind mounts, so don't blindly add the
 			// parent path unless we need to!
 			fullyQualifiedConfigPath = fmt.Sprintf(
