@@ -29,5 +29,12 @@ func TestDefaultValues(t *testing.T) {
 		t.Error(err)
 	}
 
-	clabernetestesthelper.HelmTest(t, chartName, testName, clabernetesconstants.Clabernetes, "", chartsDir)
+	clabernetestesthelper.HelmTest(
+		t,
+		chartName,
+		testName,
+		clabernetesconstants.Clabernetes,
+		"",
+		chartsDir,
+	)
 }

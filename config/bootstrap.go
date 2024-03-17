@@ -42,6 +42,7 @@ func bootstrapFromConfigMap( //nolint:gocyclo,funlen,gocognit
 		launcherImage:           os.Getenv(clabernetesconstants.LauncherImageEnv),
 		launcherImagePullPolicy: clabernetesconstants.KubernetesImagePullIfNotPresent,
 		launcherLogLevel:        clabernetesconstants.Info,
+		privilegedLauncher:      true,
 		naming:                  clabernetesconstants.NamingModePrefixed,
 	}
 
@@ -86,8 +87,8 @@ func bootstrapFromConfigMap( //nolint:gocyclo,funlen,gocognit
 
 	inPrivilegedLauncher, inPrivilegedLauncherOk := inMap["privilegedLauncher"]
 	if inPrivilegedLauncherOk {
-		if strings.EqualFold(inPrivilegedLauncher, clabernetesconstants.True) {
-			bc.privilegedLauncher = true
+		if strings.EqualFold(inPrivilegedLauncher, clabernetesconstants.False) {
+			bc.privilegedLauncher = false
 		}
 	}
 
@@ -167,7 +168,8 @@ func bootstrapFromConfigMap( //nolint:gocyclo,funlen,gocognit
 // MergeFromBootstrapConfig accepts a bootstrap config configmap and the instance of the global
 // config CR and merges the bootstrap config data onto the CR. The merge operation is based on the
 // config merge mode set in both the bootstrap config and the CR (with the CR setting taking
-// precedence).
+// precedence). If the config cr did not exist (as in this is the first deployment of c9s), we
+// run overwrite mode to forcibly apply the settings from helm/the configmap.
 func MergeFromBootstrapConfig(
 	bootstrapConfigMap *k8scorev1.ConfigMap,
 	config *clabernetesapisv1alpha1.Config,

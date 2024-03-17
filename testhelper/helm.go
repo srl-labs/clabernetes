@@ -23,13 +23,23 @@ func HelmTest(t *testing.T, chartName, testName, namespace, valuesFileName, char
 	t.Helper()
 
 	// we have to make the chartname/templates dir too since thats where helm wants to write things
-	actualRootDir := fmt.Sprintf("%s/tests/%s/test-fixtures/%s-actual", chartName, testName, testName)
+	actualRootDir := fmt.Sprintf(
+		"%s/tests/%s/test-fixtures/%s-actual",
+		chartName,
+		testName,
+		testName,
+	)
 	actualDir := fmt.Sprintf("%s/%s/templates", actualRootDir, chartName)
 
 	var valuesFile string
 
 	if valuesFileName != "" {
-		valuesFile = fmt.Sprintf("%s/tests/%s/test-fixtures/%s-values.yaml", chartName, testName, testName)
+		valuesFile = fmt.Sprintf(
+			"%s/tests/%s/test-fixtures/%s-values.yaml",
+			chartName,
+			testName,
+			testName,
+		)
 	}
 
 	err := os.MkdirAll(actualDir, clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute)
