@@ -15,9 +15,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const containerlabDefinitionProcessTestName = "definition/containerlab"
+const definitionProcessTestName = "definition"
 
-func TestContainerlabDefinitionProcess(t *testing.T) {
+func TestDefinitionProcess(t *testing.T) {
 	cases := []struct {
 		name                 string
 		inTopology           *clabernetesapisv1alpha1.Topology
@@ -25,7 +25,7 @@ func TestContainerlabDefinitionProcess(t *testing.T) {
 		removeTopologyPrefix bool
 	}{
 		{
-			name: "simple",
+			name: "containerlab-simple",
 			inTopology: &clabernetesapisv1alpha1.Topology{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "process-containerlab-definition-test",
@@ -64,7 +64,7 @@ func TestContainerlabDefinitionProcess(t *testing.T) {
 			removeTopologyPrefix: false,
 		},
 		{
-			name: "simple-remove-prefix",
+			name: "containerlab-simple-remove-prefix",
 			inTopology: &clabernetesapisv1alpha1.Topology{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "process-containerlab-definition-test",
@@ -105,6 +105,138 @@ func TestContainerlabDefinitionProcess(t *testing.T) {
 			},
 			removeTopologyPrefix: true,
 		},
+		// kne tests
+		{
+			name: "kne-simple",
+			inTopology: &clabernetesapisv1alpha1.Topology{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "process-kne-definition-test",
+					Namespace: "clabernetes",
+				},
+				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Definition: clabernetesapisv1alpha1.Definition{
+						Kne: `      name: "2-srl-ixr6"
+      nodes: {
+        name: "srl1"
+          vendor: NOKIA
+          model: "ixr10"
+          config:{
+            file: "occonfig.cfg"
+          }
+          interfaces: {
+            key: "e1-1"
+              value: {
+                name: "ethernet-1/1"
+              }
+          }
+      }
+      
+      nodes: {
+        name: "srl2"
+          vendor: NOKIA
+          model: "ixr10"
+          config:{
+            file: "occonfig.cfg"
+          }
+          interfaces: {
+            key: "e1-1"
+              value: {
+                name: "ethernet-1/1"
+              }
+          }
+      }
+      
+      links: {
+        a_node: "srl1"
+          a_int: "e1-1"
+          z_node: "srl2"
+          z_int: "e1-1"
+      }
+`,
+					},
+				},
+			},
+			reconcileData: &clabernetescontrollerstopology.ReconcileData{
+				Kind:           "kne",
+				ResolvedHashes: clabernetesapisv1alpha1.ReconcileHashes{},
+				ResolvedConfigs: map[string]*clabernetesutilcontainerlab.Config{
+					"srl1": {},
+					"srl2": {},
+				},
+				ResolvedTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{
+					"srl1": {},
+					"srl2": {},
+				},
+			},
+			removeTopologyPrefix: false,
+		},
+		{
+			name: "kne-simple-remove-prefix",
+			inTopology: &clabernetesapisv1alpha1.Topology{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "process-kne-definition-test",
+					Namespace: "clabernetes",
+				},
+				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Definition: clabernetesapisv1alpha1.Definition{
+						Kne: `      name: "2-srl-ixr6"
+      nodes: {
+        name: "srl1"
+          vendor: NOKIA
+          model: "ixr10"
+          config:{
+            file: "occonfig.cfg"
+          }
+          interfaces: {
+            key: "e1-1"
+              value: {
+                name: "ethernet-1/1"
+              }
+          }
+      }
+      
+      nodes: {
+        name: "srl2"
+          vendor: NOKIA
+          model: "ixr10"
+          config:{
+            file: "occonfig.cfg"
+          }
+          interfaces: {
+            key: "e1-1"
+              value: {
+                name: "ethernet-1/1"
+              }
+          }
+      }
+      
+      links: {
+        a_node: "srl1"
+          a_int: "e1-1"
+          z_node: "srl2"
+          z_int: "e1-1"
+      }
+`,
+					},
+				},
+				Status: clabernetesapisv1alpha1.TopologyStatus{
+					RemoveTopologyPrefix: clabernetesutil.ToPointer(true),
+				},
+			},
+			reconcileData: &clabernetescontrollerstopology.ReconcileData{
+				Kind:           "kne",
+				ResolvedHashes: clabernetesapisv1alpha1.ReconcileHashes{},
+				ResolvedConfigs: map[string]*clabernetesutilcontainerlab.Config{
+					"srl1": {},
+					"srl2": {},
+				},
+				ResolvedTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{
+					"srl1": {},
+					"srl2": {},
+				},
+			},
+			removeTopologyPrefix: false,
+		},
 	}
 
 	for _, testCase := range cases {
@@ -135,7 +267,7 @@ func TestContainerlabDefinitionProcess(t *testing.T) {
 						t,
 						fmt.Sprintf(
 							"golden/%s/%s.json",
-							containerlabDefinitionProcessTestName,
+							definitionProcessTestName,
 							testCase.name,
 						),
 						got,
@@ -149,7 +281,7 @@ func TestContainerlabDefinitionProcess(t *testing.T) {
 						t,
 						fmt.Sprintf(
 							"golden/%s/%s.json",
-							containerlabDefinitionProcessTestName,
+							definitionProcessTestName,
 							testCase.name,
 						),
 					),

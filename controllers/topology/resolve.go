@@ -10,7 +10,10 @@ import (
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func reconcileResolve[T ctrlruntimeclient.Object, TL ctrlruntimeclient.ObjectList](
+// ReconcileResolve is a generic func to consolidate the more or less common pattern of resolving
+// k8s objects that we need to reconcile in one of the "sub reconcilers" (i.e. deployment
+// reconciler).
+func ReconcileResolve[T ctrlruntimeclient.Object, TL ctrlruntimeclient.ObjectList](
 	ctx context.Context,
 	reconciler *Reconciler,
 	ownedType T,
@@ -36,14 +39,14 @@ func reconcileResolve[T ctrlruntimeclient.Object, TL ctrlruntimeclient.ObjectLis
 		},
 	)
 	if err != nil {
-		reconciler.Log.Criticalf("failed fetching owned deployments, error: '%s'", err)
+		reconciler.Log.Criticalf("failed fetching owned %s, error: '%s'", ownedTypeName, err)
 
 		return nil, err
 	}
 
 	resolved, err := resolveFunc(ownedTypeListing, currentClabernetesConfigs, owningTopology)
 	if err != nil {
-		reconciler.Log.Criticalf("failed resolving owned deployments, error: '%s'", err)
+		reconciler.Log.Criticalf("failed resolving owned %s, error: '%s'", ownedTypeName, err)
 
 		return nil, err
 	}

@@ -52,19 +52,19 @@ func NewReconciler(
 			log,
 			configManagerGetter,
 		),
-		serviceFabricReconciler: NewServiceFabricReconciler(
+		ServiceFabricReconciler: NewServiceFabricReconciler(
 			log,
 			configManagerGetter,
 		),
-		serviceExposeReconciler: NewServiceExposeReconciler(
+		ServiceExposeReconciler: NewServiceExposeReconciler(
 			log,
 			configManagerGetter,
 		),
-		persistentVolumeClaimReconciler: NewPersistentVolumeClaimReconciler(
+		PersistentVolumeClaimReconciler: NewPersistentVolumeClaimReconciler(
 			log,
 			configManagerGetter,
 		),
-		deploymentReconciler: NewDeploymentReconciler(
+		DeploymentReconciler: NewDeploymentReconciler(
 			log,
 			managerAppName,
 			managerNamespace,
@@ -82,14 +82,18 @@ type Reconciler struct {
 	Log    claberneteslogging.Instance
 	Client ctrlruntimeclient.Client
 
-	serviceAccountReconciler        *ServiceAccountReconciler
-	roleBindingReconciler           *RoleBindingReconciler
-	configMapReconciler             *ConfigMapReconciler
-	connectivityReconciler          *ConnectivityReconciler
-	serviceFabricReconciler         *ServiceFabricReconciler
-	serviceExposeReconciler         *ServiceExposeReconciler
-	persistentVolumeClaimReconciler *PersistentVolumeClaimReconciler
-	deploymentReconciler            *DeploymentReconciler
+	serviceAccountReconciler *ServiceAccountReconciler
+	roleBindingReconciler    *RoleBindingReconciler
+	configMapReconciler      *ConfigMapReconciler
+	connectivityReconciler   *ConnectivityReconciler
+
+	// these ones are exposed for testing purposes. no reason to not expose them really anyway so
+	// no big deal. not exposing the others at this point since there isnt a reason to (yet, but
+	// testing will probably cause them to be exposed at some point too)
+	ServiceFabricReconciler         *ServiceFabricReconciler
+	ServiceExposeReconciler         *ServiceExposeReconciler
+	PersistentVolumeClaimReconciler *PersistentVolumeClaimReconciler
+	DeploymentReconciler            *DeploymentReconciler
 }
 
 // ReconcileNamespaceResources reconciles resources that exist in a Topology's namespace but are not
@@ -135,7 +139,7 @@ func (r *Reconciler) ReconcileNaming(
 		owningTopology.Status.RemoveTopologyPrefix = clabernetesutil.ToPointer(true)
 	default:
 		owningTopology.Status.RemoveTopologyPrefix = clabernetesutil.ToPointer(
-			r.deploymentReconciler.configManagerGetter().GetRemoveTopologyPrefix(),
+			r.DeploymentReconciler.configManagerGetter().GetRemoveTopologyPrefix(),
 		)
 	}
 }
@@ -367,7 +371,7 @@ func (r *Reconciler) ReconcileServiceFabric(
 ) error {
 	serviceTypeName := fmt.Sprintf("fabric %s", clabernetesconstants.KubernetesService)
 
-	services, err := reconcileResolve(
+	services, err := ReconcileResolve(
 		ctx,
 		r,
 		&k8scorev1.Service{},
@@ -375,7 +379,7 @@ func (r *Reconciler) ReconcileServiceFabric(
 		serviceTypeName,
 		owningTopology,
 		reconcileData.ResolvedConfigs,
-		r.serviceFabricReconciler.Resolve,
+		r.ServiceFabricReconciler.Resolve,
 	)
 	if err != nil {
 		return err
@@ -396,7 +400,7 @@ func (r *Reconciler) ReconcileServiceFabric(
 
 	r.Log.Info("creating missing fabric services")
 
-	renderedMissingServices := r.serviceFabricReconciler.RenderAll(
+	renderedMissingServices := r.ServiceFabricReconciler.RenderAll(
 		owningTopology,
 		services.Missing,
 	)
@@ -416,7 +420,7 @@ func (r *Reconciler) ReconcileServiceFabric(
 	r.Log.Info("enforcing desired state on fabric services")
 
 	for existingCurrentServiceNodeName, existingCurrentService := range services.Current {
-		renderedCurrentService := r.serviceFabricReconciler.Render(
+		renderedCurrentService := r.ServiceFabricReconciler.Render(
 			owningTopology,
 			existingCurrentServiceNodeName,
 		)
@@ -430,7 +434,7 @@ func (r *Reconciler) ReconcileServiceFabric(
 			return err
 		}
 
-		if !r.serviceFabricReconciler.Conforms(
+		if !r.ServiceFabricReconciler.Conforms(
 			existingCurrentService,
 			renderedCurrentService,
 			owningTopology.GetUID(),
@@ -465,7 +469,7 @@ func (r *Reconciler) ReconcileServicesExpose(
 		reconcileData.ShouldUpdateResource = true
 	}
 
-	services, err := reconcileResolve(
+	services, err := ReconcileResolve(
 		ctx,
 		r,
 		&k8scorev1.Service{},
@@ -473,7 +477,7 @@ func (r *Reconciler) ReconcileServicesExpose(
 		serviceTypeName,
 		owningTopology,
 		reconcileData.ResolvedConfigs,
-		r.serviceExposeReconciler.Resolve,
+		r.ServiceExposeReconciler.Resolve,
 	)
 	if err != nil {
 		return err
@@ -494,7 +498,7 @@ func (r *Reconciler) ReconcileServicesExpose(
 
 	r.Log.Info("creating missing services")
 
-	renderedMissingServices := r.serviceExposeReconciler.RenderAll(
+	renderedMissingServices := r.ServiceExposeReconciler.RenderAll(
 		owningTopology,
 		reconcileData,
 		services.Missing,
@@ -515,7 +519,7 @@ func (r *Reconciler) ReconcileServicesExpose(
 	r.Log.Info("enforcing desired state on expose services")
 
 	for existingCurrentServiceNodeName, existingCurrentService := range services.Current {
-		renderedCurrentService := r.serviceExposeReconciler.Render(
+		renderedCurrentService := r.ServiceExposeReconciler.Render(
 			owningTopology,
 			reconcileData,
 			existingCurrentServiceNodeName,
@@ -538,7 +542,7 @@ func (r *Reconciler) ReconcileServicesExpose(
 			return err
 		}
 
-		if !r.serviceExposeReconciler.Conforms(
+		if !r.ServiceExposeReconciler.Conforms(
 			existingCurrentService,
 			renderedCurrentService,
 			owningTopology.GetUID(),
@@ -578,7 +582,7 @@ func (r *Reconciler) ReconcilePersistentVolumeClaim(
 	owningTopology *clabernetesapisv1alpha1.Topology,
 	reconcileData *ReconcileData,
 ) error {
-	pvcs, err := reconcileResolve(
+	pvcs, err := ReconcileResolve(
 		ctx,
 		r,
 		&k8scorev1.PersistentVolumeClaim{},
@@ -586,7 +590,7 @@ func (r *Reconciler) ReconcilePersistentVolumeClaim(
 		clabernetesconstants.KubernetesPVC,
 		owningTopology,
 		reconcileData.ResolvedConfigs,
-		r.persistentVolumeClaimReconciler.Resolve,
+		r.PersistentVolumeClaimReconciler.Resolve,
 	)
 	if err != nil {
 		return err
@@ -603,7 +607,7 @@ func (r *Reconciler) ReconcilePersistentVolumeClaim(
 
 	r.Log.Info("creating missing pvcs")
 
-	renderedMissingPVCs := r.persistentVolumeClaimReconciler.RenderAll(
+	renderedMissingPVCs := r.PersistentVolumeClaimReconciler.RenderAll(
 		owningTopology,
 		pvcs.Missing,
 	)
@@ -623,7 +627,7 @@ func (r *Reconciler) ReconcilePersistentVolumeClaim(
 	r.Log.Info("enforcing desired state on existing deployments")
 
 	for existingCurrentPVCNodeName, existingCurrentPVC := range pvcs.Current {
-		renderedCurrentPVC := r.persistentVolumeClaimReconciler.Render(
+		renderedCurrentPVC := r.PersistentVolumeClaimReconciler.Render(
 			owningTopology,
 			existingCurrentPVCNodeName,
 			existingCurrentPVC,
@@ -638,7 +642,7 @@ func (r *Reconciler) ReconcilePersistentVolumeClaim(
 			return err
 		}
 
-		if !r.persistentVolumeClaimReconciler.Conforms(
+		if !r.PersistentVolumeClaimReconciler.Conforms(
 			existingCurrentPVC,
 			renderedCurrentPVC,
 			owningTopology.GetUID(),
@@ -668,7 +672,7 @@ func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 ) error {
 	r.Log.Debug("determining nodes needing restart")
 
-	r.deploymentReconciler.DetermineNodesNeedingRestart(
+	r.DeploymentReconciler.DetermineNodesNeedingRestart(
 		owningTopology,
 		reconcileData,
 	)
@@ -765,7 +769,7 @@ func (r *Reconciler) ReconcileDeployments(
 	owningTopology *clabernetesapisv1alpha1.Topology,
 	reconcileData *ReconcileData,
 ) error {
-	deployments, err := reconcileResolve(
+	deployments, err := ReconcileResolve(
 		ctx,
 		r,
 		&k8sappsv1.Deployment{},
@@ -773,7 +777,7 @@ func (r *Reconciler) ReconcileDeployments(
 		clabernetesconstants.KubernetesDeployment,
 		owningTopology,
 		reconcileData.ResolvedConfigs,
-		r.deploymentReconciler.Resolve,
+		r.DeploymentReconciler.Resolve,
 	)
 	if err != nil {
 		return err
@@ -790,7 +794,7 @@ func (r *Reconciler) ReconcileDeployments(
 
 	r.Log.Info("creating missing deployments")
 
-	renderedMissingDeployments := r.deploymentReconciler.RenderAll(
+	renderedMissingDeployments := r.DeploymentReconciler.RenderAll(
 		owningTopology,
 		reconcileData.ResolvedConfigs,
 		deployments.Missing,
@@ -811,7 +815,7 @@ func (r *Reconciler) ReconcileDeployments(
 	r.Log.Info("enforcing desired state on existing deployments")
 
 	for existingCurrentDeploymentNodeName, existingCurrentDeployment := range deployments.Current {
-		renderedCurrentDeployment := r.deploymentReconciler.Render(
+		renderedCurrentDeployment := r.DeploymentReconciler.Render(
 			owningTopology,
 			reconcileData.ResolvedConfigs,
 			existingCurrentDeploymentNodeName,
@@ -826,7 +830,7 @@ func (r *Reconciler) ReconcileDeployments(
 			return err
 		}
 
-		if !r.deploymentReconciler.Conforms(
+		if !r.DeploymentReconciler.Conforms(
 			existingCurrentDeployment,
 			renderedCurrentDeployment,
 			owningTopology.GetUID(),
