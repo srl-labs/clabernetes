@@ -703,6 +703,10 @@ func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 
 		deploymentName := fmt.Sprintf("%s-%s", owningTopology.GetName(), nodeName)
 
+		if ResolveTopologyRemovePrefix(owningTopology) {
+			deploymentName = nodeName
+		}
+
 		nodeDeployment := &k8sappsv1.Deployment{}
 
 		err := r.getObj(

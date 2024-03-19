@@ -69,7 +69,7 @@ If not set, clabverter will look for a file named '*.clab.y*ml'`,
 			},
 			&cli.StringFlag{
 				Name:     naming,
-				Usage:    "naming scheme to use for clabernetes resrouces",
+				Usage:    "naming scheme to use for clabernetes resources",
 				Required: false,
 				Value:    "prefixed",
 			},
