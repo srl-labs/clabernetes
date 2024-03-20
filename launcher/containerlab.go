@@ -122,6 +122,11 @@ func (c *clabernetes) runContainerlab() error {
 		args = append(args, "--debug")
 	}
 
+	containerlabTimeout := os.Getenv(clabernetesconstants.LauncherContainerlabTimeout)
+	if containerlabTimeout != "" {
+		args = append(args, []string{"--timeout", containerlabTimeout}...)
+	}
+
 	cmd := exec.Command("containerlab", args...)
 
 	cmd.Stdout = containerlabOutWriter

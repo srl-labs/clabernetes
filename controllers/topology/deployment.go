@@ -438,7 +438,7 @@ func (r *DeploymentReconciler) renderDeploymentContainer(
 	deployment.Spec.Template.Spec.Containers = []k8scorev1.Container{container}
 }
 
-func (r *DeploymentReconciler) renderDeploymentContainerEnv(
+func (r *DeploymentReconciler) renderDeploymentContainerEnv( //nolint: funlen
 	deployment *k8sappsv1.Deployment,
 	nodeName,
 	owningTopologyName string,
@@ -478,6 +478,11 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 	containerlabVersion := owningTopology.Spec.Deployment.ContainerlabVersion
 	if containerlabVersion == "" {
 		containerlabVersion = r.configManagerGetter().GetContainerlabVersion()
+	}
+
+	containerlabTimeout := owningTopology.Spec.Deployment.ContainerlabTimeout
+	if containerlabTimeout == "" {
+		containerlabTimeout = r.configManagerGetter().GetContainerlabTimeout()
 	}
 
 	envs := []k8scorev1.EnvVar{
@@ -547,6 +552,10 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv(
 		{
 			Name:  clabernetesconstants.LauncherContainerlabVersion,
 			Value: containerlabVersion,
+		},
+		{
+			Name:  clabernetesconstants.LauncherContainerlabTimeout,
+			Value: containerlabTimeout,
 		},
 	}
 

@@ -51,6 +51,10 @@ type ConfigDeployment struct {
 	// This is disabled by default.
 	// +optional
 	ContainerlabDebug bool `json:"containerlabDebug"`
+	// ContainerlabTimeout sets the `--timeout` flag when invoking containerlab in the launcher
+	// pods.
+	// +optional
+	ContainerlabTimeout string `json:"containerlabTimeout"`
 	// ContainerlabVersion sets a custom version to use for containerlab -- when set this will cause
 	// the launcher pods to download and use this specific version of containerlab. Setting a bad
 	// version (version that doesnt exist/typo/etc.) will cause pods to fail to launch, so be

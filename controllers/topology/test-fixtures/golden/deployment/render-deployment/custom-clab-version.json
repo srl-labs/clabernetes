@@ -131,6 +131,9 @@
                                 "value": "0.51.1"
                             },
                             {
+                                "name": "LAUNCHER_CONTAINERLAB_TIMEOUT"
+                            },
+                            {
                                 "name": "LAUNCHER_PRIVILEGED",
                                 "value": "true"
                             }

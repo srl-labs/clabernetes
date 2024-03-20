@@ -138,6 +138,9 @@
                                 "name": "LAUNCHER_CONTAINERLAB_VERSION"
                             },
                             {
+                                "name": "LAUNCHER_CONTAINERLAB_TIMEOUT"
+                            },
+                            {
                                 "name": "LAUNCHER_PRIVILEGED",
                                 "value": "true"
                             }
