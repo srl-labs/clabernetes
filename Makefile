@@ -28,7 +28,8 @@ test-race: ## Run unit tests with race flag
 test-e2e: ## Run e2e tests
 	gotestsum --format testname --hide-summary=skipped -- -race -coverprofile=cover.out ./e2e/...
 
-cov:  ## Produce html coverage report
+cov:  ## Produce html coverage report; removes all the generated bits for sanity reasons
+	cat cover.out | grep -v "/generated/" | grep -v "zz_generated.deepcopy.go" > cover.out.clean && rm cover.out && mv cover.out.clean cover.out
 	go tool cover -html=cover.out
 
 install-tools: ## Install lint/test tools

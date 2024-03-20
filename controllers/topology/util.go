@@ -50,13 +50,15 @@ func resolveConnectivityDestination(
 	uninterestingEndpointNodeName,
 	namespace string,
 	removeTopologyPrefix bool,
+	// inject config manager getter so we can easily test this (and things upstream)
+	configManagerGetter clabernetesconfig.ManagerGetterFunc,
 ) string {
 	destination := fmt.Sprintf(
 		"%s-%s-vx.%s.%s",
 		topologyName,
 		uninterestingEndpointNodeName,
 		namespace,
-		clabernetesconfig.GetManager().GetInClusterDNSSuffix(),
+		configManagerGetter().GetInClusterDNSSuffix(),
 	)
 
 	if removeTopologyPrefix {
@@ -64,7 +66,7 @@ func resolveConnectivityDestination(
 			"%s-vx.%s.%s",
 			uninterestingEndpointNodeName,
 			namespace,
-			clabernetesconfig.GetManager().GetInClusterDNSSuffix(),
+			configManagerGetter().GetInClusterDNSSuffix(),
 		)
 	}
 

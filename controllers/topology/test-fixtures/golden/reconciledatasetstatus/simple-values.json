@@ -1,0 +1,15 @@
+{
+    "kind": "foo",
+    "removeTopologyPrefix": null,
+    "reconcileHashes": {
+        "config": "confighash",
+        "exposedPorts": "porthash",
+        "filesFromURL": null,
+        "imagePullSecrets": "pullsecret"
+    },
+    "configs": {
+        "srl1": "name: \"\"\ndebug: false\n",
+        "srl2": "name: \"\"\ndebug: false\n"
+    },
+    "exposedPorts": null
+}

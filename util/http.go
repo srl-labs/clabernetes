@@ -87,10 +87,10 @@ func GitHubGroupAndRepoFromURL(path string) (group, repo string) {
 	}
 
 	p := regexp.MustCompile(
-		`(?mi).*.\.com/(?P<Group>.*?)/(?P<Repo>.*?)/`,
+		`(?mi).*.\.com/(?P<Group>.*?)/(?P<Repo>.*)`,
 	)
 
 	paramsMap := RegexStringSubMatchToMap(p, path)
 
-	return paramsMap["Group"], paramsMap["Repo"]
+	return paramsMap["Group"], strings.Split(paramsMap["Repo"], "/")[0]
 }

@@ -61,7 +61,13 @@ func (r *ServiceAccountReconciler) Reconcile(
 		return err
 	}
 
-	renderedServiceAccount, err := r.Render(owningTopology, existingServiceAccount)
+	renderedServiceAccount := r.Render(owningTopology, existingServiceAccount)
+
+	err = ctrlruntimeutil.SetOwnerReference(
+		owningTopology,
+		renderedServiceAccount,
+		r.client.Scheme(),
+	)
 	if err != nil {
 		r.log.Criticalf(
 			"failed rendering service account for namespace %q, error: %s",
@@ -121,9 +127,13 @@ func (r *ServiceAccountReconciler) reconcileGetAndCreateIfNotExist( //nolint:dup
 	if apimachineryerrors.IsNotFound(err) {
 		r.log.Infof("no launcher service account found in namespace %q, creating...", namespace)
 
-		var renderedServiceAccount *k8scorev1.ServiceAccount
+		renderedServiceAccount := r.Render(owningTopology, nil)
 
-		renderedServiceAccount, err = r.Render(owningTopology, nil)
+		err = ctrlruntimeutil.SetOwnerReference(
+			owningTopology,
+			renderedServiceAccount,
+			r.client.Scheme(),
+		)
 		if err != nil {
 			r.log.Criticalf(
 				"failed rendering service account for namespace %q, error: %s",
@@ -161,7 +171,7 @@ func (r *ServiceAccountReconciler) reconcileGetAndCreateIfNotExist( //nolint:dup
 func (r *ServiceAccountReconciler) Render(
 	owningTopology *clabernetesapisv1alpha1.Topology,
 	existingServieAccount *k8scorev1.ServiceAccount,
-) (*k8scorev1.ServiceAccount, error) {
+) *k8scorev1.ServiceAccount {
 	annotations, globalLabels := r.configManagerGetter().GetAllMetadata()
 
 	labels := map[string]string{
@@ -187,16 +197,7 @@ func (r *ServiceAccountReconciler) Render(
 		renderedServiceAccount.OwnerReferences = existingServieAccount.GetOwnerReferences()
 	}
 
-	err := ctrlruntimeutil.SetOwnerReference(
-		owningTopology,
-		renderedServiceAccount,
-		r.client.Scheme(),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return renderedServiceAccount, nil
+	return renderedServiceAccount
 }
 
 // Conforms returns true if an existing ServiceAccount conforms with the rendered ServiceAccount.

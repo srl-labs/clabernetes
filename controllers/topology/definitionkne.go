@@ -6,13 +6,31 @@ import (
 	knetopologyproto "github.com/openconfig/kne/proto/topo"
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
-	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	clabernetesutilkne "github.com/srl-labs/clabernetes/util/kne"
 )
 
-func processConfigNodeLinks(
+type kneDefinitionProcessor struct {
+	*definitionProcessor
+}
+
+func (p *kneDefinitionProcessor) Process() error {
+	// load the kne topo to make sure its all good
+	kneTopo, err := clabernetesutilkne.LoadKneTopology(p.topology.Spec.Definition.Kne)
+	if err != nil {
+		p.logger.Criticalf("failed parsing kne topology, error: %s", err)
+
+		return err
+	}
+
+	// check this here so we only have to check it once
+	removeTopologyPrefix := p.getRemoveTopologyPrefix()
+
+	return p.processKneDefinition(kneTopo, removeTopologyPrefix)
+}
+
+func (p *kneDefinitionProcessor) processConfigNodeLinks(
 	topology *clabernetesapisv1alpha1.Topology,
 	nodeName string,
 	link *knetopologyproto.Link,
@@ -89,6 +107,7 @@ func processConfigNodeLinks(
 				uninterestingEndpoint.NodeName,
 				topology.Namespace,
 				removeTopologyPrefix,
+				p.configManagerGetter,
 			),
 			LocalInterface:  interestingEndpoint.InterfaceName,
 			RemoteInterface: uninterestingEndpoint.InterfaceName,
@@ -96,15 +115,10 @@ func processConfigNodeLinks(
 	)
 }
 
-func processKneDefinition(
-	logger claberneteslogging.Instance,
-	topology *clabernetesapisv1alpha1.Topology,
+func (p *kneDefinitionProcessor) processKneDefinition(
 	kneTopo *knetopologyproto.Topology,
-	reconcileData *ReconcileData,
 	removeTopologyPrefix bool,
-) (
-	err error,
-) {
+) error {
 	// making many assumptions that things that are pointers are not going to be nil... since
 	// basically everything in the kne topology obj is pointers
 	for _, nodeDefinition := range kneTopo.Nodes {
@@ -121,7 +135,7 @@ func processKneDefinition(
 				nodeName,
 			)
 
-			logger.Critical(msg)
+			p.logger.Critical(msg)
 
 			return fmt.Errorf(
 				"%w: %s", claberneteserrors.ErrParse, msg,
@@ -140,7 +154,7 @@ func processKneDefinition(
 					nodeName,
 				)
 
-				logger.Critical(msg)
+				p.logger.Critical(msg)
 
 				return fmt.Errorf(
 					"%w: %s", claberneteserrors.ErrParse, msg,
@@ -148,7 +162,7 @@ func processKneDefinition(
 			}
 		}
 
-		reconcileData.ResolvedConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
+		p.reconcileData.ResolvedConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
 			Name: fmt.Sprintf("clabernetes-%s", nodeName),
 			Topology: &clabernetesutilcontainerlab.Topology{
 				Defaults: &clabernetesutilcontainerlab.NodeDefinition{
@@ -167,11 +181,17 @@ func processKneDefinition(
 		}
 
 		if kneModel != "" {
-			reconcileData.ResolvedConfigs[nodeName].Topology.Nodes[nodeName].Type = kneModel
+			p.reconcileData.ResolvedConfigs[nodeName].Topology.Nodes[nodeName].Type = kneModel
 		}
 
 		for _, link := range kneTopo.Links {
-			processConfigNodeLinks(topology, nodeName, link, reconcileData, removeTopologyPrefix)
+			p.processConfigNodeLinks(
+				p.topology,
+				nodeName,
+				link,
+				p.reconcileData,
+				removeTopologyPrefix,
+			)
 		}
 	}
 

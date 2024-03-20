@@ -102,6 +102,10 @@ func (r *PersistentVolumeClaimReconciler) renderPVCBase(
 
 	deploymentName := fmt.Sprintf("%s-%s", owningTopologyName, nodeName)
 
+	if ResolveTopologyRemovePrefix(owningTopology) {
+		deploymentName = nodeName
+	}
+
 	selectorLabels := map[string]string{
 		clabernetesconstants.LabelApp:           clabernetesconstants.Clabernetes,
 		clabernetesconstants.LabelName:          deploymentName,
