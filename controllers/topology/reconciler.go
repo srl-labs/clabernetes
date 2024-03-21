@@ -673,7 +673,6 @@ func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 	r.Log.Debug("determining nodes needing restart")
 
 	r.DeploymentReconciler.DetermineNodesNeedingRestart(
-		owningTopology,
 		reconcileData,
 	)
 

@@ -3,7 +3,6 @@ package topology_test
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"testing"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
@@ -20,12 +19,12 @@ const testAllocateTunnelIDsTestName = "tunnels/allocate-tunnel-ids"
 func TestAllocateTunnelIds(t *testing.T) {
 	cases := []struct {
 		name             string
-		statusTunnels    map[string][]*clabernetesapisv1alpha1.PointToPointTunnel
+		previousTunnels  map[string][]*clabernetesapisv1alpha1.PointToPointTunnel
 		processedTunnels map[string][]*clabernetesapisv1alpha1.PointToPointTunnel
 	}{
 		{
-			name:          "simple",
-			statusTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{},
+			name:            "simple",
+			previousTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{},
 			processedTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{
 				"srl1": {
 					{
@@ -51,7 +50,7 @@ func TestAllocateTunnelIds(t *testing.T) {
 		},
 		{
 			name: "simple-existing-status",
-			statusTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{
+			previousTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{
 				"srl1": {
 					{
 						TunnelID:        0,
@@ -98,7 +97,7 @@ func TestAllocateTunnelIds(t *testing.T) {
 		},
 		{
 			name: "simple-already-allocated-ids",
-			statusTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{
+			previousTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{
 				"srl1": {
 					{
 						TunnelID:        1,
@@ -145,7 +144,7 @@ func TestAllocateTunnelIds(t *testing.T) {
 		},
 		{
 			name: "simple-weirdly-allocated-ids",
-			statusTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{
+			previousTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{
 				"srl1": {
 					{
 						TunnelID:        0,
@@ -191,8 +190,8 @@ func TestAllocateTunnelIds(t *testing.T) {
 			},
 		},
 		{
-			name:          "meshy-links",
-			statusTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{},
+			name:            "meshy-links",
+			previousTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{},
 			processedTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{
 				"srl1": {
 					{
@@ -284,6 +283,117 @@ func TestAllocateTunnelIds(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "updating-tunnels",
+			previousTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{
+				"srl1": {
+					{
+						TunnelID:        1,
+						LocalNode:       "srl1",
+						Destination:     "topo-1-srl2.clabernetes.svc.cluster.local",
+						RemoteNode:      "srl2",
+						LocalInterface:  "e1-1",
+						RemoteInterface: "e1-1",
+					},
+					{
+						TunnelID:        2,
+						LocalNode:       "srl1",
+						Destination:     "topo-1-srl2.clabernetes.svc.cluster.local",
+						RemoteNode:      "srl2",
+						LocalInterface:  "e1-2",
+						RemoteInterface: "e1-2",
+					},
+					{
+						TunnelID:        3,
+						LocalNode:       "srl1",
+						Destination:     "topo-1-srl2.clabernetes.svc.cluster.local",
+						RemoteNode:      "srl2",
+						LocalInterface:  "e1-3",
+						RemoteInterface: "e1-3",
+					},
+				},
+				"srl2": {
+					{
+						TunnelID:        1,
+						LocalNode:       "srl2",
+						Destination:     "topo-1-srl1.clabernetes.svc.cluster.local",
+						RemoteNode:      "srl1",
+						LocalInterface:  "e1-1",
+						RemoteInterface: "e1-1",
+					},
+					{
+						TunnelID:        2,
+						LocalNode:       "srl2",
+						Destination:     "topo-1-srl1.clabernetes.svc.cluster.local",
+						RemoteNode:      "srl1",
+						LocalInterface:  "e1-2",
+						RemoteInterface: "e1-2",
+					},
+					{
+						TunnelID:        3,
+						LocalNode:       "srl2",
+						Destination:     "topo-1-srl1.clabernetes.svc.cluster.local",
+						RemoteNode:      "srl1",
+						LocalInterface:  "e1-3",
+						RemoteInterface: "e1-3",
+					},
+				},
+			},
+			processedTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{
+				"srl1": {
+					{
+						TunnelID:        0,
+						LocalNode:       "srl1",
+						Destination:     "topo-1-srl2.clabernetes.svc.cluster.local",
+						RemoteNode:      "srl2",
+						LocalInterface:  "e1-1",
+						RemoteInterface: "e1-3",
+					},
+					{
+						TunnelID:        0,
+						LocalNode:       "srl1",
+						Destination:     "topo-1-srl2.clabernetes.svc.cluster.local",
+						RemoteNode:      "srl2",
+						LocalInterface:  "e1-2",
+						RemoteInterface: "e1-1",
+					},
+					{
+						TunnelID:        0,
+						LocalNode:       "srl1",
+						Destination:     "topo-1-srl2.clabernetes.svc.cluster.local",
+						RemoteNode:      "srl2",
+						LocalInterface:  "e1-3",
+						RemoteInterface: "e1-2",
+					},
+				},
+				"srl2": {
+					{
+						TunnelID:        0,
+						LocalNode:       "srl2",
+						Destination:     "topo-1-srl1.clabernetes.svc.cluster.local",
+						RemoteNode:      "srl1",
+						LocalInterface:  "e1-3",
+						RemoteInterface: "e1-1",
+					},
+					{
+						TunnelID:        0,
+						LocalNode:       "srl2",
+						Destination:     "topo-1-srl1.clabernetes.svc.cluster.local",
+						RemoteNode:      "srl1",
+						LocalInterface:  "e1-1",
+						RemoteInterface: "e1-2",
+					},
+					{
+						TunnelID:        0,
+						LocalNode:       "srl2",
+						Destination:     "topo-1-srl1.clabernetes.svc.cluster.local",
+						RemoteNode:      "srl1",
+						LocalInterface:  "e1-2",
+						RemoteInterface: "e1-3",
+					},
+				},
+			},
+		},
 	}
 
 	for _, testCase := range cases {
@@ -291,7 +401,7 @@ func TestAllocateTunnelIds(t *testing.T) {
 			testCase.name,
 			func(t *testing.T) {
 				clabernetescontrollerstopology.AllocateTunnelIDs(
-					testCase.statusTunnels,
+					testCase.previousTunnels,
 					testCase.processedTunnels,
 				)
 
@@ -326,9 +436,7 @@ func TestAllocateTunnelIds(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				if !reflect.DeepEqual(got, want) {
-					clabernetestesthelper.FailOutput(t, got, want)
-				}
+				clabernetestesthelper.MarshaledEqual(t, got, want)
 			},
 		)
 	}
