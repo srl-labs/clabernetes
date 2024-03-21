@@ -21,6 +21,7 @@ type bootstrapConfig struct {
 	resourcesByContainerlabKind map[string]map[string]*k8scorev1.ResourceRequirements
 	privilegedLauncher          bool
 	containerlabDebug           bool
+	containerlabTimeout         string
 	inClusterDNSSuffix          string
 	imagePullThroughMode        string
 	launcherImage               string
@@ -97,6 +98,11 @@ func bootstrapFromConfigMap( //nolint:gocyclo,funlen,gocognit
 		if strings.EqualFold(inContainerlabDebug, clabernetesconstants.True) {
 			bc.containerlabDebug = true
 		}
+	}
+
+	inContainerlabTimeout, inContainerlabTimeoutOk := inMap["containerlabTimeout"]
+	if inContainerlabTimeoutOk {
+		bc.containerlabTimeout = inContainerlabTimeout
 	}
 
 	inClusterDNSSuffix, inClusterDNSSuffixOk := inMap["inClusterDNSSuffix"]

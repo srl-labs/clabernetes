@@ -49,6 +49,10 @@ const (
 	// debug flag of clabernetes when invoked on the launcher pod.
 	LauncherContainerlabDebug = "LAUNCHER_CONTAINERLAB_DEBUG"
 
+	// LauncherContainerlabTimeout is the environment variable name that can be used to set the
+	// value of the timeout flag of clabernetes when invoked on the launcher pod.
+	LauncherContainerlabTimeout = "LAUNCHER_CONTAINERLAB_TIMEOUT"
+
 	// LauncherImageEnv env var that tells the controllers what image to use for clabernetes
 	// (launcher) pods.
 	LauncherImageEnv = "LAUNCHER_IMAGE"

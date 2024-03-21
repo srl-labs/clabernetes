@@ -123,6 +123,10 @@ globalConfig:
     # containerlab debug flag set.
     containerlabDebug: false
 
+    # containerlabTimeout sets the global default value for the containerlab timeout value that the
+    # launcher pods should use.
+    containerlabTimeout: ""
+
     # default image for launcher deployments; if not set here, manager will have this set to a sane
     # default as an env var that will be applied (this follows same patter as the manager image
     # itself), so this is here just if you want to override that yourself.

@@ -123,6 +123,8 @@ type Manager interface {
 	GetPrivilegedLauncher() bool
 	// GetContainerlabDebug returns the global config value for containerlabDebug.
 	GetContainerlabDebug() bool
+	// GetContainerlabTimeout returns the global config containerlab timeout value.
+	GetContainerlabTimeout() string
 	// GetInClusterDNSSuffix returns the in cluster dns suffix as set by the global config.
 	GetInClusterDNSSuffix() string
 	// GetImagePullThroughMode returns the image pull through mode in the global config.

@@ -16,6 +16,7 @@ spec:
             kind: srl
             image: ghcr.io/nokia/srlinux
   deployment:
+    containerlabTimeout: ""
     persistence:
       enabled: false
     scheduling: {}

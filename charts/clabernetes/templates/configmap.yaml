@@ -36,6 +36,7 @@ data:
 {{ .Values.globalConfig.deployment.resourcesByContainerlabKind | toYaml | indent 4 }}
   privilegedLauncher: "{{ .Values.globalConfig.deployment.privilegedLauncher }}"
   containerlabDebug: "{{ .Values.globalConfig.deployment.containerlabDebug }}"
+  containerlabTimeout: {{ .Values.globalConfig.deployment.containerlabTimeout }}
   inClusterDNSSuffix: {{ .Values.globalConfig.inClusterDNSSuffix }}
   imagePullThroughMode: {{ .Values.globalConfig.imagePull.imagePullThroughMode }}
   launcherImage: {{ .Values.globalConfig.deployment.launcherImage }}

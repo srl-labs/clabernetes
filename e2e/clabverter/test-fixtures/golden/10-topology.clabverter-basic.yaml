@@ -23,6 +23,7 @@ spec:
         links:
           - endpoints: ["srl1:e1-1", "srl2:e1-1"]
   deployment:
+    containerlabTimeout: ""
     persistence:
       enabled: false
     scheduling: {}

@@ -46,6 +46,10 @@ func (f fakeManager) GetContainerlabDebug() bool {
 	return false
 }
 
+func (f fakeManager) GetContainerlabTimeout() string {
+	return ""
+}
+
 func (f fakeManager) GetInClusterDNSSuffix() string {
 	return "svc.cluster.local"
 }

@@ -52,6 +52,10 @@ spec:
                       ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods.
                       This is disabled by default.
                     type: boolean
+                  containerlabTimeout:
+                    description: ContainerlabTimeout sets the `--timeout` flag when
+                      invoking containerlab in the launcher pods.
+                    type: string
                   containerlabVersion:
                     description: |-
                       ContainerlabVersion sets a custom version to use for containerlab -- when set this will cause

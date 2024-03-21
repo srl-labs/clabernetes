@@ -131,6 +131,9 @@
                                 "name": "LAUNCHER_CONTAINERLAB_VERSION"
                             },
                             {
+                                "name": "LAUNCHER_CONTAINERLAB_TIMEOUT"
+                            },
+                            {
                                 "name": "LAUNCHER_INSECURE_REGISTRIES",
                                 "value": "1.2.3.4,potato.com"
                             },

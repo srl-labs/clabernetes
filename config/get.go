@@ -79,6 +79,13 @@ func (m *manager) GetContainerlabDebug() bool {
 	return m.config.Deployment.ContainerlabDebug
 }
 
+func (m *manager) GetContainerlabTimeout() string {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	return m.config.Deployment.ContainerlabTimeout
+}
+
 func (m *manager) GetInClusterDNSSuffix() string {
 	m.lock.RLock()
 	defer m.lock.RUnlock()

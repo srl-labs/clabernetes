@@ -98,6 +98,9 @@
             "containerlabDebug": {
               "type": "boolean"
             },
+            "containerlabTimeout": {
+              "type": "string"
+            },
             "launcherImage": {
               "type": "string"
             },

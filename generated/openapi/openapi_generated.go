@@ -234,6 +234,14 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigDeployment(
 							Format:      "",
 						},
 					},
+					"containerlabTimeout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ContainerlabTimeout sets the `--timeout` flag when invoking containerlab in the launcher pods.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"containerlabVersion": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ContainerlabVersion sets a custom version to use for containerlab -- when set this will cause the launcher pods to download and use this specific version of containerlab. Setting a bad version (version that doesnt exist/typo/etc.) will cause pods to fail to launch, so be careful! You never \"need\" to this as the publicly available launcher image will always be built with a (reasonably) up to date containerlab version, this setting exists in case you want to pin back to an older version for some reason or you want to be bleeding edge with some new feature (but do note that just because it exists in containerlab doesnt *necessarily* mean it will be auto-working in clabernetes!",
@@ -778,6 +786,14 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_Deployment(
 						SchemaProps: spec.SchemaProps{
 							Description: "ContainerlabDebug sets the `--debug` flag when invoking containerlab in the launcher pods. This is disabled by default. If this value is unset, the global config value (default of \"false\") will be used.",
 							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"containerlabTimeout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ContainerlabTimeout sets the `--timeout` flag when invoking containerlab in the launcher pods.",
+							Default:     "",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
