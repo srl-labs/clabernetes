@@ -80,7 +80,6 @@ spec:
             - name: LAUNCHER_CONTAINERLAB_TIMEOUT
             - name: LAUNCHER_PRIVILEGED
               value: "true"
-          image: 172.31.254.11/clabernetes-launcher:dev-latest
           imagePullPolicy: IfNotPresent
           name: srl1
           ports:

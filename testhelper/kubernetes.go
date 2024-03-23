@@ -127,6 +127,18 @@ func NormalizeFabricService(t *testing.T, objectData []byte) []byte {
 	return objectData
 }
 
+// NormalizeDeployment normalizes a deployment by removing fields that may change between ci and
+// local or other folks machines/clusters (like image/registry)-- so we can compare results more
+// easily.
+func NormalizeDeployment(t *testing.T, objectData []byte) []byte {
+	t.Helper()
+
+	// we dont care about testing that the image was set "right" really, so just remove it
+	objectData = YQCommand(t, objectData, "del(.spec.template.spec.containers[0].image)")
+
+	return objectData
+}
+
 // NormalizeConnectivity normalizes a connectivity cr between ci and local or other folks
 // machines/clusters -- so we can compare results more easily. For now this is just replacing the
 // namespace in the destinations since those will be random(ish) per test run.
