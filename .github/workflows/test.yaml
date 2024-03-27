@@ -95,6 +95,8 @@ jobs:
 
       - name: spin up kind cluster
         uses: helm/kind-action@v1.9.0
+        with:
+          version: v0.22.0
 
       - name: verify kind cluster
         run: |
@@ -104,6 +106,12 @@ jobs:
 
       - name: deploy clabernetes
         run: devspace run deploy --profile debug
+
+      # actions seem to be running out of disk for e2e -- probably due to all the image build stuff
+      # floating around, all the junk runners get pre-built with, and runners not being super beefy
+      # lets just system prune all the docker stuff to get rid of some junk we dont need
+      - name: docker system prune
+        run: docker system prune -a -f
 
       - name: setup tmate session
         uses: mxschmitt/action-tmate@v3

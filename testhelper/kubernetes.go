@@ -1,6 +1,7 @@
 package testhelper
 
 import (
+	"regexp"
 	"testing"
 
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
@@ -53,6 +54,18 @@ func NormalizeKubernetesObject(t *testing.T, object []byte) []byte {
 	// can also see a uid on owner refs, we should only ever have one owner ref...
 	object = YQCommand(t, object, "del(.metadata.ownerReferences[0].uid)")
 
+	// revision and restartedAt annotations obviously will change in tests
+	object = YQCommand(
+		t,
+		object,
+		"del(.metadata.annotations.\"deployment.kubernetes.io/revision\")",
+	)
+	object = YQCommand(
+		t,
+		object,
+		"del(.spec.template.metadata.annotations.\"kubectl.kubernetes.io/restartedAt\")",
+	)
+
 	return object
 }
 
@@ -97,4 +110,42 @@ func NormalizeExposeService(t *testing.T, objectData []byte) []byte {
 	)
 
 	return objectData
+}
+
+// NormalizeFabricService normalizes a (fabric) service cr by removing fields that may change
+// between ci and local or other folks machines/clusters -- so we can compare results more easily.
+func NormalizeFabricService(t *testing.T, objectData []byte) []byte {
+	t.Helper()
+
+	// cluster ips obviously are going to be different all the time so we'll ignore them
+	objectData = YQCommand(t, objectData, "del(.spec.clusterIP)")
+	objectData = YQCommand(t, objectData, "del(.spec.clusterIPs)")
+
+	// remove node ports since they'll be random
+	objectData = YQCommand(t, objectData, "del(.spec.ports[].nodePort)")
+
+	return objectData
+}
+
+// NormalizeDeployment normalizes a deployment by removing fields that may change between ci and
+// local or other folks machines/clusters (like image/registry)-- so we can compare results more
+// easily.
+func NormalizeDeployment(t *testing.T, objectData []byte) []byte {
+	t.Helper()
+
+	// we dont care about testing that the image was set "right" really, so just remove it
+	objectData = YQCommand(t, objectData, "del(.spec.template.spec.containers[0].image)")
+
+	return objectData
+}
+
+// NormalizeConnectivity normalizes a connectivity cr between ci and local or other folks
+// machines/clusters -- so we can compare results more easily. For now this is just replacing the
+// namespace in the destinations since those will be random(ish) per test run.
+func NormalizeConnectivity(t *testing.T, objectData []byte) []byte {
+	t.Helper()
+
+	// replace the namespace in the connectivity destinations
+	return regexp.MustCompile(`\..*\.svc.cluster.local`).
+		ReplaceAll(objectData, []byte(".NAMESPACE.svc.cluster.local"))
 }

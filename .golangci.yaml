@@ -177,7 +177,7 @@ issues:
     # prefer to sprintf -- feels more consistent overall
     - linters:
         - perfsprint
-      text: "can be replaced with string addition"
+      text: "can be replaced with string concatenation"
 
 run:
   go: '1.21'
@@ -189,4 +189,4 @@ output:
   uniq-by-line: false
 
 service:
-  golangci-lint-version: 1.56.x
+  golangci-lint-version: 1.57.x
