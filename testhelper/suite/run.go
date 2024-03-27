@@ -44,12 +44,10 @@ func Run(t *testing.T, testName string, steps []Step, namespace string) { //noli
 		}
 
 		for kind, objects := range step.AssertObjects {
-			t.Logf("begin assertion of %q resources", kind)
-
 			for idx := range objects {
 				object := step.AssertObjects[kind][idx]
 
-				t.Logf("begin assertion of %q resources %q", kind, object.Name)
+				t.Logf("\tbegin assertion of %q resources %q", kind, object.Name)
 
 				fileName := fmt.Sprintf("golden/%d-%s.%s.yaml", step.Index, kind, object.Name)
 
