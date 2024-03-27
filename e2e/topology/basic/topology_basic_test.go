@@ -122,5 +122,5 @@ func TestContainerlabBasic(t *testing.T) {
 		},
 	}
 
-	clabernetestesthelpersuite.Run(t, steps, namespace)
+	clabernetestesthelpersuite.Run(t, testName, steps, namespace)
 }

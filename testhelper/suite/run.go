@@ -15,11 +15,13 @@ const (
 )
 
 // Run executes a clabernetes e2e test.
-func Run(t *testing.T, steps []Step, namespace string) { //nolint: thelper
+func Run(t *testing.T, testName string, steps []Step, namespace string) { //nolint: thelper
 	clabernetestesthelper.KubectlCreateNamespace(t, namespace)
 
 	defer func() {
 		if !*clabernetestesthelper.SkipCleanup {
+			t.Logf("deleting namespace %q used in test %q", namespace, testName)
+
 			clabernetestesthelper.KubectlDeleteNamespace(t, namespace)
 		}
 	}()
@@ -42,8 +44,12 @@ func Run(t *testing.T, steps []Step, namespace string) { //nolint: thelper
 		}
 
 		for kind, objects := range step.AssertObjects {
+			t.Logf("begin assertion of %q resources", kind)
+
 			for idx := range objects {
 				object := step.AssertObjects[kind][idx]
+
+				t.Logf("begin assertion of %q resources %q", kind, object.Name)
 
 				fileName := fmt.Sprintf("golden/%d-%s.%s.yaml", step.Index, kind, object.Name)
 
