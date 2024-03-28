@@ -133,6 +133,8 @@ issues:
   max-same-issues: 0
   # https://github.com/golangci/golangci-lint/issues/2439#issuecomment-1002912465
   exclude-use-default: false
+  exclude-dirs:
+    - .private
   exclude-rules:
     - path: _test\.go
       linters:
@@ -180,9 +182,7 @@ issues:
       text: "can be replaced with string concatenation"
 
 run:
-  go: '1.21'
-  skip-dirs:
-    - .private
+  go: '1.22'
   timeout: 5m
 
 output:
