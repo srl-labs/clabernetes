@@ -1023,24 +1023,19 @@ func (r *DeploymentReconciler) Conforms( //nolint: gocyclo
 // rendered sub-topologies) and updates the reconcile data NodesNeedingReboot set with each node
 // that needs restarting due to configuration changes.
 func (r *DeploymentReconciler) DetermineNodesNeedingRestart(
-	owningTopology *clabernetesapisv1alpha1.Topology,
 	reconcileData *ReconcileData,
 ) {
-	for nodeName, nodeConfig := range reconcileData.ResolvedConfigs {
+	for nodeName := range reconcileData.ResolvedConfigs {
 		_, nodeExistedBefore := reconcileData.PreviousConfigs[nodeName]
 		if !nodeExistedBefore {
 			continue
 		}
 
-		if owningTopology.Spec.Connectivity == clabernetesconstants.ConnectivitySlurpeeth {
-			determineNodeNeedsRestartSlurpeeth(reconcileData, nodeName)
-		} else if !reflect.DeepEqual(nodeConfig, reconcileData.PreviousConfigs[nodeName]) {
-			reconcileData.NodesNeedingReboot.Add(nodeName)
-		}
+		determineNodeNeedsRestart(reconcileData, nodeName)
 	}
 }
 
-func determineNodeNeedsRestartSlurpeeth(
+func determineNodeNeedsRestart(
 	reconcileData *ReconcileData,
 	nodeName string,
 ) {
@@ -1089,6 +1084,14 @@ func determineNodeNeedsRestartSlurpeeth(
 		return
 	}
 
+	if len(previousConfig.Topology.Links) != len(currentConfig.Topology.Links) {
+		// dont bother checking links since they cant be same/same, node needs rebooted to restart
+		// clab bits
+		reconcileData.NodesNeedingReboot.Add(nodeName)
+
+		return
+	}
+
 	// we know (because we set this) that topology will never be nil and links will always be slices
 	// that are len 2... so we are a little risky here but its probably ok :)
 	for idx := range previousConfig.Topology.Links {
@@ -1096,7 +1099,7 @@ func determineNodeNeedsRestartSlurpeeth(
 		currentASide := currentConfig.Topology.Links[idx].Endpoints[0]
 
 		if previousASide == currentASide {
-			// as long as "a" side is the same, slurpeeth will auto update itself since launcher is
+			// as long as "a" side is the same, things will auto update itself since launcher is
 			// watching the connectivity cr
 			continue
 		}

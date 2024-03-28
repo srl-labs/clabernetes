@@ -10,7 +10,7 @@ import (
 // given status object by iterating over the freshly processed tunnels (as processed during a
 // reconciliation) and assigning any tunnels in the status without a vnid the next valid vnid.
 func AllocateTunnelIDs(
-	statusTunnels map[string][]*clabernetesapisv1alpha1.PointToPointTunnel,
+	previousTunnels map[string][]*clabernetesapisv1alpha1.PointToPointTunnel,
 	processedTunnels map[string][]*clabernetesapisv1alpha1.PointToPointTunnel,
 ) {
 	// we want to allocate ids deterministically, so lets iterate over the maps in *order* by
@@ -33,7 +33,7 @@ func AllocateTunnelIDs(
 	allocatedTunnelIDs := make(map[int]bool)
 
 	for nodeName, nodeTunnels := range processedTunnels {
-		existingNodeTunnels, ok := statusTunnels[nodeName]
+		existingNodeTunnels, ok := previousTunnels[nodeName]
 		if !ok {
 			continue
 		}
@@ -41,6 +41,7 @@ func AllocateTunnelIDs(
 		for _, newTunnel := range nodeTunnels {
 			for _, existingTunnel := range existingNodeTunnels {
 				if newTunnel.LocalInterface == existingTunnel.LocalInterface &&
+					newTunnel.RemoteInterface == existingTunnel.RemoteInterface &&
 					newTunnel.RemoteNode == existingTunnel.RemoteNode {
 					newTunnel.TunnelID = existingTunnel.TunnelID
 
