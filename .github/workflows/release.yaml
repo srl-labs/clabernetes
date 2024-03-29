@@ -79,3 +79,25 @@ jobs:
           
           helm package charts/clabernetes --version $RELEASE_VERSION
           helm push clabernetes-$RELEASE_VERSION.tgz oci://ghcr.io/srl-labs/clabernetes
+
+      - name: run goreleaser to build clabverter/checksums
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          version: latest
+          args: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # simply use gh cli to upload since we dont actually want an action that makes the release
+      # for us, just wanna upload assets
+      - name: upload clabverter binaries (and checksums) to the release
+        run: |
+          cd .dist
+          gh release upload ${{ github.ref_name }} checksums.txt
+          for filename in *.tar.gz; do
+            [ -e "$filename" ] || continue
+            gh release upload ${{ github.ref_name }} "$filename"
+          done
+        env:
+          GITHUB_TOKEN: ${{ github.TOKEN }}
+        shell: bash

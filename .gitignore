@@ -37,3 +37,6 @@ cover.out
 
 # direnv file
 .envrc
+
+# goreleaser dist dir for testing builds and such locally
+.dist/
