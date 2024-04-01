@@ -35,6 +35,7 @@ jobs:
           echo "GOLINES_VERSION=$GOLINES_VERSION" >> "$GITHUB_ENV"
           echo "GOTESTSUM_VERSION=$GOTESTSUM_VERSION" >> "$GITHUB_ENV"
           echo "HELM_VERSION=$HELM_VERSION" >> "$GITHUB_ENV"
+          echo "GORELEASER_VERSION=$GORELEASER_VERSION" >> "$GITHUB_ENV"
 
       - name: install devspace
         run: |
@@ -83,7 +84,7 @@ jobs:
       - name: run goreleaser to build clabverter/checksums
         uses: goreleaser/goreleaser-action@v5
         with:
-          version: latest
+          version: ${{ env.GORELEASER_VERSION }}
           args: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
