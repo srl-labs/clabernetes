@@ -1,0 +1,35 @@
+---
+version: 1
+
+dist: ./.dist
+
+checksum:
+  name_template: checksums.txt
+
+builds:
+  - id: clabverter
+    binary: clabverter
+    main: ./cmd/clabverter/main.go
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+
+# we just wanna build/archive w/ goreleaser, disable changelog/release bits
+changelog:
+  disable: true
+release:
+  disable: true
