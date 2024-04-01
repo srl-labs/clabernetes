@@ -59,28 +59,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: build and push images
-        run: |
-          RELEASE_TAG=${{ github.ref_name }}
-          RELEASE_VERSION=${RELEASE_TAG#v}
-          
-          devspace run build --profile release --var RELEASE_VERSION=$RELEASE_VERSION
-
-      - name: package and push charts
-        run: |
-          RELEASE_TAG=${{ github.ref_name }}
-          RELEASE_VERSION=${RELEASE_TAG#v}
-          
-          helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
-
-          make set-chart-versions $RELEASE_VERSION
-
-          helm package charts/clicker --version $RELEASE_VERSION
-          helm push clicker-$RELEASE_VERSION.tgz oci://ghcr.io/srl-labs/clabernetes
-          
-          helm package charts/clabernetes --version $RELEASE_VERSION
-          helm push clabernetes-$RELEASE_VERSION.tgz oci://ghcr.io/srl-labs/clabernetes
-
+      # note: we run goreleaser before any helm packaging since helm updates the chart.yaml files
+      # w/ the release tag/version which upsets goreleaser (and we dont want to .gitignore the chart
+      # manifest obviously)
       - name: run goreleaser to build clabverter/checksums
         uses: goreleaser/goreleaser-action@v5
         with:
@@ -102,3 +83,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.TOKEN }}
         shell: bash
+
+      - name: build and push images
+        run: |
+          RELEASE_TAG=${{ github.ref_name }}
+          RELEASE_VERSION=${RELEASE_TAG#v}
+          
+          devspace run build --profile release --var RELEASE_VERSION=$RELEASE_VERSION
+
+      - name: package and push charts
+        run: |
+          RELEASE_TAG=${{ github.ref_name }}
+          RELEASE_VERSION=${RELEASE_TAG#v}
+          
+          helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
+
+          make set-chart-versions $RELEASE_VERSION
+
+          helm package charts/clicker --version $RELEASE_VERSION
+          helm push clicker-$RELEASE_VERSION.tgz oci://ghcr.io/srl-labs/clabernetes
+          
+          helm package charts/clabernetes --version $RELEASE_VERSION
+          helm push clabernetes-$RELEASE_VERSION.tgz oci://ghcr.io/srl-labs/clabernetes
