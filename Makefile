@@ -40,34 +40,31 @@ install-tools: ## Install lint/test tools
 
 install-code-generators: ## Install latest code-generator tools
 	go install k8s.io/code-generator/cmd/deepcopy-gen@latest
-	go install k8s.io/code-generator/cmd/openapi-gen@latest
+	go install k8s.io/kube-openapi/cmd/openapi-gen@latest
 	go install k8s.io/code-generator/cmd/client-gen@latest
 	go install sigs.k8s.io/controller-tools/cmd/controller-gen@latest
 
 run-deepcopy-gen: ## Run deepcopy-gen
-	GOMOD111=on \
 	deepcopy-gen \
 	--go-header-file hack/boilerplate.go.txt \
-	--input-dirs github.com/srl-labs/clabernetes/apis/... \
-	--output-file-base zz_generated.deepcopy \
-	--trim-path-prefix ${GOPATH}/src/github.com/srl-labs/clabernetes
+	--output-file zz_generated.deepcopy.go \
+	github.com/srl-labs/clabernetes/apis/...
 
 run-openapi-gen: ## Run openapi-gen
-	GOMOD111=on \
 	openapi-gen \
 	--go-header-file hack/boilerplate.go.txt \
-	--input-dirs github.com/srl-labs/clabernetes/apis/... \
-	--trim-path-prefix ${GOPATH}/src/github.com/srl-labs/clabernetes \
-	--output-package github.com/srl-labs/clabernetes/generated/openapi
+	--output-dir generated/openapi \
+	--output-file openapi_generated.go \
+	--output-pkg github.com/srl-labs/clabernetes/generated/openapi \
+	github.com/srl-labs/clabernetes/apis/...
 
 run-client-gen: ## Run client-gen
-	GOMOD111=on \
 	client-gen \
 	--go-header-file hack/boilerplate.go.txt \
 	--input-base github.com/srl-labs/clabernetes \
 	--input apis/v1alpha1 \
-	--trim-path-prefix ${GOPATH}/src/github.com/srl-labs/clabernetes \
-	--output-package github.com/srl-labs/clabernetes/generated \
+	--output-dir generated \
+	--output-pkg github.com/srl-labs/clabernetes/generated \
 	--clientset-name clientset
 
 run-generate-crds: ## Run controller-gen for crds
