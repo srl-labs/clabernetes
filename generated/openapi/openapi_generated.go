@@ -1506,7 +1506,7 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_Scheduling(
 					"tolerations": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
