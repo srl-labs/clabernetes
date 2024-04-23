@@ -189,6 +189,7 @@ type Scheduling struct {
 	// +optional
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 	// Tolerations is a list of Tolerations that will be set on the launcher pod spec.
+	// +listType=atomic
 	// +optional
 	Tolerations []k8scorev1.Toleration `json:"tolerations"`
 }
