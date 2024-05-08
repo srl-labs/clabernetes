@@ -143,5 +143,5 @@ func GenerateCertificateData(certBytes, caBytes []byte, key *rsa.PrivateKey) (*C
 }
 
 func serialNumber() *big.Int {
-	return big.NewInt(rand.Int63n(999999999999999)) //nolint:gomnd,gosec
+	return big.NewInt(rand.Int63n(999999999999999)) //nolint:mnd,gosec
 }

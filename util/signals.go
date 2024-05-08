@@ -22,7 +22,7 @@ func SignalHandledContext(
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	sigs := make(chan os.Signal, 2) //nolint:gomnd
+	sigs := make(chan os.Signal, 2) //nolint:mnd
 
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
