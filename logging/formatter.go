@@ -23,12 +23,12 @@ var colorMap = map[string]string{ //nolint:gochecknoglobals
 // instance, a level string, and a message string, returning a formatted message string.
 type Formatter func(i Instance, l, m string) string
 
-func shortenString(s string, max int) string {
-	if len(s) <= max {
+func shortenString(s string, maxLen int) string {
+	if len(s) <= maxLen {
 		return s
 	}
 
-	return fmt.Sprintf("%s*", s[:max-1])
+	return fmt.Sprintf("%s*", s[:maxLen-1])
 }
 
 // DefaultFormatter is the default logging instance formatter -- this formatter simply adds colors

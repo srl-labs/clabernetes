@@ -46,16 +46,16 @@ func SafeConcatNameKubernetes(name ...string) string {
 // SafeConcatNameMax concats all provided strings into a string joined by "-" - if the final string
 // is greater than max characters, the string will be shortened, and a hash will be used at the end
 // of the string to keep it unique, but safely within allowed lengths.
-func SafeConcatNameMax(name []string, max int) string {
+func SafeConcatNameMax(name []string, maxLen int) string {
 	finalName := strings.Join(name, "-")
 
-	if len(finalName) <= max {
+	if len(finalName) <= maxLen {
 		return finalName
 	}
 
 	digest := sha256.Sum256([]byte(finalName))
 
-	return finalName[0:max-8] + "-" + hex.EncodeToString(digest[0:])[0:7]
+	return finalName[0:maxLen-8] + "-" + hex.EncodeToString(digest[0:])[0:7]
 }
 
 // EnforceDNSLabelConvention attempts to enforce the RFC 1123 label name requirements on s.
