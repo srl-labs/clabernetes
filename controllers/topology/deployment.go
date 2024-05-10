@@ -258,6 +258,37 @@ func (r *DeploymentReconciler) renderDeploymentVolumes( //nolint:funlen
 		)
 	}
 
+	dockerConfigSecret := owningTopology.Spec.ImagePull.DockerConfig
+	if dockerConfigSecret == "" {
+		dockerConfigSecret = r.configManagerGetter().GetDockerConfig()
+	}
+
+	if dockerConfigSecret != "" {
+		volumes = append(
+			volumes,
+			k8scorev1.Volume{
+				Name: "docker-config",
+				VolumeSource: k8scorev1.VolumeSource{
+					Secret: &k8scorev1.SecretVolumeSource{
+						SecretName: dockerConfigSecret,
+						DefaultMode: clabernetesutil.ToPointer(
+							int32(clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute),
+						),
+					},
+				},
+			},
+		)
+
+		volumeMountsFromCommonSpec = append(
+			volumeMountsFromCommonSpec,
+			k8scorev1.VolumeMount{
+				Name:      "docker-config",
+				ReadOnly:  true,
+				MountPath: "/root/.docker",
+			},
+		)
+	}
+
 	volumesFromConfigMaps := make([]clabernetesapisv1alpha1.FileFromConfigMap, 0)
 
 	volumesFromConfigMaps = append(

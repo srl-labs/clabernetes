@@ -133,8 +133,12 @@ type Manager interface {
 	GetImagePullCriSockOverride() string
 	// GetImagePullCriKindOverride returns the cri kind override.
 	GetImagePullCriKindOverride() string
-	// GetDockerDaemonConfig returns the secret name to mount in /etc/docker.
+	// GetDockerDaemonConfig returns the secret name to mount in /etc/docker -- the secret *must*
+	// have a key "daemon.json" so the final mounted file is /etc/docker/daemon.json.
 	GetDockerDaemonConfig() string
+	// GetDockerConfig returns the secret name to mount in /root/.docker/ -- the secret *must* have
+	// a key "config.json" so the final mounted file is /root/.docker/config.json.
+	GetDockerConfig() string
 	// GetLauncherImage returns the global default launcher image.
 	GetLauncherImage() string
 	// GetLauncherImagePullPolicy returns the global default launcher image pull policy.

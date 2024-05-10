@@ -316,6 +316,13 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigImagePull(
 							Format:      "",
 						},
 					},
+					"dockerConfig": {
+						SchemaProps: spec.SchemaProps{
+							Description: "DockerConfig allows for setting the docker user (for root) config for all launchers in this topology. The secret *must be present in the namespace of this topology*. The secret *must* contain a key \"config.json\" -- as this secret will be mounted to /root/.docker/config.json and as such wil be utilized when doing docker-y things -- this means you can put auth things in here in the event your cluster doesn't support the preferred image pull through option.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
@@ -1060,6 +1067,13 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ImagePull(
 					"dockerDaemonConfig": {
 						SchemaProps: spec.SchemaProps{
 							Description: "DockerDaemonConfig allows for setting the docker daemon config for all launchers in this topology. The secret *must be present in the namespace of this topology*. The secret *must* contain a key \"daemon.json\" -- as this secret will be mounted to /etc/docker and docker will be expecting the config at /etc/docker/daemon.json.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"dockerConfig": {
+						SchemaProps: spec.SchemaProps{
+							Description: "DockerConfig allows for setting the docker user (for root) config for all launchers in this topology. The secret *must be present in the namespace of this topology*. The secret *must* contain a key \"config.json\" -- as this secret will be mounted to /root/.docker/config.json and as such wil be utilized when doing docker-y things -- this means you can put auth things in here in the event your cluster doesn't support the preferred image pull through option.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

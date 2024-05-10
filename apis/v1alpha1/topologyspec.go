@@ -223,4 +223,11 @@ type ImagePull struct {
 	// be expecting the config at /etc/docker/daemon.json.
 	// +optional
 	DockerDaemonConfig string `json:"dockerDaemonConfig,omitempty"`
+	// DockerConfig allows for setting the docker user (for root) config for all launchers in this
+	// topology. The secret *must be present in the namespace of this topology*. The secret *must*
+	// contain a key "config.json" -- as this secret will be mounted to /root/.docker/config.json
+	// and as such wil be utilized when doing docker-y things -- this means you can put auth things
+	// in here in the event your cluster doesn't support the preferred image pull through option.
+	// +optional
+	DockerConfig string `json:"dockerConfig,omitempty"`
 }
