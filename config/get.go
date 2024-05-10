@@ -121,6 +121,13 @@ func (m *manager) GetDockerDaemonConfig() string {
 	return m.config.ImagePull.DockerDaemonConfig
 }
 
+func (m *manager) GetDockerConfig() string {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	return m.config.ImagePull.DockerConfig
+}
+
 func (m *manager) GetLauncherImage() string {
 	m.lock.RLock()
 	defer m.lock.RUnlock()

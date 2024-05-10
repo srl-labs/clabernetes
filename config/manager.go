@@ -135,6 +135,8 @@ type Manager interface {
 	GetImagePullCriKindOverride() string
 	// GetDockerDaemonConfig returns the secret name to mount in /etc/docker.
 	GetDockerDaemonConfig() string
+	// GetDockerConfig returns the secret name to mount in /root/.docker/.
+	GetDockerConfig() string
 	// GetLauncherImage returns the global default launcher image.
 	GetLauncherImage() string
 	// GetLauncherImagePullPolicy returns the global default launcher image pull policy.
