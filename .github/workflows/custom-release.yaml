@@ -32,7 +32,7 @@ jobs:
       - name: install devspace
         run: |
           curl -L -o devspace \
-            "https://github.com/loft-sh/devspace/releases/download/${{ env.DEVSPACE_VERSION}}/devspace-linux-amd64" &&
+            "https://github.com/loft-sh/devspace/releases/download/${{ env.DEVSPACE_VERSION }}/devspace-linux-amd64" &&
             install -c -m 0755 devspace /usr/local/bin
         working-directory: /tmp
 
