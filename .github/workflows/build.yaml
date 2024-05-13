@@ -34,14 +34,14 @@ jobs:
       - name: install devspace
         run: |
           curl -L -o devspace \
-            "https://github.com/loft-sh/devspace/releases/download/${{ env.DEVSPACE_VERSION}}/devspace-linux-amd64" &&
+            "https://github.com/loft-sh/devspace/releases/download/${{ env.DEVSPACE_VERSION }}/devspace-linux-amd64" &&
             install -c -m 0755 devspace /usr/local/bin
         working-directory: /tmp
 
       - name: install helm
         run: |
           curl -L -o helm.tar.gz \
-            "https://get.helm.sh/helm-${{ env.HELM_VERSION}}-linux-amd64.tar.gz"
+            "https://get.helm.sh/helm-${{ env.HELM_VERSION }}-linux-amd64.tar.gz"
           tar -zxvf helm.tar.gz
           mv linux-amd64/helm /usr/local/bin/helm
         working-directory: /tmp

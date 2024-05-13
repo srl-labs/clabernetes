@@ -12,6 +12,12 @@ builds:
     main: ./cmd/clabverter/main.go
     env:
       - CGO_ENABLED=0
+      - VERSION={{ .Env.RELEASE_VERSION }}
+    ldflags:
+      - -s -w -X github.com/srl-labs/clabernetes/constants.Version={{ .Env.VERSION }}
+    flags:
+      - -trimpath
+      - -a
     goos:
       - linux
       - darwin

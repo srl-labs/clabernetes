@@ -37,17 +37,24 @@ jobs:
           echo "HELM_VERSION=$HELM_VERSION" >> "$GITHUB_ENV"
           echo "GORELEASER_VERSION=$GORELEASER_VERSION" >> "$GITHUB_ENV"
 
+      - name: set release version var
+        run: |
+          RELEASE_TAG=${{ github.ref_name }}
+          RELEASE_VERSION=${RELEASE_TAG#v}
+          
+          echo "RELEASE_VERSION=$RELEASE_VERSION" >> "$GITHUB_ENV"
+
       - name: install devspace
         run: |
           curl -L -o devspace \
-            "https://github.com/loft-sh/devspace/releases/download/${{ env.DEVSPACE_VERSION}}/devspace-linux-amd64" &&
+            "https://github.com/loft-sh/devspace/releases/download/${{ env.DEVSPACE_VERSION }}/devspace-linux-amd64" &&
             install -c -m 0755 devspace /usr/local/bin
         working-directory: /tmp
 
       - name: install helm
         run: |
           curl -L -o helm.tar.gz \
-            "https://get.helm.sh/helm-${{ env.HELM_VERSION}}-linux-amd64.tar.gz"
+            "https://get.helm.sh/helm-${{ env.HELM_VERSION }}-linux-amd64.tar.gz"
           tar -zxvf helm.tar.gz
           mv linux-amd64/helm /usr/local/bin/helm
         working-directory: /tmp
@@ -69,6 +76,7 @@ jobs:
           args: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
 
       # simply use gh cli to upload since we dont actually want an action that makes the release
       # for us, just wanna upload assets
@@ -85,23 +93,17 @@ jobs:
         shell: bash
 
       - name: build and push images
-        run: |
-          RELEASE_TAG=${{ github.ref_name }}
-          RELEASE_VERSION=${RELEASE_TAG#v}
-          
-          devspace run build --profile release --var RELEASE_VERSION=$RELEASE_VERSION
+        run: |         
+          devspace run build --profile release --var RELEASE_VERSION=${{ env.RELEASE_VERSION }}
 
       - name: package and push charts
-        run: |
-          RELEASE_TAG=${{ github.ref_name }}
-          RELEASE_VERSION=${RELEASE_TAG#v}
-          
+        run: |          
           helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
 
-          make set-chart-versions $RELEASE_VERSION
+          make set-chart-versions ${{ env.RELEASE_VERSION }}
 
-          helm package charts/clicker --version $RELEASE_VERSION
-          helm push clicker-$RELEASE_VERSION.tgz oci://ghcr.io/srl-labs/clabernetes
+          helm package charts/clicker --version ${{ env.RELEASE_VERSION }}
+          helm push clicker-${{ env.RELEASE_VERSION }}.tgz oci://ghcr.io/srl-labs/clabernetes
           
-          helm package charts/clabernetes --version $RELEASE_VERSION
-          helm push clabernetes-$RELEASE_VERSION.tgz oci://ghcr.io/srl-labs/clabernetes
+          helm package charts/clabernetes --version ${{ env.RELEASE_VERSION }}
+          helm push clabernetes-${{ env.RELEASE_VERSION }}.tgz oci://ghcr.io/srl-labs/clabernetes
