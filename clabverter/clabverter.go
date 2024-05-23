@@ -54,7 +54,8 @@ func MustNewClabverter(
 
 	logManager := claberneteslogging.GetManager()
 
-	if oldClabverterLogger, _ := logManager.GetLogger(clabernetesconstants.Clabverter); oldClabverterLogger != nil {
+	oldClabverterLogger, _ := logManager.GetLogger(clabernetesconstants.Clabverter)
+	if oldClabverterLogger != nil {
 		logManager.DeleteLogger(clabernetesconstants.Clabverter)
 	}
 
