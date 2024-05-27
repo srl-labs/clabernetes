@@ -768,7 +768,7 @@ func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 }
 
 // ReconcileDeployments reconciles the deployments that make up a clabernetes Topology.
-func (r *Reconciler) ReconcileDeployments(
+func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo
 	ctx context.Context,
 	owningTopology *clabernetesapisv1alpha1.Topology,
 	reconcileData *ReconcileData,
@@ -825,7 +825,7 @@ func (r *Reconciler) ReconcileDeployments(
 			existingCurrentDeploymentNodeName,
 		)
 
-		err = ctrlruntimeutil.SetControllerReference(
+		err = ctrlruntimeutil.SetOwnerReference(
 			owningTopology,
 			renderedCurrentDeployment,
 			r.Client.Scheme(),
@@ -865,6 +865,27 @@ func (r *Reconciler) ReconcileDeployments(
 
 	for _, missingDeploymentName := range deployments.Missing {
 		reconcileData.NodeStatuses[missingDeploymentName] = clabernetesconstants.NodeStatusUnknown //nolint:lll
+	}
+
+	topologyReady := true
+
+	for nodeName := range reconcileData.ResolvedConfigs {
+		state, ok := reconcileData.NodeStatuses[nodeName]
+		if !ok {
+			topologyReady = false
+
+			break
+		}
+
+		if state != clabernetesconstants.NodeStatusReady {
+			topologyReady = false
+
+			break
+		}
+	}
+
+	if topologyReady {
+		reconcileData.TopologyReady = true
 	}
 
 	if !reflect.DeepEqual(reconcileData.NodeStatuses, reconcileData.PreviousNodeStatuses) {

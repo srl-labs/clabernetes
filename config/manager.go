@@ -260,7 +260,7 @@ func (m *manager) watchConfig() {
 	}
 
 	for event := range watch.ResultChan() {
-		switch event.Type { //nolint:exhaustive
+		switch event.Type {
 		case apimachinerywatch.Added, apimachinerywatch.Modified:
 			m.logger.Info("processing global config add or modification event")
 
@@ -278,6 +278,7 @@ func (m *manager) watchConfig() {
 			)
 
 			m.load(&clabernetesapisv1alpha1.Config{})
+		case apimachinerywatch.Bookmark, apimachinerywatch.Error:
 		}
 	}
 }

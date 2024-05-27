@@ -24,12 +24,10 @@ import (
 )
 
 const (
-	probeInitialDelay              = 60
-	probePeriodSeconds             = 20
-	probeReadinessFailureThreshold = 3
-	// TODO -- this probably should be even higher by default 20min??? just to not have issues with
-	//  big images and/or slow starting nos like n9kv and stuff
-	probeDefaultStartupFailureThreshold = 30
+	probeInitialDelay                   = 60
+	probePeriodSeconds                  = 20
+	probeReadinessFailureThreshold      = 3
+	probeDefaultStartupFailureThreshold = 40
 )
 
 // NewDeploymentReconciler returns an instance of DeploymentReconciler.
@@ -780,8 +778,8 @@ func (r *DeploymentReconciler) renderDeploymentContainerStatus(
 		return
 	}
 
-	// default failure threshold for startup probe == 30, 30*20 = 600 seconds startup probe total
-	// time (plus the 60s initial delay).
+	// default failure threshold for startup probe == 40, 40*20 = 800 seconds startup probe total
+	// time (plus the 60s initial delay) for 15ish min startup time...
 	failureThresholds := probeDefaultStartupFailureThreshold
 
 	if nodeProbeConfiguration.StartupSeconds != 0 {

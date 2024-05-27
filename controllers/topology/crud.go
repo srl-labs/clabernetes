@@ -35,7 +35,7 @@ func (r *Reconciler) createObj(
 	createObj ctrlruntimeclient.Object,
 	createObjKind string,
 ) error {
-	err := ctrlruntimeutil.SetControllerReference(ownerObj, createObj, r.Client.Scheme())
+	err := ctrlruntimeutil.SetOwnerReference(ownerObj, createObj, r.Client.Scheme())
 	if err != nil {
 		return err
 	}

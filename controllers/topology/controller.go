@@ -103,14 +103,6 @@ func (c *Controller) SetupWithManager(mgr ctrlruntime.Manager) error {
 				mgr.GetScheme(),
 				mgr.GetRESTMapper(),
 				&clabernetesapisv1alpha1.Topology{},
-				ctrlruntimehandler.OnlyControllerOwner(),
-			),
-		).
-		// watch our config cr too so we get any config updates handled
-		Watches(
-			&clabernetesapisv1alpha1.Config{},
-			ctrlruntimehandler.EnqueueRequestsFromMapFunc(
-				c.enqueueForAll,
 			),
 		).
 		// watch owned deployments; we (for now?!) only do this so we can track the status of the
@@ -121,7 +113,13 @@ func (c *Controller) SetupWithManager(mgr ctrlruntime.Manager) error {
 				mgr.GetScheme(),
 				mgr.GetRESTMapper(),
 				&clabernetesapisv1alpha1.Topology{},
-				ctrlruntimehandler.OnlyControllerOwner(),
+			),
+		).
+		// watch our config cr too so we get any config updates handled
+		Watches(
+			&clabernetesapisv1alpha1.Config{},
+			ctrlruntimehandler.EnqueueRequestsFromMapFunc(
+				c.enqueueForAll,
 			),
 		).
 		Complete(c)

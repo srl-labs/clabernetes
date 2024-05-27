@@ -36,7 +36,7 @@ func watchConnectivity(
 	}
 
 	for event := range watch.ResultChan() {
-		switch event.Type { //nolint:exhaustive
+		switch event.Type {
 		case apimachinerywatch.Modified:
 			logger.Info("processing connectivity modification event")
 
@@ -59,7 +59,10 @@ func watchConnectivity(
 			}
 
 			handleUpdate(nodeTunnels)
-		default:
+		case apimachinerywatch.Added,
+			apimachinerywatch.Deleted,
+			apimachinerywatch.Bookmark,
+			apimachinerywatch.Error:
 			logger.Warnf(
 				"connectivity resource had %s event occur, ignoring...", event.Type,
 			)

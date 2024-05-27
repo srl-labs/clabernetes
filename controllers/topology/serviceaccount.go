@@ -63,8 +63,6 @@ func (r *ServiceAccountReconciler) Reconcile(
 
 	renderedServiceAccount := r.Render(owningTopology, existingServiceAccount)
 
-	// TODO -- everywhere we have these, should this be SetControllerOwnerReference? seems we
-	//  need that in order to have the watches act how i feel like they should
 	err = ctrlruntimeutil.SetOwnerReference(
 		owningTopology,
 		renderedServiceAccount,
