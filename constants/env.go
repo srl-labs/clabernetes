@@ -92,6 +92,22 @@ const (
 	// LauncherContainerlabVersion is the env var that holds the possibly user specified version of
 	// containerlab to download and use in the launcher.
 	LauncherContainerlabVersion = "LAUNCHER_CONTAINERLAB_VERSION"
+
+	// LauncherTCPProbePort is the env var that holds the port to use in the tcp probe (if
+	// configured).
+	LauncherTCPProbePort = "LAUNCHER_TCP_PROBE_PORT"
+
+	// LauncherSSHProbePort is the env var that holds the port to use in the ssh probe (if
+	// configured).
+	LauncherSSHProbePort = "LAUNCHER_SSH_PROBE_PORT"
+
+	// LauncherSSHProbeUsername is the env var that holds the username to use in the ssh probe (if
+	// configured).
+	LauncherSSHProbeUsername = "LAUNCHER_SSH_PROBE_USERNAME"
+
+	// LauncherSSHProbePassword is the env var that holds the password to use in the ssh probe (if
+	// configured).
+	LauncherSSHProbePassword = "LAUNCHER_SSH_PROBE_PASSWORD" //nolint:gosec
 )
 
 const (

@@ -2,6 +2,7 @@ package topology
 
 import (
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	"gopkg.in/yaml.v3"
@@ -23,8 +24,12 @@ type ReconcileData struct {
 
 	ResolvedExposedPorts map[string]*clabernetesapisv1alpha1.ExposedPorts
 
+	PreviousNodeStatuses map[string]string
+	NodeStatuses         map[string]string
+
+	NodesNeedingReboot clabernetesutil.StringSet
+
 	ShouldUpdateResource bool
-	NodesNeedingReboot   clabernetesutil.StringSet
 }
 
 // NewReconcileData accepts a Topology object and returns a ReconcileData object.
@@ -46,7 +51,9 @@ func NewReconcileData(
 
 		ResolvedExposedPorts: map[string]*clabernetesapisv1alpha1.ExposedPorts{},
 
-		NodesNeedingReboot: clabernetesutil.NewStringSet(),
+		PreviousNodeStatuses: owningTopology.Status.NodeReadiness,
+		NodeStatuses:         make(map[string]string),
+		NodesNeedingReboot:   clabernetesutil.NewStringSet(),
 	}
 
 	for nodeName, nodeConfig := range status.Configs {
@@ -81,6 +88,29 @@ func (r *ReconcileData) SetStatus(
 		}
 
 		owningTopologyStatus.Configs[nodeName] = string(configBytes)
+	}
+
+	owningTopologyStatus.NodeReadiness = r.NodeStatuses
+
+	var topologyReady bool
+
+	for nodeName := range r.ResolvedConfigs {
+		state, ok := r.NodeStatuses[nodeName]
+		if !ok {
+			continue
+		}
+
+		if state != clabernetesconstants.NodeStatusReady {
+			continue
+		}
+
+		topologyReady = true
+
+		break
+	}
+
+	if topologyReady {
+		owningTopologyStatus.TopologyReady = true
 	}
 
 	return nil

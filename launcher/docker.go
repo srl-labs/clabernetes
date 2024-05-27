@@ -12,6 +12,7 @@ import (
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
+	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 )
 
 const (
@@ -24,14 +25,7 @@ func daemonConfigExists() bool {
 	return err == nil
 }
 
-func (c *clabernetes) handleInsecureRegistries() error {
-	if daemonConfigExists() {
-		// user has provided a docker daemon config, we ignore insecure
-		c.logger.Infof("%q exists, skipping insecure registries", dockerDaemonConfig)
-
-		return nil
-	}
-
+func handleInsecureRegistries() error {
 	insecureRegistries := os.Getenv(clabernetesconstants.LauncherInsecureRegistries)
 
 	if insecureRegistries == "" {
@@ -76,7 +70,7 @@ func (c *clabernetes) handleInsecureRegistries() error {
 	return nil
 }
 
-func (c *clabernetes) enableLegacyIPTables() error {
+func enableLegacyIPTables(logger io.Writer) error {
 	updateCmd := exec.Command(
 		"update-alternatives",
 		"--set",
@@ -84,8 +78,8 @@ func (c *clabernetes) enableLegacyIPTables() error {
 		"/usr/sbin/iptables-legacy",
 	)
 
-	updateCmd.Stdout = c.logger
-	updateCmd.Stderr = c.logger
+	updateCmd.Stdout = logger
+	updateCmd.Stderr = logger
 
 	err := updateCmd.Run()
 	if err != nil {
@@ -95,14 +89,14 @@ func (c *clabernetes) enableLegacyIPTables() error {
 	return nil
 }
 
-func (c *clabernetes) startDocker() error {
+func startDocker(logger io.Writer) error {
 	var attempts int
 
 	for {
 		psCmd := exec.Command("docker", "ps")
 
-		psCmd.Stdout = c.logger
-		psCmd.Stderr = c.logger
+		psCmd.Stdout = logger
+		psCmd.Stderr = logger
 
 		err := psCmd.Run()
 		if err == nil {
@@ -116,8 +110,8 @@ func (c *clabernetes) startDocker() error {
 
 		startCmd := exec.Command("service", "docker", "start")
 
-		startCmd.Stdout = c.logger
-		startCmd.Stderr = c.logger
+		startCmd.Stdout = logger
+		startCmd.Stderr = logger
 
 		err = startCmd.Run()
 		if err != nil {
@@ -130,19 +124,13 @@ func (c *clabernetes) startDocker() error {
 	}
 }
 
-func (c *clabernetes) getContainerIDs() []string {
+func getContainerIDs() ([]string, error) {
 	// return all the container ids running in the pod
 	psCmd := exec.Command("docker", "ps", "--quiet")
 
 	output, err := psCmd.Output()
 	if err != nil {
-		c.logger.Warnf(
-			"failed determining container ids will continue but will not log container output,"+
-				" err: %s",
-			err,
-		)
-
-		return nil
+		return nil, err
 	}
 
 	containerIDLines := strings.Split(string(output), "\n")
@@ -157,20 +145,22 @@ func (c *clabernetes) getContainerIDs() []string {
 		}
 	}
 
-	return containerIDs
+	return containerIDs, nil
 }
 
-func (c *clabernetes) tailContainerLogs() {
+func tailContainerLogs(
+	logger claberneteslogging.Instance,
+	nodeLogger io.Writer,
+	containerIDs []string,
+) error {
 	nodeLogFile, err := os.Create("node.log")
 	if err != nil {
-		c.logger.Warnf("failed creating node log file, err: %s", err)
-
-		return
+		return err
 	}
 
-	nodeOutWriter := io.MultiWriter(c.nodeLogger, nodeLogFile)
+	nodeOutWriter := io.MultiWriter(nodeLogger, nodeLogFile)
 
-	for _, containerID := range c.containerIDs {
+	for _, containerID := range containerIDs {
 		go func(containerID string, nodeOutWriter io.Writer) {
 			args := []string{
 				"logs",
@@ -185,10 +175,46 @@ func (c *clabernetes) tailContainerLogs() {
 
 			err = cmd.Run()
 			if err != nil {
-				c.logger.Warnf(
+				logger.Warnf(
 					"tailing node logs for container id %q failed, err: %s", containerID, err,
 				)
 			}
 		}(containerID, nodeOutWriter)
 	}
+
+	return nil
+}
+
+func getContainerIDForNodeName(nodeName string) (string, error) {
+	psCmd := exec.Command( //nolint:gosec
+		"docker",
+		"ps",
+		"--quiet",
+		"--filter",
+		fmt.Sprintf("name=%s", nodeName),
+	)
+
+	output, err := psCmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(string(output)), nil
+}
+
+func getContainerAddr(containerID string) (string, error) {
+	inspectCmd := exec.Command(
+		"docker",
+		"inspect",
+		"--format",
+		"{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}",
+		containerID,
+	)
+
+	output, err := inspectCmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(string(output)), nil
 }

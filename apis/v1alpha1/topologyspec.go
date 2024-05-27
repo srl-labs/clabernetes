@@ -194,6 +194,79 @@ type Scheduling struct {
 	Tolerations []k8scorev1.Toleration `json:"tolerations"`
 }
 
+// StatusProbes holds details about if the status probes are enabled and if so how they should be
+// handled.
+type StatusProbes struct {
+	// Enabled sets the status probes to enabled (or obviously disabled). Note that if the probes
+	// are enabled and the health condition fails due to configuring the node the cluster will
+	// restart the node. So, if you plan on being destructive with the node config (probably because
+	// you will have exec'd onto the node) then you may want to disable this!
+	// +kubebuilder:default=true
+	// +optional
+	Enabled bool `json:"enabled"`
+	// ExcludedNodes is a set of nodes to be excluded from status probe checking. It may be
+	// desirable to exclude some node(s) from status checking due to them not having an easy way
+	// for clabernetes to check the state of the node. The node names here should match the name of
+	// the nodes in the containerlab sub-topology.
+	// +listType=atomic
+	// +optional
+	ExcludedNodes []string `json:"excludedNodes"`
+	// NodeProbeConfigurations is a map of node specific probe configurations -- if you only need
+	// a simple ssh or tcp connect style setup that works on all node types in the topology you can
+	// ignore this and just configure ProbeConfiguration.
+	// +optional
+	NodeProbeConfigurations map[string]ProbeConfiguration `json:"nodeProbeConfigurations"`
+	// ProbeConfiguration is the default probe configuration for the Topology.
+	// +optional
+	ProbeConfiguration ProbeConfiguration `json:"probeConfiguration"`
+}
+
+// ProbeConfiguration holds information about how to probe a (containerlab) node in a Topology. If
+// both style probes are configured, both will be used and both must succeed in order to report
+// healthy.
+type ProbeConfiguration struct {
+	// StartupSeconds is the total amount of seconds to allow for the node to start. This defaults
+	// to 10 minutes to hopefully account for slow to boot nodes. Note that there is also a 60
+	// initial delay configured, so technically the default is 11 minutes. Be careful with this
+	// delay as there must be time for c9s to (via whatever means) pull the image and load it into
+	// docker on the launcher and this can take a bit! Having this be bigger than you think you need
+	// is generally better since if the startup probe succeeds ever then the readiness probe takes
+	// over anyway.
+	// +optional
+	StartupSeconds int `json:"startupSeconds"`
+	// SSHProbeConfiguration defines an SSH probe.
+	// +optional
+	SSHProbeConfiguration *SSHProbeConfiguration `json:"sshProbeConfiguration,omitempty"`
+	// TCPProbeConfiguration defines a TCP probe.
+	// +optional
+	TCPProbeConfiguration *TCPProbeConfiguration `json:"tcpProbeConfiguration,omitempty"`
+}
+
+// SSHProbeConfiguration defines a "ssh" probe -- the ssh probe just connects using standard go
+// crypto ssh setup and reports true if auth is successful, it does no further checking. The probe
+// is executed by the launcher and the result is placed into /clabernetes/.nodestatus so the k8s
+// probe can pick it up and reflect the status.
+type SSHProbeConfiguration struct {
+	// Username is the username to use for auth.
+	Username string `json:"username"`
+	// Password is the password to use for auth.
+	Password string `json:"password"`
+	// Port is an optional override (of course default is 22).
+	// +optional
+	Port int `json:"port"`
+}
+
+// TCPProbeConfiguration defines a "tcp" probe. The probe is executed by the launcher and the
+// result is placed into /clabernetes/.nodestatus so the k8s probe can pick it up and reflect the
+// status.
+type TCPProbeConfiguration struct {
+	// Port defines the port to try to open a TCP connection to. When using TCP probe setup this
+	// connection happens inside the launcher rather than the "normal" k8s style probes. This style
+	// probe behaves like a k8s style probe though in that it is "successful" whenever a TCP
+	// connection to this port can be opened successfully.
+	Port int `json:"port"`
+}
+
 // ImagePull holds configurations relevant to how clabernetes launcher pods handle pulling
 // images.
 type ImagePull struct {

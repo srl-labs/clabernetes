@@ -30,6 +30,10 @@ spec:
     disableExpose: false
   imagePull: {}
   naming: global
+  statusProbes:
+    enabled: false
+    probeConfiguration:
+      startupSeconds: 0
 status:
   configs:
     srl1: |
@@ -128,6 +132,7 @@ status:
       udpPorts:
         - 161
   kind: containerlab
+  nodeReadiness: {}
   reconcileHashes:
     config: 25ea403243c3741d3013049756aa02db0ad8dc3d0d9bf803dc1576f9dda33649
     filesFromURL: {}

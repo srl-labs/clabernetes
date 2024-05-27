@@ -3,6 +3,7 @@ package topology
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"slices"
 	"time"
 
@@ -824,7 +825,7 @@ func (r *Reconciler) ReconcileDeployments(
 			existingCurrentDeploymentNodeName,
 		)
 
-		err = ctrlruntimeutil.SetOwnerReference(
+		err = ctrlruntimeutil.SetControllerReference(
 			owningTopology,
 			renderedCurrentDeployment,
 			r.Client.Scheme(),
@@ -850,6 +851,24 @@ func (r *Reconciler) ReconcileDeployments(
 				return err
 			}
 		}
+	}
+
+	r.Log.Info("processing deployment statuses")
+
+	for nodeName, deployment := range deployments.Current {
+		if deployment.Status.ReadyReplicas == 1 {
+			reconcileData.NodeStatuses[nodeName] = clabernetesconstants.NodeStatusReady
+		} else {
+			reconcileData.NodeStatuses[nodeName] = clabernetesconstants.NodeStatusNotReady //nolint:lll
+		}
+	}
+
+	for _, missingDeploymentName := range deployments.Missing {
+		reconcileData.NodeStatuses[missingDeploymentName] = clabernetesconstants.NodeStatusUnknown //nolint:lll
+	}
+
+	if !reflect.DeepEqual(reconcileData.NodeStatuses, reconcileData.PreviousNodeStatuses) {
+		reconcileData.ShouldUpdateResource = true
 	}
 
 	return r.reconcileDeploymentsHandleRestarts(

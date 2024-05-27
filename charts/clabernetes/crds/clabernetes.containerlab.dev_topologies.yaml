@@ -21,6 +21,9 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
+    - jsonPath: .status.topologyReady
+      name: Ready
+      type: boolean
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -468,6 +471,128 @@ spec:
                 - message: naming field is immutable, to change this value delete
                     and re-create the Topology
                   rule: self == oldSelf
+              statusProbes:
+                description: |-
+                  StatusProbes holds the configurations relevant to how clabernetes and the launcher handle
+                  checking and reporting the containerlab node status
+                properties:
+                  enabled:
+                    default: true
+                    description: |-
+                      Enabled sets the status probes to enabled (or obviously disabled). Note that if the probes
+                      are enabled and the health condition fails due to configuring the node the cluster will
+                      restart the node. So, if you plan on being destructive with the node config (probably because
+                      you will have exec'd onto the node) then you may want to disable this!
+                    type: boolean
+                  excludedNodes:
+                    description: |-
+                      ExcludedNodes is a set of nodes to be excluded from status probe checking. It may be
+                      desirable to exclude some node(s) from status checking due to them not having an easy way
+                      for clabernetes to check the state of the node. The node names here should match the name of
+                      the nodes in the containerlab sub-topology.
+                    items:
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  nodeProbeConfigurations:
+                    additionalProperties:
+                      description: |-
+                        ProbeConfiguration holds information about how to probe a (containerlab) node in a Topology. If
+                        both style probes are configured, both will be used and both must succeed in order to report
+                        healthy.
+                      properties:
+                        sshProbeConfiguration:
+                          description: SSHProbeConfiguration defines an SSH probe.
+                          properties:
+                            password:
+                              description: Password is the password to use for auth.
+                              type: string
+                            port:
+                              description: Port is an optional override (of course
+                                default is 22).
+                              type: integer
+                            username:
+                              description: Username is the username to use for auth.
+                              type: string
+                          required:
+                          - password
+                          - username
+                          type: object
+                        startupSeconds:
+                          description: |-
+                            StartupSeconds is the total amount of seconds to allow for the node to start. This defaults
+                            to 10 minutes to hopefully account for slow to boot nodes. Note that there is also a 60
+                            initial delay configured, so technically the default is 11 minutes. Be careful with this
+                            delay as there must be time for c9s to (via whatever means) pull the image and load it into
+                            docker on the launcher and this can take a bit! Having this be bigger than you think you need
+                            is generally better since if the startup probe succeeds ever then the readiness probe takes
+                            over anyway.
+                          type: integer
+                        tcpProbeConfiguration:
+                          description: TCPProbeConfiguration defines a TCP probe.
+                          properties:
+                            port:
+                              description: |-
+                                Port defines the port to try to open a TCP connection to. When using TCP probe setup this
+                                connection happens inside the launcher rather than the "normal" k8s style probes. This style
+                                probe behaves like a k8s style probe though in that it is "successful" whenever a TCP
+                                connection to this port can be opened successfully.
+                              type: integer
+                          required:
+                          - port
+                          type: object
+                      type: object
+                    description: |-
+                      NodeProbeConfigurations is a map of node specific probe configurations -- if you only need
+                      a simple ssh or tcp connect style setup that works on all node types in the topology you can
+                      ignore this and just configure ProbeConfiguration.
+                    type: object
+                  probeConfiguration:
+                    description: ProbeConfiguration is the default probe configuration
+                      for the Topology.
+                    properties:
+                      sshProbeConfiguration:
+                        description: SSHProbeConfiguration defines an SSH probe.
+                        properties:
+                          password:
+                            description: Password is the password to use for auth.
+                            type: string
+                          port:
+                            description: Port is an optional override (of course default
+                              is 22).
+                            type: integer
+                          username:
+                            description: Username is the username to use for auth.
+                            type: string
+                        required:
+                        - password
+                        - username
+                        type: object
+                      startupSeconds:
+                        description: |-
+                          StartupSeconds is the total amount of seconds to allow for the node to start. This defaults
+                          to 10 minutes to hopefully account for slow to boot nodes. Note that there is also a 60
+                          initial delay configured, so technically the default is 11 minutes. Be careful with this
+                          delay as there must be time for c9s to (via whatever means) pull the image and load it into
+                          docker on the launcher and this can take a bit! Having this be bigger than you think you need
+                          is generally better since if the startup probe succeeds ever then the readiness probe takes
+                          over anyway.
+                        type: integer
+                      tcpProbeConfiguration:
+                        description: TCPProbeConfiguration defines a TCP probe.
+                        properties:
+                          port:
+                            description: |-
+                              Port defines the port to try to open a TCP connection to. When using TCP probe setup this
+                              connection happens inside the launcher rather than the "normal" k8s style probes. This style
+                              probe behaves like a k8s style probe though in that it is "successful" whenever a TCP
+                              connection to this port can be opened successfully.
+                            type: integer
+                        required:
+                        - port
+                        type: object
+                    type: object
+                type: object
             required:
             - connectivity
             - definition
@@ -527,6 +652,14 @@ spec:
                 - containerlab
                 - kne
                 type: string
+              nodeReadiness:
+                additionalProperties:
+                  type: string
+                description: |-
+                  NodeReadiness is a map of nodename to readiness status. The readiness status is as reported
+                  by the k8s startup/readiness probe (which is in turn managed by the status probe
+                  configuration of the topology). The possible values are "notready" and "ready", "unknown".
+                type: object
               reconcileHashes:
                 description: ReconcileHashes holds the hashes form the last reconciliation
                   run.
@@ -569,12 +702,18 @@ spec:
                   if it is unset (nil) when a Topology is created, the controller will use the default global
                   config value (false); if the field is non-nil, this status field will hold the non-nil value.
                 type: boolean
+              topologyReady:
+                description: TopologyReady indicates if all nodes in the topology
+                  have reported ready.
+                type: boolean
             required:
             - configs
             - exposedPorts
             - kind
+            - nodeReadiness
             - reconcileHashes
             - removeTopologyPrefix
+            - topologyReady
             type: object
         type: object
     served: true
