@@ -8,5 +8,8 @@
         "imagePullSecrets": ""
     },
     "configs": {},
-    "exposedPorts": null
+    "exposedPorts": null,
+    "nodeReadiness": null,
+    "topologyReady": false,
+    "conditions": null
 }

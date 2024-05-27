@@ -23,8 +23,13 @@ type ReconcileData struct {
 
 	ResolvedExposedPorts map[string]*clabernetesapisv1alpha1.ExposedPorts
 
+	PreviousNodeStatuses map[string]string
+	NodeStatuses         map[string]string
+	TopologyReady        bool
+
+	NodesNeedingReboot clabernetesutil.StringSet
+
 	ShouldUpdateResource bool
-	NodesNeedingReboot   clabernetesutil.StringSet
 }
 
 // NewReconcileData accepts a Topology object and returns a ReconcileData object.
@@ -46,7 +51,9 @@ func NewReconcileData(
 
 		ResolvedExposedPorts: map[string]*clabernetesapisv1alpha1.ExposedPorts{},
 
-		NodesNeedingReboot: clabernetesutil.NewStringSet(),
+		PreviousNodeStatuses: owningTopology.Status.NodeReadiness,
+		NodeStatuses:         make(map[string]string),
+		NodesNeedingReboot:   clabernetesutil.NewStringSet(),
 	}
 
 	for nodeName, nodeConfig := range status.Configs {
@@ -82,6 +89,9 @@ func (r *ReconcileData) SetStatus(
 
 		owningTopologyStatus.Configs[nodeName] = string(configBytes)
 	}
+
+	owningTopologyStatus.NodeReadiness = r.NodeStatuses
+	owningTopologyStatus.TopologyReady = r.TopologyReady
 
 	return nil
 }

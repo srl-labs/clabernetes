@@ -32,7 +32,8 @@ func newManager(scheme *apimachineryruntime.Scheme, appName string) (ctrlruntime
 						// about anything else (for now -- and we can override it with opts.ByObject
 						// anyway?! and... who the hell calls their app "clabernetes" so this should
 						// really limit the cache nicely :)
-						// currently this matters for launcher service accounts and role bindings
+						// currently this matters for launcher service accounts, role bindings,
+						// services (fabric and expose), and (launcher) deployments
 						"clabernetes/app": appName,
 					},
 				)

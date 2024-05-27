@@ -32,6 +32,10 @@ spec:
     disableExpose: false
   imagePull: {}
   naming: prefixed
+  statusProbes:
+    enabled: false
+    probeConfiguration:
+      startupSeconds: 0
 status:
   configs:
     srl1: |

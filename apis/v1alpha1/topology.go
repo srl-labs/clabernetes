@@ -13,6 +13,7 @@ import (
 // +kubebuilder:resource:path="topologies"
 // +kubebuilder:printcolumn:JSONPath=".status.kind",name=Kind,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
+// +kubebuilder:printcolumn:JSONPath=".status.topologyReady",name=Ready,type=boolean
 type Topology struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -36,6 +37,10 @@ type TopologySpec struct {
 	// up a given topology.
 	// +optional
 	Deployment Deployment `json:"deployment"`
+	// StatusProbes holds the configurations relevant to how clabernetes and the launcher handle
+	// checking and reporting the containerlab node status
+	// +optional
+	StatusProbes StatusProbes `json:"statusProbes"`
 	// ImagePull holds configurations relevant to how clabernetes launcher pods handle pulling
 	// images.
 	// +optional
@@ -84,6 +89,15 @@ type TopologyStatus struct {
 	// ExposedPorts holds a map of (containerlab not k8s!) nodes and their exposed ports
 	// (via load balancer).
 	ExposedPorts map[string]*ExposedPorts `json:"exposedPorts"`
+	// NodeReadiness is a map of nodename to readiness status. The readiness status is as reported
+	// by the k8s startup/readiness probe (which is in turn managed by the status probe
+	// configuration of the topology). The possible values are "notready" and "ready", "unknown".
+	NodeReadiness map[string]string `json:"nodeReadiness"`
+	// TopologyReady indicates if all nodes in the topology have reported ready. This is duplicated
+	// from the conditions so we can easily snag it for print columns!
+	TopologyReady bool `json:"topologyReady"`
+	// Conditions is a list of conditions for the topology custom resource.
+	Conditions []metav1.Condition `json:"conditions"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

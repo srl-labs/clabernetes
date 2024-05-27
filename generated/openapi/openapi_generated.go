@@ -103,10 +103,22 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/srl-labs/clabernetes/apis/v1alpha1.PointToPointTunnel": schema_srl_labs_clabernetes_apis_v1alpha1_PointToPointTunnel(
 			ref,
 		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.ProbeConfiguration": schema_srl_labs_clabernetes_apis_v1alpha1_ProbeConfiguration(
+			ref,
+		),
 		"github.com/srl-labs/clabernetes/apis/v1alpha1.ReconcileHashes": schema_srl_labs_clabernetes_apis_v1alpha1_ReconcileHashes(
 			ref,
 		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.SSHProbeConfiguration": schema_srl_labs_clabernetes_apis_v1alpha1_SSHProbeConfiguration(
+			ref,
+		),
 		"github.com/srl-labs/clabernetes/apis/v1alpha1.Scheduling": schema_srl_labs_clabernetes_apis_v1alpha1_Scheduling(
+			ref,
+		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.StatusProbes": schema_srl_labs_clabernetes_apis_v1alpha1_StatusProbes(
+			ref,
+		),
+		"github.com/srl-labs/clabernetes/apis/v1alpha1.TCPProbeConfiguration": schema_srl_labs_clabernetes_apis_v1alpha1_TCPProbeConfiguration(
 			ref,
 		),
 		"github.com/srl-labs/clabernetes/apis/v1alpha1.Topology": schema_srl_labs_clabernetes_apis_v1alpha1_Topology(
@@ -1436,6 +1448,47 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_PointToPointTunnel(
 	}
 }
 
+func schema_srl_labs_clabernetes_apis_v1alpha1_ProbeConfiguration(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ProbeConfiguration holds information about how to probe a (containerlab) node in a Topology. If both style probes are configured, both will be used and both must succeed in order to report healthy.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"startupSeconds": {
+						SchemaProps: spec.SchemaProps{
+							Description: "StartupSeconds is the total amount of seconds to allow for the node to start. This defaults to ~13 minutes to hopefully account for slow to boot nodes. Note that there is also a 60 initial delay configured, so technically the default is ~14-15 minutes. Be careful with this delay as there must be time for c9s to (via whatever means) pull the image and load it into docker on the launcher and this can take a bit! Having this be bigger than you think you need is generally better since if the startup probe succeeds ever then the readiness probe takes over anyway.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"sshProbeConfiguration": {
+						SchemaProps: spec.SchemaProps{
+							Description: "SSHProbeConfiguration defines an SSH probe.",
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.SSHProbeConfiguration",
+							),
+						},
+					},
+					"tcpProbeConfiguration": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TCPProbeConfiguration defines a TCP probe.",
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.TCPProbeConfiguration",
+							),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.SSHProbeConfiguration", "github.com/srl-labs/clabernetes/apis/v1alpha1.TCPProbeConfiguration"},
+	}
+}
+
 func schema_srl_labs_clabernetes_apis_v1alpha1_ReconcileHashes(
 	ref common.ReferenceCallback,
 ) common.OpenAPIDefinition {
@@ -1492,6 +1545,46 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ReconcileHashes(
 	}
 }
 
+func schema_srl_labs_clabernetes_apis_v1alpha1_SSHProbeConfiguration(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "SSHProbeConfiguration defines a \"ssh\" probe -- the ssh probe just connects using standard go crypto ssh setup and reports true if auth is successful, it does no further checking. The probe is executed by the launcher and the result is placed into /clabernetes/.nodestatus so the k8s probe can pick it up and reflect the status.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"username": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Username is the username to use for auth.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"password": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Password is the password to use for auth.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"port": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Port is an optional override (of course default is 22).",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+				},
+				Required: []string{"username", "password"},
+			},
+		},
+	}
+}
+
 func schema_srl_labs_clabernetes_apis_v1alpha1_Scheduling(
 	ref common.ReferenceCallback,
 ) common.OpenAPIDefinition {
@@ -1541,6 +1634,101 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_Scheduling(
 		},
 		Dependencies: []string{
 			"k8s.io/api/core/v1.Toleration"},
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_StatusProbes(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "StatusProbes holds details about if the status probes are enabled and if so how they should be handled.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"enabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Enabled sets the status probes to enabled (or obviously disabled). Note that if the probes are enabled and the health condition fails due to configuring the node the cluster will restart the node. So, if you plan on being destructive with the node config (probably because you will have exec'd onto the node) then you may want to disable this!",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"excludedNodes": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "ExcludedNodes is a set of nodes to be excluded from status probe checking. It may be desirable to exclude some node(s) from status checking due to them not having an easy way for clabernetes to check the state of the node. The node names here should match the name of the nodes in the containerlab sub-topology.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"nodeProbeConfigurations": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NodeProbeConfigurations is a map of node specific probe configurations -- if you only need a simple ssh or tcp connect style setup that works on all node types in the topology you can ignore this and just configure ProbeConfiguration.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref: ref(
+											"github.com/srl-labs/clabernetes/apis/v1alpha1.ProbeConfiguration",
+										),
+									},
+								},
+							},
+						},
+					},
+					"probeConfiguration": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ProbeConfiguration is the default probe configuration for the Topology.",
+							Default:     map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.ProbeConfiguration",
+							),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.ProbeConfiguration"},
+	}
+}
+
+func schema_srl_labs_clabernetes_apis_v1alpha1_TCPProbeConfiguration(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TCPProbeConfiguration defines a \"tcp\" probe. The probe is executed by the launcher and the result is placed into /clabernetes/.nodestatus so the k8s probe can pick it up and reflect the status.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"port": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Port defines the port to try to open a TCP connection to. When using TCP probe setup this connection happens inside the launcher rather than the \"normal\" k8s style probes. This style probe behaves like a k8s style probe though in that it is \"successful\" whenever a TCP connection to this port can be opened successfully.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+				},
+				Required: []string{"port"},
+			},
+		},
 	}
 }
 
@@ -1686,6 +1874,15 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologySpec(
 							),
 						},
 					},
+					"statusProbes": {
+						SchemaProps: spec.SchemaProps{
+							Description: "StatusProbes holds the configurations relevant to how clabernetes and the launcher handle checking and reporting the containerlab node status",
+							Default:     map[string]interface{}{},
+							Ref: ref(
+								"github.com/srl-labs/clabernetes/apis/v1alpha1.StatusProbes",
+							),
+						},
+					},
 					"imagePull": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ImagePull holds configurations relevant to how clabernetes launcher pods handle pulling images.",
@@ -1716,7 +1913,7 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologySpec(
 			},
 		},
 		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/v1alpha1.Definition", "github.com/srl-labs/clabernetes/apis/v1alpha1.Deployment", "github.com/srl-labs/clabernetes/apis/v1alpha1.Expose", "github.com/srl-labs/clabernetes/apis/v1alpha1.ImagePull"},
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.Definition", "github.com/srl-labs/clabernetes/apis/v1alpha1.Deployment", "github.com/srl-labs/clabernetes/apis/v1alpha1.Expose", "github.com/srl-labs/clabernetes/apis/v1alpha1.ImagePull", "github.com/srl-labs/clabernetes/apis/v1alpha1.StatusProbes"},
 	}
 }
 
@@ -1785,6 +1982,46 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 							},
 						},
 					},
+					"nodeReadiness": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NodeReadiness is a map of nodename to readiness status. The readiness status is as reported by the k8s startup/readiness probe (which is in turn managed by the status probe configuration of the topology). The possible values are \"notready\" and \"ready\", \"unknown\".",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"topologyReady": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TopologyReady indicates if all nodes in the topology have reported ready. This is duplicated from the conditions so we can easily snag it for print columns!",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"conditions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Conditions is a list of conditions for the topology custom resource.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref: ref(
+											"k8s.io/apimachinery/pkg/apis/meta/v1.Condition",
+										),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{
 					"kind",
@@ -1792,10 +2029,13 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 					"reconcileHashes",
 					"configs",
 					"exposedPorts",
+					"nodeReadiness",
+					"topologyReady",
+					"conditions",
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/v1alpha1.ExposedPorts", "github.com/srl-labs/clabernetes/apis/v1alpha1.ReconcileHashes"},
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.ExposedPorts", "github.com/srl-labs/clabernetes/apis/v1alpha1.ReconcileHashes", "k8s.io/apimachinery/pkg/apis/meta/v1.Condition"},
 	}
 }

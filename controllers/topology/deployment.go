@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 	"reflect"
+	"slices"
+	"strconv"
 	"strings"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
@@ -19,6 +21,13 @@ import (
 	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
+)
+
+const (
+	probeInitialDelay                   = 60
+	probePeriodSeconds                  = 20
+	probeReadinessFailureThreshold      = 3
+	probeDefaultStartupFailureThreshold = 40
 )
 
 // NewDeploymentReconciler returns an instance of DeploymentReconciler.
@@ -743,6 +752,119 @@ func (r *DeploymentReconciler) renderDeploymentContainerPrivileges(
 	}
 }
 
+func (r *DeploymentReconciler) renderDeploymentContainerStatus(
+	deployment *k8sappsv1.Deployment,
+	nodeName string,
+	owningTopology *clabernetesapisv1alpha1.Topology,
+) {
+	if !owningTopology.Spec.StatusProbes.Enabled {
+		return
+	}
+
+	if slices.Contains(owningTopology.Spec.StatusProbes.ExcludedNodes, nodeName) {
+		// this clab node was excluded, dont setup probes
+		return
+	}
+
+	nodeProbeConfiguration, ok := owningTopology.Spec.StatusProbes.NodeProbeConfigurations[nodeName]
+	if !ok {
+		nodeProbeConfiguration = owningTopology.Spec.StatusProbes.ProbeConfiguration
+	}
+
+	if nodeProbeConfiguration.SSHProbeConfiguration == nil &&
+		nodeProbeConfiguration.TCPProbeConfiguration == nil {
+		r.log.Warnf("node %q has no status probe configurations, skipping...", nodeName)
+
+		return
+	}
+
+	// default failure threshold for startup probe == 40, 40*20 = 800 seconds startup probe total
+	// time (plus the 60s initial delay) for 15ish min startup time...
+	failureThresholds := probeDefaultStartupFailureThreshold
+
+	if nodeProbeConfiguration.StartupSeconds != 0 {
+		failureThresholds = nodeProbeConfiguration.StartupSeconds / probePeriodSeconds
+	}
+
+	// startup probe delays the start of the readiness probe -- this gives us time for the nos to
+	// boot before we start doing the readiness check on the (slightly) faster frequency
+	deployment.Spec.Template.Spec.Containers[0].StartupProbe = &k8scorev1.Probe{
+		ProbeHandler: k8scorev1.ProbeHandler{
+			Exec: &k8scorev1.ExecAction{
+				Command: []string{
+					"grep",
+					clabernetesconstants.NodeStatusHealthy,
+					clabernetesconstants.NodeStatusFile,
+				},
+			},
+		},
+		InitialDelaySeconds: probeInitialDelay,
+		TimeoutSeconds:      1,
+		SuccessThreshold:    1,
+		PeriodSeconds:       probePeriodSeconds,
+		FailureThreshold:    int32(failureThresholds),
+	}
+
+	// after the startup probe has done its thing we set run the readiness probe -- since the
+	// launcher doenst check the status super frequently we keep this pretty slow too
+	deployment.Spec.Template.Spec.Containers[0].ReadinessProbe = &k8scorev1.Probe{
+		ProbeHandler: k8scorev1.ProbeHandler{
+			Exec: &k8scorev1.ExecAction{
+				Command: []string{
+					"grep",
+					clabernetesconstants.NodeStatusHealthy,
+					clabernetesconstants.NodeStatusFile,
+				},
+			},
+		},
+		TimeoutSeconds:   1,
+		SuccessThreshold: 1,
+		PeriodSeconds:    probePeriodSeconds,
+		FailureThreshold: probeReadinessFailureThreshold,
+	}
+
+	probeEnvVars := make([]k8scorev1.EnvVar, 0)
+
+	if nodeProbeConfiguration.TCPProbeConfiguration != nil {
+		probeEnvVars = append(
+			probeEnvVars,
+			k8scorev1.EnvVar{
+				Name:  clabernetesconstants.LauncherTCPProbePort,
+				Value: strconv.Itoa(nodeProbeConfiguration.TCPProbeConfiguration.Port),
+			},
+		)
+	}
+
+	if nodeProbeConfiguration.SSHProbeConfiguration != nil {
+		probeEnvVars = append(
+			probeEnvVars,
+			k8scorev1.EnvVar{
+				Name:  clabernetesconstants.LauncherSSHProbeUsername,
+				Value: nodeProbeConfiguration.SSHProbeConfiguration.Username,
+			},
+			k8scorev1.EnvVar{
+				Name:  clabernetesconstants.LauncherSSHProbePassword,
+				Value: nodeProbeConfiguration.SSHProbeConfiguration.Password,
+			},
+		)
+
+		if nodeProbeConfiguration.SSHProbeConfiguration.Port != 0 {
+			probeEnvVars = append(
+				probeEnvVars,
+				k8scorev1.EnvVar{
+					Name:  clabernetesconstants.LauncherSSHProbePort,
+					Value: strconv.Itoa(nodeProbeConfiguration.SSHProbeConfiguration.Port),
+				},
+			)
+		}
+	}
+
+	deployment.Spec.Template.Spec.Containers[0].Env = append(
+		deployment.Spec.Template.Spec.Containers[0].Env,
+		probeEnvVars...,
+	)
+}
+
 func (r *DeploymentReconciler) renderDeploymentDevices(
 	deployment *k8sappsv1.Deployment,
 	owningTopology *clabernetesapisv1alpha1.Topology,
@@ -908,6 +1030,12 @@ func (r *DeploymentReconciler) Render(
 	)
 
 	r.renderDeploymentContainerPrivileges(
+		deployment,
+		nodeName,
+		owningTopology,
+	)
+
+	r.renderDeploymentContainerStatus(
 		deployment,
 		nodeName,
 		owningTopology,

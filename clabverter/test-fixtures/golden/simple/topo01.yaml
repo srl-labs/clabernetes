@@ -93,13 +93,22 @@ spec:
     - 1.2.3.4
     pullSecrets: null
   naming: prefixed
+  statusProbes:
+    enabled: false
+    excludedNodes: null
+    nodeProbeConfigurations: null
+    probeConfiguration:
+      startupSeconds: 0
 status:
+  conditions: null
   configs: null
   exposedPorts: null
   kind: ""
+  nodeReadiness: null
   reconcileHashes:
     config: ""
     exposedPorts: ""
     filesFromURL: null
     imagePullSecrets: ""
   removeTopologyPrefix: null
+  topologyReady: false

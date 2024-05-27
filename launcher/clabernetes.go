@@ -2,7 +2,9 @@ package launcher
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
+	"net"
 	"os"
 	"strings"
 	"time"
@@ -11,12 +13,16 @@ import (
 	clabernetesgeneratedclientset "github.com/srl-labs/clabernetes/generated/clientset"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
+	"golang.org/x/crypto/ssh"
 )
 
 const (
-	maxDockerLaunchAttempts = 10
-	containerCheckInterval  = 5 * time.Second
-	clientDefaultTimeout    = time.Minute
+	maxDockerLaunchAttempts  = 10
+	containerCheckInterval   = 5 * time.Second
+	statusProbeCheckInterval = 30 * time.Second
+	statusProbeCheckTimeout  = 5 * time.Second
+	clientDefaultTimeout     = time.Minute
+	defaultSSHPort           = 22
 )
 
 // StartClabernetes is a function that starts the clabernetes launcher. It cannot fail, only panic.
@@ -59,6 +65,7 @@ func StartClabernetes() {
 			clabernetesconstants.AppNameEnv,
 			clabernetesconstants.AppNameDefault,
 		),
+		nodeName:             os.Getenv(clabernetesconstants.LauncherNodeNameEnv),
 		logger:               clabernetesLogger,
 		containerlabLogger:   containerlabLogger,
 		nodeLogger:           nodeLogger,
@@ -77,7 +84,8 @@ type clabernetes struct {
 
 	kubeClabernetesClient *clabernetesgeneratedclientset.Clientset
 
-	appName string
+	appName  string
+	nodeName string
 
 	logger             claberneteslogging.Instance
 	containerlabLogger claberneteslogging.Instance
@@ -86,7 +94,12 @@ type clabernetes struct {
 	imageName            string
 	imagePullThroughMode string
 
+	// containerIDs holds *all* ids of containers running --in theory we could have other side-car
+	// type stuff running so just catching all them here so we know if/when things fail
 	containerIDs []string
+	// meanwhile nodeContainerID is the container id of hte specific node this launcher represents
+	// -- meaning the single node from the original topology this launcher is representing
+	nodeContainerID string
 }
 
 func (c *clabernetes) startup() {
@@ -100,6 +113,7 @@ func (c *clabernetes) startup() {
 	c.launch()
 	c.connectivity()
 
+	go c.runProbes()
 	go c.watchContainers()
 
 	c.logger.Info("running for forever or until sigint...")
@@ -138,28 +152,32 @@ func (c *clabernetes) setup() {
 		c.handleMounts()
 	}
 
-	c.logger.Debug("configure insecure registries if requested...")
+	if daemonConfigExists() {
+		c.logger.Infof("%q exists, skipping insecure registries", dockerDaemonConfig)
+	} else {
+		c.logger.Debug("configure insecure registries if requested...")
 
-	err := c.handleInsecureRegistries()
-	if err != nil {
-		c.logger.Fatalf("failed configuring insecure docker registries, err: %s", err)
+		err := handleInsecureRegistries()
+		if err != nil {
+			c.logger.Fatalf("failed configuring insecure docker registries, err: %s", err)
+		}
 	}
 
 	c.logger.Debug("ensuring docker is running...")
 
-	err = c.startDocker()
+	err := startDocker(c.logger)
 	if err != nil {
 		c.logger.Warn(
 			"failed ensuring docker is running, attempting to fallback to legacy ip tables",
 		)
 
 		// see https://github.com/srl-labs/clabernetes/issues/47
-		err = c.enableLegacyIPTables()
+		err = enableLegacyIPTables(c.logger)
 		if err != nil {
 			c.logger.Fatalf("failed enabling legacy ip tables, err: %s", err)
 		}
 
-		err = c.startDocker()
+		err = startDocker(c.logger)
 		if err != nil {
 			c.logger.Fatalf("failed ensuring docker is running, err: %s", err)
 		}
@@ -183,12 +201,22 @@ func (c *clabernetes) launch() {
 		c.logger.Fatalf("failed launching containerlab, err: %s", err)
 	}
 
-	c.containerIDs = c.getContainerIDs()
+	c.containerIDs, err = getContainerIDs()
+	if err != nil {
+		c.logger.Warnf(
+			"failed determining container ids will continue but will not log container output,"+
+				" err: %s",
+			err,
+		)
+	}
 
 	if len(c.containerIDs) > 0 {
 		c.logger.Debugf("found container ids %q", c.containerIDs)
 
-		c.tailContainerLogs()
+		err = tailContainerLogs(c.logger, c.nodeLogger, c.containerIDs)
+		if err != nil {
+			c.logger.Warnf("failed creating node log file, err: %s", err)
+		}
 	} else {
 		c.logger.Warn(
 			"failed determining container ids, will continue but may not be in a working " +
@@ -196,7 +224,157 @@ func (c *clabernetes) launch() {
 		)
 	}
 
+	c.nodeContainerID, err = getContainerIDForNodeName(c.nodeName)
+	if err != nil {
+		c.logger.Fatalf("failed determining node %q container id, err: %s", c.nodeName, err)
+	}
+
 	c.logger.Debug("containerlab launched successfully")
+}
+
+func (c *clabernetes) runProbes() {
+	c.logger.Debug("starting status probe(s) if configured...")
+
+	tcpProbePort := clabernetesutil.GetEnvIntOrDefault(clabernetesconstants.LauncherTCPProbePort, 0)
+
+	sshProbePort := clabernetesutil.GetEnvIntOrDefault(
+		clabernetesconstants.LauncherSSHProbePort,
+		defaultSSHPort,
+	)
+
+	sshProbeUsername := os.Getenv(clabernetesconstants.LauncherSSHProbeUsername)
+
+	sshProbePassword := os.Getenv(clabernetesconstants.LauncherSSHProbePassword)
+
+	var runTCPProbe bool
+
+	var runSSHProbe bool
+
+	if tcpProbePort != 0 {
+		c.logger.Debugf("will run tcp status probe to port %d", tcpProbePort)
+
+		runTCPProbe = true
+	}
+
+	if sshProbeUsername != "" && sshProbePassword != "" {
+		c.logger.Debugf(
+			"will run ssh status probe using username %s to port %d",
+			sshProbeUsername,
+			sshProbePort,
+		)
+
+		runSSHProbe = true
+	}
+
+	if !runTCPProbe && !runSSHProbe {
+		c.logger.Debug("no probes configured, skipping status probes...")
+
+		return
+	}
+
+	c.logger.Info("starting status probes...")
+
+	ticker := time.NewTicker(statusProbeCheckInterval)
+
+	var nodeAddr string
+
+	for range ticker.C {
+		if nodeAddr == "" {
+			var err error
+
+			nodeAddr, err = getContainerAddr(c.nodeContainerID)
+			if err != nil {
+				c.logger.Warnf(
+					"failed determining node %q address, error: %s",
+					c.nodeName,
+					err,
+				)
+
+				continue
+			}
+		}
+
+		tcpProbeOk := true
+		sshProbeOk := true
+
+		if runTCPProbe {
+			dialer := net.Dialer{
+				Timeout: statusProbeCheckTimeout,
+			}
+
+			tcpConn, err := dialer.Dial("tcp", fmt.Sprintf("%s:%d", nodeAddr, tcpProbePort))
+			if err != nil {
+				tcpProbeOk = false
+			} else {
+				_ = tcpConn.Close()
+			}
+		}
+
+		if runSSHProbe {
+			sshProbeOk = probeSSH(sshProbePort, nodeAddr, sshProbeUsername, sshProbePassword)
+		}
+
+		var writeErr error
+
+		if tcpProbeOk && sshProbeOk {
+			writeErr = os.WriteFile(
+				clabernetesconstants.NodeStatusFile,
+				[]byte(clabernetesconstants.NodeStatusHealthy),
+				clabernetesconstants.PermissionsEveryoneAllPermissions,
+			)
+		} else {
+			writeErr = os.WriteFile(
+				clabernetesconstants.NodeStatusFile,
+				nil,
+				clabernetesconstants.PermissionsEveryoneAllPermissions,
+			)
+		}
+
+		if writeErr != nil {
+			c.logger.Criticalf(
+				"failed writing node status file, this probably should not happen, error: %s",
+				writeErr,
+			)
+
+			c.cancel()
+
+			return
+		}
+	}
+}
+
+func probeSSH(port int, nodeAddr, username, password string) bool {
+	sshConfig := &ssh.ClientConfig{
+		User: username,
+		Auth: []ssh.AuthMethod{
+			ssh.Password(password),
+			ssh.KeyboardInteractive(
+				func(_, _ string, questions []string, _ []bool) ([]string, error) {
+					answers := make([]string, len(questions))
+					for i := range answers {
+						answers[i] = password
+					}
+
+					return answers, nil
+				},
+			),
+		},
+		Timeout:         statusProbeCheckTimeout,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(), //nolint:gosec
+	}
+
+	conn, err := ssh.Dial(
+		"tcp",
+		fmt.Sprintf("%s:%d", nodeAddr, port),
+		sshConfig,
+	)
+	if err != nil {
+		return false
+	}
+
+	_ = conn.Close()
+
+	return true
 }
 
 func (c *clabernetes) watchContainers() {
@@ -207,7 +385,13 @@ func (c *clabernetes) watchContainers() {
 	ticker := time.NewTicker(containerCheckInterval)
 
 	for range ticker.C {
-		currentContainerIDs := c.getContainerIDs()
+		currentContainerIDs, err := getContainerIDs()
+		if err != nil {
+			c.logger.Warnf(
+				"failed listing container ids, error: %s",
+				err,
+			)
+		}
 
 		if len(currentContainerIDs) != len(c.containerIDs) {
 			c.logger.Criticalf(

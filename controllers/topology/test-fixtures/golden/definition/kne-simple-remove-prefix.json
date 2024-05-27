@@ -253,6 +253,9 @@
         ]
     },
     "ResolvedExposedPorts": null,
-    "ShouldUpdateResource": false,
-    "NodesNeedingReboot": null
+    "PreviousNodeStatuses": null,
+    "NodeStatuses": null,
+    "TopologyReady": false,
+    "NodesNeedingReboot": null,
+    "ShouldUpdateResource": false
 }

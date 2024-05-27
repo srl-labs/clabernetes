@@ -8,6 +8,7 @@ import (
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
 	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
+	k8sappsv1 "k8s.io/api/apps/v1"
 	k8scorev1 "k8s.io/api/core/v1"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
@@ -102,7 +103,16 @@ func (c *Controller) SetupWithManager(mgr ctrlruntime.Manager) error {
 				mgr.GetScheme(),
 				mgr.GetRESTMapper(),
 				&clabernetesapisv1alpha1.Topology{},
-				ctrlruntimehandler.OnlyControllerOwner(),
+			),
+		).
+		// watch owned deployments; we (for now?!) only do this so we can track the status of the
+		// startup/readiness probes. maybe in the future we'll do more with this?
+		Watches(
+			&k8sappsv1.Deployment{},
+			ctrlruntimehandler.EnqueueRequestForOwner(
+				mgr.GetScheme(),
+				mgr.GetRESTMapper(),
+				&clabernetesapisv1alpha1.Topology{},
 			),
 		).
 		// watch our config cr too so we get any config updates handled
