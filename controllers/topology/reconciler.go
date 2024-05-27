@@ -887,6 +887,8 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo
 	}
 
 	if topologyReady {
+		reconcileData.TopologyReady = true
+
 		apimachinerymeta.SetStatusCondition(&owningTopology.Status.Conditions, metav1.Condition{
 			Type:    "TopologyReady",
 			Status:  "True",

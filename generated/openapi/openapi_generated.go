@@ -1998,6 +1998,14 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 							},
 						},
 					},
+					"topologyReady": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TopologyReady indicates if all nodes in the topology have reported ready. This is duplicated from the conditions so we can easily snag it for print columns!",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"conditions": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Conditions is a list of conditions for the topology custom resource.",
@@ -2022,6 +2030,7 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 					"configs",
 					"exposedPorts",
 					"nodeReadiness",
+					"topologyReady",
 					"conditions",
 				},
 			},
