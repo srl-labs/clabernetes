@@ -1459,7 +1459,7 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ProbeConfiguration(
 				Properties: map[string]spec.Schema{
 					"startupSeconds": {
 						SchemaProps: spec.SchemaProps{
-							Description: "StartupSeconds is the total amount of seconds to allow for the node to start. This defaults to 10 minutes to hopefully account for slow to boot nodes. Note that there is also a 60 initial delay configured, so technically the default is 11 minutes. Be careful with this delay as there must be time for c9s to (via whatever means) pull the image and load it into docker on the launcher and this can take a bit! Having this be bigger than you think you need is generally better since if the startup probe succeeds ever then the readiness probe takes over anyway.",
+							Description: "StartupSeconds is the total amount of seconds to allow for the node to start. This defaults to ~13 minutes to hopefully account for slow to boot nodes. Note that there is also a 60 initial delay configured, so technically the default is ~14-15 minutes. Be careful with this delay as there must be time for c9s to (via whatever means) pull the image and load it into docker on the launcher and this can take a bit! Having this be bigger than you think you need is generally better since if the startup probe succeeds ever then the readiness probe takes over anyway.",
 							Default:     0,
 							Type:        []string{"integer"},
 							Format:      "int32",
