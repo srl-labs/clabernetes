@@ -113,3 +113,4 @@ status:
     filesFromURL: null
     imagePullSecrets: ""
   removeTopologyPrefix: null
+  topologyReady: false
