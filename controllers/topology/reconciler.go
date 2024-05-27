@@ -17,6 +17,8 @@ import (
 	k8sappsv1 "k8s.io/api/apps/v1"
 	k8scorev1 "k8s.io/api/core/v1"
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
+	apimachinerymeta "k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -885,7 +887,20 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo
 	}
 
 	if topologyReady {
-		reconcileData.TopologyReady = true
+		apimachinerymeta.SetStatusCondition(&owningTopology.Status.Conditions, metav1.Condition{
+			Type:    "TopologyReady",
+			Status:  "True",
+			Reason:  clabernetesconstants.NodeStatusReady,
+			Message: "all nodes report ready",
+		})
+	} else {
+		apimachinerymeta.SetStatusCondition(&owningTopology.Status.Conditions, metav1.Condition{
+			Type:   "TopologyReady",
+			Status: "False",
+			Reason: clabernetesconstants.NodeStatusNotReady,
+			Message: "one or more nodes report not ready, check node status field " +
+				"for more information",
+		})
 	}
 
 	if !reflect.DeepEqual(reconcileData.NodeStatuses, reconcileData.PreviousNodeStatuses) {

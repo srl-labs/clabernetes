@@ -87,6 +87,18 @@ func NormalizeTopology(t *testing.T, objectData []byte) []byte {
 		"del(.status.exposedPorts[].loadBalancerAddress)",
 	)
 
+	// we dont want to wait for node statuses/conditions in ci especially since its slooooooow
+	objectData = YQCommand(
+		t,
+		objectData,
+		"del(.status.conditions)",
+	)
+	objectData = YQCommand(
+		t,
+		objectData,
+		"del(.status.nodeStatuses)",
+	)
+
 	return objectData
 }
 

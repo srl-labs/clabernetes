@@ -1998,12 +1998,20 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 							},
 						},
 					},
-					"topologyReady": {
+					"conditions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "TopologyReady indicates if all nodes in the topology have reported ready.",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
+							Description: "Conditions is a list of conditions for the topology custom resource.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref: ref(
+											"k8s.io/apimachinery/pkg/apis/meta/v1.Condition",
+										),
+									},
+								},
+							},
 						},
 					},
 				},
@@ -2014,11 +2022,11 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 					"configs",
 					"exposedPorts",
 					"nodeReadiness",
-					"topologyReady",
+					"conditions",
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/v1alpha1.ExposedPorts", "github.com/srl-labs/clabernetes/apis/v1alpha1.ReconcileHashes"},
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.ExposedPorts", "github.com/srl-labs/clabernetes/apis/v1alpha1.ReconcileHashes", "k8s.io/apimachinery/pkg/apis/meta/v1.Condition"},
 	}
 }

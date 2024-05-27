@@ -91,7 +91,6 @@ func (r *ReconcileData) SetStatus(
 	}
 
 	owningTopologyStatus.NodeReadiness = r.NodeStatuses
-	owningTopologyStatus.TopologyReady = r.TopologyReady
 
 	return nil
 }

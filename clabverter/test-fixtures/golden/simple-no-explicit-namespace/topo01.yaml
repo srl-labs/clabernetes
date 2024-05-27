@@ -102,6 +102,7 @@ spec:
     probeConfiguration:
       startupSeconds: 0
 status:
+  conditions: null
   configs: null
   exposedPorts: null
   kind: ""
@@ -112,4 +113,3 @@ status:
     filesFromURL: null
     imagePullSecrets: ""
   removeTopologyPrefix: null
-  topologyReady: false

@@ -93,8 +93,8 @@ type TopologyStatus struct {
 	// by the k8s startup/readiness probe (which is in turn managed by the status probe
 	// configuration of the topology). The possible values are "notready" and "ready", "unknown".
 	NodeReadiness map[string]string `json:"nodeReadiness"`
-	// TopologyReady indicates if all nodes in the topology have reported ready.
-	TopologyReady bool `json:"topologyReady"`
+	// Conditions is a list of conditions for the topology custom resource.
+	Conditions []metav1.Condition `json:"conditions"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

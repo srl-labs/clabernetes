@@ -132,7 +132,9 @@ status:
       udpPorts:
         - 161
   kind: containerlab
-  nodeReadiness: {}
+  nodeReadiness:
+    srl1: notready
+    srl2: ready
   reconcileHashes:
     config: 25ea403243c3741d3013049756aa02db0ad8dc3d0d9bf803dc1576f9dda33649
     filesFromURL: {}
