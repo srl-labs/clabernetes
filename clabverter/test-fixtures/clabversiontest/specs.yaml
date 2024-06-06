@@ -1,0 +1,7 @@
+statusProbes:
+  enabled: true
+  excludedNodes:
+  - baguette
+  probeConfiguration:
+    tcpProbeConfiguration:
+       port: 22

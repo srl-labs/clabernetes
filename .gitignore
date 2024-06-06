@@ -40,3 +40,6 @@ cover.out
 
 # goreleaser dist dir for testing builds and such locally
 .dist/
+
+# build files
+cmd/clabverter/build/

@@ -16,17 +16,20 @@ import (
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+	yamlConfig "go.uber.org/config"
+	"gopkg.in/yaml.v3"
 )
 
 const (
 	specIndentSpaces           = 4
-	specDefinitionIndentSpaces = 8
+	specDefinitionIndentSpaces = 10
 	maxBytesForConfigMap       = 950_000
 )
 
 // MustNewClabverter returns an instance of Clabverter or panics.
 func MustNewClabverter(
 	topologyFile,
+	specsFile,
 	outputDirectory,
 	destinationNamespace,
 	naming,
@@ -90,6 +93,7 @@ func MustNewClabverter(
 	return &Clabverter{
 		logger:                  clabverterLogger,
 		topologyFile:            topologyFile,
+		specsFile:               specsFile,
 		githubToken:             githubToken,
 		outputDirectory:         outputDirectory,
 		stdout:                  stdout,
@@ -113,6 +117,7 @@ type Clabverter struct {
 	logger claberneteslogging.Instance
 
 	topologyFile    string
+	specsFile       string
 	outputDirectory string
 	stdout          bool
 
@@ -126,6 +131,7 @@ type Clabverter struct {
 	topologyPath        string
 	topologyPathParent  string
 	isRemotePath        bool
+	valuesPath          string
 	githubGroup         string
 	githubRepo          string
 	githubToken         string
@@ -134,6 +140,8 @@ type Clabverter struct {
 
 	rawClabConfig string
 	clabConfig    *clabernetesutilcontainerlab.Config
+
+	rawSpecValues string
 
 	// mapping of nodeName -> startup-config info for the templating process; this is its own thing
 	// because configurations may be huge and configmaps have a 1M char limit, so while keeping them
@@ -362,6 +370,38 @@ func (c *Clabverter) load() error {
 
 	c.logger.Debug("loading and validating containerlab topology file complete!")
 
+	if c.specsFile != "" {
+		c.valuesPath, err = filepath.Abs(c.specsFile)
+		if err != nil {
+			c.logger.Criticalf("failed determining absolute path of values file, error: %s", err)
+
+			return err
+		}
+
+		c.logger.Debugf(
+			"determined fully qualified spec values file path as: %s", c.valuesPath,
+		)
+
+		c.logger.Debug("attempting to load spec values....")
+
+		rawSpecValuesBytes, err := os.ReadFile(c.valuesPath)
+
+		if err != nil {
+			c.logger.Criticalf(
+				"failed reading spec values file at '%s' from disk, error: %s",
+				c.valuesPath, err,
+			)
+
+			return err
+		}
+
+		// specs file content is non-indented, need to make it match spec indent
+		c.rawSpecValues = "spec:\n" + clabernetesutil.Indent(
+			string(rawSpecValuesBytes),
+			specIndentSpaces,
+		)
+	}
+
 	return nil
 }
 
@@ -453,13 +493,8 @@ func (c *Clabverter) handleManifest() error {
 	err = t.Execute(
 		&rendered,
 		containerlabTemplateVars{
-			Name:      c.clabConfig.Name,
-			Namespace: c.destinationNamespace,
-			// pad w/ a newline so the template can look prettier :)
-			ClabConfig: "\n" + clabernetesutil.Indent(
-				c.rawClabConfig,
-				specDefinitionIndentSpaces,
-			),
+			Name:                c.clabConfig.Name,
+			Namespace:           c.destinationNamespace,
 			Files:               files,
 			FilesFromURL:        c.extraFilesFromURL,
 			InsecureRegistries:  c.insecureRegistries,
@@ -470,19 +505,75 @@ func (c *Clabverter) handleManifest() error {
 		},
 	)
 	if err != nil {
-		c.logger.Criticalf("failed executing configmap template: %s", err)
+		c.logger.Criticalf("failed executing topology template: %s", err)
 
 		return err
 	}
 
 	fileName := fmt.Sprintf("%s/%s.yaml", c.outputDirectory, c.clabConfig.Name)
 
+	// merge yamls
+	// spec values override rendered values
+	rendered_yaml := yamlConfig.Source(strings.NewReader(rendered.String()))
+	spec_yaml := yamlConfig.Source(strings.NewReader(c.rawSpecValues))
+
+	merged_yaml, err := yamlConfig.NewYAML(rendered_yaml, spec_yaml)
+	if err != nil {
+		c.logger.Criticalf("failed merging topology spec values: %s", err)
+
+		return err
+	}
+
+	var target interface{}
+	err = merged_yaml.Get(yamlConfig.Root).Populate(&target)
+	if err != nil {
+		c.logger.Criticalf("failed extracting spec values: %s", err)
+
+		return err
+	}
+
+	rendered_bytes, err := yaml.Marshal(target)
+	if err != nil {
+		c.logger.Criticalf("error marshalling topology YAML: %s", err)
+
+		return err
+	}
+
+	// marshalling removes the yaml start document chars, adding them back
+	rendered_bytes = append([]byte("---\n"), rendered_bytes...)
+
+	// marshalling uglifies multilne clab topo, appending separate template render to keep it pretty
+	t_clab, err := template.ParseFS(Assets, "assets/topology-clab.yaml.template")
+	if err != nil {
+		c.logger.Criticalf("failed loading containerlab definition manifest from assets: %s", err)
+
+		return err
+	}
+
+	var rendered_clab bytes.Buffer
+
+	err = t_clab.Execute(
+		&rendered_clab,
+		containerlabDefinitionTemplateVars{
+			// pad w/ a newline so the template can look prettier :)
+			ClabConfig: "\n" + clabernetesutil.Indent(
+				c.rawClabConfig,
+				specDefinitionIndentSpaces,
+			),
+		},
+	)
+	if err != nil {
+		c.logger.Criticalf("failed executing configmap template: %s", err)
+
+		return err
+	}
+
 	c.renderedFiles = append(
 		c.renderedFiles,
 		renderedContent{
 			friendlyName: "clabernetes manifest",
 			fileName:     fileName,
-			content:      rendered.Bytes(),
+			content:      append(rendered_bytes, rendered_clab.Bytes()...),
 		},
 	)
 
