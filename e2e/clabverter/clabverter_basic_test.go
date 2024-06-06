@@ -25,6 +25,7 @@ func TestClabverterBasic(t *testing.T) {
 
 	c := clabernetesclabverter.MustNewClabverter(
 		"test-fixtures/basic_clab.yaml",
+		"",
 		"test-fixtures",
 		namespace,
 		"prefixed",
