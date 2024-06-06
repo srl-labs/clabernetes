@@ -96,11 +96,14 @@ spec:
     - regcred
   naming: non-prefixed
   statusProbes:
-    enabled: false
-    excludedNodes: null
+    enabled: true
+    excludedNodes:
+    - baguette
     nodeProbeConfigurations: null
     probeConfiguration:
       startupSeconds: 0
+      tcpProbeConfiguration:
+        port: 22
 status:
   conditions: null
   configs: null

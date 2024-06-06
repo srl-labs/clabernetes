@@ -9,6 +9,7 @@ import (
 
 const (
 	topologyFile         = "topologyFile"
+	specsFile            = "specsFile"
 	outputDirectory      = "outputDirectory"
 	destinationNamespace = "destinationNamespace"
 	insecureRegistries   = "insecureRegistries"
@@ -34,6 +35,12 @@ func Entrypoint() *cli.App {
 				Name: topologyFile,
 				Usage: `set the topology file to parse.
 If not set, clabverter will look for a file named '*.clab.y*ml'`,
+				Required: false,
+				Value:    "",
+			},
+			&cli.StringFlag{
+				Name:     specsFile,
+				Usage:    `set the values file to parse that will be included in the topology manifest spec.`,
 				Required: false,
 				Value:    "",
 			},
@@ -102,6 +109,7 @@ If not set, clabverter will look for a file named '*.clab.y*ml'`,
 		Action: func(c *cli.Context) error {
 			err := clabernetesclabverter.MustNewClabverter(
 				c.String(topologyFile),
+				c.String(specsFile),
 				c.String(outputDirectory),
 				c.String(destinationNamespace),
 				c.String(naming),
