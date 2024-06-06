@@ -19,7 +19,7 @@ const (
 // HelmTest executes a test against a helm chart -- this is a very simple/dumb test meant only to
 // ensure that we don't accidentally screw up charts. We do this by storing the "golden" output of
 // a rendered chart (and subcharts if applicable) with a given values file.
-func HelmTest(t *testing.T, chartName, testName, namespace, specsFileName, chartsDir string) {
+func HelmTest(t *testing.T, chartName, testName, namespace, valuesFileName, chartsDir string) {
 	t.Helper()
 
 	// we have to make the chartname/templates dir too since thats where helm wants to write things
@@ -31,10 +31,10 @@ func HelmTest(t *testing.T, chartName, testName, namespace, specsFileName, chart
 	)
 	actualDir := fmt.Sprintf("%s/%s/templates", actualRootDir, chartName)
 
-	var specsFile string
+	var valuesFile string
 
-	if specsFileName != "" {
-		specsFile = fmt.Sprintf(
+	if valuesFileName != "" {
+		valuesFile = fmt.Sprintf(
 			"%s/tests/%s/test-fixtures/%s-values.yaml",
 			chartName,
 			testName,
@@ -74,8 +74,8 @@ func HelmTest(t *testing.T, chartName, testName, namespace, specsFileName, chart
 		args = append(args, "--namespace", namespace)
 	}
 
-	if specsFile != "" {
-		args = append(args, "--values", specsFile)
+	if valuesFile != "" {
+		args = append(args, "--values", valuesFile)
 	}
 
 	HelmCommand(
