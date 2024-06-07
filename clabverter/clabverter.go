@@ -524,6 +524,7 @@ func (c *Clabverter) handleManifest() error {
 	}
 
 	var target interface{}
+
 	err = merged_yaml.Get(yamlConfig.Root).Populate(&target)
 	if err != nil {
 		c.logger.Criticalf("failed extracting spec values: %s", err)
