@@ -37,10 +37,6 @@ type containerlabTemplateVars struct {
 	ContainerlabVersion string
 }
 
-type containerlabDefinitionTemplateVars struct {
-	ClabConfig string
-}
-
 type renderedContent struct {
 	friendlyName string
 	fileName     string

@@ -6,18 +6,18 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	sigsyaml "sigs.k8s.io/yaml"
 	"slices"
 	"sort"
 	"strings"
 	"text/template"
 
+	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
-	yamlConfig "go.uber.org/config"
-	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -504,80 +504,60 @@ func (c *Clabverter) handleManifest() error {
 		},
 	)
 	if err != nil {
-		c.logger.Criticalf("failed executing topology template: %s", err)
+		c.logger.Criticalf("failed executing topology template, error: %s", err)
 
 		return err
+	}
+
+	finalRendered, err := c.mergeConfigSpecWithRenderedTopology(rendered.Bytes())
+	if err != nil {
+		c.logger.Criticalf("failed merging spec config with rendered topology, error: %s", err)
 	}
 
 	fileName := fmt.Sprintf("%s/%s.yaml", c.outputDirectory, c.clabConfig.Name)
-
-	// merge yamls
-	// spec values override rendered values
-	rendered_yaml := yamlConfig.Source(strings.NewReader(rendered.String()))
-	spec_yaml := yamlConfig.Source(strings.NewReader(c.rawSpecValues))
-
-	merged_yaml, err := yamlConfig.NewYAML(rendered_yaml, spec_yaml)
-	if err != nil {
-		c.logger.Criticalf("failed merging topology spec values: %s", err)
-
-		return err
-	}
-
-	var target interface{}
-
-	err = merged_yaml.Get(yamlConfig.Root).Populate(&target)
-	if err != nil {
-		c.logger.Criticalf("failed extracting spec values: %s", err)
-
-		return err
-	}
-
-	rendered_bytes, err := yaml.Marshal(target)
-	if err != nil {
-		c.logger.Criticalf("error marshalling topology YAML: %s", err)
-
-		return err
-	}
-
-	// marshalling removes the yaml start document chars, adding them back
-	rendered_bytes = append([]byte("---\n"), rendered_bytes...)
-
-	// marshalling uglifies multilne clab topo, appending separate template render to keep it pretty
-	t_clab, err := template.ParseFS(Assets, "assets/topology-clab.yaml.template")
-	if err != nil {
-		c.logger.Criticalf("failed loading containerlab definition manifest from assets: %s", err)
-
-		return err
-	}
-
-	var rendered_clab bytes.Buffer
-
-	err = t_clab.Execute(
-		&rendered_clab,
-		containerlabDefinitionTemplateVars{
-			// pad w/ a newline so the template can look prettier :)
-			ClabConfig: "\n" + clabernetesutil.Indent(
-				c.rawClabConfig,
-				specDefinitionIndentSpaces,
-			),
-		},
-	)
-	if err != nil {
-		c.logger.Criticalf("failed executing configmap template: %s", err)
-
-		return err
-	}
 
 	c.renderedFiles = append(
 		c.renderedFiles,
 		renderedContent{
 			friendlyName: "clabernetes manifest",
 			fileName:     fileName,
-			content:      append(rendered_bytes, rendered_clab.Bytes()...),
+			content:      finalRendered,
 		},
 	)
 
 	return nil
+}
+
+func (c *Clabverter) mergeConfigSpecWithRenderedTopology(
+	renderedTopologyBytes []byte,
+) ([]byte, error) {
+	finalTopologySpec := &clabernetesapisv1alpha1.Topology{}
+
+	if c.specsFile == "" {
+		return renderedTopologyBytes, nil
+	}
+
+	content, err := os.ReadFile(c.specsFile)
+	if err != nil {
+		return nil, err
+	}
+
+	err = sigsyaml.Unmarshal(content, &finalTopologySpec)
+	if err != nil {
+		return nil, err
+	}
+
+	err = sigsyaml.Unmarshal(renderedTopologyBytes, finalTopologySpec)
+	if err != nil {
+		return nil, err
+	}
+
+	finalTopologyBytes, err := sigsyaml.Marshal(finalTopologySpec)
+	if err != nil {
+		return nil, err
+	}
+
+	return finalTopologyBytes, nil
 }
 
 func (c *Clabverter) output() error {
