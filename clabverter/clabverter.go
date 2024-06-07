@@ -385,7 +385,6 @@ func (c *Clabverter) load() error {
 		c.logger.Debug("attempting to load spec values....")
 
 		rawSpecValuesBytes, err := os.ReadFile(c.valuesPath)
-
 		if err != nil {
 			c.logger.Criticalf(
 				"failed reading spec values file at '%s' from disk, error: %s",
