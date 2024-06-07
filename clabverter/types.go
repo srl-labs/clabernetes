@@ -28,6 +28,7 @@ type topologyFileFromURLTemplateVars struct {
 type containerlabTemplateVars struct {
 	Name                string
 	Namespace           string
+	ClabConfig          string
 	Files               map[string][]topologyConfigMapTemplateVars
 	FilesFromURL        map[string][]topologyFileFromURLTemplateVars
 	InsecureRegistries  []string
@@ -35,10 +36,6 @@ type containerlabTemplateVars struct {
 	DisableExpose       bool
 	Naming              string
 	ContainerlabVersion string
-}
-
-type containerlabDefinitionTemplateVars struct {
-	ClabConfig string
 }
 
 type renderedContent struct {
