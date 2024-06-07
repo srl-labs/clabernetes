@@ -6,12 +6,7 @@ WORKDIR /clabernetes
 
 RUN mkdir build
 
-COPY cmd/clabernetes/main.go main.go
-
 COPY . .
-
-COPY go.mod go.mod
-COPY go.sum go.sum
 
 RUN go mod download
 
@@ -24,9 +19,11 @@ RUN CGO_ENABLED=0 \
     -a \
     -o \
     build/manager \
-    main.go
+    cmd/clabernetes/main.go
 
 FROM --platform=linux/amd64 debian:bookworm-slim
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ARG DOCKER_VERSION="5:25.*"
 ARG CONTAINERLAB_VERSION="0.51.*"
@@ -34,18 +31,18 @@ ARG NERDCTL_VERSION="1.7.4"
 
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
-        ca-certificates \
-        curl \
-        wget \
-        gnupg \
-        lsb-release \
-        vim \
-        iproute2 \
-        tcpdump \
-        procps \
-        openssh-client \
-        inetutils-ping \
-        traceroute
+            ca-certificates \
+            curl \
+            wget \
+            gnupg \
+            lsb-release \
+            vim \
+            iproute2 \
+            tcpdump \
+            procps \
+            openssh-client \
+            inetutils-ping \
+            traceroute
 
 RUN echo "deb [trusted=yes] https://apt.fury.io/netdevops/ /" | \
     tee -a /etc/apt/sources.list.d/netdevops.list
@@ -65,7 +62,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/apt/archive/*.deb
 
-RUN wget -c https://github.com/containerd/nerdctl/releases/download/v${NERDCTL_VERSION}/nerdctl-${NERDCTL_VERSION}-linux-amd64.tar.gz -O - | tar -xz -C /usr/bin/ && rm /usr/bin/containerd-rootless*.sh
+RUN curl -L https://github.com/containerd/nerdctl/releases/download/v${NERDCTL_VERSION}/nerdctl-${NERDCTL_VERSION}-linux-amd64.tar.gz | tar -xz -C /usr/bin/ && rm /usr/bin/containerd-rootless*.sh
 
 # https://github.com/docker/cli/issues/4807
 RUN sed -i 's/ulimit -Hn/# ulimit -Hn/g' /etc/init.d/docker

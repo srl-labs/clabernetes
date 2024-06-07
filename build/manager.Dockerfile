@@ -8,18 +8,13 @@ RUN mkdir build
 
 # certificates and subdirs need to be owned by root group for openshift reasons -- otherwise we
 # get permission denied issues when the controller tries to create ca/client subdirs
-RUN mkdir -p certificates/ca \
-RUN mkdir -p mkdir certificates/client
-RUN mkdir -p mkdir certificates/webhook
-RUN chgrp -R root /clabernetes/certificates && \
+RUN mkdir -p certificates/ca && \
+    mkdir -p mkdir certificates/client && \
+    mkdir -p mkdir certificates/webhook && \
+    chgrp -R root /clabernetes/certificates && \
     chmod -R 0770 /clabernetes/certificates
 
-COPY cmd/clabernetes/main.go main.go
-
 COPY . .
-
-COPY go.mod go.mod
-COPY go.sum go.sum
 
 RUN go mod download
 
@@ -32,7 +27,7 @@ RUN CGO_ENABLED=0 \
     -a \
     -o \
     build/manager \
-    main.go
+    cmd/clabernetes/main.go
 
 FROM --platform=linux/amd64 gcr.io/distroless/static-debian12:nonroot
 
