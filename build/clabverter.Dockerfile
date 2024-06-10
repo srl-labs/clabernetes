@@ -4,15 +4,10 @@ ARG VERSION
 
 WORKDIR /clabernetes
 
-RUN mkdir build
-RUN mkdir work
-
-COPY cmd/clabverter/main.go main.go
+RUN mkdir build && \
+    mkdir work
 
 COPY . .
-
-COPY go.mod go.mod
-COPY go.sum go.sum
 
 RUN go mod download
 
@@ -23,7 +18,7 @@ RUN CGO_ENABLED=0 \
     -a \
     -o \
     build/clabverter \
-    main.go
+    cmd/clabverter/main.go
 
 FROM --platform=linux/amd64 gcr.io/distroless/static-debian12:nonroot
 

@@ -28,6 +28,7 @@ type topologyFileFromURLTemplateVars struct {
 type containerlabTemplateVars struct {
 	Name                string
 	Namespace           string
+	ClabConfig          string
 	Files               map[string][]topologyConfigMapTemplateVars
 	FilesFromURL        map[string][]topologyFileFromURLTemplateVars
 	InsecureRegistries  []string

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	sigsyaml "sigs.k8s.io/yaml"
 	"slices"
 	"sort"
 	"strings"
@@ -18,6 +17,7 @@ import (
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+	sigsyaml "sigs.k8s.io/yaml"
 )
 
 const (
@@ -29,7 +29,7 @@ const (
 // MustNewClabverter returns an instance of Clabverter or panics.
 func MustNewClabverter(
 	topologyFile,
-	specsFile,
+	topologySpecFile,
 	outputDirectory,
 	destinationNamespace,
 	naming,
@@ -93,7 +93,7 @@ func MustNewClabverter(
 	return &Clabverter{
 		logger:                  clabverterLogger,
 		topologyFile:            topologyFile,
-		specsFile:               specsFile,
+		topologySpecFile:        topologySpecFile,
 		githubToken:             githubToken,
 		outputDirectory:         outputDirectory,
 		stdout:                  stdout,
@@ -117,7 +117,6 @@ type Clabverter struct {
 	logger claberneteslogging.Instance
 
 	topologyFile    string
-	specsFile       string
 	outputDirectory string
 	stdout          bool
 
@@ -128,10 +127,13 @@ type Clabverter struct {
 
 	disableExpose bool
 
-	topologyPath        string
-	topologyPathParent  string
-	isRemotePath        bool
-	valuesPath          string
+	topologyPath       string
+	topologyPathParent string
+	isRemotePath       bool
+
+	topologySpecFile     string
+	topologySpecFilePath string
+
 	githubGroup         string
 	githubRepo          string
 	githubToken         string
@@ -140,8 +142,6 @@ type Clabverter struct {
 
 	rawClabConfig string
 	clabConfig    *clabernetesutilcontainerlab.Config
-
-	rawSpecValues string
 
 	// mapping of nodeName -> startup-config info for the templating process; this is its own thing
 	// because configurations may be huge and configmaps have a 1M char limit, so while keeping them
@@ -313,6 +313,19 @@ func (c *Clabverter) load() error {
 		c.topologyPathParent = filepath.Dir(c.topologyPath)
 	}
 
+	if c.topologySpecFile != "" {
+		c.topologySpecFilePath, err = filepath.Abs(c.topologySpecFile)
+		if err != nil {
+			c.logger.Criticalf("failed determining absolute path of values file, error: %s", err)
+
+			return err
+		}
+	}
+
+	c.logger.Debugf(
+		"determined fully qualified topology spec values file path as: %s", c.topologySpecFilePath,
+	)
+
 	c.logger.Debug("attempting to load containerlab topology....")
 
 	var rawClabConfigBytes []byte
@@ -369,37 +382,6 @@ func (c *Clabverter) load() error {
 	}
 
 	c.logger.Debug("loading and validating containerlab topology file complete!")
-
-	if c.specsFile != "" {
-		c.valuesPath, err = filepath.Abs(c.specsFile)
-		if err != nil {
-			c.logger.Criticalf("failed determining absolute path of values file, error: %s", err)
-
-			return err
-		}
-
-		c.logger.Debugf(
-			"determined fully qualified spec values file path as: %s", c.valuesPath,
-		)
-
-		c.logger.Debug("attempting to load spec values....")
-
-		rawSpecValuesBytes, err := os.ReadFile(c.valuesPath)
-		if err != nil {
-			c.logger.Criticalf(
-				"failed reading spec values file at '%s' from disk, error: %s",
-				c.valuesPath, err,
-			)
-
-			return err
-		}
-
-		// specs file content is non-indented, need to make it match spec indent
-		c.rawSpecValues = "spec:\n" + clabernetesutil.Indent(
-			string(rawSpecValuesBytes),
-			specIndentSpaces,
-		)
-	}
 
 	return nil
 }
@@ -492,8 +474,13 @@ func (c *Clabverter) handleManifest() error {
 	err = t.Execute(
 		&rendered,
 		containerlabTemplateVars{
-			Name:                c.clabConfig.Name,
-			Namespace:           c.destinationNamespace,
+			Name:      c.clabConfig.Name,
+			Namespace: c.destinationNamespace,
+			// pad w/ a newline so the template can look prettier :)
+			ClabConfig: "\n" + clabernetesutil.Indent(
+				c.rawClabConfig,
+				specDefinitionIndentSpaces,
+			),
 			Files:               files,
 			FilesFromURL:        c.extraFilesFromURL,
 			InsecureRegistries:  c.insecureRegistries,
@@ -512,6 +499,8 @@ func (c *Clabverter) handleManifest() error {
 	finalRendered, err := c.mergeConfigSpecWithRenderedTopology(rendered.Bytes())
 	if err != nil {
 		c.logger.Criticalf("failed merging spec config with rendered topology, error: %s", err)
+
+		return err
 	}
 
 	fileName := fmt.Sprintf("%s/%s.yaml", c.outputDirectory, c.clabConfig.Name)
@@ -529,30 +518,46 @@ func (c *Clabverter) handleManifest() error {
 }
 
 func (c *Clabverter) mergeConfigSpecWithRenderedTopology(
-	renderedTopologyBytes []byte,
+	renderedTopologySpecBytes []byte,
 ) ([]byte, error) {
-	finalTopologySpec := &clabernetesapisv1alpha1.Topology{}
+	finalTopology := &clabernetesapisv1alpha1.Topology{}
 
-	if c.specsFile == "" {
-		return renderedTopologyBytes, nil
+	if c.topologySpecFilePath == "" {
+		return renderedTopologySpecBytes, nil
 	}
 
-	content, err := os.ReadFile(c.specsFile)
+	content, err := os.ReadFile(c.topologySpecFilePath)
 	if err != nil {
 		return nil, err
 	}
 
-	err = sigsyaml.Unmarshal(content, &finalTopologySpec)
+	topologySpecFromSpecsFile := &clabernetesapisv1alpha1.TopologySpec{}
+
+	err = sigsyaml.Unmarshal(content, topologySpecFromSpecsFile)
 	if err != nil {
 		return nil, err
 	}
 
-	err = sigsyaml.Unmarshal(renderedTopologyBytes, finalTopologySpec)
+	topologyFromSpecsFile := &clabernetesapisv1alpha1.Topology{
+		Spec: *topologySpecFromSpecsFile,
+	}
+
+	topologyFromSpecsFileBytes, err := sigsyaml.Marshal(topologyFromSpecsFile)
 	if err != nil {
 		return nil, err
 	}
 
-	finalTopologyBytes, err := sigsyaml.Marshal(finalTopologySpec)
+	err = sigsyaml.Unmarshal(topologyFromSpecsFileBytes, finalTopology)
+	if err != nil {
+		return nil, err
+	}
+
+	err = sigsyaml.Unmarshal(renderedTopologySpecBytes, finalTopology)
+	if err != nil {
+		return nil, err
+	}
+
+	finalTopologyBytes, err := sigsyaml.Marshal(finalTopology)
 	if err != nil {
 		return nil, err
 	}
