@@ -72,7 +72,7 @@ type Expose struct {
 	// DisableExpose indicates if exposing nodes via LoadBalancer service should be disabled, by
 	// default any mapped ports in a containerlab topology will be exposed.
 	// +optional
-	DisableExpose bool `json:"disableExpose"`
+	DisableExpose bool `json:"disableExpose,omitempty"`
 	// DisableAutoExpose disables the automagic exposing of ports for a given topology. When this
 	// setting is disabled clabernetes will not auto add ports so if you want to expose (via a
 	// load balancer service) you will need to have ports outlined in your containerlab config
@@ -132,7 +132,7 @@ type Deployment struct {
 	// the configmap is mounted in its entirety (like normal k8s things), so you *probably* want
 	// to specify the sub path unless you are sure what you're doing!
 	// +optional
-	FilesFromConfigMap map[string][]FileFromConfigMap `json:"filesFromConfigMap"`
+	FilesFromConfigMap map[string][]FileFromConfigMap `json:"filesFromConfigMap,omitempty"`
 	// FilesFromURL is a mapping of FileFromURL that define a URL at which to fetch a file, and path
 	// on a launcher node that the file should be downloaded to. This is useful for configs that are
 	// larger than the ConfigMap (etcd) 1Mb size limit.
@@ -273,7 +273,7 @@ type ImagePull struct {
 	// InsecureRegistries is a slice of strings of insecure registries to configure in the launcher
 	// pods.
 	// +optional
-	InsecureRegistries InsecureRegistries `json:"insecureRegistries"`
+	InsecureRegistries InsecureRegistries `json:"insecureRegistries,omitempty"`
 	// PullThroughOverride allows for overriding the image pull through mode for this
 	// particular topology.
 	// +kubebuilder:validation:Enum=auto;always;never
