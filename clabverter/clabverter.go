@@ -531,23 +531,23 @@ func (c *Clabverter) mergeConfigSpecWithRenderedTopology(
 		return nil, err
 	}
 
-	topologySpecFromSpecsFile := &clabernetesapisv1alpha1.TopologySpec{}
+	topologySpecFromTopoSpecsFile := &clabernetesapisv1alpha1.TopologySpec{}
 
-	err = sigsyaml.Unmarshal(content, topologySpecFromSpecsFile)
+	err = sigsyaml.Unmarshal(content, topologySpecFromTopoSpecsFile)
 	if err != nil {
 		return nil, err
 	}
 
-	topologyFromSpecsFile := &clabernetesapisv1alpha1.Topology{
-		Spec: *topologySpecFromSpecsFile,
+	topologyFromTopoSpecsFile := &clabernetesapisv1alpha1.Topology{
+		Spec: *topologySpecFromTopoSpecsFile,
 	}
 
-	topologyFromSpecsFileBytes, err := sigsyaml.Marshal(topologyFromSpecsFile)
+	topologyFromTopoSpecsFileBytes, err := sigsyaml.Marshal(topologyFromTopoSpecsFile)
 	if err != nil {
 		return nil, err
 	}
 
-	err = sigsyaml.Unmarshal(topologyFromSpecsFileBytes, finalTopology)
+	err = sigsyaml.Unmarshal(topologyFromTopoSpecsFileBytes, finalTopology)
 	if err != nil {
 		return nil, err
 	}
@@ -561,6 +561,9 @@ func (c *Clabverter) mergeConfigSpecWithRenderedTopology(
 	if err != nil {
 		return nil, err
 	}
+
+	// add yaml start document chars
+	finalTopologyBytes = append([]byte("---\n"), finalTopologyBytes...)
 
 	return finalTopologyBytes, nil
 }

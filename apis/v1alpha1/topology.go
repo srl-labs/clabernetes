@@ -44,7 +44,7 @@ type TopologySpec struct {
 	// ImagePull holds configurations relevant to how clabernetes launcher pods handle pulling
 	// images.
 	// +optional
-	ImagePull ImagePull `json:"imagePull"`
+	ImagePull ImagePull `json:"imagePull,omitempty"`
 	// Naming tells the clabernetes controller how it should name resources it creates -- that is
 	// whether it should include the containerlab topology name as a prefix on resources spawned
 	// from this Topology or not; this includes the actual (containerlab) node Deployment(s), as
@@ -60,14 +60,14 @@ type TopologySpec struct {
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="naming field is immutable, to change this value delete and re-create the Topology"
 	// +kubebuilder:validation:Enum=prefixed;non-prefixed;global
 	// +kubebuilder:default=global
-	Naming string `json:"naming"`
+	Naming string `json:"naming,omitempty"`
 	// Connectivity defines the type of connectivity to use between nodes in the topology. The
 	// default behavior is to use vxlan tunnels, alternatively you can enable a more experimental
 	// "slurpeeth" connectivity flavor that stuffs traffic into tcp tunnels to avoid any vxlan mtu
 	// and/or fragmentation challenges.
 	// +kubebuilder:validation:Enum=vxlan;slurpeeth
 	// +kubebuilder:default=vxlan
-	Connectivity string `json:"connectivity"`
+	Connectivity string `json:"connectivity,omitempty"`
 }
 
 // TopologyStatus is the status for a Topology resource.
