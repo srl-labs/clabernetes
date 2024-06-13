@@ -1,0 +1,6 @@
+---
+manager:
+  resources:
+    limits:
+      memory: 256Mi
+      cpu: 100m

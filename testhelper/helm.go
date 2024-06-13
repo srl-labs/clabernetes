@@ -22,14 +22,10 @@ const (
 func HelmTest(t *testing.T, chartName, testName, namespace, valuesFileName, chartsDir string) {
 	t.Helper()
 
-	// we have to make the chartname/templates dir too since thats where helm wants to write things
-	actualRootDir := fmt.Sprintf(
-		"%s/tests/%s/test-fixtures/%s-actual",
-		chartName,
-		testName,
-		testName,
-	)
-	actualDir := fmt.Sprintf("%s/%s/templates", actualRootDir, chartName)
+	actualDir, err := filepath.Abs("actual")
+	if err != nil {
+		t.Fatalf("failed getting absolute path for actual dir, error: %s", err)
+	}
 
 	var valuesFile string
 
@@ -42,10 +38,10 @@ func HelmTest(t *testing.T, chartName, testName, namespace, valuesFileName, char
 		)
 	}
 
-	err := os.MkdirAll(actualDir, clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute)
+	err = os.MkdirAll(actualDir, clabernetesconstants.PermissionsEveryoneReadWriteOwnerExecute)
 	if err != nil {
 		t.Fatalf(
-			"failed creating actual output directory %q, error: %s", actualDir, err,
+			"failed creating actual output directory, error: %s", err,
 		)
 	}
 
@@ -53,12 +49,12 @@ func HelmTest(t *testing.T, chartName, testName, namespace, valuesFileName, char
 		if !*SkipCleanup {
 			err = os.Chdir(chartsDir)
 			if err != nil {
-				t.Logf("failed changing to a directory %q, error: %s", actualDir, err)
+				t.Logf("failed changing to a directory, error: %s", err)
 			}
 
-			err = os.RemoveAll(actualRootDir)
+			err = os.RemoveAll(actualDir)
 			if err != nil {
-				t.Logf("failed cleaning up actual output directory %q, error: %s", actualDir, err)
+				t.Logf("failed cleaning up actual output directory, error: %s", err)
 			}
 		}
 	}()
@@ -67,7 +63,7 @@ func HelmTest(t *testing.T, chartName, testName, namespace, valuesFileName, char
 		"template",
 		"./" + chartName,
 		"--output-dir",
-		actualRootDir,
+		actualDir,
 	}
 
 	if namespace != "" {
@@ -84,7 +80,7 @@ func HelmTest(t *testing.T, chartName, testName, namespace, valuesFileName, char
 		args...,
 	)
 
-	renderedTemplates := ReadAllRenderedTemplates(t, actualRootDir)
+	renderedTemplates := ReadAllRenderedTemplates(t, actualDir)
 
 	if *Update {
 		for expectedFileName, expectedFileContent := range renderedTemplates {
@@ -132,7 +128,7 @@ func ReadAllRenderedTemplates(t *testing.T, rootRenderDir string) map[string][]b
 
 	renderedTemplates := map[string][]byte{}
 
-	parentChartFileNames, err := filepath.Glob(fmt.Sprintf("%s/*/templates/*.yaml", rootRenderDir))
+	parentChartFileNames, err := filepath.Glob(fmt.Sprintf("/%s/*/templates/*.yaml", rootRenderDir))
 	if err != nil {
 		t.Fatalf("failed globbing parent chart files, error: '%s'", err)
 	}
@@ -161,8 +157,7 @@ func ReadAllRenderedTemplates(t *testing.T, rootRenderDir string) map[string][]b
 
 	for _, subChartFileName := range subChartFileNames {
 		subChartPathComponents := strings.Split(subChartFileName, string(filepath.Separator))
-
-		subChartName := subChartPathComponents[4]
+		subChartName := subChartPathComponents[len(subChartPathComponents)-3]
 
 		var contents []byte
 
