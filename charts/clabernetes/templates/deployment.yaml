@@ -103,7 +103,7 @@ spec:
               cpu: {{ .Values.manager.resources.requests.cpu }}
             {{- if .Values.manager.resources.limits }}
             limits:
-              {{ toYaml .Values.manager.resources.limits | indent 14 }}
+              {{ toYaml .Values.manager.resources.limits | indent 12 }}
             {{- end }}
       containers:
         - name: manager
@@ -124,7 +124,7 @@ spec:
               cpu: {{ .Values.manager.resources.requests.cpu }}
             {{- if .Values.manager.resources.limits }}
             limits:
-              {{ toYaml .Values.manager.resources.limits | indent 14 }}
+              {{ toYaml .Values.manager.resources.limits | indent 12 }}
             {{- end }}
           ports:
           - name: http
