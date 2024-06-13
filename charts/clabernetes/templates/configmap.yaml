@@ -36,7 +36,12 @@ data:
 {{ .Values.globalConfig.deployment.resourcesByContainerlabKind | toYaml | indent 4 }}
   privilegedLauncher: "{{ .Values.globalConfig.deployment.privilegedLauncher }}"
   containerlabDebug: "{{ .Values.globalConfig.deployment.containerlabDebug }}"
+  {{- if .Values.globalConfig.deployment.containerlabTimeout }}
   containerlabTimeout: {{ .Values.globalConfig.deployment.containerlabTimeout }}
+  {{- end }}
+  {{- if .Values.globalConfig.deployment.containerlabVersion }}
+  containerlabVersion: {{ .Values.globalConfig.deployment.containerlabVersion }}
+  {{- end }}
   inClusterDNSSuffix: {{ .Values.globalConfig.inClusterDNSSuffix }}
   imagePullThroughMode: {{ .Values.globalConfig.imagePull.imagePullThroughMode }}
   launcherImage: {{ .Values.globalConfig.deployment.launcherImage }}
@@ -49,5 +54,4 @@ data:
   criKindOverride: {{ .Values.globalConfig.imagePull.criKindOverride }}
   {{- end }}
   naming: {{ .Values.globalConfig.naming }}
-  containerlabVersion: {{ .Values.globalConfig.deployment.containerlabVersion }}
 {{- end }}

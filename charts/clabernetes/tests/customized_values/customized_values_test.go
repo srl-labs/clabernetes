@@ -16,10 +16,9 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// TestDefaultValues -- really just here to ensure that we dont accidentally break our charts; this
-// will probably be *highly* irritating in times of lots of chart updates, but, once we know the
-// template are in a good place we can always just re-generate the "golden" outputs.
-func TestDefaultValues(t *testing.T) {
+// TestCustomValues -- similar to the default one but we can just chuck in some custom values stuff
+// in here to test lots of the helm rendering at once.
+func TestCustomValues(t *testing.T) {
 	t.Parallel()
 
 	testName := "customized_values"

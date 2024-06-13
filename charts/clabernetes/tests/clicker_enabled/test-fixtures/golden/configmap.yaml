@@ -44,4 +44,3 @@ data:
   launcherImagePullPolicy: IfNotPresent
   launcherLogLevel: info
   naming: prefixed
-  containerlabVersion:

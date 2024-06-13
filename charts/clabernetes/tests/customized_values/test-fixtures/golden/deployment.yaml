@@ -1,0 +1,134 @@
+---
+# Source: clabernetes/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clabernetes-manager
+  namespace: clabernetes
+  labels:
+    chart: "clabernetes-0.0.0"
+    release: release-name
+    heritage: Helm
+    revision: "1"
+    app.kubernetes.io/name: "clabernetes-manager"
+    clabernetes/app: clabernetes
+    clabernetes/name: "clabernetes-manager"
+    clabernetes/component: manager
+spec:
+  selector:
+    matchLabels:
+      clabernetes/app: clabernetes
+      release: release-name
+  replicas: 3
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        chart: "clabernetes-0.0.0"
+        release: release-name
+        heritage: Helm
+        revision: "1"
+        app.kubernetes.io/name: "clabernetes-manager"
+        clabernetes/app: clabernetes
+        clabernetes/name: "clabernetes-manager"
+        clabernetes/component: manager
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    clabernetes/app: clabernetes
+                    clabernetes/name: "clabernetes-manager"
+                    clabernetes/component: manager
+                topologyKey: kubernetes.io/hostname
+            - weight: 50
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    clabernetes/app: clabernetes
+                    clabernetes/name: "clabernetes-manager"
+                    clabernetes/component: manager
+                topologyKey: topology.kubernetes.io/zone
+      terminationGracePeriodSeconds: 10
+      serviceAccountName: "clabernetes-service-account"
+      initContainers:
+        - name: init
+          image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:dev-latest"
+          imagePullPolicy: IfNotPresent
+          command: ["/clabernetes/manager", "run", "--initializer"]
+          env:
+            - name: APP_NAME
+              value: clabernetes
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: CLIENT_OPERATION_TIMEOUT_MULTIPLIER
+              value: "1"
+            - name: MANAGER_LOGGER_LEVEL
+              value: info
+            - name: CONTROLLER_LOGGER_LEVEL
+              value: info
+            - name: LAUNCHER_IMAGE
+              value: "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:dev-latest"
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 50m
+            limits:
+                          cpu: 100m
+            memory: 256Mi
+      containers:
+        - name: manager
+          image: "ghcr.io/srl-labs/clabernetes/clabernetes-manager:dev-latest"
+          imagePullPolicy: IfNotPresent
+          command: ["/clabernetes/manager", "run"]
+          env:
+            - name: APP_NAME
+              value: clabernetes
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: CLIENT_OPERATION_TIMEOUT_MULTIPLIER
+              value: "1"
+            - name: MANAGER_LOGGER_LEVEL
+              value: info
+            - name: CONTROLLER_LOGGER_LEVEL
+              value: info
+            - name: LAUNCHER_IMAGE
+              value: "ghcr.io/srl-labs/clabernetes/clabernetes-launcher:dev-latest"
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 50m
+            limits:
+                          cpu: 100m
+            memory: 256Mi
+          ports:
+          - name: http
+            containerPort: 10443
+          livenessProbe:
+            httpGet:
+              path: /alive
+              port: 10443
+              scheme: HTTPS
+            successThreshold: 1
+            failureThreshold: 2
+            periodSeconds: 30
+            timeoutSeconds: 5
