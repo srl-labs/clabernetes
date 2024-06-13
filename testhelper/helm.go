@@ -157,8 +157,7 @@ func ReadAllRenderedTemplates(t *testing.T, rootRenderDir string) map[string][]b
 
 	for _, subChartFileName := range subChartFileNames {
 		subChartPathComponents := strings.Split(subChartFileName, string(filepath.Separator))
-
-		subChartName := subChartPathComponents[4]
+		subChartName := subChartPathComponents[len(subChartPathComponents)-3]
 
 		var contents []byte
 

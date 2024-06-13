@@ -1,11 +1,11 @@
 package default_values_test
 
 import (
-	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	"os"
 	"path/filepath"
 	"testing"
 
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetestesthelper "github.com/srl-labs/clabernetes/testhelper"
 )
 
