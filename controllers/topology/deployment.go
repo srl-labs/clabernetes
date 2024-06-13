@@ -635,6 +635,20 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv( //nolint: funlen
 		)
 	}
 
+	if len(owningTopology.Spec.Deployment.ExtraEnv) > 0 {
+		envs = append(
+			envs,
+			owningTopology.Spec.Deployment.ExtraEnv...,
+		)
+	} else {
+		globalEnvs := r.configManagerGetter().GetExtraEnv()
+
+		envs = append(
+			envs,
+			globalEnvs...,
+		)
+	}
+
 	deployment.Spec.Template.Spec.Containers[0].Env = envs
 }
 

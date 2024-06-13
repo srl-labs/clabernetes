@@ -138,6 +138,10 @@ globalConfig:
     # version of containerlab. generally don't set this unless you need to.
     containerlabVersion: ""
 
+    # extraEnv is a list of k8scorev1.EnvVar that will be set on any launcher pods. Note that any
+    # configured global config env vars will be ignored if a Topology has an extraEnv config.
+    extraEnv: []
+
   # name is the global setting that governs a Topology's "naming" field when set to "global".
   # valid options are "prefixed" or "non-prefixed", see the api types for more detail.
   naming: prefixed

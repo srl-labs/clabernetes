@@ -179,6 +179,11 @@ type Deployment struct {
 	// +kubebuilder:validation:Enum=disabled;critical;warn;info;debug
 	// +optional
 	LauncherLogLevel string `json:"launcherLogLevel,omitempty"`
+	// ExtraEnv is a list of additional environment variables to set on the launcher container. The
+	// values here override any configured global config extra envs!
+	// +optional
+	// +listType=atomic
+	ExtraEnv []k8scorev1.EnvVar `json:"extraEnv"`
 }
 
 // Scheduling holds information about how the launcher pod(s) should be configured with respect

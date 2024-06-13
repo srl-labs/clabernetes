@@ -114,6 +114,12 @@
             },
             "containerlabVersion": {
               "type": "string"
+            },
+            "extraEnv": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
             }
           }
         },

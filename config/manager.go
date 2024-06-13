@@ -145,6 +145,8 @@ type Manager interface {
 	GetLauncherImagePullPolicy() string
 	// GetLauncherLogLevel returns the default launcher log level.
 	GetLauncherLogLevel() string
+	// GetExtraEnv returns the default extra env vars for setting on launcher containers.
+	GetExtraEnv() []k8scorev1.EnvVar
 	// GetRemoveTopologyPrefix returns true if the topology prefix should be removed from Topology
 	// resources, otherwise false.
 	GetRemoveTopologyPrefix() bool
