@@ -1,6 +1,7 @@
 package default_values_test
 
 import (
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	"os"
 	"path/filepath"
 	"testing"
@@ -30,5 +31,12 @@ func TestDefaultValues(t *testing.T) {
 
 	t.Log(chartsDir)
 
-	clabernetestesthelper.HelmTest(t, chartName, testName, "", "", chartsDir)
+	clabernetestesthelper.HelmTest(
+		t,
+		chartName,
+		testName,
+		clabernetesconstants.Clabernetes,
+		"",
+		chartsDir,
+	)
 }

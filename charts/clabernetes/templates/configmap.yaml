@@ -44,7 +44,9 @@ data:
   {{- end }}
   inClusterDNSSuffix: {{ .Values.globalConfig.inClusterDNSSuffix }}
   imagePullThroughMode: {{ .Values.globalConfig.imagePull.imagePullThroughMode }}
+  {{- if .Values.globalConfig.deployment.launcherImage }}
   launcherImage: {{ .Values.globalConfig.deployment.launcherImage }}
+  {{- end }}
   launcherImagePullPolicy: {{ .Values.globalConfig.deployment.launcherImagePullPolicy }}
   launcherLogLevel: {{ .Values.globalConfig.deployment.launcherLogLevel }}
   {{- if .Values.globalConfig.imagePull.criSockOverride }}
