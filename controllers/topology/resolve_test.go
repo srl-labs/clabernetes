@@ -208,7 +208,7 @@ func TestReconcileResolvePVC(t *testing.T) {
 					Name:      owningTopologyName,
 					Namespace: "clabernetes",
 				},
-				Spec: clabernetesapisv1alpha1.TopologySpec{
+				Spec: &clabernetesapisv1alpha1.TopologySpec{
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						Persistence: clabernetesapisv1alpha1.Persistence{
 							Enabled: false,
@@ -239,7 +239,7 @@ func TestReconcileResolvePVC(t *testing.T) {
 					Name:      owningTopologyName,
 					Namespace: "clabernetes",
 				},
-				Spec: clabernetesapisv1alpha1.TopologySpec{
+				Spec: &clabernetesapisv1alpha1.TopologySpec{
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						Persistence: clabernetesapisv1alpha1.Persistence{
 							Enabled: true,
@@ -270,7 +270,7 @@ func TestReconcileResolvePVC(t *testing.T) {
 					Name:      owningTopologyName,
 					Namespace: "clabernetes",
 				},
-				Spec: clabernetesapisv1alpha1.TopologySpec{
+				Spec: &clabernetesapisv1alpha1.TopologySpec{
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						Persistence: clabernetesapisv1alpha1.Persistence{
 							Enabled: false,

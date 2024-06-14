@@ -520,8 +520,6 @@ func (c *Clabverter) handleManifest() error {
 func (c *Clabverter) mergeConfigSpecWithRenderedTopology(
 	renderedTopologySpecBytes []byte,
 ) ([]byte, error) {
-	finalTopology := &clabernetesapisv1alpha1.Topology{}
-
 	if c.topologySpecFilePath == "" {
 		return renderedTopologySpecBytes, nil
 	}
@@ -539,7 +537,7 @@ func (c *Clabverter) mergeConfigSpecWithRenderedTopology(
 	}
 
 	topologyFromTopoSpecsFile := &clabernetesapisv1alpha1.Topology{
-		Spec: *topologySpecFromTopoSpecsFile,
+		Spec: topologySpecFromTopoSpecsFile,
 	}
 
 	topologyFromTopoSpecsFileBytes, err := sigsyaml.Marshal(topologyFromTopoSpecsFile)
@@ -547,12 +545,14 @@ func (c *Clabverter) mergeConfigSpecWithRenderedTopology(
 		return nil, err
 	}
 
-	err = sigsyaml.Unmarshal(topologyFromTopoSpecsFileBytes, finalTopology)
+	finalTopology := &clabernetesapisv1alpha1.Topology{}
+
+	err = sigsyaml.UnmarshalStrict(topologyFromTopoSpecsFileBytes, finalTopology)
 	if err != nil {
 		return nil, err
 	}
 
-	err = sigsyaml.Unmarshal(renderedTopologySpecBytes, finalTopology)
+	err = sigsyaml.UnmarshalStrict(renderedTopologySpecBytes, finalTopology)
 	if err != nil {
 		return nil, err
 	}

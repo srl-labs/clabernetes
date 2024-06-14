@@ -143,7 +143,7 @@ func TestRenderDeployment(t *testing.T) {
 					Name:      "render-deployment-test",
 					Namespace: "clabernetes",
 				},
-				Spec: clabernetesapisv1alpha1.TopologySpec{
+				Spec: &clabernetesapisv1alpha1.TopologySpec{
 					Connectivity: clabernetesconstants.ConnectivityVXLAN,
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
@@ -201,7 +201,7 @@ func TestRenderDeployment(t *testing.T) {
 					Name:      "render-deployment-test",
 					Namespace: "clabernetes",
 				},
-				Spec: clabernetesapisv1alpha1.TopologySpec{
+				Spec: &clabernetesapisv1alpha1.TopologySpec{
 					Connectivity: clabernetesconstants.ConnectivityVXLAN,
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						PrivilegedLauncher: clabernetesutil.ToPointer(false),
@@ -262,7 +262,7 @@ func TestRenderDeployment(t *testing.T) {
 					Name:      "render-deployment-test",
 					Namespace: "clabernetes",
 				},
-				Spec: clabernetesapisv1alpha1.TopologySpec{
+				Spec: &clabernetesapisv1alpha1.TopologySpec{
 					Connectivity: clabernetesconstants.ConnectivityVXLAN,
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						ContainerlabDebug: clabernetesutil.ToPointer(true),
@@ -323,7 +323,7 @@ func TestRenderDeployment(t *testing.T) {
 					Name:      "render-deployment-test",
 					Namespace: "clabernetes",
 				},
-				Spec: clabernetesapisv1alpha1.TopologySpec{
+				Spec: &clabernetesapisv1alpha1.TopologySpec{
 					Connectivity: clabernetesconstants.ConnectivityVXLAN,
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						LauncherLogLevel: "debug",
@@ -384,7 +384,7 @@ func TestRenderDeployment(t *testing.T) {
 					Name:      "render-deployment-test",
 					Namespace: "clabernetes",
 				},
-				Spec: clabernetesapisv1alpha1.TopologySpec{
+				Spec: &clabernetesapisv1alpha1.TopologySpec{
 					Connectivity: clabernetesconstants.ConnectivityVXLAN,
 					ImagePull: clabernetesapisv1alpha1.ImagePull{
 						InsecureRegistries: []string{"1.2.3.4", "potato.com"},
@@ -445,7 +445,7 @@ func TestRenderDeployment(t *testing.T) {
 					Name:      "render-deployment-test",
 					Namespace: "clabernetes",
 				},
-				Spec: clabernetesapisv1alpha1.TopologySpec{
+				Spec: &clabernetesapisv1alpha1.TopologySpec{
 					Connectivity: clabernetesconstants.ConnectivityVXLAN,
 					ImagePull: clabernetesapisv1alpha1.ImagePull{
 						DockerDaemonConfig: "sneakydockerdaemonconfig",
@@ -506,7 +506,7 @@ func TestRenderDeployment(t *testing.T) {
 					Name:      "render-deployment-test",
 					Namespace: "clabernetes",
 				},
-				Spec: clabernetesapisv1alpha1.TopologySpec{
+				Spec: &clabernetesapisv1alpha1.TopologySpec{
 					Connectivity: clabernetesconstants.ConnectivityVXLAN,
 					ImagePull: clabernetesapisv1alpha1.ImagePull{
 						DockerConfig: "sneakydockerconfig",
@@ -552,7 +552,7 @@ func TestRenderDeployment(t *testing.T) {
 					Name:      "render-deployment-test",
 					Namespace: "clabernetes",
 				},
-				Spec: clabernetesapisv1alpha1.TopologySpec{
+				Spec: &clabernetesapisv1alpha1.TopologySpec{
 					Connectivity: clabernetesconstants.ConnectivityVXLAN,
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						Scheduling: clabernetesapisv1alpha1.Scheduling{
@@ -608,7 +608,7 @@ func TestRenderDeployment(t *testing.T) {
 					Name:      "render-deployment-test",
 					Namespace: "clabernetes",
 				},
-				Spec: clabernetesapisv1alpha1.TopologySpec{
+				Spec: &clabernetesapisv1alpha1.TopologySpec{
 					Connectivity: clabernetesconstants.ConnectivitySlurpeeth,
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
@@ -621,7 +621,7 @@ func TestRenderDeployment(t *testing.T) {
 		`,
 					},
 				},
-				Status: clabernetesapisv1alpha1.TopologyStatus{
+				Status: &clabernetesapisv1alpha1.TopologyStatus{
 					// to set naming for test purposes we need to update the *status* of the topo
 					// since this is done very early in the rec
 					RemoveTopologyPrefix: clabernetesutil.ToPointer(true),
@@ -654,7 +654,7 @@ func TestRenderDeployment(t *testing.T) {
 					Name:      "render-deployment-test",
 					Namespace: "clabernetes",
 				},
-				Spec: clabernetesapisv1alpha1.TopologySpec{
+				Spec: &clabernetesapisv1alpha1.TopologySpec{
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						ContainerlabVersion: "0.51.1",
 					},
@@ -669,7 +669,7 @@ func TestRenderDeployment(t *testing.T) {
 		`,
 					},
 				},
-				Status: clabernetesapisv1alpha1.TopologyStatus{
+				Status: &clabernetesapisv1alpha1.TopologyStatus{
 					// to set naming for test purposes we need to update the *status* of the topo
 					// since this is done very early in the rec
 					RemoveTopologyPrefix: clabernetesutil.ToPointer(true),

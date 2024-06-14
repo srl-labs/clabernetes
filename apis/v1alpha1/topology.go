@@ -18,8 +18,8 @@ type Topology struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   TopologySpec   `json:"spec,omitempty"`
-	Status TopologyStatus `json:"status,omitempty"`
+	Spec   *TopologySpec   `json:"spec,omitempty"`
+	Status *TopologyStatus `json:"status,omitempty"`
 }
 
 // TopologySpec is the spec for a Topology resource.

@@ -135,7 +135,7 @@ func TestRenderServiceFabric(t *testing.T) {
 					Name:      "render-service-fabric-test",
 					Namespace: "clabernetes",
 				},
-				Spec: clabernetesapisv1alpha1.TopologySpec{
+				Spec: &clabernetesapisv1alpha1.TopologySpec{
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
     name: test
@@ -157,7 +157,7 @@ func TestRenderServiceFabric(t *testing.T) {
 					Name:      "render-service-fabric-test",
 					Namespace: "clabernetes",
 				},
-				Spec: clabernetesapisv1alpha1.TopologySpec{
+				Spec: &clabernetesapisv1alpha1.TopologySpec{
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
     name: test
@@ -169,7 +169,7 @@ func TestRenderServiceFabric(t *testing.T) {
 `,
 					},
 				},
-				Status: clabernetesapisv1alpha1.TopologyStatus{
+				Status: &clabernetesapisv1alpha1.TopologyStatus{
 					// to set naming for test purposes we need to update the *status* of the topo
 					// since this is done very early in the rec
 					RemoveTopologyPrefix: clabernetesutil.ToPointer(true),
