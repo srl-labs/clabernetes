@@ -29,7 +29,7 @@ const (
 // MustNewClabverter returns an instance of Clabverter or panics.
 func MustNewClabverter(
 	topologyFile,
-	topologySpecFile,
+	topoSpecFile,
 	outputDirectory,
 	destinationNamespace,
 	naming,
@@ -93,7 +93,7 @@ func MustNewClabverter(
 	return &Clabverter{
 		logger:                  clabverterLogger,
 		topologyFile:            topologyFile,
-		topologySpecFile:        topologySpecFile,
+		topoSpecFile:            topoSpecFile,
 		githubToken:             githubToken,
 		outputDirectory:         outputDirectory,
 		stdout:                  stdout,
@@ -131,8 +131,8 @@ type Clabverter struct {
 	topologyPathParent string
 	isRemotePath       bool
 
-	topologySpecFile     string
-	topologySpecFilePath string
+	topoSpecFile     string
+	topoSpecFilePath string
 
 	githubGroup         string
 	githubRepo          string
@@ -313,8 +313,8 @@ func (c *Clabverter) load() error {
 		c.topologyPathParent = filepath.Dir(c.topologyPath)
 	}
 
-	if c.topologySpecFile != "" {
-		c.topologySpecFilePath, err = filepath.Abs(c.topologySpecFile)
+	if c.topoSpecFile != "" {
+		c.topoSpecFilePath, err = filepath.Abs(c.topoSpecFile)
 		if err != nil {
 			c.logger.Criticalf("failed determining absolute path of values file, error: %s", err)
 
@@ -323,7 +323,7 @@ func (c *Clabverter) load() error {
 	}
 
 	c.logger.Debugf(
-		"determined fully qualified topology spec values file path as: %s", c.topologySpecFilePath,
+		"determined fully qualified topology spec values file path as: %s", c.topoSpecFilePath,
 	)
 
 	c.logger.Debug("attempting to load containerlab topology....")
@@ -520,11 +520,11 @@ func (c *Clabverter) handleManifest() error {
 func (c *Clabverter) mergeConfigSpecWithRenderedTopology(
 	renderedTopologySpecBytes []byte,
 ) ([]byte, error) {
-	if c.topologySpecFilePath == "" {
+	if c.topoSpecFilePath == "" {
 		return renderedTopologySpecBytes, nil
 	}
 
-	content, err := os.ReadFile(c.topologySpecFilePath)
+	content, err := os.ReadFile(c.topoSpecFilePath)
 	if err != nil {
 		return nil, err
 	}
