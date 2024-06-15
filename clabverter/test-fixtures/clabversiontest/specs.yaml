@@ -1,0 +1,12 @@
+---
+connectivity: slurpeeth
+imagePull:
+  pullSecrets:
+    - regcred
+statusProbes:
+  enabled: true
+  excludedNodes:
+  - baguette
+  probeConfiguration:
+    tcpProbeConfiguration:
+      port: 22

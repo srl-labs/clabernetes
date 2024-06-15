@@ -11,22 +11,35 @@ import (
 	"strings"
 	"text/template"
 
+	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	sigsyaml "sigs.k8s.io/yaml"
 )
 
 const (
 	specIndentSpaces           = 4
-	specDefinitionIndentSpaces = 8
+	specDefinitionIndentSpaces = 10
 	maxBytesForConfigMap       = 950_000
 )
+
+// StatuslessTopology is the same as a "normal" Topology without the status field since this field
+// should not be present in clabverter output.
+type StatuslessTopology struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec clabernetesapisv1alpha1.TopologySpec `json:"spec,omitempty"`
+}
 
 // MustNewClabverter returns an instance of Clabverter or panics.
 func MustNewClabverter(
 	topologyFile,
+	topoSpecFile,
 	outputDirectory,
 	destinationNamespace,
 	naming,
@@ -90,6 +103,7 @@ func MustNewClabverter(
 	return &Clabverter{
 		logger:                  clabverterLogger,
 		topologyFile:            topologyFile,
+		topoSpecFile:            topoSpecFile,
 		githubToken:             githubToken,
 		outputDirectory:         outputDirectory,
 		stdout:                  stdout,
@@ -123,9 +137,13 @@ type Clabverter struct {
 
 	disableExpose bool
 
-	topologyPath        string
-	topologyPathParent  string
-	isRemotePath        bool
+	topologyPath       string
+	topologyPathParent string
+	isRemotePath       bool
+
+	topoSpecFile     string
+	topoSpecFilePath string
+
 	githubGroup         string
 	githubRepo          string
 	githubToken         string
@@ -305,6 +323,19 @@ func (c *Clabverter) load() error {
 		c.topologyPathParent = filepath.Dir(c.topologyPath)
 	}
 
+	if c.topoSpecFile != "" {
+		c.topoSpecFilePath, err = filepath.Abs(c.topoSpecFile)
+		if err != nil {
+			c.logger.Criticalf("failed determining absolute path of values file, error: %s", err)
+
+			return err
+		}
+	}
+
+	c.logger.Debugf(
+		"determined fully qualified topology spec values file path as: %s", c.topoSpecFilePath,
+	)
+
 	c.logger.Debug("attempting to load containerlab topology....")
 
 	var rawClabConfigBytes []byte
@@ -470,7 +501,14 @@ func (c *Clabverter) handleManifest() error {
 		},
 	)
 	if err != nil {
-		c.logger.Criticalf("failed executing configmap template: %s", err)
+		c.logger.Criticalf("failed executing topology template, error: %s", err)
+
+		return err
+	}
+
+	finalRendered, err := c.mergeConfigSpecWithRenderedTopology(rendered.Bytes())
+	if err != nil {
+		c.logger.Criticalf("failed merging spec config with rendered topology, error: %s", err)
 
 		return err
 	}
@@ -482,11 +520,62 @@ func (c *Clabverter) handleManifest() error {
 		renderedContent{
 			friendlyName: "clabernetes manifest",
 			fileName:     fileName,
-			content:      rendered.Bytes(),
+			content:      finalRendered,
 		},
 	)
 
 	return nil
+}
+
+func (c *Clabverter) mergeConfigSpecWithRenderedTopology(
+	renderedTopologySpecBytes []byte,
+) ([]byte, error) {
+	if c.topoSpecFilePath == "" {
+		return renderedTopologySpecBytes, nil
+	}
+
+	content, err := os.ReadFile(c.topoSpecFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	topologySpecFromTopoSpecsFile := &clabernetesapisv1alpha1.TopologySpec{}
+
+	err = sigsyaml.Unmarshal(content, topologySpecFromTopoSpecsFile)
+	if err != nil {
+		return nil, err
+	}
+
+	topologyFromTopoSpecsFile := &StatuslessTopology{
+		Spec: *topologySpecFromTopoSpecsFile,
+	}
+
+	topologyFromTopoSpecsFileBytes, err := sigsyaml.Marshal(topologyFromTopoSpecsFile)
+	if err != nil {
+		return nil, err
+	}
+
+	finalTopology := &StatuslessTopology{}
+
+	err = sigsyaml.Unmarshal(topologyFromTopoSpecsFileBytes, finalTopology)
+	if err != nil {
+		return nil, err
+	}
+
+	err = sigsyaml.Unmarshal(renderedTopologySpecBytes, finalTopology)
+	if err != nil {
+		return nil, err
+	}
+
+	finalTopologyBytes, err := sigsyaml.Marshal(finalTopology)
+	if err != nil {
+		return nil, err
+	}
+
+	// add yaml start document chars
+	finalTopologyBytes = append([]byte("---\n"), finalTopologyBytes...)
+
+	return finalTopologyBytes, nil
 }
 
 func (c *Clabverter) output() error {

@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesclabverter "github.com/srl-labs/clabernetes/clabverter"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
@@ -22,6 +21,7 @@ func TestClabvert(t *testing.T) {
 	cases := []struct {
 		name                 string
 		topologyFile         string
+		topoSpecsFile        string
 		destinationNamespace string
 		insecureRegistries   string
 		imagePullSecrets     string
@@ -32,17 +32,19 @@ func TestClabvert(t *testing.T) {
 		{
 			name:                 "simple",
 			topologyFile:         "test-fixtures/clabversiontest/clab.yaml",
+			topoSpecsFile:        "",
 			destinationNamespace: "notclabernetes",
 			insecureRegistries:   "1.2.3.4",
-			imagePullSecrets:     "",
+			imagePullSecrets:     "regcred",
 			naming:               "prefixed",
 			containerlabVersion:  "",
 		},
 		{
 			name:                "simple-no-explicit-namespace",
 			topologyFile:        "test-fixtures/clabversiontest/clab.yaml",
+			topoSpecsFile:       "test-fixtures/clabversiontest/specs.yaml",
 			insecureRegistries:  "1.2.3.4",
-			imagePullSecrets:    "regcred",
+			imagePullSecrets:    "",
 			disableExpose:       true,
 			naming:              "non-prefixed",
 			containerlabVersion: "0.51.0",
@@ -87,6 +89,7 @@ func TestClabvert(t *testing.T) {
 
 				clabverter := clabernetesclabverter.MustNewClabverter(
 					testCase.topologyFile,
+					testCase.topoSpecsFile,
 					actualDir,
 					testCase.destinationNamespace,
 					testCase.naming,
@@ -193,7 +196,7 @@ func normalizeFromFileFilePaths(t *testing.T, b []byte) []byte {
 		t.Fatalf("failed getting working dir, err: %s", err)
 	}
 
-	topology := &clabernetesapisv1alpha1.Topology{}
+	topology := &clabernetesclabverter.StatuslessTopology{}
 
 	err = yaml.Unmarshal(b, topology)
 	if err != nil {

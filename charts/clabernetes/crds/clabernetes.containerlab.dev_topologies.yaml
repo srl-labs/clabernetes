@@ -594,7 +594,6 @@ spec:
                     type: object
                 type: object
             required:
-            - connectivity
             - definition
             - naming
             type: object
@@ -675,6 +674,7 @@ spec:
                   - type
                   type: object
                 type: array
+                x-kubernetes-list-type: atomic
               configs:
                 additionalProperties:
                   type: string

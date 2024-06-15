@@ -67,7 +67,7 @@ type TopologySpec struct {
 	// and/or fragmentation challenges.
 	// +kubebuilder:validation:Enum=vxlan;slurpeeth
 	// +kubebuilder:default=vxlan
-	Connectivity string `json:"connectivity"`
+	Connectivity string `json:"connectivity,omitempty"`
 }
 
 // TopologyStatus is the status for a Topology resource.
@@ -97,6 +97,7 @@ type TopologyStatus struct {
 	// from the conditions so we can easily snag it for print columns!
 	TopologyReady bool `json:"topologyReady"`
 	// Conditions is a list of conditions for the topology custom resource.
+	// +listType=atomic
 	Conditions []metav1.Condition `json:"conditions"`
 }
 
