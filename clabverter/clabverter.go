@@ -29,7 +29,7 @@ const (
 // MustNewClabverter returns an instance of Clabverter or panics.
 func MustNewClabverter(
 	topologyFile,
-	topoSpecFile,
+	topologySpecFile,
 	outputDirectory,
 	destinationNamespace,
 	naming,
@@ -93,7 +93,7 @@ func MustNewClabverter(
 	return &Clabverter{
 		logger:                  clabverterLogger,
 		topologyFile:            topologyFile,
-		topoSpecFile:            topoSpecFile,
+		topologySpecFile:        topologySpecFile,
 		githubToken:             githubToken,
 		outputDirectory:         outputDirectory,
 		stdout:                  stdout,
@@ -131,8 +131,8 @@ type Clabverter struct {
 	topologyPathParent string
 	isRemotePath       bool
 
-	topoSpecFile     string
-	topoSpecFilePath string
+	topologySpecFile     string
+	topologySpecFilePath string
 
 	githubGroup         string
 	githubRepo          string
@@ -313,8 +313,8 @@ func (c *Clabverter) load() error {
 		c.topologyPathParent = filepath.Dir(c.topologyPath)
 	}
 
-	if c.topoSpecFile != "" {
-		c.topoSpecFilePath, err = filepath.Abs(c.topoSpecFile)
+	if c.topologySpecFile != "" {
+		c.topologySpecFilePath, err = filepath.Abs(c.topologySpecFile)
 		if err != nil {
 			c.logger.Criticalf("failed determining absolute path of values file, error: %s", err)
 
@@ -323,7 +323,7 @@ func (c *Clabverter) load() error {
 	}
 
 	c.logger.Debugf(
-		"determined fully qualified topology spec values file path as: %s", c.topoSpecFilePath,
+		"determined fully qualified topology spec values file path as: %s", c.topologySpecFilePath,
 	)
 
 	c.logger.Debug("attempting to load containerlab topology....")
@@ -520,39 +520,39 @@ func (c *Clabverter) handleManifest() error {
 func (c *Clabverter) mergeConfigSpecWithRenderedTopology(
 	renderedTopologySpecBytes []byte,
 ) ([]byte, error) {
-	if c.topoSpecFilePath == "" {
+	finalTopology := &clabernetesapisv1alpha1.Topology{}
+
+	if c.topologySpecFilePath == "" {
 		return renderedTopologySpecBytes, nil
 	}
 
-	content, err := os.ReadFile(c.topoSpecFilePath)
+	content, err := os.ReadFile(c.topologySpecFilePath)
 	if err != nil {
 		return nil, err
 	}
 
-	topologySpecFromTopoSpecsFile := &clabernetesapisv1alpha1.TopologySpec{}
+	topologySpecFromSpecsFile := &clabernetesapisv1alpha1.TopologySpec{}
 
-	err = sigsyaml.Unmarshal(content, topologySpecFromTopoSpecsFile)
+	err = sigsyaml.Unmarshal(content, topologySpecFromSpecsFile)
 	if err != nil {
 		return nil, err
 	}
 
-	topologyFromTopoSpecsFile := &clabernetesapisv1alpha1.Topology{
-		Spec: topologySpecFromTopoSpecsFile,
+	topologyFromSpecsFile := &clabernetesapisv1alpha1.Topology{
+		Spec: *topologySpecFromSpecsFile,
 	}
 
-	topologyFromTopoSpecsFileBytes, err := sigsyaml.Marshal(topologyFromTopoSpecsFile)
+	topologyFromSpecsFileBytes, err := sigsyaml.Marshal(topologyFromSpecsFile)
 	if err != nil {
 		return nil, err
 	}
 
-	finalTopology := &clabernetesapisv1alpha1.Topology{}
-
-	err = sigsyaml.UnmarshalStrict(topologyFromTopoSpecsFileBytes, finalTopology)
+	err = sigsyaml.Unmarshal(topologyFromSpecsFileBytes, finalTopology)
 	if err != nil {
 		return nil, err
 	}
 
-	err = sigsyaml.UnmarshalStrict(renderedTopologySpecBytes, finalTopology)
+	err = sigsyaml.Unmarshal(renderedTopologySpecBytes, finalTopology)
 	if err != nil {
 		return nil, err
 	}
@@ -561,9 +561,6 @@ func (c *Clabverter) mergeConfigSpecWithRenderedTopology(
 	if err != nil {
 		return nil, err
 	}
-
-	// add yaml start document chars
-	finalTopologyBytes = append([]byte("---\n"), finalTopologyBytes...)
 
 	return finalTopologyBytes, nil
 }

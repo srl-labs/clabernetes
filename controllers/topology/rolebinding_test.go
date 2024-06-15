@@ -30,7 +30,7 @@ func TestRenderRoleBinding(t *testing.T) {
 					Name:      "render-rolebinding-test",
 					Namespace: "clabernetes",
 				},
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
     name: test
@@ -51,7 +51,7 @@ func TestRenderRoleBinding(t *testing.T) {
 					Name:      "render-serviceaccount-test",
 					Namespace: "clabernetes",
 				},
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
     name: test

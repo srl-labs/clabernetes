@@ -5,6 +5,7 @@ metadata:
   name: topo01
   namespace: notclabernetes
 spec:
+  connectivity: vxlan
   definition:
     containerlab: |-
       name: topo01
@@ -86,11 +87,11 @@ spec:
       tolerations: null
   expose:
     disableAutoExpose: false
+    disableExpose: false
   imagePull:
     insecureRegistries:
     - 1.2.3.4
-    pullSecrets:
-    - regcred
+    pullSecrets: null
   naming: prefixed
   statusProbes:
     enabled: false
@@ -98,3 +99,16 @@ spec:
     nodeProbeConfigurations: null
     probeConfiguration:
       startupSeconds: 0
+status:
+  conditions: null
+  configs: null
+  exposedPorts: null
+  kind: ""
+  nodeReadiness: null
+  reconcileHashes:
+    config: ""
+    exposedPorts: ""
+    filesFromURL: null
+    imagePullSecrets: ""
+  removeTopologyPrefix: null
+  topologyReady: false

@@ -38,7 +38,7 @@ func TestResolveServiceExpose(t *testing.T) {
 					Name:      "render-deployment-test",
 					Namespace: "clabernetes",
 				},
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
     name: test
@@ -67,7 +67,7 @@ func TestResolveServiceExpose(t *testing.T) {
 					Name:      "resolve-servicefabric-test",
 					Namespace: "clabernetes",
 				},
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
     name: test
@@ -108,7 +108,7 @@ func TestResolveServiceExpose(t *testing.T) {
 					Name:      "resolve-servicefabric-test",
 					Namespace: "clabernetes",
 				},
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
     name: test
@@ -192,7 +192,7 @@ func TestRenderServiceExpose(t *testing.T) {
 					Name:      "render-service-expose-test",
 					Namespace: "clabernetes",
 				},
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
     name: test
@@ -252,7 +252,7 @@ func TestRenderServiceExpose(t *testing.T) {
 					Name:      "render-service-expose-test",
 					Namespace: "clabernetes",
 				},
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
     name: test
@@ -264,7 +264,7 @@ func TestRenderServiceExpose(t *testing.T) {
 `,
 					},
 				},
-				Status: &clabernetesapisv1alpha1.TopologyStatus{
+				Status: clabernetesapisv1alpha1.TopologyStatus{
 					// to set naming for test purposes we need to update the *status* of the topo
 					// since this is done very early in the rec
 					RemoveTopologyPrefix: clabernetesutil.ToPointer(true),

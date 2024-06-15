@@ -31,7 +31,7 @@ func TestDefinitionProcess(t *testing.T) {
 					Name:      "process-containerlab-definition-test",
 					Namespace: "clabernetes",
 				},
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
     name: test
@@ -70,7 +70,7 @@ func TestDefinitionProcess(t *testing.T) {
 					Name:      "process-containerlab-definition-test",
 					Namespace: "clabernetes",
 				},
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
     name: test
@@ -87,7 +87,7 @@ func TestDefinitionProcess(t *testing.T) {
 `,
 					},
 				},
-				Status: &clabernetesapisv1alpha1.TopologyStatus{
+				Status: clabernetesapisv1alpha1.TopologyStatus{
 					RemoveTopologyPrefix: clabernetesutil.ToPointer(true),
 				},
 			},
@@ -113,7 +113,7 @@ func TestDefinitionProcess(t *testing.T) {
 					Name:      "process-kne-definition-test",
 					Namespace: "clabernetes",
 				},
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Definition: clabernetesapisv1alpha1.Definition{
 						Kne: `      name: "2-srl-ixr6"
       nodes: {
@@ -177,7 +177,7 @@ func TestDefinitionProcess(t *testing.T) {
 					Name:      "process-kne-definition-test",
 					Namespace: "clabernetes",
 				},
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Definition: clabernetesapisv1alpha1.Definition{
 						Kne: `      name: "2-srl-ixr6"
       nodes: {
@@ -219,7 +219,7 @@ func TestDefinitionProcess(t *testing.T) {
 `,
 					},
 				},
-				Status: &clabernetesapisv1alpha1.TopologyStatus{
+				Status: clabernetesapisv1alpha1.TopologyStatus{
 					RemoveTopologyPrefix: clabernetesutil.ToPointer(true),
 				},
 			},

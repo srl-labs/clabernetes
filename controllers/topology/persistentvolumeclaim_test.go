@@ -36,7 +36,7 @@ func TestResolvePersistentVolumeClaim(t *testing.T) {
 			ownedPVCs:          &k8scorev1.PersistentVolumeClaimList{},
 			clabernetesConfigs: nil,
 			owningTopology: &clabernetesapisv1alpha1.Topology{
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						Persistence: clabernetesapisv1alpha1.Persistence{
 							Enabled: true,
@@ -65,7 +65,7 @@ func TestResolvePersistentVolumeClaim(t *testing.T) {
 			},
 			clabernetesConfigs: nil,
 			owningTopology: &clabernetesapisv1alpha1.Topology{
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						Persistence: clabernetesapisv1alpha1.Persistence{
 							Enabled: true,
@@ -94,7 +94,7 @@ func TestResolvePersistentVolumeClaim(t *testing.T) {
 				"node2": nil,
 			},
 			owningTopology: &clabernetesapisv1alpha1.Topology{
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						Persistence: clabernetesapisv1alpha1.Persistence{
 							Enabled: true,
@@ -126,7 +126,7 @@ func TestResolvePersistentVolumeClaim(t *testing.T) {
 				"node2": nil,
 			},
 			owningTopology: &clabernetesapisv1alpha1.Topology{
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						Persistence: clabernetesapisv1alpha1.Persistence{
 							Enabled: false,
@@ -203,7 +203,7 @@ func TestRenderPersistentVolumeClaim(t *testing.T) {
 					Name:      "pvc-test",
 					Namespace: "clabernetes",
 				},
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						Persistence: clabernetesapisv1alpha1.Persistence{
 							Enabled: true,
@@ -223,7 +223,7 @@ func TestRenderPersistentVolumeClaim(t *testing.T) {
 					Name:      "pvc-test",
 					Namespace: "clabernetes",
 				},
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						Persistence: clabernetesapisv1alpha1.Persistence{
 							Enabled:          true,
@@ -244,7 +244,7 @@ func TestRenderPersistentVolumeClaim(t *testing.T) {
 					Name:      "pvc-test",
 					Namespace: "clabernetes",
 				},
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Deployment: clabernetesapisv1alpha1.Deployment{
 						Persistence: clabernetesapisv1alpha1.Persistence{
 							Enabled:   true,

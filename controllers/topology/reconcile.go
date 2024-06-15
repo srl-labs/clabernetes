@@ -74,7 +74,7 @@ func (c *Controller) Reconcile(
 	if reconcileData.ShouldUpdateResource {
 		// we should update because config hash or something changed, so snag the updated status
 		// data out of the reconcile data, put it in the resource, and push the update
-		err = reconcileData.SetStatus(topology.Status)
+		err = reconcileData.SetStatus(&topology.Status)
 		if err != nil {
 			c.BaseController.Log.Criticalf(
 				"failed setting object '%s/%s' status, error: %s",

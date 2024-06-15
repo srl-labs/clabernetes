@@ -22,7 +22,7 @@ func TestClabvert(t *testing.T) {
 	cases := []struct {
 		name                 string
 		topologyFile         string
-		topoSpecsFile        string
+		specsFile            string
 		destinationNamespace string
 		insecureRegistries   string
 		imagePullSecrets     string
@@ -33,19 +33,19 @@ func TestClabvert(t *testing.T) {
 		{
 			name:                 "simple",
 			topologyFile:         "test-fixtures/clabversiontest/clab.yaml",
-			topoSpecsFile:        "",
+			specsFile:            "",
 			destinationNamespace: "notclabernetes",
 			insecureRegistries:   "1.2.3.4",
-			imagePullSecrets:     "regcred",
+			imagePullSecrets:     "",
 			naming:               "prefixed",
 			containerlabVersion:  "",
 		},
 		{
 			name:                "simple-no-explicit-namespace",
 			topologyFile:        "test-fixtures/clabversiontest/clab.yaml",
-			topoSpecsFile:       "test-fixtures/clabversiontest/specs.yaml",
+			specsFile:           "test-fixtures/clabversiontest/specs.yaml",
 			insecureRegistries:  "1.2.3.4",
-			imagePullSecrets:    "",
+			imagePullSecrets:    "regcred",
 			disableExpose:       true,
 			naming:              "non-prefixed",
 			containerlabVersion: "0.51.0",
@@ -90,7 +90,7 @@ func TestClabvert(t *testing.T) {
 
 				clabverter := clabernetesclabverter.MustNewClabverter(
 					testCase.topologyFile,
-					testCase.topoSpecsFile,
+					testCase.specsFile,
 					actualDir,
 					testCase.destinationNamespace,
 					testCase.naming,

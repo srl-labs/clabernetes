@@ -23,7 +23,7 @@ func TestGetTopologyKind(t *testing.T) {
 		{
 			name: "containerlab",
 			in: &clabernetesapisv1alpha1.Topology{
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: "something",
 					},
@@ -34,7 +34,7 @@ func TestGetTopologyKind(t *testing.T) {
 		{
 			name: "kne",
 			in: &clabernetesapisv1alpha1.Topology{
-				Spec: &clabernetesapisv1alpha1.TopologySpec{
+				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Definition: clabernetesapisv1alpha1.Definition{
 						Kne: "something",
 					},

@@ -821,8 +821,8 @@ func (in *Topology) DeepCopyInto(out *Topology) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	in.Spec.DeepCopyInto(out.Spec)
-	in.Status.DeepCopyInto(out.Status)
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
 	return
 }
 

@@ -55,6 +55,7 @@ spec:
   {{- if .Naming }}
   naming: {{ .Naming }}
   {{- end }}
+  connectivity: vxlan
   definition:
     containerlab: |-
       {{- .ClabConfig }}

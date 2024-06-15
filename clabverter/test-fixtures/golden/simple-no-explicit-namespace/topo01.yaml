@@ -5,7 +5,7 @@ metadata:
   name: topo01
   namespace: c9s-topo01
 spec:
-  connectivity: slurpeeth
+  connectivity: vxlan
   definition:
     containerlab: |-
       name: topo01
@@ -104,3 +104,16 @@ spec:
       startupSeconds: 0
       tcpProbeConfiguration:
         port: 22
+status:
+  conditions: null
+  configs: null
+  exposedPorts: null
+  kind: ""
+  nodeReadiness: null
+  reconcileHashes:
+    config: ""
+    exposedPorts: ""
+    filesFromURL: null
+    imagePullSecrets: ""
+  removeTopologyPrefix: null
+  topologyReady: false
