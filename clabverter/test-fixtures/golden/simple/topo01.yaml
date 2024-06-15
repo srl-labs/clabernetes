@@ -99,16 +99,3 @@ spec:
     nodeProbeConfigurations: null
     probeConfiguration:
       startupSeconds: 0
-status:
-  conditions: null
-  configs: null
-  exposedPorts: null
-  kind: ""
-  nodeReadiness: null
-  reconcileHashes:
-    config: ""
-    exposedPorts: ""
-    filesFromURL: null
-    imagePullSecrets: ""
-  removeTopologyPrefix: null
-  topologyReady: false

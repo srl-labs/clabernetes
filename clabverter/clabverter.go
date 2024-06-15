@@ -17,6 +17,7 @@ import (
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	sigsyaml "sigs.k8s.io/yaml"
 )
 
@@ -25,6 +26,15 @@ const (
 	specDefinitionIndentSpaces = 10
 	maxBytesForConfigMap       = 950_000
 )
+
+// StatuslessTopology is the same as a "normal" Topology without the status field since this field
+// should not be present in clabverter output.
+type StatuslessTopology struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec clabernetesapisv1alpha1.TopologySpec `json:"spec,omitempty"`
+}
 
 // MustNewClabverter returns an instance of Clabverter or panics.
 func MustNewClabverter(
@@ -520,7 +530,7 @@ func (c *Clabverter) handleManifest() error {
 func (c *Clabverter) mergeConfigSpecWithRenderedTopology(
 	renderedTopologySpecBytes []byte,
 ) ([]byte, error) {
-	finalTopology := &clabernetesapisv1alpha1.Topology{}
+	finalTopology := &StatuslessTopology{}
 
 	if c.topologySpecFilePath == "" {
 		return renderedTopologySpecBytes, nil
@@ -538,7 +548,7 @@ func (c *Clabverter) mergeConfigSpecWithRenderedTopology(
 		return nil, err
 	}
 
-	topologyFromSpecsFile := &clabernetesapisv1alpha1.Topology{
+	topologyFromSpecsFile := &StatuslessTopology{
 		Spec: *topologySpecFromSpecsFile,
 	}
 

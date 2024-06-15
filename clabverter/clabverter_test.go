@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesclabverter "github.com/srl-labs/clabernetes/clabverter"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
@@ -197,7 +196,7 @@ func normalizeFromFileFilePaths(t *testing.T, b []byte) []byte {
 		t.Fatalf("failed getting working dir, err: %s", err)
 	}
 
-	topology := &clabernetesapisv1alpha1.Topology{}
+	topology := &clabernetesclabverter.StatuslessTopology{}
 
 	err = yaml.Unmarshal(b, topology)
 	if err != nil {
