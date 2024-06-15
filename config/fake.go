@@ -86,6 +86,10 @@ func (f fakeManager) GetLauncherLogLevel() string {
 	return clabernetesconstants.Info
 }
 
+func (f fakeManager) GetExtraEnv() []k8scorev1.EnvVar {
+	return nil
+}
+
 func (f fakeManager) GetRemoveTopologyPrefix() bool {
 	return false
 }

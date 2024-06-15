@@ -56,4 +56,8 @@ data:
   criKindOverride: {{ .Values.globalConfig.imagePull.criKindOverride }}
   {{- end }}
   naming: {{ .Values.globalConfig.naming }}
+  {{- if .Values.globalConfig.deployment.extraEnv }}
+  extraEnv: |-
+{{ .Values.globalConfig.deployment.extraEnv | toYaml | indent 4 }}
+  {{- end }}
 {{- end }}

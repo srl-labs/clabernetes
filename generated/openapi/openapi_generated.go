@@ -282,12 +282,31 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigDeployment(
 							Format:      "",
 						},
 					},
+					"extraEnv": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "ExtraEnv is a list of additional environment variables to set on the launcher container. The values here are applied to *all* launchers since this is the global config after all!",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("k8s.io/api/core/v1.EnvVar"),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"launcherImage", "launcherImagePullPolicy"},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/core/v1.ResourceRequirements"},
+			"k8s.io/api/core/v1.EnvVar", "k8s.io/api/core/v1.ResourceRequirements"},
 	}
 }
 
@@ -842,11 +861,30 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_Deployment(
 							Format:      "",
 						},
 					},
+					"extraEnv": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "ExtraEnv is a list of additional environment variables to set on the launcher container. The values here override any configured global config extra envs!",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("k8s.io/api/core/v1.EnvVar"),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/srl-labs/clabernetes/apis/v1alpha1.FileFromConfigMap", "github.com/srl-labs/clabernetes/apis/v1alpha1.FileFromURL", "github.com/srl-labs/clabernetes/apis/v1alpha1.Persistence", "github.com/srl-labs/clabernetes/apis/v1alpha1.Scheduling", "k8s.io/api/core/v1.ResourceRequirements"},
+			"github.com/srl-labs/clabernetes/apis/v1alpha1.FileFromConfigMap", "github.com/srl-labs/clabernetes/apis/v1alpha1.FileFromURL", "github.com/srl-labs/clabernetes/apis/v1alpha1.Persistence", "github.com/srl-labs/clabernetes/apis/v1alpha1.Scheduling", "k8s.io/api/core/v1.EnvVar", "k8s.io/api/core/v1.ResourceRequirements"},
 	}
 }
 

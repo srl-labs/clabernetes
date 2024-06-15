@@ -149,6 +149,13 @@ func (m *manager) GetLauncherLogLevel() string {
 	return m.config.Deployment.LauncherLogLevel
 }
 
+func (m *manager) GetExtraEnv() []k8scorev1.EnvVar {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	return m.config.Deployment.ExtraEnv
+}
+
 func (m *manager) GetRemoveTopologyPrefix() bool {
 	m.lock.RLock()
 	defer m.lock.RUnlock()

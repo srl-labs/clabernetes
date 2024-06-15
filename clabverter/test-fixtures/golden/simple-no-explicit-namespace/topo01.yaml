@@ -42,6 +42,7 @@ spec:
     containerlabDebug: null
     containerlabTimeout: ""
     containerlabVersion: 0.51.0
+    extraEnv: null
     filesFromConfigMap:
       srl1:
       - configMapName: topo01-srl1-startup-config
