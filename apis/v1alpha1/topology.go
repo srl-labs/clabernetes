@@ -67,7 +67,7 @@ type TopologySpec struct {
 	// and/or fragmentation challenges.
 	// +kubebuilder:validation:Enum=vxlan;slurpeeth
 	// +kubebuilder:default=vxlan
-	Connectivity string `json:"connectivity"`
+	Connectivity string `json:"connectivity,omitempty"`
 }
 
 // TopologyStatus is the status for a Topology resource.

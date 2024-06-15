@@ -1903,13 +1903,12 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologySpec(
 					"connectivity": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Connectivity defines the type of connectivity to use between nodes in the topology. The default behavior is to use vxlan tunnels, alternatively you can enable a more experimental \"slurpeeth\" connectivity flavor that stuffs traffic into tcp tunnels to avoid any vxlan mtu and/or fragmentation challenges.",
-							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 				},
-				Required: []string{"definition", "naming", "connectivity"},
+				Required: []string{"definition", "naming"},
 			},
 		},
 		Dependencies: []string{

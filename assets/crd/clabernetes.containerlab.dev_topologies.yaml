@@ -594,7 +594,6 @@ spec:
                     type: object
                 type: object
             required:
-            - connectivity
             - definition
             - naming
             type: object

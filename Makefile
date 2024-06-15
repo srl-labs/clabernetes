@@ -34,7 +34,7 @@ cov:  ## Produce html coverage report; removes all the generated bits for sanity
 
 install-tools: ## Install lint/test tools
 	go install mvdan.cc/gofumpt@latest
-	go install github.com/daixiang0/gci@latest@latest
+	go install github.com/daixiang0/gci@latest
 	go install github.com/segmentio/golines@latest
 	go install gotest.tools/gotestsum@latest
 
