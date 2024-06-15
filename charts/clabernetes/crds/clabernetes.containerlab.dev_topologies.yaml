@@ -675,6 +675,7 @@ spec:
                   - type
                   type: object
                 type: array
+                x-kubernetes-list-type: atomic
               configs:
                 additionalProperties:
                   type: string

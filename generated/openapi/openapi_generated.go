@@ -2007,6 +2007,11 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_TopologyStatus(
 						},
 					},
 					"conditions": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Conditions is a list of conditions for the topology custom resource.",
 							Type:        []string{"array"},

@@ -5,6 +5,7 @@ metadata:
   name: topo01
   namespace: notclabernetes
 spec:
+  connectivity: ""
   definition:
     containerlab: |-
       name: topo01
@@ -86,6 +87,7 @@ spec:
       tolerations: null
   expose:
     disableAutoExpose: false
+    disableExpose: false
   imagePull:
     insecureRegistries:
     - 1.2.3.4
