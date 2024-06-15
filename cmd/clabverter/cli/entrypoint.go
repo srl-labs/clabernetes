@@ -9,7 +9,7 @@ import (
 
 const (
 	topologyFile         = "topologyFile"
-	specsFile            = "specsFile"
+	topoSpecFile         = "topoSpecFile"
 	outputDirectory      = "outputDirectory"
 	destinationNamespace = "destinationNamespace"
 	insecureRegistries   = "insecureRegistries"
@@ -39,7 +39,7 @@ func Entrypoint() *cli.App {
 				Value:    "",
 			},
 			&cli.StringFlag{
-				Name: specsFile,
+				Name: topoSpecFile,
 				Usage: "set the values file to parse that will be included in the topology" +
 					" manifest spec",
 				Required: false,
@@ -110,7 +110,7 @@ func Entrypoint() *cli.App {
 		Action: func(c *cli.Context) error {
 			err := clabernetesclabverter.MustNewClabverter(
 				c.String(topologyFile),
-				c.String(specsFile),
+				c.String(topoSpecFile),
 				c.String(outputDirectory),
 				c.String(destinationNamespace),
 				c.String(naming),
