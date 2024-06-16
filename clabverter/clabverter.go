@@ -324,7 +324,7 @@ func (c *Clabverter) load() error {
 	}
 
 	if c.topologySpecFile != "" {
-		c.topologySpecFile, err = filepath.Abs(c.topologySpecFile)
+		c.topologySpecFilePath, err = filepath.Abs(c.topologySpecFile)
 		if err != nil {
 			c.logger.Criticalf("failed determining absolute path of values file, error: %s", err)
 
@@ -333,7 +333,7 @@ func (c *Clabverter) load() error {
 	}
 
 	c.logger.Debugf(
-		"determined fully qualified topology spec values file path as: %s", c.topologySpecFile,
+		"determined fully qualified topology spec values file path as: %s", c.topologySpecFilePath,
 	)
 
 	c.logger.Debug("attempting to load containerlab topology....")
