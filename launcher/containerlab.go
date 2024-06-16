@@ -114,6 +114,7 @@ func (c *clabernetes) runContainerlab() error {
 
 	args := []string{
 		"deploy",
+		"-c",
 		"-t",
 		"topo.clab.yaml",
 	}
