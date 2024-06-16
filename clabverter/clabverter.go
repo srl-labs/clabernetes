@@ -39,7 +39,7 @@ type StatuslessTopology struct {
 // MustNewClabverter returns an instance of Clabverter or panics.
 func MustNewClabverter(
 	topologyFile,
-	topoSpecFile,
+	topologySpecFile,
 	outputDirectory,
 	destinationNamespace,
 	naming,
@@ -103,7 +103,7 @@ func MustNewClabverter(
 	return &Clabverter{
 		logger:                  clabverterLogger,
 		topologyFile:            topologyFile,
-		topoSpecFile:            topoSpecFile,
+		topologySpecFile:        topologySpecFile,
 		githubToken:             githubToken,
 		outputDirectory:         outputDirectory,
 		stdout:                  stdout,
@@ -141,8 +141,8 @@ type Clabverter struct {
 	topologyPathParent string
 	isRemotePath       bool
 
-	topoSpecFile     string
-	topoSpecFilePath string
+	topologySpecFile     string
+	topologySpecFilePath string
 
 	githubGroup         string
 	githubRepo          string
@@ -323,8 +323,8 @@ func (c *Clabverter) load() error {
 		c.topologyPathParent = filepath.Dir(c.topologyPath)
 	}
 
-	if c.topoSpecFile != "" {
-		c.topoSpecFilePath, err = filepath.Abs(c.topoSpecFile)
+	if c.topologySpecFile != "" {
+		c.topologySpecFile, err = filepath.Abs(c.topologySpecFile)
 		if err != nil {
 			c.logger.Criticalf("failed determining absolute path of values file, error: %s", err)
 
@@ -333,7 +333,7 @@ func (c *Clabverter) load() error {
 	}
 
 	c.logger.Debugf(
-		"determined fully qualified topology spec values file path as: %s", c.topoSpecFilePath,
+		"determined fully qualified topology spec values file path as: %s", c.topologySpecFile,
 	)
 
 	c.logger.Debug("attempting to load containerlab topology....")
@@ -530,11 +530,11 @@ func (c *Clabverter) handleManifest() error {
 func (c *Clabverter) mergeConfigSpecWithRenderedTopology(
 	renderedTopologySpecBytes []byte,
 ) ([]byte, error) {
-	if c.topoSpecFilePath == "" {
+	if c.topologySpecFilePath == "" {
 		return renderedTopologySpecBytes, nil
 	}
 
-	content, err := os.ReadFile(c.topoSpecFilePath)
+	content, err := os.ReadFile(c.topologySpecFilePath)
 	if err != nil {
 		return nil, err
 	}
