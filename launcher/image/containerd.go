@@ -70,7 +70,7 @@ func (m *containerdManager) Export(imageName, destination string) error {
 	if err != nil {
 		m.logger.Warnf(
 			"image re-pull failed, this can happen when containerd sets "+
-				"`discard_unpacked_layers` sets to true and we don't have appropriate pull"+
+				"`discard_unpacked_layers` sets to true or we don't have appropriate pull"+
 				" secrets for pulling the image. will continue attempting image pull through but"+
 				" this may fail, error: %s", err,
 		)
@@ -96,6 +96,8 @@ func (m *containerdManager) Export(imageName, destination string) error {
 	if err != nil {
 		return err
 	}
+
+	m.logger.Debugf("image %q exported from containerd successfully...", imageName)
 
 	return nil
 }
