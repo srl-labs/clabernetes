@@ -124,9 +124,16 @@ func startDocker(logger io.Writer) error {
 	}
 }
 
-func getContainerIDs() ([]string, error) {
-	// return all the container ids running in the pod
-	psCmd := exec.Command("docker", "ps", "--quiet")
+func getContainerIDs(all bool) ([]string, error) {
+	args := []string{"ps"}
+
+	if all {
+		args = append(args, "-a")
+	}
+
+	args = append(args, "--quiet")
+
+	psCmd := exec.Command("docker", args...)
 
 	output, err := psCmd.Output()
 	if err != nil {
@@ -146,6 +153,30 @@ func getContainerIDs() ([]string, error) {
 	}
 
 	return containerIDs, nil
+}
+
+func printContainerLogs(
+	logger claberneteslogging.Instance,
+	containerIDs []string,
+) {
+	for _, containerID := range containerIDs {
+		args := []string{
+			"logs",
+			containerID,
+		}
+
+		cmd := exec.Command("docker", args...) //nolint:gosec
+
+		cmd.Stdout = logger
+		cmd.Stderr = logger
+
+		err := cmd.Run()
+		if err != nil {
+			logger.Warnf(
+				"printing node logs for container id %q failed, err: %s", containerID, err,
+			)
+		}
+	}
 }
 
 func tailContainerLogs(
