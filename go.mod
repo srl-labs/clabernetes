@@ -15,7 +15,7 @@ require (
 	// pin back to help controller-runtime out
 	// https://github.com/kubernetes-sigs/controller-runtime/issues/2788
 	k8s.io/client-go v0.30.2
-	k8s.io/klog/v2 v2.130.0
+	k8s.io/klog/v2 v2.130.1
 	k8s.io/kube-openapi v0.0.0-20240521193020-835d969ad83a
 	sigs.k8s.io/controller-runtime v0.18.4
 	sigs.k8s.io/yaml v1.4.0

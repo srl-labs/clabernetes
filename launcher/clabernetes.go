@@ -113,6 +113,7 @@ func (c *clabernetes) startup() {
 	c.launch()
 	c.connectivity()
 
+	go c.imageCleanup()
 	go c.runProbes()
 	go c.watchContainers()
 
@@ -198,10 +199,15 @@ func (c *clabernetes) launch() {
 
 	err := c.runContainerlab()
 	if err != nil {
-		c.logger.Fatalf("failed launching containerlab, err: %s", err)
+		c.logger.Criticalf(
+			"failed launching containerlab,"+
+				" will try to gather crashed container logs then will exit, err: %s", err,
+		)
+
+		c.reportContainerLaunchFail()
 	}
 
-	c.containerIDs, err = getContainerIDs()
+	c.containerIDs, err = getContainerIDs(false)
 	if err != nil {
 		c.logger.Warnf(
 			"failed determining container ids will continue but will not log container output,"+
@@ -385,7 +391,7 @@ func (c *clabernetes) watchContainers() {
 	ticker := time.NewTicker(containerCheckInterval)
 
 	for range ticker.C {
-		currentContainerIDs, err := getContainerIDs()
+		currentContainerIDs, err := getContainerIDs(false)
 		if err != nil {
 			c.logger.Warnf(
 				"failed listing container ids, error: %s",
@@ -405,4 +411,18 @@ func (c *clabernetes) watchContainers() {
 			return
 		}
 	}
+}
+
+func (c *clabernetes) reportContainerLaunchFail() {
+	allContainerIDs, err := getContainerIDs(true)
+	if err != nil {
+		c.logger.Fatalf(
+			"failed launching containerlab, then failed gathering all container "+
+				"ids to report container status. error: %s", err,
+		)
+	}
+
+	printContainerLogs(c.nodeLogger, allContainerIDs)
+
+	os.Exit(clabernetesconstants.ExitCodeError)
 }

@@ -356,3 +356,22 @@ func (c *clabernetes) imageImport() error {
 
 	return nil
 }
+
+func (c *clabernetes) imageCleanup() {
+	c.logger.Debug("running image (docker) cleanup in background...")
+
+	exportCmd := exec.Command(
+		"docker",
+		"system",
+		"prune",
+		"--force",
+	)
+
+	exportCmd.Stdout = c.logger
+	exportCmd.Stderr = c.logger
+
+	err := exportCmd.Run()
+	if err != nil {
+		c.logger.Warnf("failed pruning docker daemon, error: %s", err)
+	}
+}
