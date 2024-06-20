@@ -26,7 +26,8 @@ FROM --platform=linux/amd64 debian:bookworm-slim
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ARG DOCKER_VERSION="5:26.*"
-ARG CONTAINERLAB_VERSION="0.55.*"
+# pinning back as vxlan tools has some issue we need to investigate in 0.52.0
+ARG CONTAINERLAB_VERSION="0.51.3"
 ARG NERDCTL_VERSION="1.7.6"
 
 RUN apt-get update && \
