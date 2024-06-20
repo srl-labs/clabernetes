@@ -113,6 +113,7 @@ func (c *clabernetes) startup() {
 	c.launch()
 	c.connectivity()
 
+	go c.imageCleanup()
 	go c.runProbes()
 	go c.watchContainers()
 
