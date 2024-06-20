@@ -73,20 +73,16 @@ func (m *vxlanManager) resolveVXLANService(vxlanRemote string) (string, error) {
 	for attempt := 0; attempt < resolveServiceMaxAttempts; attempt++ {
 		resolvedVxlanRemotes, err = net.LookupIP(vxlanRemote)
 		if err != nil {
-			if attempt < resolveServiceMaxAttempts {
-				m.logger.Warnf(
-					"failed resolving remote vxlan endpoint but under max attempts will try"+
-						" again in %s. error: %s",
-					resolveServiceSleep,
-					err,
-				)
+			m.logger.Warnf(
+				"failed resolving remote vxlan endpoint but under max attempts will try"+
+					" again in %s. error: %s",
+				resolveServiceSleep,
+				err,
+			)
 
-				time.Sleep(resolveServiceSleep)
+			time.Sleep(resolveServiceSleep)
 
-				continue
-			}
-
-			return "", err
+			continue
 		}
 
 		break
