@@ -70,7 +70,7 @@ jobs:
       # w/ the release tag/version which upsets goreleaser (and we dont want to .gitignore the chart
       # manifest obviously)
       - name: run goreleaser to build clabverter/checksums
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
           version: ${{ env.GORELEASER_VERSION }}
           args: release
