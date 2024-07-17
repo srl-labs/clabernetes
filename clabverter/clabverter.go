@@ -421,7 +421,8 @@ func (c *Clabverter) handleNamespace() error {
 		return err
 	}
 
-	fileName := fmt.Sprintf("%s/%s-ns.yaml", c.outputDirectory, c.clabConfig.Name)
+	// prefix w/ "_" to try to ensure its first file that gets applied when k applying a directory
+	fileName := fmt.Sprintf("%s/_%s-ns.yaml", c.outputDirectory, c.clabConfig.Name)
 
 	c.renderedFiles = append(
 		c.renderedFiles,
