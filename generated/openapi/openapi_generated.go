@@ -1019,13 +1019,12 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_FileFromConfigMap(
 					"mode": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Mode sets the file permissions when mounting the configmap. Since the configmap will be read only filesystem anyway, we basically just want to expose if the file should be mounted as executable or not. So, default permissions would be 0o444 (read) and execute would be 0o555.",
-							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 				},
-				Required: []string{"filePath", "configMapName", "mode"},
+				Required: []string{"filePath", "configMapName"},
 			},
 		},
 	}

@@ -424,5 +424,7 @@ func (c *clabernetes) reportContainerLaunchFail() {
 
 	printContainerLogs(c.nodeLogger, allContainerIDs)
 
+	claberneteslogging.GetManager().Flush()
+
 	os.Exit(clabernetesconstants.ExitCodeError)
 }

@@ -56,7 +56,7 @@ func TestClabverterBasic(t *testing.T) {
 		}
 
 		// remove the clabverted ns output too if exists
-		err = os.Remove("test-fixtures/clabverter-basic-ns.yaml")
+		err = os.Remove("test-fixtures/_clabverter-basic-ns.yaml")
 		if err != nil {
 			t.Errorf("failed cleaning up clabverted namespace file, err: %s", err)
 		}

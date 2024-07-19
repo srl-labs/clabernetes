@@ -357,13 +357,19 @@ func (c *Clabverter) resolveExtraFilesLocal(
 		}
 
 		for _, subExtraFileSubPath := range extraFileSubPaths {
+			subExtraFileRelativeSubPath := strings.TrimPrefix(
+				subExtraFileSubPath,
+				fmt.Sprintf("%s/", c.topologyPathParent),
+			)
+
 			resolvedExtraFilePaths, err = c.resolveExtraFilesLocal(
 				[]sourceDestinationPathPair{
 					{
-						sourcePath: subExtraFileSubPath,
-						destinationPath: strings.TrimPrefix(
-							subExtraFileSubPath,
-							c.topologyPathParent,
+						sourcePath: subExtraFileRelativeSubPath,
+						destinationPath: fmt.Sprintf(
+							"%s/%s",
+							extraFilePath.destinationPath,
+							subExtraFileRelativeSubPath,
 						),
 					},
 				},
