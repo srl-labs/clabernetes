@@ -361,6 +361,10 @@ func (p *containerlabDefinitionProcessor) processConfigForNode(
 
 		deepCopiedDefaults.Ports = defaultPorts
 		nodeDefinition.Ports = nodePorts
+	} else {
+		// zero value of slice is nil, that breaks deep equal checks later, so ensure we set to
+		// a non-zero (but empty) slice
+		nodeDefinition.Ports = []string{}
 	}
 
 	p.reconcileData.ResolvedConfigs[nodeName] = &clabernetesutilcontainerlab.Config{
