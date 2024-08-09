@@ -262,7 +262,6 @@ spec:
                         required:
                         - configMapName
                         - filePath
-                        - mode
                         type: object
                       type: array
                     description: |-
