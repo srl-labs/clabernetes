@@ -77,7 +77,7 @@ images:
     buildArgs:
       VERSION: ${VERSION}-${COMMIT_HASH}
     # seems node things dont wanna ever build w/out buildkit?
-#    buildKit: {}
+    buildKit: {}
     tags:
       - dev-latest
       - ${COMMIT_HASH}

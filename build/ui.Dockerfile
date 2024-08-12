@@ -28,7 +28,6 @@ ENV NODE_ENV=production
 
 WORKDIR /clabernetes
 
-COPY --from=builder --chown=nonroot:nonroot /clabernetes/public ./public
 COPY --from=builder --chown=nonroot:nonroot /clabernetes/.next/standalone ./
 COPY --from=builder --chown=nonroot:nonroot /clabernetes/.next/static ./.next/static
 

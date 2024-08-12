@@ -94,7 +94,7 @@ jobs:
 
       - name: build and push images
         run: |         
-          devspace run build --build-sequential --profile release --var RELEASE_VERSION=${{ env.RELEASE_VERSION }}
+          devspace run build --profile release --var RELEASE_VERSION=${{ env.RELEASE_VERSION }}
 
       - name: package and push charts
         run: |          
