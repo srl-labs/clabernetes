@@ -1,6 +1,6 @@
 version: v2beta1
 commands:
-  dev: "DEVSPACE_CONFIG=./.develop/devspace.yaml devspace dev --profile debug --profile single-manager $@"
+  dev: "DEVSPACE_CONFIG=./.develop/devspace.yaml devspace dev --profile dev --profile debug --profile single-manager --profile single-ui $@"
   deploy: "DEVSPACE_CONFIG=./.develop/devspace.yaml devspace deploy $@"
   build: "DEVSPACE_CONFIG=./.develop/devspace.yaml devspace build $@"
   purge: "DEVSPACE_CONFIG=./.develop/devspace.yaml devspace purge $@"

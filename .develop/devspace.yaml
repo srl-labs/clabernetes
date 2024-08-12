@@ -16,6 +16,7 @@ vars:
   MANAGER_IMAGE: ${REGISTRY}/${CLABERNETES}-manager
   MANAGER_DEV_IMAGE: ${MANAGER_IMAGE}-dev
   LAUNCHER_IMAGE: ${REGISTRY}/${CLABERNETES}-launcher
+  UI_IMAGE: ${REGISTRY}/${CLABERNETES}-ui
   CLABVERTER_IMAGE: ${REGISTRY}/clabverter
 
   # always build w/ 0.0.0 -- overridden for actual releases by release profile. for "normal" builds
@@ -25,6 +26,10 @@ vars:
 
   # to be set in ci
   RELEASE_VERSION: ""
+
+  CLABERNETES_DEV_DOMAIN:
+    source: env
+    default: containerlab.dev
 
 localRegistry:
   enabled: false
@@ -37,7 +42,7 @@ images:
     dockerfile: dev.Dockerfile
     rebuildStrategy: ignoreContextChanges
     tags:
-      - $(git describe --always --abbrev=8)
+      - ${COMMIT_HASH}
 
   clabernetes:
     createPullSecret: false
@@ -49,7 +54,7 @@ images:
       VERSION: ${VERSION}-${COMMIT_HASH}
     tags:
       - dev-latest
-      - $(git describe --always --abbrev=8)
+      - ${COMMIT_HASH}
 
   clabernetes-launcher:
     createPullSecret: false
@@ -59,6 +64,20 @@ images:
     rebuildStrategy: ignoreContextChanges
     buildArgs:
       VERSION: ${VERSION}-${COMMIT_HASH}
+    tags:
+      - dev-latest
+      - ${COMMIT_HASH}
+
+  clabernetes-ui:
+    createPullSecret: false
+    image: ${UI_IMAGE}
+    context: ../ui/
+    dockerfile: ../build/ui.Dockerfile
+    rebuildStrategy: ignoreContextChanges
+    buildArgs:
+      VERSION: ${VERSION}-${COMMIT_HASH}
+    # seems node things dont wanna ever build w/out buildkit?
+    buildKit: {}
     tags:
       - dev-latest
       - ${COMMIT_HASH}
@@ -85,6 +104,9 @@ deployments:
         manager:
           image: ${MANAGER_IMAGE}
           imagePullPolicy: ${PULL_POLICY}
+        ui:
+          image: ${UI_IMAGE}
+          imagePullPolicy: ${PULL_POLICY}
         globalConfig:
           deployment:
             launcherImage: ${LAUNCHER_IMAGE}
@@ -110,6 +132,16 @@ dev:
       command: .develop/start.sh
 
 profiles:
+  - name: dev
+    patches:
+      - op: add
+        path: deployments.clabernetes.helm.values.ui
+        value:
+          enabled: true
+          ingress:
+            enabled: true
+            host: ui.clabernetes.${CLABERNETES_DEV_DOMAIN}
+
   - name: debug
     patches:
       - op: add
@@ -126,6 +158,12 @@ profiles:
     patches:
       - op: add
         path: deployments.clabernetes.helm.values.manager.replicaCount
+        value: 1
+
+  - name: single-ui
+    patches:
+      - op: add
+        path: deployments.clabernetes.helm.values.ui.replicaCount
         value: 1
 
   # for development using devspace on "non-local" clusters (meaning *not* kind/docker-desktop/
@@ -209,12 +247,12 @@ pipelines:
   build:
     # override the default build pipeline so we don't bother building dev image in ci
     run: |
-      build_images clabernetes clabernetes-launcher clabverter
+      build_images clabernetes clabernetes-launcher clabernetes-ui clabverter
 
   dev:
     # override the default dev pipeline to not bother building clabverter while doing dev things
     run: |
-      build_images clabernetes-dev clabernetes clabernetes-launcher
+      build_images clabernetes-dev clabernetes clabernetes-launcher clabernetes-ui
       create_deployments --all
       start_dev --all
 
@@ -223,7 +261,7 @@ pipelines:
     # deploy pipeline
     run: |
       run_dependencies --all
-      build_images clabernetes clabernetes-launcher
+      build_images clabernetes clabernetes-launcher clabernetes-ui
       create_deployments --all
 
   purge:
