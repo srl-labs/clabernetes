@@ -56,12 +56,12 @@ jobs:
       - name: <not on main> build images, don't push
         if: github.ref_name != 'main'
         run: |
-          devspace run build --skip-push
+          devspace run build --build-sequential --skip-push
 
       - name: <on main> build and push images and helm chart
         if: github.ref_name == 'main'
         run: |
-          devspace run build
+          devspace run build --build-sequential
           
           helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
           

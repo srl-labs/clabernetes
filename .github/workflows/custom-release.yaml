@@ -45,7 +45,7 @@ jobs:
 
       - name: build and push images
         run: |
-          devspace run build --profile custom-release --var RELEASE_VERSION=${{ github.event.inputs.version }}
+          devspace run build --build-sequential --profile custom-release --var RELEASE_VERSION=${{ github.event.inputs.version }}
 
       # packaging charts but *not* uploading them to ghcr, only to artifacts repo; mostly this is
       # so we can have a process for testing ci bits w/out actually cutting a release and/or being
