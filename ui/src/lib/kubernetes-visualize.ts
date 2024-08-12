@@ -140,9 +140,6 @@ export async function visualizeTopology(namespace: string, name: string): Promis
 
   const recordedTunnels: Record<number, boolean> = {};
 
-  // @ts-ignore-error
-  const connectivityNameLabel = connectivity.data?.metadata?.labels["clabernetes/name"];
-
   // doing this to de-dup things because we have both sides of tunnels represented basically
   for (const tunnelDefinitions of Object.values(
     connectivity.data?.spec?.pointToPointTunnels ?? {},
@@ -154,9 +151,9 @@ export async function visualizeTopology(namespace: string, name: string): Promis
 
       recordedTunnels[tunnelDefinition.tunnelID] = true;
 
-      const localFabricService = `svc/${connectivityNameLabel}-${tunnelDefinition.localNode}-vx`;
+      const localFabricService = `svc/${tunnelDefinition.localNode}-vx`;
       const localInterface = `${tunnelDefinition.localNode}-${tunnelDefinition.localInterface}`;
-      const remoteFabricService = `svc/${connectivityNameLabel}-${tunnelDefinition.remoteNode}-vx`;
+      const remoteFabricService = `svc/${tunnelDefinition.remoteNode}-vx`;
       const remoteInterface = `${tunnelDefinition.remoteNode}-${tunnelDefinition.remoteInterface}`;
 
       nodes.push({
@@ -200,6 +197,11 @@ export async function visualizeTopology(namespace: string, name: string): Promis
       });
     }
   }
+
+  console.log(JSON.stringify({
+    edges: edges,
+    nodes: nodes,
+  }))
 
   return JSON.stringify({
     edges: edges,
