@@ -50,4 +50,8 @@ const (
 	// NodeStatusUnknown is reported in the topology.status.nodereadiness map for nodes that have
 	// no deployment available for whatever reason.
 	NodeStatusUnknown = "unknown"
+
+	// NodeStatusDeploymentDisabled is reported in the topology.status.nodereadiness map when the
+	// parent topology has the "clabernetes/disableDeployments" label set.
+	NodeStatusDeploymentDisabled = "deploymentDisabled"
 )

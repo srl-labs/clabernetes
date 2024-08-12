@@ -59,6 +59,10 @@ const (
 	// Note that this basically ignored during deletion since our controller doest do anything in
 	// the delete case (owner reference handles clean up).
 	LabelIgnoreReconcile = "clabernetes/ignoreReconcile"
+
+	// LabelDisableDeployments indicates that controller should reconcile normally but not create
+	// update or delete any deployments.
+	LabelDisableDeployments = "clabernetes/disableDeployments"
 )
 
 const (
