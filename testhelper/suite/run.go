@@ -27,7 +27,7 @@ func Run(t *testing.T, testName string, steps []Step, namespace string) { //noli
 	}()
 
 	for _, step := range steps {
-		t.Logf(LogStepDescr(step.Index, step.Description))
+		t.Log(LogStepDescr(step.Index, step.Description))
 
 		stepFixtures := GlobStepFixtures(t, step.Index)
 
@@ -70,7 +70,7 @@ func Run(t *testing.T, testName string, steps []Step, namespace string) { //noli
 			}
 		}
 
-		t.Logf(LogStepSuccess(step.Index))
+		t.Log(LogStepSuccess(step.Index))
 	}
 }
 
