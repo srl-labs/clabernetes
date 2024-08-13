@@ -206,6 +206,16 @@ profiles:
         value: ${RELEASE_VERSION}
 
       - op: replace
+        path: images.clabernetes-ui.tags
+        value:
+          - latest
+          - ${RELEASE_VERSION}
+          - ${COMMIT_HASH}
+      - op: replace
+        path: images.clabernetes-ui.buildArgs.VERSION
+        value: ${RELEASE_VERSION}
+
+      - op: replace
         path: images.clabverter.tags
         value:
           - latest
@@ -233,6 +243,14 @@ profiles:
           - ${RELEASE_VERSION}
       - op: replace
         path: images.clabernetes-launcher.buildArgs.VERSION
+        value: ${RELEASE_VERSION}
+
+      - op: replace
+        path: images.clabernetes-ui.tags
+        value:
+          - ${RELEASE_VERSION}
+      - op: replace
+        path: images.clabernetes-ui.buildArgs.VERSION
         value: ${RELEASE_VERSION}
 
       - op: replace
