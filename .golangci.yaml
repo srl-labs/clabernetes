@@ -189,4 +189,4 @@ output:
   uniq-by-line: false
 
 service:
-  golangci-lint-version: 1.57.x
+  golangci-lint-version: 1.59.x
