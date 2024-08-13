@@ -57,6 +57,8 @@ run-openapi-gen: ## Run openapi-gen
 	--output-file openapi_generated.go \
 	--output-pkg github.com/srl-labs/clabernetes/generated/openapi \
 	github.com/srl-labs/clabernetes/apis/...
+	venv/bin/python build/crds-to-openapi/crds-to-openapi.py && \
+	cp generated/openapi/openapi.json ui/clabernetes-openapi.json
 
 run-client-gen: ## Run client-gen
 	client-gen \

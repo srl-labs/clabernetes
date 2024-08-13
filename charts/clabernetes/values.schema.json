@@ -54,6 +54,53 @@
         }
       }
     },
+    "ui": {
+      "type": "object",
+      "properties": {
+        "deploymentAnnotations": {
+          "type": "object"
+        },
+        "deploymentLabels": {
+          "type": "object"
+        },
+        "podAnnotations": {
+          "type": "object"
+        },
+        "podLabels": {
+          "type": "object"
+        },
+        "image": {
+          "type": "string"
+        },
+        "imagePullPolicy": {
+          "type": "string",
+          "enum": ["Never", "IfNotPresent", "Always"]
+        },
+        "replicaCount": {
+          "type": "integer"
+        },
+        "resources": {
+          "type": "object"
+        },
+        "affinity": {
+          "type": "object"
+        },
+        "ingress": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "ingressClass": {
+              "type": "string"
+            },
+            "host": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
     "globalConfig": {
       "type": "object",
       "properties": {

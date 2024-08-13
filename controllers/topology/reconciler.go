@@ -770,7 +770,7 @@ func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 }
 
 // ReconcileDeployments reconciles the deployments that make up a clabernetes Topology.
-func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo
+func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,funlen
 	ctx context.Context,
 	owningTopology *clabernetesapisv1alpha1.Topology,
 	reconcileData *ReconcileData,
@@ -787,6 +787,21 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo
 	)
 	if err != nil {
 		return err
+	}
+
+	_, disableDeployments := owningTopology.ObjectMeta.Labels[clabernetesconstants.LabelDisableDeployments] //nolint:lll
+	if disableDeployments {
+		r.Log.Warn("skipping reconciling deployments due to disable deployments label set")
+
+		apimachinerymeta.SetStatusCondition(&owningTopology.Status.Conditions, metav1.Condition{
+			Type:   "TopologyReady",
+			Status: "False",
+			Reason: clabernetesconstants.NodeStatusDeploymentDisabled,
+			Message: "topology has 'clabernetes/disableDeployments' label set," +
+				" skipping reconciling deployments",
+		})
+
+		return nil
 	}
 
 	r.Log.Info("pruning extraneous deployments")

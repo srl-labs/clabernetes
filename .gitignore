@@ -43,3 +43,6 @@ cover.out
 
 # build files
 cmd/clabverter/build/
+
+# for crd -> openapi gen
+venv
