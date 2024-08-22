@@ -27,6 +27,7 @@ spec:
     matchLabels:
       clabernetes/app: {{ .Values.appName }}
       release: {{ .Release.Name }}
+      clabernetes/component: manager
   replicas: {{ .Values.manager.replicaCount }}
   strategy:
     rollingUpdate:
@@ -169,6 +170,7 @@ spec:
     matchLabels:
       clabernetes/app: {{ $.Values.appName }}
       release: {{ .Release.Name }}
+      clabernetes/component: ui
   replicas: {{ $.Values.ui.replicaCount }}
   strategy:
     rollingUpdate:
