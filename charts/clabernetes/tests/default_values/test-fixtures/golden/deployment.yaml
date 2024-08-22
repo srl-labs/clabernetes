@@ -19,6 +19,7 @@ spec:
     matchLabels:
       clabernetes/app: clabernetes
       release: release-name
+      clabernetes/component: manager
   replicas: 3
   strategy:
     rollingUpdate:
@@ -147,6 +148,7 @@ spec:
     matchLabels:
       clabernetes/app: clabernetes
       release: release-name
+      clabernetes/component: ui
   replicas: 3
   strategy:
     rollingUpdate:
@@ -194,6 +196,9 @@ spec:
             requests:
               memory: 128Mi
               cpu: 50m
+          env:
+            - name: HOSTNAME
+              value: "0.0.0.0"
           ports:
             - name: http
               containerPort: 3000
