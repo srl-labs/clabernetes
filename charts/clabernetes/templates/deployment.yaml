@@ -246,6 +246,9 @@ spec:
             limits:
               {{ toYaml $.Values.ui.resources.limits | indent 14 }}
             {{- end }}
+          env:
+            - name: HOSTNAME
+              value: "0.0.0.0"
           ports:
             - name: http
               containerPort: 3000
