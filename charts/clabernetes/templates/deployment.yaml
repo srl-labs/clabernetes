@@ -27,6 +27,7 @@ spec:
     matchLabels:
       clabernetes/app: {{ .Values.appName }}
       release: {{ .Release.Name }}
+      clabernetes/component: manager
   replicas: {{ .Values.manager.replicaCount }}
   strategy:
     rollingUpdate:
@@ -169,6 +170,7 @@ spec:
     matchLabels:
       clabernetes/app: {{ $.Values.appName }}
       release: {{ .Release.Name }}
+      clabernetes/component: ui
   replicas: {{ $.Values.ui.replicaCount }}
   strategy:
     rollingUpdate:
@@ -244,6 +246,9 @@ spec:
             limits:
               {{ toYaml $.Values.ui.resources.limits | indent 14 }}
             {{- end }}
+          env:
+            - name: HOSTNAME
+              value: "0.0.0.0"
           ports:
             - name: http
               containerPort: 3000
