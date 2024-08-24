@@ -32,6 +32,11 @@ const interfacePartition = 50;
 
 const redrawDelay = 25;
 
+export enum VisualizeStyle {
+  Kubernetes = "kubernetes",
+  Network = "network",
+}
+
 const elk = new Elk({});
 
 export enum LayoutStyle {
@@ -140,13 +145,93 @@ function visualizeObjectsToVisualizeObjectsElk(
   return computedNodes;
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: its fiiiiiine
+function kubernetesToNetworkNodesAndEdges(
+  initialNodes: VisualizeObject[],
+  initialEdges: Edge[],
+): [VisualizeObject[], Edge[]] {
+  const networkNodes: VisualizeObject[] = [];
+  const networkEdges: Edge[] = [];
+
+  for (const initialNode of initialNodes) {
+    switch (initialNode.type) {
+      case "topology":
+        // we remove the edges attaching to the topo and we *dont* put the topo node in the
+        // array of nodes to draw
+        networkEdges.forEach((edge, index) => {
+          if (edge.source === initialNode.id) {
+            networkEdges.splice(index, 1);
+          }
+        });
+
+        break;
+      case "service":
+        switch (initialNode.data.serviceKind) {
+          case "expose":
+            // expose service is like topology, just get rid of it and its edges
+            break;
+          default: {
+            let upstreamDeployment = "";
+
+            for (const edge of initialEdges) {
+              if (edge.target === initialNode.id) {
+                // services only have the one upstream deployment, so this is that
+                upstreamDeployment = edge.source;
+
+                break;
+              }
+            }
+
+            for (const edge of initialEdges) {
+              if (edge.source === initialNode.id) {
+                // we found a service -> interface edge, lets replace it with a deployment ->
+                // interface edge
+                networkEdges.push({
+                  id: `${upstreamDeployment} / ${edge.target}`,
+                  source: upstreamDeployment,
+                  target: edge.target,
+                });
+
+                for (const innerEdge of initialEdges) {
+                  if (edge.target === innerEdge.source) {
+                    networkEdges.push({
+                      id: `${innerEdge.source} / ${edge.target}`,
+                      source: edge.target,
+                      target: innerEdge.target,
+                    });
+                  }
+                }
+              }
+            }
+
+            break;
+          }
+        }
+        break;
+      default:
+        networkNodes.push(initialNode);
+
+        break;
+    }
+  }
+
+  return [networkNodes, networkEdges];
+}
+
 async function createLayout(
   initialNodes: VisualizeObject[],
   initialEdges: Edge[],
   layoutStyle: LayoutStyle,
+  visualizeStyle: VisualizeStyle,
 ): Promise<{
   nodes: VisualizeObject[];
+  edges: Edge[];
 }> {
+  if (visualizeStyle === VisualizeStyle.Network) {
+    // biome-ignore lint/style/noParameterAssign: blah
+    [initialNodes, initialEdges] = kubernetesToNetworkNodesAndEdges(initialNodes, initialEdges);
+  }
+
   const graph = {
     children: [],
     edges: [],
@@ -178,6 +263,7 @@ async function createLayout(
 
   return {
     nodes: layoutedNodes,
+    edges: initialEdges,
   };
 }
 
@@ -203,6 +289,7 @@ export function VisualizeFlow(props: VisualizeFlowProps): ReactElement {
 
   const reactFlow = useReactFlow();
 
+  const [visualizeStyle, setVisualizeStyle] = useState<VisualizeStyle>(VisualizeStyle.Kubernetes);
   const [layoutStyle, setLayoutStyle] = useState<LayoutStyle>(LayoutStyle.Horizontal);
   const [nodes, setNodes, onNodesChange] = useNodesState<VisualizeObject>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -235,18 +322,27 @@ export function VisualizeFlow(props: VisualizeFlowProps): ReactElement {
       return;
     }
 
-    createLayout(data.nodes, data.edges, layoutStyle)
+    createLayout(data.nodes, data.edges, layoutStyle, visualizeStyle)
       .catch((layoutErr: unknown) => {
         throw layoutErr;
       })
-      .then(({ nodes: layoutedNodes }) => {
+      .then(({ nodes: layoutedNodes, edges: layoutedEdges }) => {
         setNodes(layoutedNodes);
-        setEdges(data.edges);
+        setEdges(layoutedEdges);
         setTimeout(reactFlow.fitView, redrawDelay);
       });
 
     setTriggerDraw(false);
-  }, [data, layoutStyle, reactFlow.fitView, setEdges, setNodes, triggerDraw, setTriggerDraw]);
+  }, [
+    data,
+    layoutStyle,
+    visualizeStyle,
+    reactFlow.fitView,
+    setEdges,
+    setNodes,
+    triggerDraw,
+    setTriggerDraw,
+  ]);
 
   const nodeTypes = useMemo((): NodeTypes => {
     return {
@@ -320,6 +416,31 @@ export function VisualizeFlow(props: VisualizeFlowProps): ReactElement {
           variant="secondary"
         >
           Vertical
+        </Button>
+      </Panel>
+      <Panel
+        className="space-x-2 p-2"
+        position="top-right"
+      >
+        <Button
+          disabled={namespace === "" || visualizeStyle === VisualizeStyle.Kubernetes}
+          onClick={() => {
+            setVisualizeStyle(VisualizeStyle.Kubernetes);
+            setTriggerDraw(true);
+          }}
+          variant="secondary"
+        >
+          Kubernetes
+        </Button>
+        <Button
+          disabled={namespace === "" || visualizeStyle === VisualizeStyle.Network}
+          onClick={() => {
+            setVisualizeStyle(VisualizeStyle.Network);
+            setTriggerDraw(true);
+          }}
+          variant="secondary"
+        >
+          Network
         </Button>
       </Panel>
       <Background />
