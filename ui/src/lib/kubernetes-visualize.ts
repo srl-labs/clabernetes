@@ -111,13 +111,15 @@ export async function visualizeTopology(namespace: string, name: string): Promis
   }
 
   for (const service of services.items) {
-    const serviceName = service.metadata?.name ?? "";
-    const qualifiedServiceName = `svc/${serviceName}`;
-
     const labels = service.metadata?.labels ?? {};
     const deploymentName = labels["clabernetes/name"] ?? "";
     const containerlabNodeName = labels["clabernetes/topologyNode"] ?? "";
     const serviceType = labels["clabernetes/topologyServiceType"] ?? "";
+
+    let qualifiedServiceName = `svc/${containerlabNodeName}`
+    if (serviceType === "fabric") {
+      qualifiedServiceName += "-vx"
+    }
 
     nodes.push({
       data: {
