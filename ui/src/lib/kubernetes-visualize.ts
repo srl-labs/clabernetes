@@ -198,11 +198,6 @@ export async function visualizeTopology(namespace: string, name: string): Promis
     }
   }
 
-  console.log(JSON.stringify({
-    edges: edges,
-    nodes: nodes,
-  }))
-
   return JSON.stringify({
     edges: edges,
     nodes: nodes,
