@@ -7,10 +7,31 @@ import { CircleAlert, CircleCheck, CircleHelp } from "lucide-react";
 const kindPattern = /kind: (.*)/;
 const imagePattern = /image: (.*)/;
 
-function getTopologyReadyIcon(topologyReady: boolean | undefined): ReactElement {
+function getTopologyReadyIcon(
+  statusProbesEnabled: boolean | undefined,
+  topologyReady: boolean | undefined,
+): ReactElement {
+  if (!statusProbesEnabled) {
+    return (
+      <div className="relative group">
+        <CircleHelp className="h-4 w-4 mt-1 fill-yellow-500" />
+        <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-max bg-gray-800 text-white text-sm rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          status probes not enabled
+        </span>
+      </div>
+    );
+  }
+
   switch (topologyReady) {
     case undefined:
-      return <CircleHelp className="h-4 w-4 mt-1 fill-yellow-500" />;
+      return (
+        <div className="relative group">
+          <CircleHelp className="h-4 w-4 mt-1 fill-yellow-500" />
+          <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-max bg-gray-800 text-white text-sm rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            status probes enabled, but state unknown
+          </span>
+        </div>
+      );
     case true:
       return <CircleCheck className="h-4 w-4 mt-1 fill-green-500" />;
     default:
@@ -117,7 +138,9 @@ export function Expand(props: ExpandProps): ReactElement {
               </div>
               <div className="flex items-center">
                 <span className="w-24 pr-2 text-right font-semibold">Ready:</span>
-                <span>{getTopologyReadyIcon(obj.status?.topologyReady)}</span>
+                <span>
+                  {getTopologyReadyIcon(obj.spec?.statusProbes?.enabled, obj.status?.topologyReady)}
+                </span>
               </div>
             </div>
           </CardTitle>
