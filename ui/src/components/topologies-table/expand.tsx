@@ -1,8 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { ReactElement } from "react";
+import { type ReactElement, useState } from "react";
 import type { ClabernetesContainerlabDevTopologyV1Alpha1 } from "@/lib/clabernetes-client";
 import type { Row } from "@tanstack/react-table";
 import { CircleAlert, CircleCheck, CircleHelp } from "lucide-react";
+import { Button } from "@/components/ui/button.tsx";
+import { getExpandCollapseIcon } from "@/components/topologies-table/table.tsx";
 
 const kindPattern = /kind: (.*)/;
 const imagePattern = /image: (.*)/;
@@ -39,6 +41,20 @@ function getTopologyReadyIcon(
   }
 }
 
+function getPorts(nodeName: string, ports: number[], expandedPorts: string[]): ReactElement {
+  if (expandedPorts.includes(nodeName)) {
+    return (
+      <ul className="pl-24 list-disc">
+        {ports.map((port, index) => (
+          <li key={`${index}-${port}`}>{port}</li>
+        ))}
+      </ul>
+    );
+  }
+
+  return <></>;
+}
+
 function getMatchOrUnknown(text: string, pattern: RegExp): string {
   const match = text.match(pattern);
 
@@ -56,6 +72,10 @@ function getMatchOrUnknown(text: string, pattern: RegExp): string {
 function getTopologyNodeCard(
   nodeName: string,
   obj: ClabernetesContainerlabDevTopologyV1Alpha1,
+  expandedTcpPorts: string[],
+  setExpandedTcpPorts: (expandedPorts: string[]) => void,
+  expandedUdpPorts: string[],
+  setExpandedUdpPorts: (expandedPorts: string[]) => void,
 ): ReactElement {
   const nodeConfig = obj.status?.configs[nodeName] ?? "";
   const nodeExposedPortData = obj.status?.exposedPorts[nodeName];
@@ -92,20 +112,54 @@ function getTopologyNodeCard(
           </div>
           <div className="flex items-center">
             <span className="w-24 pr-2 text-right font-semibold">TCP Ports:</span>
+            <Button
+              onClick={() => {
+                const clonedExpandedPorts = [...expandedTcpPorts];
+
+                if (expandedTcpPorts.includes(nodeName)) {
+                  setExpandedTcpPorts(
+                    clonedExpandedPorts.filter((element) => {
+                      return element !== nodeName;
+                    }),
+                  );
+                  return;
+                }
+
+                clonedExpandedPorts.push(nodeName);
+                setExpandedTcpPorts(clonedExpandedPorts);
+              }}
+              size="sm"
+              variant="ghost"
+            >
+              {getExpandCollapseIcon(expandedTcpPorts.includes(nodeName))}
+            </Button>
           </div>
-          <ul className="pl-24 list-disc">
-            {exposedTcpPorts.map((port, index) => (
-              <li key={`${index}-${port}`}>{port}</li>
-            ))}
-          </ul>
+          {getPorts(nodeName, exposedTcpPorts, expandedTcpPorts)}
           <div className="flex items-center">
             <span className="w-24 pr-2 text-right font-semibold">UDP Ports:</span>
+            <Button
+              onClick={() => {
+                const clonedExpandedPorts = [...expandedUdpPorts];
+
+                if (expandedUdpPorts.includes(nodeName)) {
+                  setExpandedUdpPorts(
+                    clonedExpandedPorts.filter((element) => {
+                      return element !== nodeName;
+                    }),
+                  );
+                  return;
+                }
+
+                clonedExpandedPorts.push(nodeName);
+                setExpandedUdpPorts(clonedExpandedPorts);
+              }}
+              size="sm"
+              variant="ghost"
+            >
+              {getExpandCollapseIcon(expandedUdpPorts.includes(nodeName))}
+            </Button>
           </div>
-          <ul className="pl-24 list-disc">
-            {exposedUdpPorts.map((port, index) => (
-              <li key={`${index}-${port}`}>{port}</li>
-            ))}
-          </ul>
+          {getPorts(nodeName, exposedUdpPorts, expandedUdpPorts)}
         </div>
       </CardContent>
     </Card>
@@ -121,6 +175,10 @@ export function Expand(props: ExpandProps): ReactElement {
 
   const obj = row.original;
   const objNodes = obj.status?.configs ? Array.from(Object.keys(obj.status?.configs)) : [];
+
+  const [expandedTcpPorts, setExpandedTcpPorts] = useState<string[]>([]);
+
+  const [expandedUdpPorts, setExpandedUdpPorts] = useState<string[]>([]);
 
   return (
     <div>
@@ -147,7 +205,14 @@ export function Expand(props: ExpandProps): ReactElement {
         </CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {objNodes.map((nodeName) => {
-            return getTopologyNodeCard(nodeName, obj);
+            return getTopologyNodeCard(
+              nodeName,
+              obj,
+              expandedTcpPorts,
+              setExpandedTcpPorts,
+              expandedUdpPorts,
+              setExpandedUdpPorts,
+            );
           })}
         </CardContent>
       </Card>
