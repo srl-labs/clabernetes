@@ -3,6 +3,7 @@ import "../fetch.config";
 import { CoreV1Api, KubeConfig } from "@kubernetes/client-node";
 
 import {
+  createClabernetesContainerlabDevV1Alpha1NamespacedTopology,
   deleteClabernetesContainerlabDevV1Alpha1NamespacedTopology,
   listClabernetesContainerlabDevV1Alpha1NamespacedTopology,
   listClabernetesContainerlabDevV1Alpha1TopologyForAllNamespaces,
@@ -62,6 +63,63 @@ export async function listNamespaces(): Promise<string> {
   const response = await kc
     .makeApiClient(CoreV1Api)
     .listNamespace()
+    .catch((error: unknown) => {
+      throw error;
+    });
+
+  return JSON.stringify(
+    response.body.items.map((namespace) => {
+      return namespace.metadata?.name;
+    }),
+  );
+}
+
+export async function createTopology(
+  namespace: string,
+  name: string,
+  body: string,
+): Promise<string> {
+  const response = await createClabernetesContainerlabDevV1Alpha1NamespacedTopology({
+    body: JSON.parse(body),
+    path: { name: name, namespace: namespace },
+  });
+
+  return JSON.stringify(response);
+}
+
+export async function listNamespacedPullSecrets(namespace: string): Promise<string> {
+  const kc = new KubeConfig();
+
+  kc.loadFromDefault();
+
+  const response = await kc
+    .makeApiClient(CoreV1Api)
+    .listNamespacedSecret(
+      namespace,
+      undefined,
+      undefined,
+      undefined,
+      "type=kubernetes.io/dockerconfigjson",
+    )
+    .catch((error: unknown) => {
+      throw error;
+    });
+
+  return JSON.stringify(
+    response.body.items.map((namespace) => {
+      return namespace.metadata?.name;
+    }),
+  );
+}
+
+export async function listNamespacedSecrets(namespace: string): Promise<string> {
+  const kc = new KubeConfig();
+
+  kc.loadFromDefault();
+
+  const response = await kc
+    .makeApiClient(CoreV1Api)
+    .listNamespacedSecret(namespace, undefined, undefined, undefined, "type=Opaque")
     .catch((error: unknown) => {
       throw error;
     });
