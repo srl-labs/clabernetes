@@ -65,11 +65,13 @@ jobs:
         uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: ghcr.io/srl-labs/clabernetes/clabernetes-manager:${{ env.COMMIT_HASH }}
-          format: table
+          format: github
+          output: clabernetes-manager.sbom.json
           exit-code: 1
           ignore-unfixed: true
           vuln-type: os,library
           severity: CRITICAL,HIGH
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
 
       # note: the launcher is beyond hope for so many reasons, so...
       # we'll skip running this on that guy and just hit the manager/ui :)
@@ -78,11 +80,13 @@ jobs:
         uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: ghcr.io/srl-labs/clabernetes/clabernetes-ui:${{ env.COMMIT_HASH }}
-          format: table
+          format: github
+          output: clabernetes-ui.sbom.json
           exit-code: 1
           ignore-unfixed: true
           vuln-type: os,library
           severity: CRITICAL,HIGH
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
 
       - name: <on main> build and push images and helm chart
         if: github.ref_name == 'main'

@@ -44,5 +44,17 @@ jobs:
             https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh |
             sh -s -- -b $(go env GOPATH)/bin ${{ env.GOLANGCI_LINT_VERSION }}
 
-      - name: run the linter
+      - name: run the linters
         run: make lint
+
+      - name: run trivy - fs
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          exit-code: 1
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+          scanners: config
+          skip-dirs: ui/.next,charts,e2e
+          skip-files: build/clabverter.Dockerfile,build/launcher.Dockerfile
