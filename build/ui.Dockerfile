@@ -30,5 +30,6 @@ WORKDIR /clabernetes
 
 COPY --from=builder --chown=nonroot:nonroot /clabernetes/.next/standalone ./
 COPY --from=builder --chown=nonroot:nonroot /clabernetes/.next/static ./.next/static
+USER nonroot:nonroot
 
 CMD ["server.js"]
