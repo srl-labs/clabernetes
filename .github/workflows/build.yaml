@@ -26,6 +26,10 @@ jobs:
           echo "GOTESTSUM_VERSION=$GOTESTSUM_VERSION" >> "$GITHUB_ENV"
           echo "HELM_VERSION=$HELM_VERSION" >> "$GITHUB_ENV"
 
+      - name: store short hash
+        run: |
+          echo "COMMIT_HASH=$(git describe --always --abbrev=8)" >> "$GITHUB_ENV"
+
       - name: set up go
         uses: actions/setup-go@v5
         with:
@@ -53,14 +57,41 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: <not on main> build images, don't push
-        if: github.ref_name != 'main'
+      - name: build images
         run: |
           devspace run build --skip-push
+
+      - name: run trivy - manager
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ghcr.io/srl-labs/clabernetes/clabernetes-manager:${{ env.COMMIT_HASH }}
+          format: github
+          output: clabernetes-manager.sbom.json
+          exit-code: 1
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
+
+      # note: the launcher is beyond hope for so many reasons, so...
+      # we'll skip running this on that guy and just hit the manager/ui :)
+
+      - name: run trivy - ui
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ghcr.io/srl-labs/clabernetes/clabernetes-ui:${{ env.COMMIT_HASH }}
+          format: github
+          output: clabernetes-ui.sbom.json
+          exit-code: 1
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+          github-pat: ${{ secrets.GITHUB_TOKEN }}
 
       - name: <on main> build and push images and helm chart
         if: github.ref_name == 'main'
         run: |
+          # we already built but everything will be cached so just re-run to let devspace push them
           devspace run build
           
           helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
