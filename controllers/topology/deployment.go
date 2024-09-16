@@ -816,7 +816,7 @@ func (r *DeploymentReconciler) renderDeploymentContainerStatus(
 		TimeoutSeconds:      1,
 		SuccessThreshold:    1,
 		PeriodSeconds:       probePeriodSeconds,
-		FailureThreshold:    int32(failureThresholds),
+		FailureThreshold:    int32(failureThresholds), //nolint:gosec
 	}
 
 	// after the startup probe has done its thing we set run the readiness probe -- since the

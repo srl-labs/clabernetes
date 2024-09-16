@@ -173,9 +173,9 @@ func (r *ServiceExposeReconciler) parseContainerlabTopologyPortsSection(
 			"port-%d-%s", typedPort.DestinationPort, strings.ToLower(typedPort.Protocol),
 		),
 		Protocol: k8scorev1.Protocol(typedPort.Protocol),
-		Port:     int32(typedPort.DestinationPort),
+		Port:     int32(typedPort.DestinationPort), //nolint: gosec
 		TargetPort: intstr.IntOrString{
-			IntVal: int32(typedPort.ExposePort),
+			IntVal: int32(typedPort.ExposePort), //nolint: gosec
 		},
 	}
 }

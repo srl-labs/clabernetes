@@ -112,7 +112,7 @@ func (m *slurpeethManager) renderSlurpeethConfig(
 					tunnel.RemoteNode,
 					tunnel.RemoteInterface,
 				),
-				ID: uint16(tunnel.TunnelID),
+				ID: uint16(tunnel.TunnelID), //nolint:gosec
 				Interfaces: []string{
 					fmt.Sprintf("%s-%s", tunnel.LocalNode, tunnel.LocalInterface),
 				},

@@ -60,6 +60,7 @@ linters:
   enable:
     - asciicheck
     - bodyclose
+    - copyloopvar
     - decorder
     - dogsled
     - dupl
@@ -70,7 +71,6 @@ linters:
     - errname
     - errorlint
     - exhaustive
-    - exportloopref
     - forbidigo
     - forcetypeassert
     - funlen
@@ -189,4 +189,4 @@ output:
   uniq-by-line: false
 
 service:
-  golangci-lint-version: 1.59.x
+  golangci-lint-version: 1.61.x
