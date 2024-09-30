@@ -62,7 +62,7 @@ func (m *vxlanManager) Run() {
 		m.updateVxlanTunnels,
 	)
 
-	m.logger.Debug("slurpeeth connectivity setup complete")
+	m.logger.Debug("vxlan connectivity setup complete")
 }
 
 func (m *vxlanManager) resolveVXLANService(vxlanRemote string) (string, error) {

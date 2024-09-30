@@ -32,10 +32,6 @@ const (
 )
 
 const (
-	// TopologyServiceTypeNodeAlias is one of the allowed values for the LabelTopologyServiceType
-	// label type -- this indicates that this service is of the type that provides docker-like
-	// resolution of nodes in a Topology.
-	TopologyServiceTypeNodeAlias = "nodeAlias"
 	// TopologyServiceTypeFabric is one of the allowed values for the LabelTopologyServiceType label
 	// type -- this indicates that this service is of the type that facilitates the connectivity
 	// between containerlab devices in the cluster.
