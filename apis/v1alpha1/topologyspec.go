@@ -110,7 +110,7 @@ type Expose struct {
 	// +kubebuilder:validation:Enum=None;ClusterIP;LoadBalancer
 	// +kubebuilder:default=LoadBalancer
 	// +optional
-	ExposeType string `json:"exposeType"`
+	ExposeType string `json:"exposeType,omitempty"`
 }
 
 // Deployment holds configurations relevant to how clabernetes configures deployments that make
