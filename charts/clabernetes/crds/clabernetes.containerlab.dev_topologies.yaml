@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.16.4
   name: topologies.clabernetes.containerlab.dev
 spec:
   group: clabernetes.containerlab.dev
@@ -144,9 +144,7 @@ spec:
                                     This field is effectively required, but due to backwards compatibility is
                                     allowed to be empty. Instances of this type with an empty value here are
                                     almost certainly wrong.
-                                    TODO: Add other useful fields. apiVersion, kind, uid?
                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                   type: string
                                 optional:
                                   description: Specify whether the ConfigMap or its
@@ -212,9 +210,7 @@ spec:
                                     This field is effectively required, but due to backwards compatibility is
                                     allowed to be empty. Instances of this type with an empty value here are
                                     almost certainly wrong.
-                                    TODO: Add other useful fields. apiVersion, kind, uid?
                                     More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                   type: string
                                 optional:
                                   description: Specify whether the Secret or its key
@@ -375,10 +371,8 @@ spec:
                             Claims lists the names of resources, defined in spec.resourceClaims,
                             that are used by this container.
 
-
                             This is an alpha field and requires enabling the
                             DynamicResourceAllocation feature gate.
-
 
                             This field is immutable. It can only be set for containers.
                           items:
@@ -389,6 +383,12 @@ spec:
                                   Name must match the name of one entry in pod.spec.resourceClaims of
                                   the Pod where this field is used. It makes that resource available
                                   inside a container.
+                                type: string
+                              request:
+                                description: |-
+                                  Request is the name chosen for a request in the referenced claim.
+                                  If empty, everything from the claim is made available, otherwise
+                                  only the result of this request.
                                 type: string
                             required:
                             - name
@@ -497,7 +497,6 @@ spec:
                       (or equivalent for kne). When this is `false` (default), clabernetes will add and expose the
                       following list of ports to whatever ports you have already defined:
 
-
                       21    - tcp - ftp
                       22    - tcp - ssh
                       23    - tcp - telnet
@@ -513,7 +512,6 @@ spec:
                       9559  - tcp - p4rt
                       57400 - tcp - gnmi (nokia srl/sros default)
 
-
                       This setting is *ignored completely* if `DisableExpose` is true!
                     type: boolean
                   disableExpose:
@@ -521,6 +519,22 @@ spec:
                       DisableExpose indicates if exposing nodes via LoadBalancer service should be disabled, by
                       default any mapped ports in a containerlab topology will be exposed.
                     type: boolean
+                  exposeType:
+                    default: LoadBalancer
+                    description: |-
+                      ExposeType configures the service type(s) related to exposing the topology. This is an enum
+                      that has the following valid values:
+                      - None: expose is *not* disabled, but we just don't create any services related to the pods,
+                              you may want to do this if you want to tickle the pods by pod name directly for some
+                              reason while not having extra services floating around.
+                      - ClusterIP: a clusterip service is created so you can hit that service name for the pods.
+                      - LoadBalancer: (default) creates a load balancer service so you can access your pods from
+                              outside the cluster. this is/was the only behavior up to v0.2.4.
+                    enum:
+                    - None
+                    - ClusterIP
+                    - LoadBalancer
+                    type: string
                 type: object
               imagePull:
                 description: |-
@@ -733,16 +747,8 @@ spec:
                 description: Conditions is a list of conditions for the topology custom
                   resource.
                 items:
-                  description: "Condition contains details for one aspect of the current
-                    state of this API Resource.\n---\nThis struct is intended for
-                    direct use as an array at the field path .status.conditions.  For
-                    example,\n\n\n\ttype FooStatus struct{\n\t    // Represents the
-                    observations of a foo's current state.\n\t    // Known .status.conditions.type
-                    are: \"Available\", \"Progressing\", and \"Degraded\"\n\t    //
-                    +patchMergeKey=type\n\t    // +patchStrategy=merge\n\t    // +listType=map\n\t
-                    \   // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\"
-                    patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t
-                    \   // other fields\n\t}"
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
                   properties:
                     lastTransitionTime:
                       description: |-
@@ -783,12 +789,7 @@ spec:
                       - Unknown
                       type: string
                     type:
-                      description: |-
-                        type of condition in CamelCase or in foo.example.com/CamelCase.
-                        ---
-                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
-                        useful (see .node.status.conditions), the ability to deconflict is important.
-                        The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
                       maxLength: 316
                       pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
                       type: string

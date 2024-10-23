@@ -683,7 +683,7 @@
                                                                 },
                                                                 "name": {
                                                                     "default": "",
-                                                                    "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nTODO: Add other useful fields. apiVersion, kind, uid?\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names\nTODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.",
+                                                                    "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
                                                                     "type": "string"
                                                                 },
                                                                 "optional": {
@@ -755,7 +755,7 @@
                                                                 },
                                                                 "name": {
                                                                     "default": "",
-                                                                    "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nTODO: Add other useful fields. apiVersion, kind, uid?\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names\nTODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.",
+                                                                    "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
                                                                     "type": "string"
                                                                 },
                                                                 "optional": {
@@ -817,12 +817,16 @@
                                                 "description": "ResourceRequirements describes the compute resource requirements.",
                                                 "properties": {
                                                     "claims": {
-                                                        "description": "Claims lists the names of resources, defined in spec.resourceClaims,\nthat are used by this container.\n\n\nThis is an alpha field and requires enabling the\nDynamicResourceAllocation feature gate.\n\n\nThis field is immutable. It can only be set for containers.",
+                                                        "description": "Claims lists the names of resources, defined in spec.resourceClaims,\nthat are used by this container.\n\nThis is an alpha field and requires enabling the\nDynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
                                                         "items": {
                                                             "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
                                                             "properties": {
                                                                 "name": {
                                                                     "description": "Name must match the name of one entry in pod.spec.resourceClaims of\nthe Pod where this field is used. It makes that resource available\ninside a container.",
+                                                                    "type": "string"
+                                                                },
+                                                                "request": {
+                                                                    "description": "Request is the name chosen for a request in the referenced claim.\nIf empty, everything from the claim is made available, otherwise\nonly the result of this request.",
                                                                     "type": "string"
                                                                 }
                                                             },
@@ -881,12 +885,16 @@
                                         "description": "ResourcesDefault is the default set of resources for clabernetes launcher pods. This is used\nonly as a last option if a Topology does not have resources, and there are no resources for\nthe given containerlab kind/type",
                                         "properties": {
                                             "claims": {
-                                                "description": "Claims lists the names of resources, defined in spec.resourceClaims,\nthat are used by this container.\n\n\nThis is an alpha field and requires enabling the\nDynamicResourceAllocation feature gate.\n\n\nThis field is immutable. It can only be set for containers.",
+                                                "description": "Claims lists the names of resources, defined in spec.resourceClaims,\nthat are used by this container.\n\nThis is an alpha field and requires enabling the\nDynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
                                                 "items": {
                                                     "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
                                                     "properties": {
                                                         "name": {
                                                             "description": "Name must match the name of one entry in pod.spec.resourceClaims of\nthe Pod where this field is used. It makes that resource available\ninside a container.",
+                                                            "type": "string"
+                                                        },
+                                                        "request": {
+                                                            "description": "Request is the name chosen for a request in the referenced claim.\nIf empty, everything from the claim is made available, otherwise\nonly the result of this request.",
                                                             "type": "string"
                                                         }
                                                     },
@@ -1143,7 +1151,7 @@
                                                                 },
                                                                 "name": {
                                                                     "default": "",
-                                                                    "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nTODO: Add other useful fields. apiVersion, kind, uid?\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names\nTODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.",
+                                                                    "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
                                                                     "type": "string"
                                                                 },
                                                                 "optional": {
@@ -1215,7 +1223,7 @@
                                                                 },
                                                                 "name": {
                                                                     "default": "",
-                                                                    "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nTODO: Add other useful fields. apiVersion, kind, uid?\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names\nTODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.",
+                                                                    "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
                                                                     "type": "string"
                                                                 },
                                                                 "optional": {
@@ -1358,12 +1366,16 @@
                                             "description": "ResourceRequirements describes the compute resource requirements.",
                                             "properties": {
                                                 "claims": {
-                                                    "description": "Claims lists the names of resources, defined in spec.resourceClaims,\nthat are used by this container.\n\n\nThis is an alpha field and requires enabling the\nDynamicResourceAllocation feature gate.\n\n\nThis field is immutable. It can only be set for containers.",
+                                                    "description": "Claims lists the names of resources, defined in spec.resourceClaims,\nthat are used by this container.\n\nThis is an alpha field and requires enabling the\nDynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
                                                     "items": {
                                                         "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
                                                         "properties": {
                                                             "name": {
                                                                 "description": "Name must match the name of one entry in pod.spec.resourceClaims of\nthe Pod where this field is used. It makes that resource available\ninside a container.",
+                                                                "type": "string"
+                                                            },
+                                                            "request": {
+                                                                "description": "Request is the name chosen for a request in the referenced claim.\nIf empty, everything from the claim is made available, otherwise\nonly the result of this request.",
                                                                 "type": "string"
                                                             }
                                                         },
@@ -1468,12 +1480,23 @@
                                 "description": "Expose holds configurations relevant to how clabernetes exposes a topology.",
                                 "properties": {
                                     "disableAutoExpose": {
-                                        "description": "DisableAutoExpose disables the automagic exposing of ports for a given topology. When this\nsetting is disabled clabernetes will not auto add ports so if you want to expose (via a\nload balancer service) you will need to have ports outlined in your containerlab config\n(or equivalent for kne). When this is `false` (default), clabernetes will add and expose the\nfollowing list of ports to whatever ports you have already defined:\n\n\n21    - tcp - ftp\n22    - tcp - ssh\n23    - tcp - telnet\n80    - tcp - http\n161   - udp - snmp\n443   - tcp - https\n830   - tcp - netconf (over ssh)\n5000  - tcp - telnet for vrnetlab qemu host\n5900  - tcp - vnc\n6030  - tcp - gnmi (arista default)\n9339  - tcp - gnmi/gnoi\n9340  - tcp - gribi\n9559  - tcp - p4rt\n57400 - tcp - gnmi (nokia srl/sros default)\n\n\nThis setting is *ignored completely* if `DisableExpose` is true!",
+                                        "description": "DisableAutoExpose disables the automagic exposing of ports for a given topology. When this\nsetting is disabled clabernetes will not auto add ports so if you want to expose (via a\nload balancer service) you will need to have ports outlined in your containerlab config\n(or equivalent for kne). When this is `false` (default), clabernetes will add and expose the\nfollowing list of ports to whatever ports you have already defined:\n\n21    - tcp - ftp\n22    - tcp - ssh\n23    - tcp - telnet\n80    - tcp - http\n161   - udp - snmp\n443   - tcp - https\n830   - tcp - netconf (over ssh)\n5000  - tcp - telnet for vrnetlab qemu host\n5900  - tcp - vnc\n6030  - tcp - gnmi (arista default)\n9339  - tcp - gnmi/gnoi\n9340  - tcp - gribi\n9559  - tcp - p4rt\n57400 - tcp - gnmi (nokia srl/sros default)\n\nThis setting is *ignored completely* if `DisableExpose` is true!",
                                         "type": "boolean"
                                     },
                                     "disableExpose": {
                                         "description": "DisableExpose indicates if exposing nodes via LoadBalancer service should be disabled, by\ndefault any mapped ports in a containerlab topology will be exposed.",
                                         "type": "boolean"
+                                    },
+                                    "exposeType": {
+                                        "default": "LoadBalancer",
+                                        "description": "ExposeType configures the service type(s) related to exposing the topology. This is an enum\nthat has the following valid values:\n- None: expose is *not* disabled, but we just don't create any services related to the pods,\n        you may want to do this if you want to tickle the pods by pod name directly for some\n        reason while not having extra services floating around.\n- ClusterIp: a clusterip service is created so you can hit that service name for the pods.\n- LoadBalancer: (default) creates a load balancer service so you can access your pods from\n        outside the cluster. this is/was the only behavior up to v0.2.4.\n- Both: creates both a load balancer service and a cluster ip service.",
+                                        "enum": [
+                                            "None",
+                                            "ClusterIp",
+                                            "LoadBalancer",
+                                            "Both"
+                                        ],
+                                        "type": "string"
                                     }
                                 },
                                 "type": "object"
@@ -1664,7 +1687,7 @@
                             "conditions": {
                                 "description": "Conditions is a list of conditions for the topology custom resource.",
                                 "items": {
-                                    "description": "Condition contains details for one aspect of the current state of this API Resource.\n---\nThis struct is intended for direct use as an array at the field path .status.conditions.  For example,\n\n\n\ttype FooStatus struct{\n\t    // Represents the observations of a foo's current state.\n\t    // Known .status.conditions.type are: \"Available\", \"Progressing\", and \"Degraded\"\n\t    // +patchMergeKey=type\n\t    // +patchStrategy=merge\n\t    // +listType=map\n\t    // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\" patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t    // other fields\n\t}",
+                                    "description": "Condition contains details for one aspect of the current state of this API Resource.",
                                     "properties": {
                                         "lastTransitionTime": {
                                             "description": "lastTransitionTime is the last time the condition transitioned from one status to another.\nThis should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.",
@@ -1699,7 +1722,7 @@
                                             "type": "string"
                                         },
                                         "type": {
-                                            "description": "type of condition in CamelCase or in foo.example.com/CamelCase.\n---\nMany .condition.type values are consistent across resources like Available, but because arbitrary conditions can be\nuseful (see .node.status.conditions), the ability to deconflict is important.\nThe regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)",
+                                            "description": "type of condition in CamelCase or in foo.example.com/CamelCase.",
                                             "maxLength": 316,
                                             "pattern": "^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$",
                                             "type": "string"
