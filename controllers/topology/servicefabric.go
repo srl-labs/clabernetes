@@ -155,7 +155,7 @@ func (r *ServiceFabricReconciler) renderServiceBase(
 				},
 			},
 			Selector: selectorLabels,
-			Type:     clabernetesconstants.KubernetesServiceClusterIPType,
+			Type:     k8scorev1.ServiceTypeClusterIP,
 		},
 	}
 }

@@ -30,6 +30,7 @@ spec:
   expose:
     disableAutoExpose: false
     disableExpose: false
+    exposeType: LoadBalancer
   imagePull: {}
   naming: prefixed
   statusProbes:

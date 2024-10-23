@@ -45,11 +45,12 @@ func (c *FakeConfigs) Get(
 	name string,
 	options v1.GetOptions,
 ) (result *v1alpha1.Config, err error) {
+	emptyResult := &v1alpha1.Config{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(configsResource, c.ns, name), &v1alpha1.Config{})
+		Invokes(testing.NewGetActionWithOptions(configsResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.Config), err
 }
@@ -59,14 +60,15 @@ func (c *FakeConfigs) List(
 	ctx context.Context,
 	opts v1.ListOptions,
 ) (result *v1alpha1.ConfigList, err error) {
+	emptyResult := &v1alpha1.ConfigList{}
 	obj, err := c.Fake.
 		Invokes(
-			testing.NewListAction(configsResource, configsKind, c.ns, opts),
-			&v1alpha1.ConfigList{},
+			testing.NewListActionWithOptions(configsResource, configsKind, c.ns, opts),
+			emptyResult,
 		)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -85,7 +87,7 @@ func (c *FakeConfigs) List(
 // Watch returns a watch.Interface that watches the requested configs.
 func (c *FakeConfigs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(configsResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(configsResource, c.ns, opts))
 
 }
 
@@ -95,11 +97,15 @@ func (c *FakeConfigs) Create(
 	config *v1alpha1.Config,
 	opts v1.CreateOptions,
 ) (result *v1alpha1.Config, err error) {
+	emptyResult := &v1alpha1.Config{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(configsResource, c.ns, config), &v1alpha1.Config{})
+		Invokes(
+			testing.NewCreateActionWithOptions(configsResource, c.ns, config, opts),
+			emptyResult,
+		)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.Config), err
 }
@@ -110,11 +116,15 @@ func (c *FakeConfigs) Update(
 	config *v1alpha1.Config,
 	opts v1.UpdateOptions,
 ) (result *v1alpha1.Config, err error) {
+	emptyResult := &v1alpha1.Config{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(configsResource, c.ns, config), &v1alpha1.Config{})
+		Invokes(
+			testing.NewUpdateActionWithOptions(configsResource, c.ns, config, opts),
+			emptyResult,
+		)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.Config), err
 }
@@ -125,15 +135,22 @@ func (c *FakeConfigs) UpdateStatus(
 	ctx context.Context,
 	config *v1alpha1.Config,
 	opts v1.UpdateOptions,
-) (*v1alpha1.Config, error) {
+) (result *v1alpha1.Config, err error) {
+	emptyResult := &v1alpha1.Config{}
 	obj, err := c.Fake.
 		Invokes(
-			testing.NewUpdateSubresourceAction(configsResource, "status", c.ns, config),
-			&v1alpha1.Config{},
+			testing.NewUpdateSubresourceActionWithOptions(
+				configsResource,
+				"status",
+				c.ns,
+				config,
+				opts,
+			),
+			emptyResult,
 		)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.Config), err
 }
@@ -155,7 +172,7 @@ func (c *FakeConfigs) DeleteCollection(
 	opts v1.DeleteOptions,
 	listOpts v1.ListOptions,
 ) error {
-	action := testing.NewDeleteCollectionAction(configsResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(configsResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.ConfigList{})
 	return err
@@ -170,20 +187,22 @@ func (c *FakeConfigs) Patch(
 	opts v1.PatchOptions,
 	subresources ...string,
 ) (result *v1alpha1.Config, err error) {
+	emptyResult := &v1alpha1.Config{}
 	obj, err := c.Fake.
 		Invokes(
-			testing.NewPatchSubresourceAction(
+			testing.NewPatchSubresourceActionWithOptions(
 				configsResource,
 				c.ns,
 				name,
 				pt,
 				data,
+				opts,
 				subresources...),
-			&v1alpha1.Config{},
+			emptyResult,
 		)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.Config), err
 }

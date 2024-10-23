@@ -50,6 +50,10 @@ func TestClabverterBasic(t *testing.T) {
 	}
 
 	defer func() {
+		if *clabernetestesthelper.SkipCleanup {
+			return
+		}
+
 		err = os.Remove("test-fixtures/10-apply.yaml")
 		if err != nil {
 			t.Errorf("failed cleaning up clabverted topology file, err: %s", err)

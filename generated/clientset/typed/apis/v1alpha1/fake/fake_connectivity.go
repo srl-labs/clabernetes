@@ -45,11 +45,15 @@ func (c *FakeConnectivities) Get(
 	name string,
 	options v1.GetOptions,
 ) (result *v1alpha1.Connectivity, err error) {
+	emptyResult := &v1alpha1.Connectivity{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(connectivitiesResource, c.ns, name), &v1alpha1.Connectivity{})
+		Invokes(
+			testing.NewGetActionWithOptions(connectivitiesResource, c.ns, name, options),
+			emptyResult,
+		)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.Connectivity), err
 }
@@ -59,14 +63,20 @@ func (c *FakeConnectivities) List(
 	ctx context.Context,
 	opts v1.ListOptions,
 ) (result *v1alpha1.ConnectivityList, err error) {
+	emptyResult := &v1alpha1.ConnectivityList{}
 	obj, err := c.Fake.
 		Invokes(
-			testing.NewListAction(connectivitiesResource, connectivitiesKind, c.ns, opts),
-			&v1alpha1.ConnectivityList{},
+			testing.NewListActionWithOptions(
+				connectivitiesResource,
+				connectivitiesKind,
+				c.ns,
+				opts,
+			),
+			emptyResult,
 		)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -88,7 +98,7 @@ func (c *FakeConnectivities) Watch(
 	opts v1.ListOptions,
 ) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(connectivitiesResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(connectivitiesResource, c.ns, opts))
 
 }
 
@@ -98,14 +108,15 @@ func (c *FakeConnectivities) Create(
 	connectivity *v1alpha1.Connectivity,
 	opts v1.CreateOptions,
 ) (result *v1alpha1.Connectivity, err error) {
+	emptyResult := &v1alpha1.Connectivity{}
 	obj, err := c.Fake.
 		Invokes(
-			testing.NewCreateAction(connectivitiesResource, c.ns, connectivity),
-			&v1alpha1.Connectivity{},
+			testing.NewCreateActionWithOptions(connectivitiesResource, c.ns, connectivity, opts),
+			emptyResult,
 		)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.Connectivity), err
 }
@@ -116,14 +127,15 @@ func (c *FakeConnectivities) Update(
 	connectivity *v1alpha1.Connectivity,
 	opts v1.UpdateOptions,
 ) (result *v1alpha1.Connectivity, err error) {
+	emptyResult := &v1alpha1.Connectivity{}
 	obj, err := c.Fake.
 		Invokes(
-			testing.NewUpdateAction(connectivitiesResource, c.ns, connectivity),
-			&v1alpha1.Connectivity{},
+			testing.NewUpdateActionWithOptions(connectivitiesResource, c.ns, connectivity, opts),
+			emptyResult,
 		)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.Connectivity), err
 }
@@ -134,20 +146,22 @@ func (c *FakeConnectivities) UpdateStatus(
 	ctx context.Context,
 	connectivity *v1alpha1.Connectivity,
 	opts v1.UpdateOptions,
-) (*v1alpha1.Connectivity, error) {
+) (result *v1alpha1.Connectivity, err error) {
+	emptyResult := &v1alpha1.Connectivity{}
 	obj, err := c.Fake.
 		Invokes(
-			testing.NewUpdateSubresourceAction(
+			testing.NewUpdateSubresourceActionWithOptions(
 				connectivitiesResource,
 				"status",
 				c.ns,
 				connectivity,
+				opts,
 			),
-			&v1alpha1.Connectivity{},
+			emptyResult,
 		)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.Connectivity), err
 }
@@ -169,7 +183,12 @@ func (c *FakeConnectivities) DeleteCollection(
 	opts v1.DeleteOptions,
 	listOpts v1.ListOptions,
 ) error {
-	action := testing.NewDeleteCollectionAction(connectivitiesResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(
+		connectivitiesResource,
+		c.ns,
+		opts,
+		listOpts,
+	)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.ConnectivityList{})
 	return err
@@ -184,20 +203,22 @@ func (c *FakeConnectivities) Patch(
 	opts v1.PatchOptions,
 	subresources ...string,
 ) (result *v1alpha1.Connectivity, err error) {
+	emptyResult := &v1alpha1.Connectivity{}
 	obj, err := c.Fake.
 		Invokes(
-			testing.NewPatchSubresourceAction(
+			testing.NewPatchSubresourceActionWithOptions(
 				connectivitiesResource,
 				c.ns,
 				name,
 				pt,
 				data,
+				opts,
 				subresources...),
-			&v1alpha1.Connectivity{},
+			emptyResult,
 		)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.Connectivity), err
 }
