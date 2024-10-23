@@ -18,6 +18,17 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+const exposeTypeNone = "None"
+
+func exposeTypeToServiceType(exposeType string) k8scorev1.ServiceType {
+	switch exposeType {
+	case string(k8scorev1.ServiceTypeClusterIP):
+		return k8scorev1.ServiceTypeClusterIP
+	default:
+		return k8scorev1.ServiceTypeLoadBalancer
+	}
+}
+
 // NewServiceExposeReconciler returns an instance of ServiceExposeReconciler.
 func NewServiceExposeReconciler(
 	log claberneteslogging.Instance,
@@ -99,6 +110,12 @@ func (r *ServiceExposeReconciler) Resolve(
 			continue
 		}
 
+		if owningTopology.Spec.Expose.ExposeType == exposeTypeNone {
+			// expose type is none -- this means we "expose" the nodes but dont create any
+			// service(s) for them (so folks can tickle the pods directly only)
+			continue
+		}
+
 		exposedNodes = append(exposedNodes, nodeName)
 	}
 
@@ -153,7 +170,9 @@ func (r *ServiceExposeReconciler) renderServiceBase(
 		},
 		Spec: k8scorev1.ServiceSpec{
 			Selector: selectorLabels,
-			Type:     clabernetesconstants.KubernetesServiceLoadBalancerType,
+			// if we ever get here we know expose is not none, so we can just cast the string from
+			// our crd to the appropriate flavor service
+			Type: exposeTypeToServiceType(owningTopology.Spec.Expose.ExposeType),
 		},
 	}
 }
@@ -241,6 +260,10 @@ func (r *ServiceExposeReconciler) Render(
 	reconcileData *ReconcileData,
 	nodeName string,
 ) *k8scorev1.Service {
+	if owningTopology.Spec.Expose.ExposeType == exposeTypeNone {
+		return nil
+	}
+
 	owningTopologyName := owningTopology.GetName()
 
 	serviceName := fmt.Sprintf("%s-%s", owningTopologyName, nodeName)
@@ -272,6 +295,10 @@ func (r *ServiceExposeReconciler) RenderAll(
 	nodeNames []string,
 ) []*k8scorev1.Service {
 	services := make([]*k8scorev1.Service, len(nodeNames))
+
+	if owningTopology.Spec.Expose.ExposeType == exposeTypeNone {
+		return services
+	}
 
 	for idx, nodeName := range nodeNames {
 		services[idx] = r.Render(

@@ -90,6 +90,7 @@ spec:
   expose:
     disableAutoExpose: false
     disableExpose: true
+    exposeType: LoadBalancer
   imagePull:
     insecureRegistries:
     - 1.2.3.4

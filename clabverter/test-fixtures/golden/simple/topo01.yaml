@@ -88,6 +88,7 @@ spec:
   expose:
     disableAutoExpose: false
     disableExpose: false
+    exposeType: ""
   imagePull:
     insecureRegistries:
     - 1.2.3.4
