@@ -62,7 +62,7 @@ jobs:
           devspace run build --skip-push
 
       - name: run trivy - manager
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.29.0
         with:
           image-ref: ghcr.io/srl-labs/clabernetes/clabernetes-manager:${{ env.COMMIT_HASH }}
           format: github
@@ -77,7 +77,7 @@ jobs:
       # we'll skip running this on that guy and just hit the manager/ui :)
 
       - name: run trivy - ui
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.29.0
         with:
           image-ref: ghcr.io/srl-labs/clabernetes/clabernetes-ui:${{ env.COMMIT_HASH }}
           format: github

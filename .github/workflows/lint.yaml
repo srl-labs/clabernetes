@@ -48,7 +48,7 @@ jobs:
         run: make lint
 
       - name: run trivy - fs
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.29.0
         with:
           scan-type: fs
           exit-code: 1
