@@ -25,6 +25,78 @@ func TestDefinitionProcess(t *testing.T) {
 		removeTopologyPrefix bool
 	}{
 		{
+			name: "containerlab-host-and-links",
+			inTopology: &clabernetesapisv1alpha1.Topology{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "process-containerlab-definition-host-and-links-test",
+					Namespace: "clabernetes",
+				},
+				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
+    name: test
+    topology:
+      nodes:
+        srl1:
+          kind: srl
+          image: ghcr.io/nokia/srlinux
+        srl2:
+          kind: srl
+          image: ghcr.io/nokia/srlinux
+      links:
+        - endpoints: ["srl1:e1-1", "srl2:e1-1"]
+        - endpoints: ["srl1:e3-3", "host:eth3-3"]
+`,
+					},
+				},
+			},
+			reconcileData: &clabernetescontrollerstopology.ReconcileData{
+				Kind:           "containerlab",
+				ResolvedHashes: clabernetesapisv1alpha1.ReconcileHashes{},
+				ResolvedConfigs: map[string]*clabernetesutilcontainerlab.Config{
+					"srl1": {},
+					"srl2": {},
+				},
+				ResolvedTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{
+					"srl1": {},
+					"srl2": {},
+				},
+			},
+			removeTopologyPrefix: false,
+		},
+		{
+			name: "containerlab-host-link",
+			inTopology: &clabernetesapisv1alpha1.Topology{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "process-containerlab-definition-host-link-test",
+					Namespace: "clabernetes",
+				},
+				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
+    name: test
+    topology:
+      nodes:
+        srl1:
+          kind: srl
+          image: ghcr.io/nokia/srlinux
+      links:
+        - endpoints: ["srl1:e1-1", "host:srl1-e1-1"]
+`,
+					},
+				},
+			},
+			reconcileData: &clabernetescontrollerstopology.ReconcileData{
+				Kind:           "containerlab",
+				ResolvedHashes: clabernetesapisv1alpha1.ReconcileHashes{},
+				ResolvedConfigs: map[string]*clabernetesutilcontainerlab.Config{
+					"srl1": {},
+				},
+				ResolvedTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{},
+			},
+			removeTopologyPrefix: false,
+		},
+		{
 			name: "containerlab-simple",
 			inTopology: &clabernetesapisv1alpha1.Topology{
 				ObjectMeta: metav1.ObjectMeta{

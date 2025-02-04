@@ -41,4 +41,7 @@ const (
 	// FileModeExecute is "execute". Used for configmap mount permissions in the
 	// TopologySpec/FilesFromConfigMap.
 	FileModeExecute = "execute"
+
+	// Keyword to define host links endpoints
+	HostKeyword = "host"
 )

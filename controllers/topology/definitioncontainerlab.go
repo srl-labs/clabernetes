@@ -446,6 +446,23 @@ func (p *containerlabDefinitionProcessor) processConfigForNode(
 			uninterestingEndpoint = endpointA
 		}
 
+		var hostEntryDestiny string
+		if endpointB.NodeName == clabernetesconstants.HostKeyword {
+			// It is a containerlab host entry, so the original provided interface is preserved
+			hostEntryDestiny = fmt.Sprintf(
+				"%s:%s",
+				clabernetesconstants.HostKeyword,
+				uninterestingEndpoint.InterfaceName,
+			)
+		} else {
+			hostEntryDestiny = fmt.Sprintf(
+				"%s:%s-%s",
+				clabernetesconstants.HostKeyword,
+				interestingEndpoint.NodeName,
+				interestingEndpoint.InterfaceName,
+			)
+		}
+
 		p.reconcileData.ResolvedConfigs[nodeName].Topology.Links = append(
 			p.reconcileData.ResolvedConfigs[nodeName].Topology.Links,
 			&clabernetesutilcontainerlab.LinkDefinition{
@@ -456,15 +473,16 @@ func (p *containerlabDefinitionProcessor) processConfigForNode(
 							interestingEndpoint.NodeName,
 							interestingEndpoint.InterfaceName,
 						),
-						fmt.Sprintf(
-							"host:%s-%s",
-							interestingEndpoint.NodeName,
-							interestingEndpoint.InterfaceName,
-						),
+						hostEntryDestiny,
 					},
 				},
 			},
 		)
+
+		if endpointB.NodeName == clabernetesconstants.HostKeyword {
+			// This is containerlab host entry, so no VxLAN is required
+			continue
+		}
 
 		p.reconcileData.ResolvedTunnels[nodeName] = append(
 			p.reconcileData.ResolvedTunnels[nodeName],
