@@ -19,193 +19,35 @@
 package fake
 
 import (
-	"context"
-
 	v1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	apisv1alpha1 "github.com/srl-labs/clabernetes/generated/clientset/typed/apis/v1alpha1"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeTopologies implements TopologyInterface
-type FakeTopologies struct {
+// fakeTopologies implements TopologyInterface
+type fakeTopologies struct {
+	*gentype.FakeClientWithList[*v1alpha1.Topology, *v1alpha1.TopologyList]
 	Fake *FakeClabernetesV1alpha1
-	ns   string
 }
 
-var topologiesResource = v1alpha1.SchemeGroupVersion.WithResource("topologies")
-
-var topologiesKind = v1alpha1.SchemeGroupVersion.WithKind("Topology")
-
-// Get takes name of the topology, and returns the corresponding topology object, and an error if there is any.
-func (c *FakeTopologies) Get(
-	ctx context.Context,
-	name string,
-	options v1.GetOptions,
-) (result *v1alpha1.Topology, err error) {
-	emptyResult := &v1alpha1.Topology{}
-	obj, err := c.Fake.
-		Invokes(
-			testing.NewGetActionWithOptions(topologiesResource, c.ns, name, options),
-			emptyResult,
-		)
-
-	if obj == nil {
-		return emptyResult, err
+func newFakeTopologies(
+	fake *FakeClabernetesV1alpha1,
+	namespace string,
+) apisv1alpha1.TopologyInterface {
+	return &fakeTopologies{
+		gentype.NewFakeClientWithList[*v1alpha1.Topology, *v1alpha1.TopologyList](
+			fake.Fake,
+			namespace,
+			v1alpha1.SchemeGroupVersion.WithResource("topologies"),
+			v1alpha1.SchemeGroupVersion.WithKind("Topology"),
+			func() *v1alpha1.Topology { return &v1alpha1.Topology{} },
+			func() *v1alpha1.TopologyList { return &v1alpha1.TopologyList{} },
+			func(dst, src *v1alpha1.TopologyList) { dst.ListMeta = src.ListMeta },
+			func(list *v1alpha1.TopologyList) []*v1alpha1.Topology { return gentype.ToPointerSlice(list.Items) },
+			func(list *v1alpha1.TopologyList, items []*v1alpha1.Topology) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1alpha1.Topology), err
-}
-
-// List takes label and field selectors, and returns the list of Topologies that match those selectors.
-func (c *FakeTopologies) List(
-	ctx context.Context,
-	opts v1.ListOptions,
-) (result *v1alpha1.TopologyList, err error) {
-	emptyResult := &v1alpha1.TopologyList{}
-	obj, err := c.Fake.
-		Invokes(
-			testing.NewListActionWithOptions(topologiesResource, topologiesKind, c.ns, opts),
-			emptyResult,
-		)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1alpha1.TopologyList{ListMeta: obj.(*v1alpha1.TopologyList).ListMeta}
-	for _, item := range obj.(*v1alpha1.TopologyList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested topologies.
-func (c *FakeTopologies) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchActionWithOptions(topologiesResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a topology and creates it.  Returns the server's representation of the topology, and an error, if there is any.
-func (c *FakeTopologies) Create(
-	ctx context.Context,
-	topology *v1alpha1.Topology,
-	opts v1.CreateOptions,
-) (result *v1alpha1.Topology, err error) {
-	emptyResult := &v1alpha1.Topology{}
-	obj, err := c.Fake.
-		Invokes(
-			testing.NewCreateActionWithOptions(topologiesResource, c.ns, topology, opts),
-			emptyResult,
-		)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.Topology), err
-}
-
-// Update takes the representation of a topology and updates it. Returns the server's representation of the topology, and an error, if there is any.
-func (c *FakeTopologies) Update(
-	ctx context.Context,
-	topology *v1alpha1.Topology,
-	opts v1.UpdateOptions,
-) (result *v1alpha1.Topology, err error) {
-	emptyResult := &v1alpha1.Topology{}
-	obj, err := c.Fake.
-		Invokes(
-			testing.NewUpdateActionWithOptions(topologiesResource, c.ns, topology, opts),
-			emptyResult,
-		)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.Topology), err
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeTopologies) UpdateStatus(
-	ctx context.Context,
-	topology *v1alpha1.Topology,
-	opts v1.UpdateOptions,
-) (result *v1alpha1.Topology, err error) {
-	emptyResult := &v1alpha1.Topology{}
-	obj, err := c.Fake.
-		Invokes(
-			testing.NewUpdateSubresourceActionWithOptions(
-				topologiesResource,
-				"status",
-				c.ns,
-				topology,
-				opts,
-			),
-			emptyResult,
-		)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.Topology), err
-}
-
-// Delete takes name of the topology and deletes it. Returns an error if one occurs.
-func (c *FakeTopologies) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(
-			testing.NewDeleteActionWithOptions(topologiesResource, c.ns, name, opts),
-			&v1alpha1.Topology{},
-		)
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeTopologies) DeleteCollection(
-	ctx context.Context,
-	opts v1.DeleteOptions,
-	listOpts v1.ListOptions,
-) error {
-	action := testing.NewDeleteCollectionActionWithOptions(topologiesResource, c.ns, opts, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1alpha1.TopologyList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched topology.
-func (c *FakeTopologies) Patch(
-	ctx context.Context,
-	name string,
-	pt types.PatchType,
-	data []byte,
-	opts v1.PatchOptions,
-	subresources ...string,
-) (result *v1alpha1.Topology, err error) {
-	emptyResult := &v1alpha1.Topology{}
-	obj, err := c.Fake.
-		Invokes(
-			testing.NewPatchSubresourceActionWithOptions(
-				topologiesResource,
-				c.ns,
-				name,
-				pt,
-				data,
-				opts,
-				subresources...),
-			emptyResult,
-		)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.Topology), err
 }

@@ -19,206 +19,37 @@
 package fake
 
 import (
-	"context"
-
 	v1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	apisv1alpha1 "github.com/srl-labs/clabernetes/generated/clientset/typed/apis/v1alpha1"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeConnectivities implements ConnectivityInterface
-type FakeConnectivities struct {
+// fakeConnectivities implements ConnectivityInterface
+type fakeConnectivities struct {
+	*gentype.FakeClientWithList[*v1alpha1.Connectivity, *v1alpha1.ConnectivityList]
 	Fake *FakeClabernetesV1alpha1
-	ns   string
 }
 
-var connectivitiesResource = v1alpha1.SchemeGroupVersion.WithResource("connectivities")
-
-var connectivitiesKind = v1alpha1.SchemeGroupVersion.WithKind("Connectivity")
-
-// Get takes name of the connectivity, and returns the corresponding connectivity object, and an error if there is any.
-func (c *FakeConnectivities) Get(
-	ctx context.Context,
-	name string,
-	options v1.GetOptions,
-) (result *v1alpha1.Connectivity, err error) {
-	emptyResult := &v1alpha1.Connectivity{}
-	obj, err := c.Fake.
-		Invokes(
-			testing.NewGetActionWithOptions(connectivitiesResource, c.ns, name, options),
-			emptyResult,
-		)
-
-	if obj == nil {
-		return emptyResult, err
+func newFakeConnectivities(
+	fake *FakeClabernetesV1alpha1,
+	namespace string,
+) apisv1alpha1.ConnectivityInterface {
+	return &fakeConnectivities{
+		gentype.NewFakeClientWithList[*v1alpha1.Connectivity, *v1alpha1.ConnectivityList](
+			fake.Fake,
+			namespace,
+			v1alpha1.SchemeGroupVersion.WithResource("connectivities"),
+			v1alpha1.SchemeGroupVersion.WithKind("Connectivity"),
+			func() *v1alpha1.Connectivity { return &v1alpha1.Connectivity{} },
+			func() *v1alpha1.ConnectivityList { return &v1alpha1.ConnectivityList{} },
+			func(dst, src *v1alpha1.ConnectivityList) { dst.ListMeta = src.ListMeta },
+			func(list *v1alpha1.ConnectivityList) []*v1alpha1.Connectivity {
+				return gentype.ToPointerSlice(list.Items)
+			},
+			func(list *v1alpha1.ConnectivityList, items []*v1alpha1.Connectivity) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1alpha1.Connectivity), err
-}
-
-// List takes label and field selectors, and returns the list of Connectivities that match those selectors.
-func (c *FakeConnectivities) List(
-	ctx context.Context,
-	opts v1.ListOptions,
-) (result *v1alpha1.ConnectivityList, err error) {
-	emptyResult := &v1alpha1.ConnectivityList{}
-	obj, err := c.Fake.
-		Invokes(
-			testing.NewListActionWithOptions(
-				connectivitiesResource,
-				connectivitiesKind,
-				c.ns,
-				opts,
-			),
-			emptyResult,
-		)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1alpha1.ConnectivityList{ListMeta: obj.(*v1alpha1.ConnectivityList).ListMeta}
-	for _, item := range obj.(*v1alpha1.ConnectivityList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested connectivities.
-func (c *FakeConnectivities) Watch(
-	ctx context.Context,
-	opts v1.ListOptions,
-) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchActionWithOptions(connectivitiesResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a connectivity and creates it.  Returns the server's representation of the connectivity, and an error, if there is any.
-func (c *FakeConnectivities) Create(
-	ctx context.Context,
-	connectivity *v1alpha1.Connectivity,
-	opts v1.CreateOptions,
-) (result *v1alpha1.Connectivity, err error) {
-	emptyResult := &v1alpha1.Connectivity{}
-	obj, err := c.Fake.
-		Invokes(
-			testing.NewCreateActionWithOptions(connectivitiesResource, c.ns, connectivity, opts),
-			emptyResult,
-		)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.Connectivity), err
-}
-
-// Update takes the representation of a connectivity and updates it. Returns the server's representation of the connectivity, and an error, if there is any.
-func (c *FakeConnectivities) Update(
-	ctx context.Context,
-	connectivity *v1alpha1.Connectivity,
-	opts v1.UpdateOptions,
-) (result *v1alpha1.Connectivity, err error) {
-	emptyResult := &v1alpha1.Connectivity{}
-	obj, err := c.Fake.
-		Invokes(
-			testing.NewUpdateActionWithOptions(connectivitiesResource, c.ns, connectivity, opts),
-			emptyResult,
-		)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.Connectivity), err
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeConnectivities) UpdateStatus(
-	ctx context.Context,
-	connectivity *v1alpha1.Connectivity,
-	opts v1.UpdateOptions,
-) (result *v1alpha1.Connectivity, err error) {
-	emptyResult := &v1alpha1.Connectivity{}
-	obj, err := c.Fake.
-		Invokes(
-			testing.NewUpdateSubresourceActionWithOptions(
-				connectivitiesResource,
-				"status",
-				c.ns,
-				connectivity,
-				opts,
-			),
-			emptyResult,
-		)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.Connectivity), err
-}
-
-// Delete takes name of the connectivity and deletes it. Returns an error if one occurs.
-func (c *FakeConnectivities) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(
-			testing.NewDeleteActionWithOptions(connectivitiesResource, c.ns, name, opts),
-			&v1alpha1.Connectivity{},
-		)
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeConnectivities) DeleteCollection(
-	ctx context.Context,
-	opts v1.DeleteOptions,
-	listOpts v1.ListOptions,
-) error {
-	action := testing.NewDeleteCollectionActionWithOptions(
-		connectivitiesResource,
-		c.ns,
-		opts,
-		listOpts,
-	)
-
-	_, err := c.Fake.Invokes(action, &v1alpha1.ConnectivityList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched connectivity.
-func (c *FakeConnectivities) Patch(
-	ctx context.Context,
-	name string,
-	pt types.PatchType,
-	data []byte,
-	opts v1.PatchOptions,
-	subresources ...string,
-) (result *v1alpha1.Connectivity, err error) {
-	emptyResult := &v1alpha1.Connectivity{}
-	obj, err := c.Fake.
-		Invokes(
-			testing.NewPatchSubresourceActionWithOptions(
-				connectivitiesResource,
-				c.ns,
-				name,
-				pt,
-				data,
-				opts,
-				subresources...),
-			emptyResult,
-		)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.Connectivity), err
 }

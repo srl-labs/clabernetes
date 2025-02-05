@@ -19,190 +19,32 @@
 package fake
 
 import (
-	"context"
-
 	v1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	apisv1alpha1 "github.com/srl-labs/clabernetes/generated/clientset/typed/apis/v1alpha1"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeConfigs implements ConfigInterface
-type FakeConfigs struct {
+// fakeConfigs implements ConfigInterface
+type fakeConfigs struct {
+	*gentype.FakeClientWithList[*v1alpha1.Config, *v1alpha1.ConfigList]
 	Fake *FakeClabernetesV1alpha1
-	ns   string
 }
 
-var configsResource = v1alpha1.SchemeGroupVersion.WithResource("configs")
-
-var configsKind = v1alpha1.SchemeGroupVersion.WithKind("Config")
-
-// Get takes name of the config, and returns the corresponding config object, and an error if there is any.
-func (c *FakeConfigs) Get(
-	ctx context.Context,
-	name string,
-	options v1.GetOptions,
-) (result *v1alpha1.Config, err error) {
-	emptyResult := &v1alpha1.Config{}
-	obj, err := c.Fake.
-		Invokes(testing.NewGetActionWithOptions(configsResource, c.ns, name, options), emptyResult)
-
-	if obj == nil {
-		return emptyResult, err
+func newFakeConfigs(fake *FakeClabernetesV1alpha1, namespace string) apisv1alpha1.ConfigInterface {
+	return &fakeConfigs{
+		gentype.NewFakeClientWithList[*v1alpha1.Config, *v1alpha1.ConfigList](
+			fake.Fake,
+			namespace,
+			v1alpha1.SchemeGroupVersion.WithResource("configs"),
+			v1alpha1.SchemeGroupVersion.WithKind("Config"),
+			func() *v1alpha1.Config { return &v1alpha1.Config{} },
+			func() *v1alpha1.ConfigList { return &v1alpha1.ConfigList{} },
+			func(dst, src *v1alpha1.ConfigList) { dst.ListMeta = src.ListMeta },
+			func(list *v1alpha1.ConfigList) []*v1alpha1.Config { return gentype.ToPointerSlice(list.Items) },
+			func(list *v1alpha1.ConfigList, items []*v1alpha1.Config) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1alpha1.Config), err
-}
-
-// List takes label and field selectors, and returns the list of Configs that match those selectors.
-func (c *FakeConfigs) List(
-	ctx context.Context,
-	opts v1.ListOptions,
-) (result *v1alpha1.ConfigList, err error) {
-	emptyResult := &v1alpha1.ConfigList{}
-	obj, err := c.Fake.
-		Invokes(
-			testing.NewListActionWithOptions(configsResource, configsKind, c.ns, opts),
-			emptyResult,
-		)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1alpha1.ConfigList{ListMeta: obj.(*v1alpha1.ConfigList).ListMeta}
-	for _, item := range obj.(*v1alpha1.ConfigList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested configs.
-func (c *FakeConfigs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchActionWithOptions(configsResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a config and creates it.  Returns the server's representation of the config, and an error, if there is any.
-func (c *FakeConfigs) Create(
-	ctx context.Context,
-	config *v1alpha1.Config,
-	opts v1.CreateOptions,
-) (result *v1alpha1.Config, err error) {
-	emptyResult := &v1alpha1.Config{}
-	obj, err := c.Fake.
-		Invokes(
-			testing.NewCreateActionWithOptions(configsResource, c.ns, config, opts),
-			emptyResult,
-		)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.Config), err
-}
-
-// Update takes the representation of a config and updates it. Returns the server's representation of the config, and an error, if there is any.
-func (c *FakeConfigs) Update(
-	ctx context.Context,
-	config *v1alpha1.Config,
-	opts v1.UpdateOptions,
-) (result *v1alpha1.Config, err error) {
-	emptyResult := &v1alpha1.Config{}
-	obj, err := c.Fake.
-		Invokes(
-			testing.NewUpdateActionWithOptions(configsResource, c.ns, config, opts),
-			emptyResult,
-		)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.Config), err
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeConfigs) UpdateStatus(
-	ctx context.Context,
-	config *v1alpha1.Config,
-	opts v1.UpdateOptions,
-) (result *v1alpha1.Config, err error) {
-	emptyResult := &v1alpha1.Config{}
-	obj, err := c.Fake.
-		Invokes(
-			testing.NewUpdateSubresourceActionWithOptions(
-				configsResource,
-				"status",
-				c.ns,
-				config,
-				opts,
-			),
-			emptyResult,
-		)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.Config), err
-}
-
-// Delete takes name of the config and deletes it. Returns an error if one occurs.
-func (c *FakeConfigs) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(
-			testing.NewDeleteActionWithOptions(configsResource, c.ns, name, opts),
-			&v1alpha1.Config{},
-		)
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeConfigs) DeleteCollection(
-	ctx context.Context,
-	opts v1.DeleteOptions,
-	listOpts v1.ListOptions,
-) error {
-	action := testing.NewDeleteCollectionActionWithOptions(configsResource, c.ns, opts, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1alpha1.ConfigList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched config.
-func (c *FakeConfigs) Patch(
-	ctx context.Context,
-	name string,
-	pt types.PatchType,
-	data []byte,
-	opts v1.PatchOptions,
-	subresources ...string,
-) (result *v1alpha1.Config, err error) {
-	emptyResult := &v1alpha1.Config{}
-	obj, err := c.Fake.
-		Invokes(
-			testing.NewPatchSubresourceActionWithOptions(
-				configsResource,
-				c.ns,
-				name,
-				pt,
-				data,
-				opts,
-				subresources...),
-			emptyResult,
-		)
-
-	if obj == nil {
-		return emptyResult, err
-	}
-	return obj.(*v1alpha1.Config), err
 }
