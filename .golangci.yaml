@@ -180,13 +180,11 @@ issues:
     - linters:
         - perfsprint
       text: "can be replaced with string concatenation"
-
-run:
-  go: '1.22'
-  timeout: 5m
-
-output:
   uniq-by-line: false
 
+run:
+  go: '1.23'
+  timeout: 5m
+
 service:
-  golangci-lint-version: 1.61.x
+  golangci-lint-version: 1.63.x
