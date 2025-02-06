@@ -42,6 +42,6 @@ const (
 	// TopologySpec/FilesFromConfigMap.
 	FileModeExecute = "execute"
 
-	// Keyword to define host links endpoints.
+	// HostKeyword is the containerlab reserved keyword to define host links endpoints.
 	HostKeyword = "host"
 )

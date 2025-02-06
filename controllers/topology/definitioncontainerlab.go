@@ -335,6 +335,27 @@ func getKindsForNode(
 	return nil
 }
 
+func getDestinyLinkEndpoint(targetNode string,
+	interestingEndpoint clabernetesapisv1alpha1.LinkEndpoint,
+	uninterestingEndpoint clabernetesapisv1alpha1.LinkEndpoint,
+) string {
+	if targetNode == clabernetesconstants.HostKeyword {
+		// It is a containerlab host entry, so the original provided interface is preserved
+		return fmt.Sprintf(
+			"%s:%s",
+			clabernetesconstants.HostKeyword,
+			uninterestingEndpoint.InterfaceName,
+		)
+	}
+
+	return fmt.Sprintf(
+		"%s:%s-%s",
+		clabernetesconstants.HostKeyword,
+		interestingEndpoint.NodeName,
+		interestingEndpoint.InterfaceName,
+	)
+}
+
 func (p *containerlabDefinitionProcessor) processConfigForNode(
 	containerlabConfig *clabernetesutilcontainerlab.Config,
 	nodeName string,
@@ -446,23 +467,10 @@ func (p *containerlabDefinitionProcessor) processConfigForNode(
 			uninterestingEndpoint = endpointA
 		}
 
-		var hostEntryDestiny string
-		if endpointB.NodeName == clabernetesconstants.HostKeyword {
-			// It is a containerlab host entry, so the original provided interface is preserved
-			hostEntryDestiny = fmt.Sprintf(
-				"%s:%s",
-				clabernetesconstants.HostKeyword,
-				uninterestingEndpoint.InterfaceName,
-			)
-		} else {
-			hostEntryDestiny = fmt.Sprintf(
-				"%s:%s-%s",
-				clabernetesconstants.HostKeyword,
-				interestingEndpoint.NodeName,
-				interestingEndpoint.InterfaceName,
-			)
-		}
-
+		hostEntryDestiny := getDestinyLinkEndpoint(
+			endpointB.NodeName,
+			interestingEndpoint,
+			uninterestingEndpoint)
 		p.reconcileData.ResolvedConfigs[nodeName].Topology.Links = append(
 			p.reconcileData.ResolvedConfigs[nodeName].Topology.Links,
 			&clabernetesutilcontainerlab.LinkDefinition{
