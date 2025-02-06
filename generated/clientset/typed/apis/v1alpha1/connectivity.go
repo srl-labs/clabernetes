@@ -19,9 +19,9 @@
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 
-	v1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+	apisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	scheme "github.com/srl-labs/clabernetes/generated/clientset/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -39,24 +39,24 @@ type ConnectivitiesGetter interface {
 type ConnectivityInterface interface {
 	Create(
 		ctx context.Context,
-		connectivity *v1alpha1.Connectivity,
+		connectivity *apisv1alpha1.Connectivity,
 		opts v1.CreateOptions,
-	) (*v1alpha1.Connectivity, error)
+	) (*apisv1alpha1.Connectivity, error)
 	Update(
 		ctx context.Context,
-		connectivity *v1alpha1.Connectivity,
+		connectivity *apisv1alpha1.Connectivity,
 		opts v1.UpdateOptions,
-	) (*v1alpha1.Connectivity, error)
+	) (*apisv1alpha1.Connectivity, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
 	UpdateStatus(
 		ctx context.Context,
-		connectivity *v1alpha1.Connectivity,
+		connectivity *apisv1alpha1.Connectivity,
 		opts v1.UpdateOptions,
-	) (*v1alpha1.Connectivity, error)
+	) (*apisv1alpha1.Connectivity, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.Connectivity, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.ConnectivityList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*apisv1alpha1.Connectivity, error)
+	List(ctx context.Context, opts v1.ListOptions) (*apisv1alpha1.ConnectivityList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(
 		ctx context.Context,
@@ -65,24 +65,25 @@ type ConnectivityInterface interface {
 		data []byte,
 		opts v1.PatchOptions,
 		subresources ...string,
-	) (result *v1alpha1.Connectivity, err error)
+	) (result *apisv1alpha1.Connectivity, err error)
 	ConnectivityExpansion
 }
 
 // connectivities implements ConnectivityInterface
 type connectivities struct {
-	*gentype.ClientWithList[*v1alpha1.Connectivity, *v1alpha1.ConnectivityList]
+	*gentype.ClientWithList[*apisv1alpha1.Connectivity, *apisv1alpha1.ConnectivityList]
 }
 
 // newConnectivities returns a Connectivities
 func newConnectivities(c *ClabernetesV1alpha1Client, namespace string) *connectivities {
 	return &connectivities{
-		gentype.NewClientWithList[*v1alpha1.Connectivity, *v1alpha1.ConnectivityList](
+		gentype.NewClientWithList[*apisv1alpha1.Connectivity, *apisv1alpha1.ConnectivityList](
 			"connectivities",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1alpha1.Connectivity { return &v1alpha1.Connectivity{} },
-			func() *v1alpha1.ConnectivityList { return &v1alpha1.ConnectivityList{} }),
+			func() *apisv1alpha1.Connectivity { return &apisv1alpha1.Connectivity{} },
+			func() *apisv1alpha1.ConnectivityList { return &apisv1alpha1.ConnectivityList{} },
+		),
 	}
 }

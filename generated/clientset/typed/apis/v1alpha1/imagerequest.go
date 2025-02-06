@@ -19,9 +19,9 @@
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 
-	v1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+	apisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	scheme "github.com/srl-labs/clabernetes/generated/clientset/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -39,24 +39,24 @@ type ImageRequestsGetter interface {
 type ImageRequestInterface interface {
 	Create(
 		ctx context.Context,
-		imageRequest *v1alpha1.ImageRequest,
+		imageRequest *apisv1alpha1.ImageRequest,
 		opts v1.CreateOptions,
-	) (*v1alpha1.ImageRequest, error)
+	) (*apisv1alpha1.ImageRequest, error)
 	Update(
 		ctx context.Context,
-		imageRequest *v1alpha1.ImageRequest,
+		imageRequest *apisv1alpha1.ImageRequest,
 		opts v1.UpdateOptions,
-	) (*v1alpha1.ImageRequest, error)
+	) (*apisv1alpha1.ImageRequest, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
 	UpdateStatus(
 		ctx context.Context,
-		imageRequest *v1alpha1.ImageRequest,
+		imageRequest *apisv1alpha1.ImageRequest,
 		opts v1.UpdateOptions,
-	) (*v1alpha1.ImageRequest, error)
+	) (*apisv1alpha1.ImageRequest, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.ImageRequest, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.ImageRequestList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*apisv1alpha1.ImageRequest, error)
+	List(ctx context.Context, opts v1.ListOptions) (*apisv1alpha1.ImageRequestList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(
 		ctx context.Context,
@@ -65,24 +65,25 @@ type ImageRequestInterface interface {
 		data []byte,
 		opts v1.PatchOptions,
 		subresources ...string,
-	) (result *v1alpha1.ImageRequest, err error)
+	) (result *apisv1alpha1.ImageRequest, err error)
 	ImageRequestExpansion
 }
 
 // imageRequests implements ImageRequestInterface
 type imageRequests struct {
-	*gentype.ClientWithList[*v1alpha1.ImageRequest, *v1alpha1.ImageRequestList]
+	*gentype.ClientWithList[*apisv1alpha1.ImageRequest, *apisv1alpha1.ImageRequestList]
 }
 
 // newImageRequests returns a ImageRequests
 func newImageRequests(c *ClabernetesV1alpha1Client, namespace string) *imageRequests {
 	return &imageRequests{
-		gentype.NewClientWithList[*v1alpha1.ImageRequest, *v1alpha1.ImageRequestList](
+		gentype.NewClientWithList[*apisv1alpha1.ImageRequest, *apisv1alpha1.ImageRequestList](
 			"imagerequests",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1alpha1.ImageRequest { return &v1alpha1.ImageRequest{} },
-			func() *v1alpha1.ImageRequestList { return &v1alpha1.ImageRequestList{} }),
+			func() *apisv1alpha1.ImageRequest { return &apisv1alpha1.ImageRequest{} },
+			func() *apisv1alpha1.ImageRequestList { return &apisv1alpha1.ImageRequestList{} },
+		),
 	}
 }

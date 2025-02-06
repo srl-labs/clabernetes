@@ -29,19 +29,19 @@ type FakeClabernetesV1alpha1 struct {
 }
 
 func (c *FakeClabernetesV1alpha1) Configs(namespace string) v1alpha1.ConfigInterface {
-	return &FakeConfigs{c, namespace}
+	return newFakeConfigs(c, namespace)
 }
 
 func (c *FakeClabernetesV1alpha1) Connectivities(namespace string) v1alpha1.ConnectivityInterface {
-	return &FakeConnectivities{c, namespace}
+	return newFakeConnectivities(c, namespace)
 }
 
 func (c *FakeClabernetesV1alpha1) ImageRequests(namespace string) v1alpha1.ImageRequestInterface {
-	return &FakeImageRequests{c, namespace}
+	return newFakeImageRequests(c, namespace)
 }
 
 func (c *FakeClabernetesV1alpha1) Topologies(namespace string) v1alpha1.TopologyInterface {
-	return &FakeTopologies{c, namespace}
+	return newFakeTopologies(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

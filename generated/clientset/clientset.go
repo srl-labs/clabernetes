@@ -19,8 +19,8 @@
 package clientset
 
 import (
-	"fmt"
-	"net/http"
+	fmt "fmt"
+	http "net/http"
 
 	clabernetesv1alpha1 "github.com/srl-labs/clabernetes/generated/clientset/typed/apis/v1alpha1"
 	discovery "k8s.io/client-go/discovery"

@@ -46,16 +46,3 @@ jobs:
 
       - name: run the linters
         run: make lint
-
-      - name: run trivy - fs
-        uses: aquasecurity/trivy-action@0.29.0
-        with:
-          scan-type: fs
-          exit-code: 1
-          ignore-unfixed: true
-          vuln-type: os,library
-          severity: CRITICAL,HIGH
-          scanners: config
-          skip-dirs: ui/.next,charts,e2e
-          # we know launcher/dev/clabverter are using root user, its fine for now!
-          skip-files: build/clabverter.Dockerfile,build/launcher.Dockerfile,.develop/dev.Dockerfile

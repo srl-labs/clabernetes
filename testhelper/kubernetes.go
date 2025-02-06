@@ -126,6 +126,13 @@ func NormalizeExposeService(t *testing.T, objectData []byte) []byte {
 		".status.loadBalancer = {}",
 	)
 
+	// if metallb annotation exists for the pool allocated from, we can remove it for tests
+	objectData = YQCommand(
+		t,
+		objectData,
+		"del(.metadata.annotations.\"metallb.io/ip-allocated-from-pool\")",
+	)
+
 	return objectData
 }
 

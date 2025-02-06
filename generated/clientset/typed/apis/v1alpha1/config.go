@@ -19,9 +19,9 @@
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 
-	v1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+	apisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	scheme "github.com/srl-labs/clabernetes/generated/clientset/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -39,24 +39,24 @@ type ConfigsGetter interface {
 type ConfigInterface interface {
 	Create(
 		ctx context.Context,
-		config *v1alpha1.Config,
+		config *apisv1alpha1.Config,
 		opts v1.CreateOptions,
-	) (*v1alpha1.Config, error)
+	) (*apisv1alpha1.Config, error)
 	Update(
 		ctx context.Context,
-		config *v1alpha1.Config,
+		config *apisv1alpha1.Config,
 		opts v1.UpdateOptions,
-	) (*v1alpha1.Config, error)
+	) (*apisv1alpha1.Config, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
 	UpdateStatus(
 		ctx context.Context,
-		config *v1alpha1.Config,
+		config *apisv1alpha1.Config,
 		opts v1.UpdateOptions,
-	) (*v1alpha1.Config, error)
+	) (*apisv1alpha1.Config, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.Config, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.ConfigList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*apisv1alpha1.Config, error)
+	List(ctx context.Context, opts v1.ListOptions) (*apisv1alpha1.ConfigList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(
 		ctx context.Context,
@@ -65,24 +65,25 @@ type ConfigInterface interface {
 		data []byte,
 		opts v1.PatchOptions,
 		subresources ...string,
-	) (result *v1alpha1.Config, err error)
+	) (result *apisv1alpha1.Config, err error)
 	ConfigExpansion
 }
 
 // configs implements ConfigInterface
 type configs struct {
-	*gentype.ClientWithList[*v1alpha1.Config, *v1alpha1.ConfigList]
+	*gentype.ClientWithList[*apisv1alpha1.Config, *apisv1alpha1.ConfigList]
 }
 
 // newConfigs returns a Configs
 func newConfigs(c *ClabernetesV1alpha1Client, namespace string) *configs {
 	return &configs{
-		gentype.NewClientWithList[*v1alpha1.Config, *v1alpha1.ConfigList](
+		gentype.NewClientWithList[*apisv1alpha1.Config, *apisv1alpha1.ConfigList](
 			"configs",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *v1alpha1.Config { return &v1alpha1.Config{} },
-			func() *v1alpha1.ConfigList { return &v1alpha1.ConfigList{} }),
+			func() *apisv1alpha1.Config { return &apisv1alpha1.Config{} },
+			func() *apisv1alpha1.ConfigList { return &apisv1alpha1.ConfigList{} },
+		),
 	}
 }
