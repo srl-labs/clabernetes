@@ -467,21 +467,17 @@ func (p *containerlabDefinitionProcessor) processConfigForNode(
 			uninterestingEndpoint = endpointA
 		}
 
-		hostEntryDestiny := getDestinyLinkEndpoint(
-			endpointB.NodeName,
-			interestingEndpoint,
+		hostEntryDestiny := getDestinyLinkEndpoint(endpointB.NodeName, interestingEndpoint,
 			uninterestingEndpoint)
 		p.reconcileData.ResolvedConfigs[nodeName].Topology.Links = append(
 			p.reconcileData.ResolvedConfigs[nodeName].Topology.Links,
 			&clabernetesutilcontainerlab.LinkDefinition{
 				LinkConfig: clabernetesutilcontainerlab.LinkConfig{
 					Endpoints: []string{
-						fmt.Sprintf(
-							"%s:%s",
+						fmt.Sprintf("%s:%s",
 							interestingEndpoint.NodeName,
 							interestingEndpoint.InterfaceName,
-						),
-						hostEntryDestiny,
+						), hostEntryDestiny,
 					},
 				},
 			},
