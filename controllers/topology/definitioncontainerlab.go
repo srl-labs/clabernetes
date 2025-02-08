@@ -335,7 +335,8 @@ func getKindsForNode(
 	return nil
 }
 
-func getDestinyLinkEndpoint(targetNode string,
+func getDestinationLinkEndpoint(
+	targetNode string,
 	interestingEndpoint clabernetesapisv1alpha1.LinkEndpoint,
 	uninterestingEndpoint clabernetesapisv1alpha1.LinkEndpoint,
 ) string {
@@ -467,8 +468,6 @@ func (p *containerlabDefinitionProcessor) processConfigForNode(
 			uninterestingEndpoint = endpointA
 		}
 
-		hostEntryDestiny := getDestinyLinkEndpoint(endpointB.NodeName, interestingEndpoint,
-			uninterestingEndpoint)
 		p.reconcileData.ResolvedConfigs[nodeName].Topology.Links = append(
 			p.reconcileData.ResolvedConfigs[nodeName].Topology.Links,
 			&clabernetesutilcontainerlab.LinkDefinition{
@@ -477,7 +476,12 @@ func (p *containerlabDefinitionProcessor) processConfigForNode(
 						fmt.Sprintf("%s:%s",
 							interestingEndpoint.NodeName,
 							interestingEndpoint.InterfaceName,
-						), hostEntryDestiny,
+						),
+						getDestinationLinkEndpoint(
+							endpointB.NodeName,
+							interestingEndpoint,
+							uninterestingEndpoint,
+						),
 					},
 				},
 			},
