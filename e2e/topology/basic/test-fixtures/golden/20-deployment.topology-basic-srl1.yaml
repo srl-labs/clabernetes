@@ -80,7 +80,7 @@ spec:
             - name: LAUNCHER_CONTAINERLAB_TIMEOUT
             - name: LAUNCHER_PRIVILEGED
               value: "true"
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           name: srl1
           ports:
             - containerPort: 14789

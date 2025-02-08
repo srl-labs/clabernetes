@@ -127,10 +127,12 @@ func NormalizeExposeService(t *testing.T, objectData []byte) []byte {
 	)
 
 	// if metallb annotation exists for the pool allocated from, we can remove it for tests
+	// in reality we dont set annotations except for user ones we pass through, so its just
+	// easier to always set this to an empty map
 	objectData = YQCommand(
 		t,
 		objectData,
-		"del(.metadata.annotations.\"metallb.io/ip-allocated-from-pool\")",
+		".metadata.annotations |= (.+ // {}) | sort_keys(.metadata)",
 	)
 
 	return objectData
