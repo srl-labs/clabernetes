@@ -71,7 +71,7 @@ status:
                   - host:srl1-e1-1
               - endpoints:
                   - srl1:e1-3
-                  - host:srl1-e1-3
+                  - host:eth13
       debug: false
     srl2: |
       name: clabernetes-srl2
@@ -140,7 +140,7 @@ status:
         - 161
   kind: containerlab
   reconcileHashes:
-    config: a353337600caab93cbf5ed5ea4f3d3c92cda098968332a90ec7773041b692214
+    config: 281b4c792b37781a3546af8c79ca929098fbf7d197b0067195646bc615e0fc21
     filesFromURL: {}
     imagePullSecrets: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570
   removeTopologyPrefix: false

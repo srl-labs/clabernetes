@@ -17,12 +17,6 @@ spec:
         remoteInterface: e1-1
         remoteNode: srl2
         tunnelID: 1
-      - destination: topology-basic-host-vx.NAMESPACE.svc.cluster.local
-        localInterface: e1-3
-        localNode: srl1
-        remoteInterface: eth13
-        remoteNode: host
-        tunnelID: 2
     srl2:
       - destination: topology-basic-srl1-vx.NAMESPACE.svc.cluster.local
         localInterface: e1-1
