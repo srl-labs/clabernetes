@@ -20,6 +20,7 @@ spec:
             image: ghcr.io/nokia/srlinux
         links:
           - endpoints: ["srl1:e1-1", "srl2:e1-1"]
+          - endpoints: ["srl1:e1-3", "host:eth13"]
   deployment:
     containerlabTimeout: ""
     persistence:
@@ -66,6 +67,9 @@ status:
               - endpoints:
                   - srl1:e1-1
                   - host:srl1-e1-1
+              - endpoints:
+                  - srl1:e1-3
+                  - host:eth13
       debug: false
     srl2: |
       name: clabernetes-srl2
@@ -134,7 +138,7 @@ status:
         - 161
   kind: containerlab
   reconcileHashes:
-    config: 25ea403243c3741d3013049756aa02db0ad8dc3d0d9bf803dc1576f9dda33649
+    config: 281b4c792b37781a3546af8c79ca929098fbf7d197b0067195646bc615e0fc21
     filesFromURL: {}
     imagePullSecrets: 37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570
   removeTopologyPrefix: false

@@ -18,3 +18,4 @@ spec:
             image: ghcr.io/nokia/srlinux
         links:
           - endpoints: ["srl1:e1-1", "srl2:e1-1"]
+          - endpoints: ["srl1:e1-3", "host:eth13"]

@@ -335,6 +335,28 @@ func getKindsForNode(
 	return nil
 }
 
+func getDestinationLinkEndpoint(
+	targetNode string,
+	interestingEndpoint clabernetesapisv1alpha1.LinkEndpoint,
+	uninterestingEndpoint clabernetesapisv1alpha1.LinkEndpoint,
+) string {
+	if targetNode == clabernetesconstants.HostKeyword {
+		// It is a containerlab host entry, so the original provided interface is preserved
+		return fmt.Sprintf(
+			"%s:%s",
+			clabernetesconstants.HostKeyword,
+			uninterestingEndpoint.InterfaceName,
+		)
+	}
+
+	return fmt.Sprintf(
+		"%s:%s-%s",
+		clabernetesconstants.HostKeyword,
+		interestingEndpoint.NodeName,
+		interestingEndpoint.InterfaceName,
+	)
+}
+
 func (p *containerlabDefinitionProcessor) processConfigForNode(
 	containerlabConfig *clabernetesutilcontainerlab.Config,
 	nodeName string,
@@ -451,20 +473,24 @@ func (p *containerlabDefinitionProcessor) processConfigForNode(
 			&clabernetesutilcontainerlab.LinkDefinition{
 				LinkConfig: clabernetesutilcontainerlab.LinkConfig{
 					Endpoints: []string{
-						fmt.Sprintf(
-							"%s:%s",
+						fmt.Sprintf("%s:%s",
 							interestingEndpoint.NodeName,
 							interestingEndpoint.InterfaceName,
 						),
-						fmt.Sprintf(
-							"host:%s-%s",
-							interestingEndpoint.NodeName,
-							interestingEndpoint.InterfaceName,
+						getDestinationLinkEndpoint(
+							endpointB.NodeName,
+							interestingEndpoint,
+							uninterestingEndpoint,
 						),
 					},
 				},
 			},
 		)
+
+		if endpointB.NodeName == clabernetesconstants.HostKeyword {
+			// This is containerlab host entry, so no VxLAN is required
+			continue
+		}
 
 		p.reconcileData.ResolvedTunnels[nodeName] = append(
 			p.reconcileData.ResolvedTunnels[nodeName],
