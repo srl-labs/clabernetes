@@ -32,7 +32,8 @@ export function NamespaceSelector(props: NamespaceSelectorProps): ReactElement {
   const { namespace, placeholder, setNamespace } = props;
 
   const { data, isPending, isError, error } = useQuery<string[], Error>({
-    queryFn: async () => {
+    // biome-ignore lint/suspicious/noExplicitAny: matching queryFn expectations/json.parse return
+    queryFn: async (): Promise<any> => {
       const response = await listNamespaces();
 
       return JSON.parse(response);
@@ -80,7 +81,7 @@ export function NamespaceSelector(props: NamespaceSelectorProps): ReactElement {
             <DropdownMenuCheckboxItem
               checked={namespace === curNamespace}
               key={curNamespace}
-              onClick={() => {
+              onClick={(): void => {
                 setNamespace(curNamespace);
               }}
             >

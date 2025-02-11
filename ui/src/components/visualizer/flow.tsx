@@ -399,7 +399,7 @@ export function VisualizeFlow(props: VisualizeFlowProps): ReactElement {
       >
         <Button
           disabled={namespace === "" || layoutStyle === LayoutStyle.Horizontal}
-          onClick={() => {
+          onClick={(): void => {
             setLayoutStyle(LayoutStyle.Horizontal);
             setTriggerDraw(true);
           }}
@@ -409,7 +409,7 @@ export function VisualizeFlow(props: VisualizeFlowProps): ReactElement {
         </Button>
         <Button
           disabled={namespace === "" || layoutStyle === LayoutStyle.Vertical}
-          onClick={() => {
+          onClick={(): void => {
             setLayoutStyle(LayoutStyle.Vertical);
             setTriggerDraw(true);
           }}
@@ -424,7 +424,7 @@ export function VisualizeFlow(props: VisualizeFlowProps): ReactElement {
       >
         <Button
           disabled={namespace === "" || visualizeStyle === VisualizeStyle.Kubernetes}
-          onClick={() => {
+          onClick={(): void => {
             setVisualizeStyle(VisualizeStyle.Kubernetes);
             setTriggerDraw(true);
           }}
@@ -434,7 +434,7 @@ export function VisualizeFlow(props: VisualizeFlowProps): ReactElement {
         </Button>
         <Button
           disabled={namespace === "" || visualizeStyle === VisualizeStyle.Network}
-          onClick={() => {
+          onClick={(): void => {
             setVisualizeStyle(VisualizeStyle.Network);
             setTriggerDraw(true);
           }}

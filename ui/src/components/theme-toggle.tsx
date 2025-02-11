@@ -29,21 +29,21 @@ export function ThemeToggle(): ReactElement {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem
-          onClick={() => {
+          onClick={(): void => {
             setTheme("light");
           }}
         >
           Light
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => {
+          onClick={(): void => {
             setTheme("dark");
           }}
         >
           Dark
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => {
+          onClick={(): void => {
             setTheme("system");
           }}
         >

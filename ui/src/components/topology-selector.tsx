@@ -34,7 +34,8 @@ export function TopologySelector(props: NamespaceSelectorProps): ReactElement {
 
   const { data, isPending, isError, error } = useQuery<string[], Error>({
     enabled: namespace !== "",
-    queryFn: async () => {
+    // biome-ignore lint/suspicious/noExplicitAny: matching queryFn expectations/json.parse return
+    queryFn: async (): Promise<any> => {
       const response = await listNamespacedTopologies(namespace);
 
       return JSON.parse(response);
@@ -82,7 +83,7 @@ export function TopologySelector(props: NamespaceSelectorProps): ReactElement {
             <DropdownMenuCheckboxItem
               checked={topologyName === curTopologyName}
               key={curTopologyName}
-              onClick={() => {
+              onClick={(): void => {
                 setTopologyName(curTopologyName);
               }}
             >

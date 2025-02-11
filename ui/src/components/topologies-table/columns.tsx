@@ -16,7 +16,7 @@ export const columns: ColumnDef<ClabernetesContainerlabDevTopologyV1Alpha1>[] = 
     }: { column: Column<ClabernetesContainerlabDevTopologyV1Alpha1> }): ReactElement => {
       return (
         <Button
-          onClick={() => {
+          onClick={(): void => {
             column.toggleSorting(column.getIsSorted() === "asc");
           }}
           variant="ghost"
@@ -35,7 +35,7 @@ export const columns: ColumnDef<ClabernetesContainerlabDevTopologyV1Alpha1>[] = 
     }: { column: Column<ClabernetesContainerlabDevTopologyV1Alpha1> }): ReactElement => {
       return (
         <Button
-          onClick={() => {
+          onClick={(): void => {
             column.toggleSorting(column.getIsSorted() === "asc");
           }}
           variant="ghost"

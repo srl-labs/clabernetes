@@ -71,7 +71,7 @@ function AddAlert(
   alert: CreateAlertDialogProps,
   alerts: CreateAlertDialogProps[],
   setAlerts: (alerts: CreateAlertDialogProps[]) => void,
-) {
+): void {
   if (alerts.length === 0) {
     setAlerts([alert]);
 
@@ -356,16 +356,16 @@ export function CreateSheet(): ReactElement {
 
   return (
     <>
-      {alerts.map((alert) => {
+      {alerts.map((alert): ReactElement => {
         return (
           <AlertDialog
-            key={"alert"}
-            onOpenChange={() => {
+            key="alert"
+            onOpenChange={(): void => {
               const clonedAlerts = [...alerts];
 
               if (alerts.includes(alert)) {
                 setAlerts(
-                  clonedAlerts.filter((element) => {
+                  clonedAlerts.filter((element): boolean => {
                     return element !== alert;
                   }),
                 );
@@ -405,8 +405,8 @@ export function CreateSheet(): ReactElement {
             <div className="grid gap-4 py-4">
               <FormField
                 control={form.control}
-                name={"name"}
-                render={({ field: { onChange, value } }) => {
+                name="name"
+                render={({ field: { onChange, value } }): ReactElement => {
                   return (
                     <FormItem>
                       <div className="grid grid-cols-4 items-center gap-4">
@@ -431,8 +431,8 @@ export function CreateSheet(): ReactElement {
               />
               <FormField
                 control={form.control}
-                name={"namespace"}
-                render={({ field: { onChange, value } }) => {
+                name="namespace"
+                render={({ field: { onChange, value } }): ReactElement => {
                   return (
                     <FormItem>
                       <div className="grid grid-cols-4 items-center gap-4">
@@ -457,8 +457,8 @@ export function CreateSheet(): ReactElement {
               />
               <FormField
                 control={form.control}
-                name={"definition"}
-                render={({ field: { onChange, value } }) => {
+                name="definition"
+                render={({ field: { onChange, value } }): ReactElement => {
                   return (
                     <FormItem>
                       <div className="grid grid-cols-4 items-center gap-4">
@@ -485,7 +485,7 @@ export function CreateSheet(): ReactElement {
               />
               <Separator />
               <Collapsible
-                onOpenChange={() => setExposeExpanded(!exposeExpanded)}
+                onOpenChange={(): void => setExposeExpanded(!exposeExpanded)}
                 open={exposeExpanded}
               >
                 <div>
@@ -507,8 +507,8 @@ export function CreateSheet(): ReactElement {
                 <CollapsibleContent>
                   <FormField
                     control={form.control}
-                    name={"expose.disable"}
-                    render={({ field: { onChange, value } }) => {
+                    name="expose.disable"
+                    render={({ field: { onChange, value } }): ReactElement => {
                       return (
                         <FormItem>
                           <div className="grid grid-cols-4 items-center gap-4 pt-4">
@@ -534,8 +534,8 @@ export function CreateSheet(): ReactElement {
                   />
                   <FormField
                     control={form.control}
-                    name={"expose.disableAutoExpose"}
-                    render={({ field: { onChange, value } }) => {
+                    name="expose.disableAutoExpose"
+                    render={({ field: { onChange, value } }): ReactElement => {
                       return (
                         <FormItem>
                           <div className="grid grid-cols-4 items-center gap-4 pt-4">
@@ -563,7 +563,7 @@ export function CreateSheet(): ReactElement {
               </Collapsible>
               <Separator />
               <Collapsible
-                onOpenChange={() => setDeploymentExpanded(!deploymentExpanded)}
+                onOpenChange={(): void => setDeploymentExpanded(!deploymentExpanded)}
                 open={deploymentExpanded}
               >
                 <div>
@@ -607,13 +607,13 @@ export function CreateSheet(): ReactElement {
                     </FormDescription>
                     <FormField
                       control={form.control}
-                      name={"deployment.filesFromConfigmap"}
-                      render={() => {
+                      name="deployment.filesFromConfigmap"
+                      render={(): ReactElement => {
                         return (
                           <div className="p-4">
                             {form
                               .getValues("deployment.filesFromConfigmap")
-                              .map((fileFromConfigmap, index) => {
+                              .map((fileFromConfigmap, index): ReactElement => {
                                 return (
                                   <Card
                                     className="grid gap-4 p-4"
@@ -622,7 +622,7 @@ export function CreateSheet(): ReactElement {
                                     <FormField
                                       control={form.control}
                                       name={`deployment.filesFromConfigmap.${index}.nodeName`}
-                                      render={({ field: { value, onChange } }) => {
+                                      render={({ field: { value, onChange } }): ReactElement => {
                                         return (
                                           <FormItem>
                                             <div className="grid grid-cols-4 items-center gap-4">
@@ -650,7 +650,7 @@ export function CreateSheet(): ReactElement {
                                     <FormField
                                       control={form.control}
                                       name={`deployment.filesFromConfigmap.${index}.filePath`}
-                                      render={({ field: { value, onChange } }) => {
+                                      render={({ field: { value, onChange } }): ReactElement => {
                                         return (
                                           <FormItem>
                                             <div className="grid grid-cols-4 items-center gap-4">
@@ -678,7 +678,7 @@ export function CreateSheet(): ReactElement {
                                     <FormField
                                       control={form.control}
                                       name={`deployment.filesFromConfigmap.${index}.configmap`}
-                                      render={({ field: { value, onChange } }) => {
+                                      render={({ field: { value, onChange } }): ReactElement => {
                                         return (
                                           <FormItem>
                                             <div className="grid grid-cols-4 items-center gap-4">
@@ -706,7 +706,7 @@ export function CreateSheet(): ReactElement {
                                     <FormField
                                       control={form.control}
                                       name={`deployment.filesFromConfigmap.${index}.configmapPath`}
-                                      render={({ field: { value, onChange } }) => {
+                                      render={({ field: { value, onChange } }): ReactElement => {
                                         return (
                                           <FormItem>
                                             <div className="grid grid-cols-4 items-center gap-4">
@@ -736,7 +736,7 @@ export function CreateSheet(): ReactElement {
                                     <FormField
                                       control={form.control}
                                       name={`deployment.filesFromConfigmap.${index}.mode`}
-                                      render={({ field: { value, onChange } }) => {
+                                      render={({ field: { value, onChange } }): ReactElement => {
                                         return (
                                           <FormItem>
                                             <div className="grid grid-cols-4 items-center gap-4">
@@ -788,7 +788,7 @@ export function CreateSheet(): ReactElement {
                                     <div className="grid grid-cols-3 items-center gap-4">
                                       <div />
                                       <Button
-                                        onClick={() => {
+                                        onClick={(): void => {
                                           deleteFileFromConfigmap(index);
                                         }}
                                         type="button"
@@ -829,13 +829,13 @@ export function CreateSheet(): ReactElement {
                     </FormDescription>
                     <FormField
                       control={form.control}
-                      name={"deployment.filesFromUrl"}
-                      render={() => {
+                      name="deployment.filesFromUrl"
+                      render={(): ReactElement => {
                         return (
                           <div className="p-4">
                             {form
                               .getValues("deployment.filesFromUrl")
-                              .map((fileFromConfigmap, index) => {
+                              .map((fileFromConfigmap, index): ReactElement => {
                                 return (
                                   <Card
                                     className="grid gap-4 p-4"
@@ -844,7 +844,7 @@ export function CreateSheet(): ReactElement {
                                     <FormField
                                       control={form.control}
                                       name={`deployment.filesFromUrl.${index}.nodeName`}
-                                      render={({ field: { value, onChange } }) => {
+                                      render={({ field: { value, onChange } }): ReactElement => {
                                         return (
                                           <FormItem>
                                             <div className="grid grid-cols-4 items-center gap-4">
@@ -872,7 +872,7 @@ export function CreateSheet(): ReactElement {
                                     <FormField
                                       control={form.control}
                                       name={`deployment.filesFromUrl.${index}.url`}
-                                      render={({ field: { value, onChange } }) => {
+                                      render={({ field: { value, onChange } }): ReactElement => {
                                         return (
                                           <FormItem>
                                             <div className="grid grid-cols-4 items-center gap-4">
@@ -900,7 +900,7 @@ export function CreateSheet(): ReactElement {
                                     <div className="grid grid-cols-3 items-center gap-4">
                                       <div />
                                       <Button
-                                        onClick={() => {
+                                        onClick={(): void => {
                                           deleteFileFromUrl(index);
                                         }}
                                         type="button"
@@ -940,8 +940,8 @@ export function CreateSheet(): ReactElement {
                     </FormDescription>
                     <FormField
                       control={form.control}
-                      name={"deployment.resources"}
-                      render={() => {
+                      name="deployment.resources"
+                      render={(): ReactElement => {
                         return (
                           <div className="p-4">
                             {form.getValues("deployment.resources").map((resources, index) => {
@@ -953,7 +953,7 @@ export function CreateSheet(): ReactElement {
                                   <FormField
                                     control={form.control}
                                     name={`deployment.resources.${index}.nodeName`}
-                                    render={({ field: { value, onChange } }) => {
+                                    render={({ field: { value, onChange } }): ReactElement => {
                                       return (
                                         <FormItem>
                                           <div className="grid grid-cols-4 items-center gap-4">
@@ -981,7 +981,7 @@ export function CreateSheet(): ReactElement {
                                   <FormField
                                     control={form.control}
                                     name={`deployment.resources.${index}.requests.cpu`}
-                                    render={({ field: { value, onChange } }) => {
+                                    render={({ field: { value, onChange } }): ReactElement => {
                                       return (
                                         <FormItem>
                                           <div className="grid grid-cols-4 items-center gap-4">
@@ -1015,7 +1015,7 @@ export function CreateSheet(): ReactElement {
                                   <FormField
                                     control={form.control}
                                     name={`deployment.resources.${index}.requests.memory`}
-                                    render={({ field: { value, onChange } }) => {
+                                    render={({ field: { value, onChange } }): ReactElement => {
                                       return (
                                         <FormItem>
                                           <div className="grid grid-cols-4 items-center gap-4">
@@ -1049,7 +1049,7 @@ export function CreateSheet(): ReactElement {
                                   <FormField
                                     control={form.control}
                                     name={`deployment.resources.${index}.limits.cpu`}
-                                    render={({ field: { value, onChange } }) => {
+                                    render={({ field: { value, onChange } }): ReactElement => {
                                       return (
                                         <FormItem>
                                           <div className="grid grid-cols-4 items-center gap-4">
@@ -1083,7 +1083,7 @@ export function CreateSheet(): ReactElement {
                                   <FormField
                                     control={form.control}
                                     name={`deployment.resources.${index}.limits.memory`}
-                                    render={({ field: { value, onChange } }) => {
+                                    render={({ field: { value, onChange } }): ReactElement => {
                                       return (
                                         <FormItem>
                                           <div className="grid grid-cols-4 items-center gap-4">
@@ -1117,7 +1117,7 @@ export function CreateSheet(): ReactElement {
                                   <div className="grid grid-cols-3 items-center gap-4">
                                     <div />
                                     <Button
-                                      onClick={() => {
+                                      onClick={(): void => {
                                         deleteResources(index);
                                       }}
                                       type="button"
@@ -1139,7 +1139,7 @@ export function CreateSheet(): ReactElement {
               </Collapsible>
               <Separator />
               <Collapsible
-                onOpenChange={() => setImagePullExpanded(!imagePullExpanded)}
+                onOpenChange={(): void => setImagePullExpanded(!imagePullExpanded)}
                 open={imagePullExpanded}
               >
                 <div>
@@ -1162,7 +1162,7 @@ export function CreateSheet(): ReactElement {
                   <FormField
                     control={form.control}
                     name="imagePull.pullSecrets"
-                    render={({ field: { value, onChange } }) => {
+                    render={({ field: { value, onChange } }): ReactElement => {
                       return (
                         <FormItem>
                           <div className="grid grid-cols-4 items-center gap-4 pt-4">
@@ -1176,7 +1176,7 @@ export function CreateSheet(): ReactElement {
                               <PullSecretsSelector
                                 namespace={form.getValues("namespace")}
                                 pullSecrets={value}
-                                placeholder={"select pull secret(s)"}
+                                placeholder="select pull secret(s)"
                                 setPullSecrets={onChange}
                               />
                             </FormControl>
@@ -1224,8 +1224,8 @@ export function CreateSheet(): ReactElement {
                     </FormDescription>
                     <FormField
                       control={form.control}
-                      name={"imagePull.insecureRegistries"}
-                      render={() => {
+                      name="imagePull.insecureRegistries"
+                      render={(): ReactElement => {
                         return (
                           <div className="p-4">
                             {form
@@ -1239,7 +1239,7 @@ export function CreateSheet(): ReactElement {
                                     <FormField
                                       control={form.control}
                                       name={`imagePull.insecureRegistries.${index}`}
-                                      render={({ field: { value, onChange } }) => {
+                                      render={({ field: { value, onChange } }): ReactElement => {
                                         return (
                                           <FormItem>
                                             <div className="grid grid-cols-4 items-center gap-4">
@@ -1267,7 +1267,7 @@ export function CreateSheet(): ReactElement {
                                     <div className="grid grid-cols-3 items-center gap-4">
                                       <div />
                                       <Button
-                                        onClick={() => {
+                                        onClick={(): void => {
                                           deleteInsecureRegistries(index);
                                         }}
                                         type="button"
@@ -1288,7 +1288,7 @@ export function CreateSheet(): ReactElement {
                   <FormField
                     control={form.control}
                     name="imagePull.pullThroughOverride"
-                    render={({ field: { value, onChange } }) => {
+                    render={({ field: { value, onChange } }): ReactElement => {
                       return (
                         <FormItem>
                           <div className="grid grid-cols-4 items-center gap-4">
@@ -1340,7 +1340,7 @@ export function CreateSheet(): ReactElement {
                   <FormField
                     control={form.control}
                     name="imagePull.dockerDaemonConfig"
-                    render={({ field: { value, onChange } }) => {
+                    render={({ field: { value, onChange } }): ReactElement => {
                       return (
                         <FormItem>
                           <div className="grid grid-cols-4 items-center gap-4 pt-4">
@@ -1354,7 +1354,7 @@ export function CreateSheet(): ReactElement {
                               <SecretSelector
                                 namespace={form.getValues("namespace")}
                                 secret={value}
-                                placeholder={"select secret for docker daemon config"}
+                                placeholder="select secret for docker daemon config"
                                 setSecret={onChange}
                               />
                             </FormControl>
@@ -1379,7 +1379,7 @@ export function CreateSheet(): ReactElement {
                   <FormField
                     control={form.control}
                     name="imagePull.dockerConfig"
-                    render={({ field: { value, onChange } }) => {
+                    render={({ field: { value, onChange } }): ReactElement => {
                       return (
                         <FormItem>
                           <div className="grid grid-cols-4 items-center gap-4 pt-4">
@@ -1393,7 +1393,7 @@ export function CreateSheet(): ReactElement {
                               <SecretSelector
                                 namespace={form.getValues("namespace")}
                                 secret={value}
-                                placeholder={"select secret for docker (user)) config"}
+                                placeholder="select secret for docker (user)) config"
                                 setSecret={onChange}
                               />
                             </FormControl>
@@ -1423,7 +1423,7 @@ export function CreateSheet(): ReactElement {
             </div>
             <SheetFooter>
               <Button
-                onClick={() => {
+                onClick={(): void => {
                   form.reset();
                 }}
                 type="button"

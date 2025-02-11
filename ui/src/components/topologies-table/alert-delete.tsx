@@ -48,7 +48,7 @@ export function AlertDelete(props: AlertDeleteProps): ReactElement {
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            onClick={() => {
+            onClick={(): void => {
               deleteTopology(namespace, name).catch((deleteError: unknown) => {
                 throw deleteError;
               });

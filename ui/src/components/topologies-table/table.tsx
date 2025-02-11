@@ -105,7 +105,7 @@ function renderRow(
                     <TableCell key={cell.id}>
                       <CollapsibleTrigger asChild={true}>
                         <Button
-                          onClick={() => {
+                          onClick={(): void => {
                             const isExpanded = expandedRows[row.id];
 
                             const newExpandedRows = { ...expandedRows };
@@ -174,7 +174,8 @@ export function TopologiesTable(): ReactElement {
 
   const { isPending, isError, data, error } = useQuery({
     enabled: true,
-    queryFn: async () => {
+    // biome-ignore lint/suspicious/noExplicitAny: matching queryFn expectations/json.parse return
+    queryFn: async (): Promise<any> => {
       const response = await listTopologies();
 
       return JSON.parse(response);
@@ -195,7 +196,7 @@ export function TopologiesTable(): ReactElement {
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: (value: Updater<ColumnFiltersState>) => {
+    onColumnFiltersChange: (value: Updater<ColumnFiltersState>): void => {
       setExpandedRows({});
       setColumnFilters(value);
     },

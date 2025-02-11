@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.8.3/schema.json",
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
   "files": {
     "ignore": [
       "src/components/ui/",
@@ -19,16 +19,30 @@
     "enabled": true,
     "rules": {
       "all": true,
+      "suspicious": {
+        "noReactSpecificProps": "off"
+      },
       "nursery": {
         "all": true,
-        "noReactSpecificProps": "off",
+        "noEnum": "off",
         "useImportRestrictions": "off",
-        "noUndeclaredDependencies": "off",
         "useSortedClasses": "off"
       }
     }
   },
   "overrides": [
+    {
+      "include": [
+        "src/**"
+      ],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "useComponentExportOnlyModules": "off"
+          }
+        }
+      }
+    },
     {
       "include": [
         "src/lib/**"
@@ -37,6 +51,9 @@
         "rules": {
           "correctness": {
             "noNodejsModules": "off"
+          },
+          "nursery": {
+            "noProcessEnv": "off"
           }
         }
       }
@@ -55,6 +72,31 @@
         "rules": {
           "style": {
             "noDefaultExport": "off"
+          }
+        }
+      }
+    },
+    {
+      "include": [
+        "src/components/topologies-table/create-sheet.tsx",
+        "src/lib/kubernetes-visualize.ts"
+      ],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "noSecrets": "off"
+          }
+        }
+      }
+    },
+    {
+      "include": [
+        "src/components/topologies-table/create-sheet.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "useConsistentCurlyBraces": "off"
           }
         }
       }
