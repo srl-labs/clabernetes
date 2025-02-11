@@ -1,14 +1,16 @@
 import { defineConfig } from '@hey-api/openapi-ts';
 
 export default defineConfig({
-  client: '@hey-api/client-fetch',
   input: 'clabernetes-openapi.json',
   output: {
+    case: "PascalCase",
     format: "biome",
     lint: "biome",
     path: 'src/lib/clabernetes-client'
   },
-  types: {
-    name: 'PascalCase',
-  },
+  plugins: [
+    {
+      name: "@hey-api/client-fetch",
+    },
+  ]
 });

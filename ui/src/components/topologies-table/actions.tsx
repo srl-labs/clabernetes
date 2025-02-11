@@ -104,7 +104,7 @@ export function Actions(props: ActionsProps): ReactElement {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <DialogContent className="max-h-screen overflow-y-scroll lg:max-w-screen-lg">
+      <DialogContent className="max-h-screen overflow-y-scroll lg:max-w-(--breakpoint-lg)">
         <DialogHeader>
           <DialogTitle>{`${topologyNamespace}/${topologyName}`}</DialogTitle>
           <DialogDescription />

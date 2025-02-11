@@ -21,7 +21,7 @@ export function Header(props: HeaderProps): ReactElement {
       <div className="flex-1" />
       <div className="absolute left-1/2 transform -translate-x-1/2 flex w-3/5 max-w-2xl justify-center space-x-4 px-4">
         <Input
-          className="flex-grow"
+          className="grow"
           onChange={(event): void => {
             getColumn("namespace")?.setFilterValue(event.target.value);
           }}
@@ -29,7 +29,7 @@ export function Header(props: HeaderProps): ReactElement {
           value={getColumn("namespace")?.getFilterValue() as string}
         />
         <Input
-          className="flex-grow"
+          className="grow"
           onChange={(event): void => {
             getColumn("name")?.setFilterValue(event.target.value);
           }}
