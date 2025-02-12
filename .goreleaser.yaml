@@ -1,5 +1,5 @@
 ---
-version: 1
+version: 2
 
 dist: ./.dist
 
@@ -23,7 +23,8 @@ builds:
       - darwin
 
 archives:
-  - format: tar.gz
+  - formats:
+      - tar.gz
     name_template: >-
       {{ .ProjectName }}_
       {{- .Os }}_
@@ -32,7 +33,8 @@ archives:
       {{- else }}{{ .Arch }}{{ end }}
     format_overrides:
       - goos: windows
-        format: zip
+        formats:
+          - zip
 
 # we just wanna build/archive w/ goreleaser, disable changelog/release bits
 changelog:
