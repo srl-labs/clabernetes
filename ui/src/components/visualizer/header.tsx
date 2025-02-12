@@ -32,7 +32,7 @@ export function VisualizeHeader(props: VisualizeHeaderProps): ReactElement {
         />
         <Button
           disabled={!namespace}
-          onClick={() => {
+          onClick={(): void => {
             setTriggerDraw(true);
           }}
           type="submit"

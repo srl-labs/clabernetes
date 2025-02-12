@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Inter as fontSans } from "next/font/google";
 import type React from "react";
+import type { ReactElement } from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { cn } from "@/lib/utils";
 import { HeaderFooter } from "@/components/header-footer.tsx";
@@ -21,7 +22,7 @@ export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) {
+}>): ReactElement {
   return (
     <html
       lang="en"

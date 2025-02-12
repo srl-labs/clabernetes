@@ -47,7 +47,8 @@ export function SecretSelector(props: SecretSelectorProps): ReactElement {
   const { namespace, placeholder, secret, setSecret } = props;
 
   const { data, isPending, isError, error } = useQuery<string[], Error>({
-    queryFn: async () => {
+    // biome-ignore lint/suspicious/noExplicitAny: matching queryFn expectations/json.parse return
+    queryFn: async (): Promise<any> => {
       const response = await listNamespacedSecrets(namespace);
 
       return JSON.parse(response);
@@ -96,7 +97,7 @@ export function SecretSelector(props: SecretSelectorProps): ReactElement {
               checked={secret === curSecret}
               key={curSecret}
               disabled={data.length === 0}
-              onClick={() => {
+              onClick={(): void => {
                 setSecret(curSecret);
               }}
             >

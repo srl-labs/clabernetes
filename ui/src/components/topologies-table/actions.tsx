@@ -77,7 +77,7 @@ export function Actions(props: ActionsProps): ReactElement {
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DialogTrigger asChild={true}>
             <DropdownMenuItem
-              onClick={() => {
+              onClick={(): void => {
                 setCurrentRow(row);
               }}
             >
@@ -86,7 +86,7 @@ export function Actions(props: ActionsProps): ReactElement {
           </DialogTrigger>
           <DialogTrigger asChild={true}>
             <DropdownMenuItem
-              onClick={() => {
+              onClick={(): void => {
                 setCurrentRow(row);
                 setIsEditDialogOpen(true);
               }}
@@ -95,7 +95,7 @@ export function Actions(props: ActionsProps): ReactElement {
             </DropdownMenuItem>
           </DialogTrigger>
           <DropdownMenuItem
-            onClick={() => {
+            onClick={(): void => {
               setCurrentRow(row);
               setIsDeleteDialogOpen(true);
             }}
@@ -104,7 +104,7 @@ export function Actions(props: ActionsProps): ReactElement {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <DialogContent className="max-h-screen overflow-y-scroll lg:max-w-screen-lg">
+      <DialogContent className="max-h-screen overflow-y-scroll lg:max-w-(--breakpoint-lg)">
         <DialogHeader>
           <DialogTitle>{`${topologyNamespace}/${topologyName}`}</DialogTitle>
           <DialogDescription />
@@ -119,7 +119,7 @@ export function Actions(props: ActionsProps): ReactElement {
         <DialogFooter className="sm:end">
           <DialogClose
             asChild={true}
-            onClick={() => {
+            onClick={(): void => {
               setIsEditDialogOpen(false);
             }}
           >
@@ -133,13 +133,13 @@ export function Actions(props: ActionsProps): ReactElement {
           <DialogClose
             asChild={true}
             disabled={!isEditDialogOpen}
-            onClick={() => {
+            onClick={(): void => {
               setIsEditDialogOpen(false);
             }}
           >
             <Button
               disabled={!isEditDialogOpen}
-              onClick={() => {
+              onClick={(): void => {
                 const body = JSON.stringify(parseYaml(editorRef.current?.getValue() ?? ""));
 
                 updateTopology(topologyNamespace, topologyName, body).catch(

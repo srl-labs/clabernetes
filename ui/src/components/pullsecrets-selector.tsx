@@ -47,7 +47,8 @@ export function PullSecretsSelector(props: PullSecretsSelectorProps): ReactEleme
   const { namespace, placeholder, pullSecrets, setPullSecrets } = props;
 
   const { data, isPending, isError, error } = useQuery<string[], Error>({
-    queryFn: async () => {
+    // biome-ignore lint/suspicious/noExplicitAny: matching queryFn expectations/json.parse return
+    queryFn: async (): Promise<any> => {
       const response = await listNamespacedPullSecrets(namespace);
 
       return JSON.parse(response);
@@ -96,7 +97,7 @@ export function PullSecretsSelector(props: PullSecretsSelectorProps): ReactEleme
               checked={pullSecrets.includes(curSecret)}
               key={curSecret}
               disabled={data.length === 0}
-              onClick={() => {
+              onClick={(): void => {
                 const clonedSecrets = [...pullSecrets];
 
                 if (pullSecrets.includes(curSecret)) {

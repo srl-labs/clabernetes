@@ -68,7 +68,7 @@ export async function listNamespaces(): Promise<string> {
     });
 
   return JSON.stringify(
-    response.body.items.map((namespace) => {
+    response.items.map((namespace) => {
       return namespace.metadata?.name;
     }),
   );
@@ -76,12 +76,11 @@ export async function listNamespaces(): Promise<string> {
 
 export async function createTopology(
   namespace: string,
-  name: string,
   body: string,
 ): Promise<string> {
   const response = await createClabernetesContainerlabDevV1Alpha1NamespacedTopology({
     body: JSON.parse(body),
-    path: { name: name, namespace: namespace },
+    path: { namespace: namespace },
   });
 
   return JSON.stringify(response);
@@ -94,19 +93,16 @@ export async function listNamespacedPullSecrets(namespace: string): Promise<stri
 
   const response = await kc
     .makeApiClient(CoreV1Api)
-    .listNamespacedSecret(
-      namespace,
-      undefined,
-      undefined,
-      undefined,
-      "type=kubernetes.io/dockerconfigjson",
+    .listNamespacedSecret({
+      namespace: namespace,
+      fieldSelector: "type=kubernetes.io/dockerconfigjson",}
     )
     .catch((error: unknown) => {
       throw error;
     });
 
   return JSON.stringify(
-    response.body.items.map((namespace) => {
+    response.items.map((namespace) => {
       return namespace.metadata?.name;
     }),
   );
@@ -119,13 +115,13 @@ export async function listNamespacedSecrets(namespace: string): Promise<string> 
 
   const response = await kc
     .makeApiClient(CoreV1Api)
-    .listNamespacedSecret(namespace, undefined, undefined, undefined, "type=Opaque")
+    .listNamespacedSecret({namespace: namespace, fieldSelector: "type=Opaque"})
     .catch((error: unknown) => {
       throw error;
     });
 
   return JSON.stringify(
-    response.body.items.map((namespace) => {
+    response.items.map((namespace) => {
       return namespace.metadata?.name;
     }),
   );

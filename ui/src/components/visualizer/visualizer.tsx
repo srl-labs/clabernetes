@@ -18,7 +18,7 @@ export function Visualizer(): ReactElement {
   const [triggerDraw, setTriggerDraw] = useState(false);
 
   const { ref } = useResizeObserver<HTMLDivElement>({
-    onResize: ({ width, height }) => {
+    onResize: ({ width, height }): void => {
       setFlowDivSize({ height: height ?? 0, width: width ?? 0 });
     },
   });

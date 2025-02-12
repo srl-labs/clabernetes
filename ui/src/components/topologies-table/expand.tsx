@@ -113,7 +113,7 @@ function getTopologyNodeCard(
           <div className="flex items-center">
             <span className="w-24 pr-2 text-right font-semibold">TCP Ports:</span>
             <Button
-              onClick={() => {
+              onClick={(): void => {
                 const clonedExpandedPorts = [...expandedTcpPorts];
 
                 if (expandedTcpPorts.includes(nodeName)) {
@@ -138,7 +138,7 @@ function getTopologyNodeCard(
           <div className="flex items-center">
             <span className="w-24 pr-2 text-right font-semibold">UDP Ports:</span>
             <Button
-              onClick={() => {
+              onClick={(): void => {
                 const clonedExpandedPorts = [...expandedUdpPorts];
 
                 if (expandedUdpPorts.includes(nodeName)) {

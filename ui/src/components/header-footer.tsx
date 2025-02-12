@@ -9,9 +9,9 @@ import ContainerlabLogo from "@/public/clab-logo.svg";
 import { usePathname } from "next/navigation";
 
 const navigationMenu =
-  "group inline-flex h-10 w-48 items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50";
+  "group inline-flex h-10 w-48 items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-active:bg-accent/50 data-[state=open]:bg-accent/50";
 const navigationMenuTriggered =
-  "group inline-flex h-10 w-48 items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors bg-accent bg-accent text-accent-foreground outline-none opacity-50 bg-accent/50 data-[state=open]:bg-accent/5";
+  "group inline-flex h-10 w-48 items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors bg-accent bg-accent text-accent-foreground outline-hidden opacity-50 bg-accent/50 data-[state=open]:bg-accent/5";
 
 function getNavButtonCss(buttonIsActivePath: boolean): string {
   if (buttonIsActivePath) {

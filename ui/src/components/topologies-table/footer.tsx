@@ -27,7 +27,7 @@ export function Footer(props: FooterProps): ReactElement {
     <div className="flex justify-between">
       <div className="flex space-x-2 py-4">
         <Button
-          onClick={() => {
+          onClick={(): void => {
             getQueryClient()
               .invalidateQueries({
                 queryKey: ["topologies", {}],
@@ -52,7 +52,7 @@ export function Footer(props: FooterProps): ReactElement {
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuRadioGroup
-              onValueChange={(value: string) => {
+              onValueChange={(value: string): void => {
                 switch (value) {
                   case "3s":
                     setRefetch(RefetchInterval.ThreeSeconds);
@@ -84,7 +84,7 @@ export function Footer(props: FooterProps): ReactElement {
       <div className="ml-auto flex space-x-2 py-4">
         <Button
           disabled={!getCanPreviousPage()}
-          onClick={() => {
+          onClick={(): void => {
             previousPage();
           }}
           size="sm"
@@ -94,7 +94,7 @@ export function Footer(props: FooterProps): ReactElement {
         </Button>
         <Button
           disabled={!getCanNextPage()}
-          onClick={() => {
+          onClick={(): void => {
             nextPage();
           }}
           size="sm"
