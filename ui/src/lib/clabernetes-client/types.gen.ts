@@ -11,7 +11,7 @@ export type IoK8sApimachineryPkgApisMetaV1DeleteOptions = {
     /**
      * When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed
      */
-    dryRun?: Array<(string)>;
+    dryRun?: Array<string>;
     /**
      * The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.
      */
@@ -109,7 +109,7 @@ export type IoK8sApimachineryPkgApisMetaV1ObjectMeta = {
      * Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: http://kubernetes.io/docs/user-guide/annotations
      */
     annotations?: {
-        [key: string]: (string);
+        [key: string]: string;
     };
     /**
      * CreationTimestamp is a timestamp representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations. Clients may not set this value. It is represented in RFC3339 form and is in UTC.
@@ -130,7 +130,7 @@ export type IoK8sApimachineryPkgApisMetaV1ObjectMeta = {
     /**
      * Must be empty before the object is deleted from the registry. Each entry is an identifier for the responsible component that will remove the entry from the list. If the deletionTimestamp of the object is non-nil, entries in this list can only be removed. Finalizers may be processed and removed in any order.  Order is NOT enforced because it introduces significant risk of stuck finalizers. finalizers is a shared field, any actor with permission can reorder it. If the finalizer list is processed in order, then this can lead to a situation in which the component responsible for the first finalizer in the list is waiting for a signal (field value, external system, or other) produced by a component responsible for a finalizer later in the list, resulting in a deadlock. Without enforced ordering finalizers are free to order amongst themselves and are not vulnerable to ordering changes in the list.
      */
-    finalizers?: Array<(string)>;
+    finalizers?: Array<string>;
     /**
      * GenerateName is an optional prefix, used by the server, to generate a unique name ONLY IF the Name field has not been provided. If this field is used, the name returned to the client will be different than the name passed. This value will also be combined with a unique suffix. The provided value has the same validation rules as the Name field, and may be truncated by the length of the suffix required to make the value unique on the server.
      *
@@ -147,12 +147,12 @@ export type IoK8sApimachineryPkgApisMetaV1ObjectMeta = {
      * Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: http://kubernetes.io/docs/user-guide/labels
      */
     labels?: {
-        [key: string]: (string);
+        [key: string]: string;
     };
     /**
      * ManagedFields maps workflow-id and version to the set of fields that are managed by that workflow. This is mostly for internal housekeeping, and users typically shouldn't need to set or understand this field. A workflow can be the user's name, a controller's name, or the name of a specific apply path like "ci-cd". The set of fields is always in the version that the workflow used when modifying the object.
      */
-    managedFields?: Array<(IoK8sApimachineryPkgApisMetaV1ManagedFieldsEntry)>;
+    managedFields?: Array<IoK8sApimachineryPkgApisMetaV1ManagedFieldsEntry>;
     /**
      * Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: http://kubernetes.io/docs/user-guide/identifiers#names
      */
@@ -166,7 +166,7 @@ export type IoK8sApimachineryPkgApisMetaV1ObjectMeta = {
     /**
      * List of objects depended by this object. If ALL objects in the list have been deleted, this object will be garbage collected. If this object is managed by a controller, then an entry in this list will point to this controller, with the controller field set to true. There cannot be more than one managing controller.
      */
-    ownerReferences?: Array<(IoK8sApimachineryPkgApisMetaV1OwnerReference)>;
+    ownerReferences?: Array<IoK8sApimachineryPkgApisMetaV1OwnerReference>;
     /**
      * An opaque value that represents the internal version of this object that can be used by clients to determine when objects have changed. May be used for optimistic concurrency, change detection, and the watch operation on a resource or set of resources. Clients must treat these values as opaque and passed unmodified back to the server. They may only be valid for a particular resource or set of resources.
      *
@@ -303,7 +303,7 @@ export type IoK8sApimachineryPkgApisMetaV1StatusDetails = {
     /**
      * The Causes array includes more details associated with the StatusReason failure. Not all StatusReasons may provide detailed causes.
      */
-    causes?: Array<(IoK8sApimachineryPkgApisMetaV1StatusCause)>;
+    causes?: Array<IoK8sApimachineryPkgApisMetaV1StatusCause>;
     /**
      * The group attribute of the resource associated with the status StatusReason.
      */
@@ -392,7 +392,7 @@ export type ClabernetesContainerlabDevConnectivityV1Alpha1 = {
                 /**
                  * TunnelID is the id number of the tunnel (vnid or segment id).
                  */
-                tunnelID: number;
+                tunnelId: number;
             }>;
         };
     };
@@ -467,7 +467,7 @@ export type ClabernetesContainerlabDevImagerequestV1Alpha1 = {
         /**
          * RequestedImagePullSecrets is a list of configured pull secrets to set in the pull pod spec.
          */
-        requestedImagePullSecrets?: Array<(string)>;
+        requestedImagePullSecrets?: Array<string>;
         /**
          * TopologyName is the name of the topology requesting the image.
          */
@@ -610,9 +610,7 @@ export type ClabernetesContainerlabDevConfigV1Alpha1 = {
                          * This field is effectively required, but due to backwards compatibility is
                          * allowed to be empty. Instances of this type with an empty value here are
                          * almost certainly wrong.
-                         * TODO: Add other useful fields. apiVersion, kind, uid?
                          * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                         * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                          */
                         name?: string;
                         /**
@@ -665,9 +663,7 @@ export type ClabernetesContainerlabDevConfigV1Alpha1 = {
                          * This field is effectively required, but due to backwards compatibility is
                          * allowed to be empty. Instances of this type with an empty value here are
                          * almost certainly wrong.
-                         * TODO: Add other useful fields. apiVersion, kind, uid?
                          * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                         * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                          */
                         name?: string;
                         /**
@@ -721,10 +717,8 @@ export type ClabernetesContainerlabDevConfigV1Alpha1 = {
                          * Claims lists the names of resources, defined in spec.resourceClaims,
                          * that are used by this container.
                          *
-                         *
                          * This is an alpha field and requires enabling the
                          * DynamicResourceAllocation feature gate.
-                         *
                          *
                          * This field is immutable. It can only be set for containers.
                          */
@@ -735,13 +729,19 @@ export type ClabernetesContainerlabDevConfigV1Alpha1 = {
                              * inside a container.
                              */
                             name: string;
+                            /**
+                             * Request is the name chosen for a request in the referenced claim.
+                             * If empty, everything from the claim is made available, otherwise
+                             * only the result of this request.
+                             */
+                            request?: string;
                         }>;
                         /**
                          * Limits describes the maximum amount of compute resources allowed.
                          * More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                          */
                         limits?: {
-                            [key: string]: (number | string);
+                            [key: string]: number | string;
                         };
                         /**
                          * Requests describes the minimum amount of compute resources required.
@@ -750,7 +750,7 @@ export type ClabernetesContainerlabDevConfigV1Alpha1 = {
                          * More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                          */
                         requests?: {
-                            [key: string]: (number | string);
+                            [key: string]: number | string;
                         };
                     };
                 };
@@ -765,10 +765,8 @@ export type ClabernetesContainerlabDevConfigV1Alpha1 = {
                  * Claims lists the names of resources, defined in spec.resourceClaims,
                  * that are used by this container.
                  *
-                 *
                  * This is an alpha field and requires enabling the
                  * DynamicResourceAllocation feature gate.
-                 *
                  *
                  * This field is immutable. It can only be set for containers.
                  */
@@ -779,13 +777,19 @@ export type ClabernetesContainerlabDevConfigV1Alpha1 = {
                      * inside a container.
                      */
                     name: string;
+                    /**
+                     * Request is the name chosen for a request in the referenced claim.
+                     * If empty, everything from the claim is made available, otherwise
+                     * only the result of this request.
+                     */
+                    request?: string;
                 }>;
                 /**
                  * Limits describes the maximum amount of compute resources allowed.
                  * More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                  */
                 limits?: {
-                    [key: string]: (number | string);
+                    [key: string]: number | string;
                 };
                 /**
                  * Requests describes the minimum amount of compute resources required.
@@ -794,7 +798,7 @@ export type ClabernetesContainerlabDevConfigV1Alpha1 = {
                  * More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                  */
                 requests?: {
-                    [key: string]: (number | string);
+                    [key: string]: number | string;
                 };
             };
         };
@@ -847,7 +851,7 @@ export type ClabernetesContainerlabDevConfigV1Alpha1 = {
         /**
          * InClusterDNSSuffix overrides the default in cluster dns suffix used when resolving services.
          */
-        inClusterDNSSuffix?: string;
+        inClusterDnsSuffix?: string;
         /**
          * Metadata holds "global" metadata -- that is, metadata that is applied to all objects created
          * by the clabernetes controller.
@@ -859,7 +863,7 @@ export type ClabernetesContainerlabDevConfigV1Alpha1 = {
              * valid kubernetes annotation data.
              */
             annotations?: {
-                [key: string]: (string);
+                [key: string]: string;
             };
             /**
              * Labels holds key/value pairs that should be set as labels on clabernetes created resources.
@@ -867,7 +871,7 @@ export type ClabernetesContainerlabDevConfigV1Alpha1 = {
              * kubernetes label data.
              */
             labels?: {
-                [key: string]: (string);
+                [key: string]: string;
             };
         };
         /**
@@ -884,40 +888,6 @@ export type ClabernetesContainerlabDevConfigV1Alpha1 = {
         [key: string]: unknown;
     };
 };
-
-/**
- * LauncherImagePullPolicy sets the default launcher image pull policy to use when spawning
- * launcher deployments.
- */
-export type launcherImagePullPolicy = 'IfNotPresent' | 'Always' | 'Never';
-
-/**
- * LauncherLogLevel sets the launcher clabernetes worker log level -- this overrides whatever
- * is set on the controllers env vars for this topology. Note: omitempty because empty str does
- * not satisfy enum of course.
- */
-export type launcherLogLevel = 'disabled' | 'critical' | 'warn' | 'info' | 'debug';
-
-/**
- * CRIKindOverride allows for overriding the auto discovered cri flavor of the cluster -- this
- * may be useful if we fail to parse the cri kind for some reason, or in mixed cri flavor
- * clusters -- however in the latter case, make sure that if you are using image pull through
- * that clabernetes workloads are only run on the nodes of the cri kind specified here!
- */
-export type criKindOverride = 'containerd';
-
-/**
- * PullThroughOverride allows for overriding the image pull through mode for this
- * particular topology.
- */
-export type pullThroughOverride = 'auto' | 'always' | 'never';
-
-/**
- * Naming holds the global override for the "naming" setting for Topology objects -- this
- * controls whether the Topology resources have the containerlab topology name as a prefix.
- * Of course this is ignored if a Topology sets its Naming field to something not "global".
- */
-export type naming = 'prefixed' | 'non-prefixed';
 
 /**
  * a list of clabernetes-containerlab-dev.config.v1alpha1 resources
@@ -1056,9 +1026,7 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
                          * This field is effectively required, but due to backwards compatibility is
                          * allowed to be empty. Instances of this type with an empty value here are
                          * almost certainly wrong.
-                         * TODO: Add other useful fields. apiVersion, kind, uid?
                          * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                         * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                          */
                         name?: string;
                         /**
@@ -1111,9 +1079,7 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
                          * This field is effectively required, but due to backwards compatibility is
                          * allowed to be empty. Instances of this type with an empty value here are
                          * almost certainly wrong.
-                         * TODO: Add other useful fields. apiVersion, kind, uid?
                          * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                         * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                          */
                         name?: string;
                         /**
@@ -1157,7 +1123,7 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
              * on a launcher node that the file should be downloaded to. This is useful for configs that are
              * larger than the ConfigMap (etcd) 1Mb size limit.
              */
-            filesFromURL?: {
+            filesFromUrl?: {
                 [key: string]: Array<{
                     /**
                      * FilePath is the path to mount the file.
@@ -1242,10 +1208,8 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
                      * Claims lists the names of resources, defined in spec.resourceClaims,
                      * that are used by this container.
                      *
-                     *
                      * This is an alpha field and requires enabling the
                      * DynamicResourceAllocation feature gate.
-                     *
                      *
                      * This field is immutable. It can only be set for containers.
                      */
@@ -1256,13 +1220,19 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
                          * inside a container.
                          */
                         name: string;
+                        /**
+                         * Request is the name chosen for a request in the referenced claim.
+                         * If empty, everything from the claim is made available, otherwise
+                         * only the result of this request.
+                         */
+                        request?: string;
                     }>;
                     /**
                      * Limits describes the maximum amount of compute resources allowed.
                      * More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                      */
                     limits?: {
-                        [key: string]: (number | string);
+                        [key: string]: number | string;
                     };
                     /**
                      * Requests describes the minimum amount of compute resources required.
@@ -1271,7 +1241,7 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
                      * More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                      */
                     requests?: {
-                        [key: string]: (number | string);
+                        [key: string]: number | string;
                     };
                 };
             };
@@ -1285,7 +1255,7 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
                  * Topology.
                  */
                 nodeSelector?: {
-                    [key: string]: (string);
+                    [key: string]: string;
                 };
                 /**
                  * Tolerations is a list of Tolerations that will be set on the launcher pod spec.
@@ -1334,7 +1304,6 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
              * (or equivalent for kne). When this is `false` (default), clabernetes will add and expose the
              * following list of ports to whatever ports you have already defined:
              *
-             *
              * 21    - tcp - ftp
              * 22    - tcp - ssh
              * 23    - tcp - telnet
@@ -1350,7 +1319,6 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
              * 9559  - tcp - p4rt
              * 57400 - tcp - gnmi (nokia srl/sros default)
              *
-             *
              * This setting is *ignored completely* if `DisableExpose` is true!
              */
             disableAutoExpose?: boolean;
@@ -1359,6 +1327,17 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
              * default any mapped ports in a containerlab topology will be exposed.
              */
             disableExpose?: boolean;
+            /**
+             * ExposeType configures the service type(s) related to exposing the topology. This is an enum
+             * that has the following valid values:
+             * - None: expose is *not* disabled, but we just don't create any services related to the pods,
+             * you may want to do this if you want to tickle the pods by pod name directly for some
+             * reason while not having extra services floating around.
+             * - ClusterIP: a clusterip service is created so you can hit that service name for the pods.
+             * - LoadBalancer: (default) creates a load balancer service so you can access your pods from
+             * outside the cluster. this is/was the only behavior up to v0.2.4.
+             */
+            exposeType?: 'None' | 'ClusterIP' | 'LoadBalancer';
         };
         /**
          * ImagePull holds configurations relevant to how clabernetes launcher pods handle pulling
@@ -1384,7 +1363,7 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
              * InsecureRegistries is a slice of strings of insecure registries to configure in the launcher
              * pods.
              */
-            insecureRegistries?: Array<(string)>;
+            insecureRegistries?: Array<string>;
             /**
              * PullSecrets allows for providing secret(s) to use when pulling the image. This is only
              * applicable *if* ImagePullThrough mode is auto or always. The secret is used by the launcher
@@ -1395,7 +1374,7 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
              * just like "normal" pull secrets, the secret needs to be in the namespace that the topology
              * is in.
              */
-            pullSecrets?: Array<(string)>;
+            pullSecrets?: Array<string>;
             /**
              * PullThroughOverride allows for overriding the image pull through mode for this
              * particular topology.
@@ -1435,7 +1414,7 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
              * for clabernetes to check the state of the node. The node names here should match the name of
              * the nodes in the containerlab sub-topology.
              */
-            excludedNodes?: Array<(string)>;
+            excludedNodes?: Array<string>;
             /**
              * NodeProbeConfigurations is a map of node specific probe configurations -- if you only need
              * a simple ssh or tcp connect style setup that works on all node types in the topology you can
@@ -1568,10 +1547,6 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
             status: 'True' | 'False' | 'Unknown';
             /**
              * type of condition in CamelCase or in foo.example.com/CamelCase.
-             * ---
-             * Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
-             * useful (see .node.status.conditions), the ability to deconflict is important.
-             * The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
              */
             type: string;
         }>;
@@ -1582,7 +1557,7 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
          * topology that gets mounted in the launcher pod.
          */
         configs: {
-            [key: string]: (string);
+            [key: string]: string;
         };
         /**
          * ExposedPorts holds a map of (containerlab not k8s!) nodes and their exposed ports
@@ -1598,11 +1573,11 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
                 /**
                  * TCPPorts is a list of TCP ports exposed on the LoadBalancer service.
                  */
-                tcpPorts: Array<(number)>;
+                tcpPorts: Array<number>;
                 /**
                  * UDPPorts is a list of UDP ports exposed on the LoadBalancer service.
                  */
-                udpPorts: Array<(number)>;
+                udpPorts: Array<number>;
             };
         };
         /**
@@ -1615,7 +1590,7 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
          * configuration of the topology). The possible values are "notready" and "ready", "unknown".
          */
         nodeReadiness: {
-            [key: string]: (string);
+            [key: string]: string;
         };
         /**
          * ReconcileHashes holds the hashes form the last reconciliation run.
@@ -1640,8 +1615,8 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
              * explicitly track this per node to know when a node needs to be restarted such that the new
              * URL is "picked up" by the node/launcher.
              */
-            filesFromURL: {
-                [key: string]: (string);
+            filesFromUrl: {
+                [key: string]: string;
             };
             /**
              * ImagePullSecrets is the hash of hte last stored image pull secrets for this Topology.
@@ -1661,35 +1636,6 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
         topologyReady: boolean;
     };
 };
-
-/**
- * Connectivity defines the type of connectivity to use between nodes in the topology. The
- * default behavior is to use vxlan tunnels, alternatively you can enable a more experimental
- * "slurpeeth" connectivity flavor that stuffs traffic into tcp tunnels to avoid any vxlan mtu
- * and/or fragmentation challenges.
- */
-export type connectivity = 'vxlan' | 'slurpeeth';
-
-/**
- * Naming tells the clabernetes controller how it should name resources it creates -- that is
- * whether it should include the containerlab topology name as a prefix on resources spawned
- * from this Topology or not; this includes the actual (containerlab) node Deployment(s), as
- * well as the Service(s) for the Topology. This setting has three modes; "prefixed" -- which of
- * course includes the containerlab topology name as a prefix, "non-prefixed" which does *not*
- * include the containerlab topology name as a prefix, and "global" which defers to the global
- * config setting for this (which defaults to "prefixed").
- * "non-prefixed" mode should only be enabled when/if Topologies are deployed in their own
- * namespace -- the reason for this is simple: if two Topologies exist in the same namespace
- * with a (containerlab) node named "my-router" there will be a conflicting Deployment and
- * Services for the "my-router" (containerlab) node. Note that this field is immutable! If you
- * want to change its value you need to delete the Topology and re-create it.
- */
-export type naming2 = 'prefixed' | 'non-prefixed' | 'global';
-
-/**
- * Kind is the topology kind this CR represents -- for example "containerlab".
- */
-export type kind = 'containerlab' | 'kne';
 
 /**
  * a list of clabernetes-containerlab-dev.topology.v1alpha1 resources
@@ -1714,6 +1660,8 @@ export type ClabernetesContainerlabDevTopologyListV1Alpha1 = {
 };
 
 export type ListClabernetesContainerlabDevV1Alpha1ConnectivityForAllNamespacesData = {
+    body?: never;
+    path?: never;
     query?: {
         /**
          * allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.
@@ -1764,13 +1712,27 @@ export type ListClabernetesContainerlabDevV1Alpha1ConnectivityForAllNamespacesDa
          */
         watch?: boolean;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/connectivities';
 };
 
-export type ListClabernetesContainerlabDevV1Alpha1ConnectivityForAllNamespacesResponse = ClabernetesContainerlabDevConnectivityListV1Alpha1;
+export type ListClabernetesContainerlabDevV1Alpha1ConnectivityForAllNamespacesErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type ListClabernetesContainerlabDevV1Alpha1ConnectivityForAllNamespacesError = unknown;
+export type ListClabernetesContainerlabDevV1Alpha1ConnectivityForAllNamespacesResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevConnectivityListV1Alpha1;
+};
+
+export type ListClabernetesContainerlabDevV1Alpha1ConnectivityForAllNamespacesResponse = ListClabernetesContainerlabDevV1Alpha1ConnectivityForAllNamespacesResponses[keyof ListClabernetesContainerlabDevV1Alpha1ConnectivityForAllNamespacesResponses];
 
 export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConnectivityData = {
+    body?: never;
     path: {
         /**
          * object name and auth scope, such as for teams and projects
@@ -1778,6 +1740,10 @@ export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConnecti
         namespace: string;
     };
     query?: {
+        /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
         /**
          * allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.
          */
@@ -1803,10 +1769,6 @@ export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConnecti
          */
         limit?: number;
         /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
-        /**
          * resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
          *
          * Defaults to unset
@@ -1827,13 +1789,27 @@ export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConnecti
          */
         watch?: boolean;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/connectivities';
 };
 
-export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConnectivityResponse = IoK8sApimachineryPkgApisMetaV1Status;
+export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConnectivityErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConnectivityError = unknown;
+export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConnectivityResponses = {
+    /**
+     * OK
+     */
+    200: IoK8sApimachineryPkgApisMetaV1Status;
+};
+
+export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConnectivityResponse = DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConnectivityResponses[keyof DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConnectivityResponses];
 
 export type ListClabernetesContainerlabDevV1Alpha1NamespacedConnectivityData = {
+    body?: never;
     path: {
         /**
          * object name and auth scope, such as for teams and projects
@@ -1841,6 +1817,10 @@ export type ListClabernetesContainerlabDevV1Alpha1NamespacedConnectivityData = {
         namespace: string;
     };
     query?: {
+        /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
         /**
          * allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.
          */
@@ -1866,10 +1846,6 @@ export type ListClabernetesContainerlabDevV1Alpha1NamespacedConnectivityData = {
          */
         limit?: number;
         /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
-        /**
          * resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
          *
          * Defaults to unset
@@ -1890,11 +1866,24 @@ export type ListClabernetesContainerlabDevV1Alpha1NamespacedConnectivityData = {
          */
         watch?: boolean;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/connectivities';
 };
 
-export type ListClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponse = ClabernetesContainerlabDevConnectivityListV1Alpha1;
+export type ListClabernetesContainerlabDevV1Alpha1NamespacedConnectivityErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type ListClabernetesContainerlabDevV1Alpha1NamespacedConnectivityError = unknown;
+export type ListClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevConnectivityListV1Alpha1;
+};
+
+export type ListClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponse = ListClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponses[keyof ListClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponses];
 
 export type CreateClabernetesContainerlabDevV1Alpha1NamespacedConnectivityData = {
     body?: ClabernetesContainerlabDevConnectivityV1Alpha1;
@@ -1905,6 +1894,10 @@ export type CreateClabernetesContainerlabDevV1Alpha1NamespacedConnectivityData =
         namespace: string;
     };
     query?: {
+        /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
         /**
          * When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed
          */
@@ -1917,16 +1910,33 @@ export type CreateClabernetesContainerlabDevV1Alpha1NamespacedConnectivityData =
          * fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields, provided that the `ServerSideFieldValidation` feature gate is also enabled. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23 and is the default behavior when the `ServerSideFieldValidation` feature gate is disabled. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default when the `ServerSideFieldValidation` feature gate is enabled. - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.
          */
         fieldValidation?: string;
-        /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/connectivities';
 };
 
-export type CreateClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponse = ClabernetesContainerlabDevConnectivityV1Alpha1;
+export type CreateClabernetesContainerlabDevV1Alpha1NamespacedConnectivityErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type CreateClabernetesContainerlabDevV1Alpha1NamespacedConnectivityError = unknown;
+export type CreateClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevConnectivityV1Alpha1;
+    /**
+     * Created
+     */
+    201: ClabernetesContainerlabDevConnectivityV1Alpha1;
+    /**
+     * Accepted
+     */
+    202: ClabernetesContainerlabDevConnectivityV1Alpha1;
+};
+
+export type CreateClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponse = CreateClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponses[keyof CreateClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponses];
 
 export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedConnectivityData = {
     body?: IoK8sApimachineryPkgApisMetaV1DeleteOptions;
@@ -1942,6 +1952,10 @@ export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedConnectivityData =
     };
     query?: {
         /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
+        /**
          * When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed
          */
         dryRun?: string;
@@ -1954,21 +1968,35 @@ export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedConnectivityData =
          */
         orphanDependents?: boolean;
         /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
-        /**
          * Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.
          */
         propagationPolicy?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/connectivities/{name}';
 };
 
-export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponse = IoK8sApimachineryPkgApisMetaV1Status;
+export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedConnectivityErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedConnectivityError = unknown;
+export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponses = {
+    /**
+     * OK
+     */
+    200: IoK8sApimachineryPkgApisMetaV1Status;
+    /**
+     * Accepted
+     */
+    202: IoK8sApimachineryPkgApisMetaV1Status;
+};
+
+export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponse = DeleteClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponses[keyof DeleteClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponses];
 
 export type ReadClabernetesContainerlabDevV1Alpha1NamespacedConnectivityData = {
+    body?: never;
     path: {
         /**
          * name of the Connectivity
@@ -1991,11 +2019,24 @@ export type ReadClabernetesContainerlabDevV1Alpha1NamespacedConnectivityData = {
          */
         resourceVersion?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/connectivities/{name}';
 };
 
-export type ReadClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponse = ClabernetesContainerlabDevConnectivityV1Alpha1;
+export type ReadClabernetesContainerlabDevV1Alpha1NamespacedConnectivityErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type ReadClabernetesContainerlabDevV1Alpha1NamespacedConnectivityError = unknown;
+export type ReadClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevConnectivityV1Alpha1;
+};
+
+export type ReadClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponse = ReadClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponses[keyof ReadClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponses];
 
 export type PatchClabernetesContainerlabDevV1Alpha1NamespacedConnectivityData = {
     body?: IoK8sApimachineryPkgApisMetaV1Patch;
@@ -2011,6 +2052,10 @@ export type PatchClabernetesContainerlabDevV1Alpha1NamespacedConnectivityData = 
     };
     query?: {
         /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
+        /**
          * When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed
          */
         dryRun?: string;
@@ -2022,16 +2067,25 @@ export type PatchClabernetesContainerlabDevV1Alpha1NamespacedConnectivityData = 
          * fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields, provided that the `ServerSideFieldValidation` feature gate is also enabled. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23 and is the default behavior when the `ServerSideFieldValidation` feature gate is disabled. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default when the `ServerSideFieldValidation` feature gate is enabled. - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.
          */
         fieldValidation?: string;
-        /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/connectivities/{name}';
 };
 
-export type PatchClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponse = ClabernetesContainerlabDevConnectivityV1Alpha1;
+export type PatchClabernetesContainerlabDevV1Alpha1NamespacedConnectivityErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type PatchClabernetesContainerlabDevV1Alpha1NamespacedConnectivityError = unknown;
+export type PatchClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevConnectivityV1Alpha1;
+};
+
+export type PatchClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponse = PatchClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponses[keyof PatchClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponses];
 
 export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConnectivityData = {
     body?: ClabernetesContainerlabDevConnectivityV1Alpha1;
@@ -2047,6 +2101,10 @@ export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConnectivityData 
     };
     query?: {
         /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
+        /**
          * When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed
          */
         dryRun?: string;
@@ -2058,18 +2116,33 @@ export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConnectivityData 
          * fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields, provided that the `ServerSideFieldValidation` feature gate is also enabled. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23 and is the default behavior when the `ServerSideFieldValidation` feature gate is disabled. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default when the `ServerSideFieldValidation` feature gate is enabled. - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.
          */
         fieldValidation?: string;
-        /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/connectivities/{name}';
 };
 
-export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponse = ClabernetesContainerlabDevConnectivityV1Alpha1;
+export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConnectivityErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConnectivityError = unknown;
+export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevConnectivityV1Alpha1;
+    /**
+     * Created
+     */
+    201: ClabernetesContainerlabDevConnectivityV1Alpha1;
+};
+
+export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponse = ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponses[keyof ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConnectivityResponses];
 
 export type ListClabernetesContainerlabDevV1Alpha1ImagerequestForAllNamespacesData = {
+    body?: never;
+    path?: never;
     query?: {
         /**
          * allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.
@@ -2120,13 +2193,27 @@ export type ListClabernetesContainerlabDevV1Alpha1ImagerequestForAllNamespacesDa
          */
         watch?: boolean;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/imagerequests';
 };
 
-export type ListClabernetesContainerlabDevV1Alpha1ImagerequestForAllNamespacesResponse = ClabernetesContainerlabDevImagerequestListV1Alpha1;
+export type ListClabernetesContainerlabDevV1Alpha1ImagerequestForAllNamespacesErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type ListClabernetesContainerlabDevV1Alpha1ImagerequestForAllNamespacesError = unknown;
+export type ListClabernetesContainerlabDevV1Alpha1ImagerequestForAllNamespacesResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevImagerequestListV1Alpha1;
+};
+
+export type ListClabernetesContainerlabDevV1Alpha1ImagerequestForAllNamespacesResponse = ListClabernetesContainerlabDevV1Alpha1ImagerequestForAllNamespacesResponses[keyof ListClabernetesContainerlabDevV1Alpha1ImagerequestForAllNamespacesResponses];
 
 export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedImagerequestData = {
+    body?: never;
     path: {
         /**
          * object name and auth scope, such as for teams and projects
@@ -2134,6 +2221,10 @@ export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedImagereq
         namespace: string;
     };
     query?: {
+        /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
         /**
          * allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.
          */
@@ -2159,10 +2250,6 @@ export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedImagereq
          */
         limit?: number;
         /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
-        /**
          * resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
          *
          * Defaults to unset
@@ -2183,13 +2270,27 @@ export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedImagereq
          */
         watch?: boolean;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/imagerequests';
 };
 
-export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedImagerequestResponse = IoK8sApimachineryPkgApisMetaV1Status;
+export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedImagerequestErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedImagerequestError = unknown;
+export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedImagerequestResponses = {
+    /**
+     * OK
+     */
+    200: IoK8sApimachineryPkgApisMetaV1Status;
+};
+
+export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedImagerequestResponse = DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedImagerequestResponses[keyof DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedImagerequestResponses];
 
 export type ListClabernetesContainerlabDevV1Alpha1NamespacedImagerequestData = {
+    body?: never;
     path: {
         /**
          * object name and auth scope, such as for teams and projects
@@ -2197,6 +2298,10 @@ export type ListClabernetesContainerlabDevV1Alpha1NamespacedImagerequestData = {
         namespace: string;
     };
     query?: {
+        /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
         /**
          * allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.
          */
@@ -2222,10 +2327,6 @@ export type ListClabernetesContainerlabDevV1Alpha1NamespacedImagerequestData = {
          */
         limit?: number;
         /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
-        /**
          * resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
          *
          * Defaults to unset
@@ -2246,11 +2347,24 @@ export type ListClabernetesContainerlabDevV1Alpha1NamespacedImagerequestData = {
          */
         watch?: boolean;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/imagerequests';
 };
 
-export type ListClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponse = ClabernetesContainerlabDevImagerequestListV1Alpha1;
+export type ListClabernetesContainerlabDevV1Alpha1NamespacedImagerequestErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type ListClabernetesContainerlabDevV1Alpha1NamespacedImagerequestError = unknown;
+export type ListClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevImagerequestListV1Alpha1;
+};
+
+export type ListClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponse = ListClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponses[keyof ListClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponses];
 
 export type CreateClabernetesContainerlabDevV1Alpha1NamespacedImagerequestData = {
     body?: ClabernetesContainerlabDevImagerequestV1Alpha1;
@@ -2262,6 +2376,10 @@ export type CreateClabernetesContainerlabDevV1Alpha1NamespacedImagerequestData =
     };
     query?: {
         /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
+        /**
          * When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed
          */
         dryRun?: string;
@@ -2273,16 +2391,33 @@ export type CreateClabernetesContainerlabDevV1Alpha1NamespacedImagerequestData =
          * fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields, provided that the `ServerSideFieldValidation` feature gate is also enabled. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23 and is the default behavior when the `ServerSideFieldValidation` feature gate is disabled. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default when the `ServerSideFieldValidation` feature gate is enabled. - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.
          */
         fieldValidation?: string;
-        /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/imagerequests';
 };
 
-export type CreateClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponse = ClabernetesContainerlabDevImagerequestV1Alpha1;
+export type CreateClabernetesContainerlabDevV1Alpha1NamespacedImagerequestErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type CreateClabernetesContainerlabDevV1Alpha1NamespacedImagerequestError = unknown;
+export type CreateClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevImagerequestV1Alpha1;
+    /**
+     * Created
+     */
+    201: ClabernetesContainerlabDevImagerequestV1Alpha1;
+    /**
+     * Accepted
+     */
+    202: ClabernetesContainerlabDevImagerequestV1Alpha1;
+};
+
+export type CreateClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponse = CreateClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponses[keyof CreateClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponses];
 
 export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedImagerequestData = {
     body?: IoK8sApimachineryPkgApisMetaV1DeleteOptions;
@@ -2298,6 +2433,10 @@ export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedImagerequestData =
     };
     query?: {
         /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
+        /**
          * When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed
          */
         dryRun?: string;
@@ -2310,21 +2449,35 @@ export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedImagerequestData =
          */
         orphanDependents?: boolean;
         /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
-        /**
          * Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.
          */
         propagationPolicy?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/imagerequests/{name}';
 };
 
-export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponse = IoK8sApimachineryPkgApisMetaV1Status;
+export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedImagerequestErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedImagerequestError = unknown;
+export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponses = {
+    /**
+     * OK
+     */
+    200: IoK8sApimachineryPkgApisMetaV1Status;
+    /**
+     * Accepted
+     */
+    202: IoK8sApimachineryPkgApisMetaV1Status;
+};
+
+export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponse = DeleteClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponses[keyof DeleteClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponses];
 
 export type ReadClabernetesContainerlabDevV1Alpha1NamespacedImagerequestData = {
+    body?: never;
     path: {
         /**
          * name of the Imagerequest
@@ -2347,11 +2500,24 @@ export type ReadClabernetesContainerlabDevV1Alpha1NamespacedImagerequestData = {
          */
         resourceVersion?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/imagerequests/{name}';
 };
 
-export type ReadClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponse = ClabernetesContainerlabDevImagerequestV1Alpha1;
+export type ReadClabernetesContainerlabDevV1Alpha1NamespacedImagerequestErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type ReadClabernetesContainerlabDevV1Alpha1NamespacedImagerequestError = unknown;
+export type ReadClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevImagerequestV1Alpha1;
+};
+
+export type ReadClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponse = ReadClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponses[keyof ReadClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponses];
 
 export type PatchClabernetesContainerlabDevV1Alpha1NamespacedImagerequestData = {
     body?: IoK8sApimachineryPkgApisMetaV1Patch;
@@ -2367,6 +2533,10 @@ export type PatchClabernetesContainerlabDevV1Alpha1NamespacedImagerequestData = 
     };
     query?: {
         /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
+        /**
          * When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed
          */
         dryRun?: string;
@@ -2378,16 +2548,25 @@ export type PatchClabernetesContainerlabDevV1Alpha1NamespacedImagerequestData = 
          * fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields, provided that the `ServerSideFieldValidation` feature gate is also enabled. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23 and is the default behavior when the `ServerSideFieldValidation` feature gate is disabled. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default when the `ServerSideFieldValidation` feature gate is enabled. - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.
          */
         fieldValidation?: string;
-        /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/imagerequests/{name}';
 };
 
-export type PatchClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponse = ClabernetesContainerlabDevImagerequestV1Alpha1;
+export type PatchClabernetesContainerlabDevV1Alpha1NamespacedImagerequestErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type PatchClabernetesContainerlabDevV1Alpha1NamespacedImagerequestError = unknown;
+export type PatchClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevImagerequestV1Alpha1;
+};
+
+export type PatchClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponse = PatchClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponses[keyof PatchClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponses];
 
 export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedImagerequestData = {
     body?: ClabernetesContainerlabDevImagerequestV1Alpha1;
@@ -2403,6 +2582,10 @@ export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedImagerequestData 
     };
     query?: {
         /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
+        /**
          * When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed
          */
         dryRun?: string;
@@ -2414,18 +2597,33 @@ export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedImagerequestData 
          * fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields, provided that the `ServerSideFieldValidation` feature gate is also enabled. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23 and is the default behavior when the `ServerSideFieldValidation` feature gate is disabled. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default when the `ServerSideFieldValidation` feature gate is enabled. - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.
          */
         fieldValidation?: string;
-        /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/imagerequests/{name}';
 };
 
-export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponse = ClabernetesContainerlabDevImagerequestV1Alpha1;
+export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedImagerequestErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedImagerequestError = unknown;
+export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevImagerequestV1Alpha1;
+    /**
+     * Created
+     */
+    201: ClabernetesContainerlabDevImagerequestV1Alpha1;
+};
+
+export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponse = ReplaceClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponses[keyof ReplaceClabernetesContainerlabDevV1Alpha1NamespacedImagerequestResponses];
 
 export type ListClabernetesContainerlabDevV1Alpha1ConfigForAllNamespacesData = {
+    body?: never;
+    path?: never;
     query?: {
         /**
          * allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.
@@ -2476,13 +2674,27 @@ export type ListClabernetesContainerlabDevV1Alpha1ConfigForAllNamespacesData = {
          */
         watch?: boolean;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/configs';
 };
 
-export type ListClabernetesContainerlabDevV1Alpha1ConfigForAllNamespacesResponse = ClabernetesContainerlabDevConfigListV1Alpha1;
+export type ListClabernetesContainerlabDevV1Alpha1ConfigForAllNamespacesErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type ListClabernetesContainerlabDevV1Alpha1ConfigForAllNamespacesError = unknown;
+export type ListClabernetesContainerlabDevV1Alpha1ConfigForAllNamespacesResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevConfigListV1Alpha1;
+};
+
+export type ListClabernetesContainerlabDevV1Alpha1ConfigForAllNamespacesResponse = ListClabernetesContainerlabDevV1Alpha1ConfigForAllNamespacesResponses[keyof ListClabernetesContainerlabDevV1Alpha1ConfigForAllNamespacesResponses];
 
 export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConfigData = {
+    body?: never;
     path: {
         /**
          * object name and auth scope, such as for teams and projects
@@ -2490,6 +2702,10 @@ export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConfigDa
         namespace: string;
     };
     query?: {
+        /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
         /**
          * allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.
          */
@@ -2515,10 +2731,6 @@ export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConfigDa
          */
         limit?: number;
         /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
-        /**
          * resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
          *
          * Defaults to unset
@@ -2539,13 +2751,27 @@ export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConfigDa
          */
         watch?: boolean;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/configs';
 };
 
-export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConfigResponse = IoK8sApimachineryPkgApisMetaV1Status;
+export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConfigErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConfigError = unknown;
+export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConfigResponses = {
+    /**
+     * OK
+     */
+    200: IoK8sApimachineryPkgApisMetaV1Status;
+};
+
+export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConfigResponse = DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConfigResponses[keyof DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedConfigResponses];
 
 export type ListClabernetesContainerlabDevV1Alpha1NamespacedConfigData = {
+    body?: never;
     path: {
         /**
          * object name and auth scope, such as for teams and projects
@@ -2553,6 +2779,10 @@ export type ListClabernetesContainerlabDevV1Alpha1NamespacedConfigData = {
         namespace: string;
     };
     query?: {
+        /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
         /**
          * allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.
          */
@@ -2578,10 +2808,6 @@ export type ListClabernetesContainerlabDevV1Alpha1NamespacedConfigData = {
          */
         limit?: number;
         /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
-        /**
          * resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
          *
          * Defaults to unset
@@ -2602,11 +2828,24 @@ export type ListClabernetesContainerlabDevV1Alpha1NamespacedConfigData = {
          */
         watch?: boolean;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/configs';
 };
 
-export type ListClabernetesContainerlabDevV1Alpha1NamespacedConfigResponse = ClabernetesContainerlabDevConfigListV1Alpha1;
+export type ListClabernetesContainerlabDevV1Alpha1NamespacedConfigErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type ListClabernetesContainerlabDevV1Alpha1NamespacedConfigError = unknown;
+export type ListClabernetesContainerlabDevV1Alpha1NamespacedConfigResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevConfigListV1Alpha1;
+};
+
+export type ListClabernetesContainerlabDevV1Alpha1NamespacedConfigResponse = ListClabernetesContainerlabDevV1Alpha1NamespacedConfigResponses[keyof ListClabernetesContainerlabDevV1Alpha1NamespacedConfigResponses];
 
 export type CreateClabernetesContainerlabDevV1Alpha1NamespacedConfigData = {
     body?: ClabernetesContainerlabDevConfigV1Alpha1;
@@ -2618,6 +2857,10 @@ export type CreateClabernetesContainerlabDevV1Alpha1NamespacedConfigData = {
     };
     query?: {
         /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
+        /**
          * When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed
          */
         dryRun?: string;
@@ -2629,16 +2872,33 @@ export type CreateClabernetesContainerlabDevV1Alpha1NamespacedConfigData = {
          * fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields, provided that the `ServerSideFieldValidation` feature gate is also enabled. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23 and is the default behavior when the `ServerSideFieldValidation` feature gate is disabled. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default when the `ServerSideFieldValidation` feature gate is enabled. - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.
          */
         fieldValidation?: string;
-        /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/configs';
 };
 
-export type CreateClabernetesContainerlabDevV1Alpha1NamespacedConfigResponse = ClabernetesContainerlabDevConfigV1Alpha1;
+export type CreateClabernetesContainerlabDevV1Alpha1NamespacedConfigErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type CreateClabernetesContainerlabDevV1Alpha1NamespacedConfigError = unknown;
+export type CreateClabernetesContainerlabDevV1Alpha1NamespacedConfigResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevConfigV1Alpha1;
+    /**
+     * Created
+     */
+    201: ClabernetesContainerlabDevConfigV1Alpha1;
+    /**
+     * Accepted
+     */
+    202: ClabernetesContainerlabDevConfigV1Alpha1;
+};
+
+export type CreateClabernetesContainerlabDevV1Alpha1NamespacedConfigResponse = CreateClabernetesContainerlabDevV1Alpha1NamespacedConfigResponses[keyof CreateClabernetesContainerlabDevV1Alpha1NamespacedConfigResponses];
 
 export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedConfigData = {
     body?: IoK8sApimachineryPkgApisMetaV1DeleteOptions;
@@ -2654,6 +2914,10 @@ export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedConfigData = {
     };
     query?: {
         /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
+        /**
          * When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed
          */
         dryRun?: string;
@@ -2666,21 +2930,35 @@ export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedConfigData = {
          */
         orphanDependents?: boolean;
         /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
-        /**
          * Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.
          */
         propagationPolicy?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/configs/{name}';
 };
 
-export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedConfigResponse = IoK8sApimachineryPkgApisMetaV1Status;
+export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedConfigErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedConfigError = unknown;
+export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedConfigResponses = {
+    /**
+     * OK
+     */
+    200: IoK8sApimachineryPkgApisMetaV1Status;
+    /**
+     * Accepted
+     */
+    202: IoK8sApimachineryPkgApisMetaV1Status;
+};
+
+export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedConfigResponse = DeleteClabernetesContainerlabDevV1Alpha1NamespacedConfigResponses[keyof DeleteClabernetesContainerlabDevV1Alpha1NamespacedConfigResponses];
 
 export type ReadClabernetesContainerlabDevV1Alpha1NamespacedConfigData = {
+    body?: never;
     path: {
         /**
          * name of the Config
@@ -2703,11 +2981,24 @@ export type ReadClabernetesContainerlabDevV1Alpha1NamespacedConfigData = {
          */
         resourceVersion?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/configs/{name}';
 };
 
-export type ReadClabernetesContainerlabDevV1Alpha1NamespacedConfigResponse = ClabernetesContainerlabDevConfigV1Alpha1;
+export type ReadClabernetesContainerlabDevV1Alpha1NamespacedConfigErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type ReadClabernetesContainerlabDevV1Alpha1NamespacedConfigError = unknown;
+export type ReadClabernetesContainerlabDevV1Alpha1NamespacedConfigResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevConfigV1Alpha1;
+};
+
+export type ReadClabernetesContainerlabDevV1Alpha1NamespacedConfigResponse = ReadClabernetesContainerlabDevV1Alpha1NamespacedConfigResponses[keyof ReadClabernetesContainerlabDevV1Alpha1NamespacedConfigResponses];
 
 export type PatchClabernetesContainerlabDevV1Alpha1NamespacedConfigData = {
     body?: IoK8sApimachineryPkgApisMetaV1Patch;
@@ -2723,6 +3014,10 @@ export type PatchClabernetesContainerlabDevV1Alpha1NamespacedConfigData = {
     };
     query?: {
         /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
+        /**
          * When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed
          */
         dryRun?: string;
@@ -2734,16 +3029,25 @@ export type PatchClabernetesContainerlabDevV1Alpha1NamespacedConfigData = {
          * fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields, provided that the `ServerSideFieldValidation` feature gate is also enabled. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23 and is the default behavior when the `ServerSideFieldValidation` feature gate is disabled. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default when the `ServerSideFieldValidation` feature gate is enabled. - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.
          */
         fieldValidation?: string;
-        /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/configs/{name}';
 };
 
-export type PatchClabernetesContainerlabDevV1Alpha1NamespacedConfigResponse = ClabernetesContainerlabDevConfigV1Alpha1;
+export type PatchClabernetesContainerlabDevV1Alpha1NamespacedConfigErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type PatchClabernetesContainerlabDevV1Alpha1NamespacedConfigError = unknown;
+export type PatchClabernetesContainerlabDevV1Alpha1NamespacedConfigResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevConfigV1Alpha1;
+};
+
+export type PatchClabernetesContainerlabDevV1Alpha1NamespacedConfigResponse = PatchClabernetesContainerlabDevV1Alpha1NamespacedConfigResponses[keyof PatchClabernetesContainerlabDevV1Alpha1NamespacedConfigResponses];
 
 export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConfigData = {
     body?: ClabernetesContainerlabDevConfigV1Alpha1;
@@ -2759,6 +3063,10 @@ export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConfigData = {
     };
     query?: {
         /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
+        /**
          * When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed
          */
         dryRun?: string;
@@ -2770,18 +3078,33 @@ export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConfigData = {
          * fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields, provided that the `ServerSideFieldValidation` feature gate is also enabled. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23 and is the default behavior when the `ServerSideFieldValidation` feature gate is disabled. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default when the `ServerSideFieldValidation` feature gate is enabled. - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.
          */
         fieldValidation?: string;
-        /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/configs/{name}';
 };
 
-export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConfigResponse = ClabernetesContainerlabDevConfigV1Alpha1;
+export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConfigErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConfigError = unknown;
+export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConfigResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevConfigV1Alpha1;
+    /**
+     * Created
+     */
+    201: ClabernetesContainerlabDevConfigV1Alpha1;
+};
+
+export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConfigResponse = ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConfigResponses[keyof ReplaceClabernetesContainerlabDevV1Alpha1NamespacedConfigResponses];
 
 export type ListClabernetesContainerlabDevV1Alpha1TopologyForAllNamespacesData = {
+    body?: never;
+    path?: never;
     query?: {
         /**
          * allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.
@@ -2832,13 +3155,27 @@ export type ListClabernetesContainerlabDevV1Alpha1TopologyForAllNamespacesData =
          */
         watch?: boolean;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/topologies';
 };
 
-export type ListClabernetesContainerlabDevV1Alpha1TopologyForAllNamespacesResponse = ClabernetesContainerlabDevTopologyListV1Alpha1;
+export type ListClabernetesContainerlabDevV1Alpha1TopologyForAllNamespacesErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type ListClabernetesContainerlabDevV1Alpha1TopologyForAllNamespacesError = unknown;
+export type ListClabernetesContainerlabDevV1Alpha1TopologyForAllNamespacesResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevTopologyListV1Alpha1;
+};
+
+export type ListClabernetesContainerlabDevV1Alpha1TopologyForAllNamespacesResponse = ListClabernetesContainerlabDevV1Alpha1TopologyForAllNamespacesResponses[keyof ListClabernetesContainerlabDevV1Alpha1TopologyForAllNamespacesResponses];
 
 export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedTopologyData = {
+    body?: never;
     path: {
         /**
          * object name and auth scope, such as for teams and projects
@@ -2846,6 +3183,10 @@ export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedTopology
         namespace: string;
     };
     query?: {
+        /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
         /**
          * allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.
          */
@@ -2871,10 +3212,6 @@ export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedTopology
          */
         limit?: number;
         /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
-        /**
          * resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
          *
          * Defaults to unset
@@ -2895,13 +3232,27 @@ export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedTopology
          */
         watch?: boolean;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/topologies';
 };
 
-export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedTopologyResponse = IoK8sApimachineryPkgApisMetaV1Status;
+export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedTopologyErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedTopologyError = unknown;
+export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedTopologyResponses = {
+    /**
+     * OK
+     */
+    200: IoK8sApimachineryPkgApisMetaV1Status;
+};
+
+export type DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedTopologyResponse = DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedTopologyResponses[keyof DeleteClabernetesContainerlabDevV1Alpha1CollectionNamespacedTopologyResponses];
 
 export type ListClabernetesContainerlabDevV1Alpha1NamespacedTopologyData = {
+    body?: never;
     path: {
         /**
          * object name and auth scope, such as for teams and projects
@@ -2909,6 +3260,10 @@ export type ListClabernetesContainerlabDevV1Alpha1NamespacedTopologyData = {
         namespace: string;
     };
     query?: {
+        /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
         /**
          * allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.
          */
@@ -2934,10 +3289,6 @@ export type ListClabernetesContainerlabDevV1Alpha1NamespacedTopologyData = {
          */
         limit?: number;
         /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
-        /**
          * resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
          *
          * Defaults to unset
@@ -2958,11 +3309,24 @@ export type ListClabernetesContainerlabDevV1Alpha1NamespacedTopologyData = {
          */
         watch?: boolean;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/topologies';
 };
 
-export type ListClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponse = ClabernetesContainerlabDevTopologyListV1Alpha1;
+export type ListClabernetesContainerlabDevV1Alpha1NamespacedTopologyErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type ListClabernetesContainerlabDevV1Alpha1NamespacedTopologyError = unknown;
+export type ListClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevTopologyListV1Alpha1;
+};
+
+export type ListClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponse = ListClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponses[keyof ListClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponses];
 
 export type CreateClabernetesContainerlabDevV1Alpha1NamespacedTopologyData = {
     body?: ClabernetesContainerlabDevTopologyV1Alpha1;
@@ -2974,6 +3338,10 @@ export type CreateClabernetesContainerlabDevV1Alpha1NamespacedTopologyData = {
     };
     query?: {
         /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
+        /**
          * When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed
          */
         dryRun?: string;
@@ -2985,16 +3353,33 @@ export type CreateClabernetesContainerlabDevV1Alpha1NamespacedTopologyData = {
          * fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields, provided that the `ServerSideFieldValidation` feature gate is also enabled. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23 and is the default behavior when the `ServerSideFieldValidation` feature gate is disabled. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default when the `ServerSideFieldValidation` feature gate is enabled. - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.
          */
         fieldValidation?: string;
-        /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/topologies';
 };
 
-export type CreateClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponse = ClabernetesContainerlabDevTopologyV1Alpha1;
+export type CreateClabernetesContainerlabDevV1Alpha1NamespacedTopologyErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type CreateClabernetesContainerlabDevV1Alpha1NamespacedTopologyError = unknown;
+export type CreateClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevTopologyV1Alpha1;
+    /**
+     * Created
+     */
+    201: ClabernetesContainerlabDevTopologyV1Alpha1;
+    /**
+     * Accepted
+     */
+    202: ClabernetesContainerlabDevTopologyV1Alpha1;
+};
+
+export type CreateClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponse = CreateClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponses[keyof CreateClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponses];
 
 export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedTopologyData = {
     body?: IoK8sApimachineryPkgApisMetaV1DeleteOptions;
@@ -3010,6 +3395,10 @@ export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedTopologyData = {
     };
     query?: {
         /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
+        /**
          * When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed
          */
         dryRun?: string;
@@ -3022,21 +3411,35 @@ export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedTopologyData = {
          */
         orphanDependents?: boolean;
         /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
-        /**
          * Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.
          */
         propagationPolicy?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/topologies/{name}';
 };
 
-export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponse = IoK8sApimachineryPkgApisMetaV1Status;
+export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedTopologyErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedTopologyError = unknown;
+export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponses = {
+    /**
+     * OK
+     */
+    200: IoK8sApimachineryPkgApisMetaV1Status;
+    /**
+     * Accepted
+     */
+    202: IoK8sApimachineryPkgApisMetaV1Status;
+};
+
+export type DeleteClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponse = DeleteClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponses[keyof DeleteClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponses];
 
 export type ReadClabernetesContainerlabDevV1Alpha1NamespacedTopologyData = {
+    body?: never;
     path: {
         /**
          * name of the Topology
@@ -3059,11 +3462,24 @@ export type ReadClabernetesContainerlabDevV1Alpha1NamespacedTopologyData = {
          */
         resourceVersion?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/topologies/{name}';
 };
 
-export type ReadClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponse = ClabernetesContainerlabDevTopologyV1Alpha1;
+export type ReadClabernetesContainerlabDevV1Alpha1NamespacedTopologyErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type ReadClabernetesContainerlabDevV1Alpha1NamespacedTopologyError = unknown;
+export type ReadClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevTopologyV1Alpha1;
+};
+
+export type ReadClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponse = ReadClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponses[keyof ReadClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponses];
 
 export type PatchClabernetesContainerlabDevV1Alpha1NamespacedTopologyData = {
     body?: IoK8sApimachineryPkgApisMetaV1Patch;
@@ -3079,6 +3495,10 @@ export type PatchClabernetesContainerlabDevV1Alpha1NamespacedTopologyData = {
     };
     query?: {
         /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
+        /**
          * When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed
          */
         dryRun?: string;
@@ -3090,16 +3510,25 @@ export type PatchClabernetesContainerlabDevV1Alpha1NamespacedTopologyData = {
          * fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields, provided that the `ServerSideFieldValidation` feature gate is also enabled. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23 and is the default behavior when the `ServerSideFieldValidation` feature gate is disabled. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default when the `ServerSideFieldValidation` feature gate is enabled. - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.
          */
         fieldValidation?: string;
-        /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/topologies/{name}';
 };
 
-export type PatchClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponse = ClabernetesContainerlabDevTopologyV1Alpha1;
+export type PatchClabernetesContainerlabDevV1Alpha1NamespacedTopologyErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type PatchClabernetesContainerlabDevV1Alpha1NamespacedTopologyError = unknown;
+export type PatchClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevTopologyV1Alpha1;
+};
+
+export type PatchClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponse = PatchClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponses[keyof PatchClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponses];
 
 export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedTopologyData = {
     body?: ClabernetesContainerlabDevTopologyV1Alpha1;
@@ -3115,6 +3544,10 @@ export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedTopologyData = {
     };
     query?: {
         /**
+         * If 'true', then the output is pretty printed.
+         */
+        pretty?: string;
+        /**
          * When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed
          */
         dryRun?: string;
@@ -3126,13 +3559,30 @@ export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedTopologyData = {
          * fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields, provided that the `ServerSideFieldValidation` feature gate is also enabled. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23 and is the default behavior when the `ServerSideFieldValidation` feature gate is disabled. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default when the `ServerSideFieldValidation` feature gate is enabled. - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.
          */
         fieldValidation?: string;
-        /**
-         * If 'true', then the output is pretty printed.
-         */
-        pretty?: string;
     };
+    url: '/apis/clabernetes.containerlab.dev/v1alpha1/namespaces/{namespace}/topologies/{name}';
 };
 
-export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponse = ClabernetesContainerlabDevTopologyV1Alpha1;
+export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedTopologyErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
 
-export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedTopologyError = unknown;
+export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponses = {
+    /**
+     * OK
+     */
+    200: ClabernetesContainerlabDevTopologyV1Alpha1;
+    /**
+     * Created
+     */
+    201: ClabernetesContainerlabDevTopologyV1Alpha1;
+};
+
+export type ReplaceClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponse = ReplaceClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponses[keyof ReplaceClabernetesContainerlabDevV1Alpha1NamespacedTopologyResponses];
+
+export type ClientOptions = {
+    baseUrl: `${string}://clabernetes-openapi.json` | (string & {});
+};

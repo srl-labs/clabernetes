@@ -326,7 +326,7 @@ export function CreateSheet(): ReactElement {
       },
     } as ClabernetesContainerlabDevTopologyV1Alpha1;
 
-    const response = await createTopology(values.namespace, values.name, JSON.stringify(obj));
+    const response = await createTopology(values.namespace, JSON.stringify(obj));
 
     const parsedResponse = JSON.parse(response);
 

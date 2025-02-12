@@ -1,5 +1,5 @@
 "use server";
-import type { Edge } from "@xyflow/react";
+import type {Edge} from "@xyflow/react";
 import {
   AppsV1Api,
   CoreV1Api,
@@ -7,7 +7,9 @@ import {
   type V1DeploymentList,
   type V1ServiceList,
 } from "@kubernetes/client-node";
-import { readClabernetesContainerlabDevV1Alpha1NamespacedConnectivity } from "@/lib/clabernetes-client";
+import {
+  readClabernetesContainerlabDevV1Alpha1NamespacedConnectivity
+} from "@/lib/clabernetes-client";
 
 async function deploymentsByOwner(
   namespace: string,
@@ -18,14 +20,12 @@ async function deploymentsByOwner(
 
   kc.loadFromDefault();
 
-  const response = await kc
-    .makeApiClient(AppsV1Api)
-    .listNamespacedDeployment(namespace, undefined, undefined, undefined, undefined, labelSelector)
-    .catch((error: unknown) => {
-      throw error;
-    });
-
-  return response.body;
+  return await kc
+      .makeApiClient(AppsV1Api)
+      .listNamespacedDeployment({namespace: namespace, labelSelector: labelSelector})
+      .catch((error: unknown) => {
+        throw error;
+      });
 }
 
 async function servicesByOwner(
@@ -37,14 +37,12 @@ async function servicesByOwner(
 
   kc.loadFromDefault();
 
-  const response = await kc
-    .makeApiClient(CoreV1Api)
-    .listNamespacedService(namespace, undefined, undefined, undefined, undefined, labelSelector)
-    .catch((error: unknown) => {
-      throw error;
-    });
-
-  return response.body;
+  return await kc
+      .makeApiClient(CoreV1Api)
+      .listNamespacedService({namespace: namespace, labelSelector: labelSelector})
+      .catch((error: unknown) => {
+        throw error;
+      });
 }
 
 export interface VisualizeObject {
@@ -147,11 +145,11 @@ export async function visualizeTopology(namespace: string, name: string): Promis
     connectivity.data?.spec?.pointToPointTunnels ?? {},
   )) {
     for (const tunnelDefinition of tunnelDefinitions) {
-      if (tunnelDefinition.tunnelID in recordedTunnels) {
+      if (tunnelDefinition.tunnelId in recordedTunnels) {
         continue;
       }
 
-      recordedTunnels[tunnelDefinition.tunnelID] = true;
+      recordedTunnels[tunnelDefinition.tunnelId] = true;
 
       const localFabricService = `svc/${tunnelDefinition.localNode}-vx`;
       const localInterface = `${tunnelDefinition.localNode}-${tunnelDefinition.localInterface}`;

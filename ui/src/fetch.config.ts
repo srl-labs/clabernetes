@@ -1,7 +1,7 @@
 import { kubeConfigOptions } from "@/lib/kubeconfig.ts";
 import { createClient } from "@hey-api/client-fetch";
 import { Agent, setGlobalDispatcher } from "undici";
-import { client } from "@/lib/clabernetes-client";
+import { client } from "@/lib/clabernetes-client/client.gen";
 
 const agent = new Agent({
   connect: {
