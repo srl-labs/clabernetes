@@ -13,7 +13,8 @@ appName: &_appName clabernetes
 # extra labels/annotations that are added to all objects
 globalAnnotations: &_globalAnnotations {}
 globalLabels: &_globalLabels {}
-globalTolerations: &_globalTolerations {}
+globalTolerations: &globalTolerations []
+
 
 #
 # manager options
@@ -23,7 +24,7 @@ globalTolerations: &_globalTolerations {}
 manager:
   deploymentAnnotations: {}
   deploymentLabels: {}
-  deploymentTolerations: {}
+  deploymentTolerations: []
   podAnnotations: {}
   podLabels: {}
 
@@ -158,7 +159,7 @@ ui:
 
   deploymentAnnotations: { }
   deploymentLabels: { }
-  deploymentTolerations: { }
+  deploymentTolerations: []
   podAnnotations: { }
   podLabels: { }
 
