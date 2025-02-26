@@ -139,6 +139,12 @@ spec:
             failureThreshold: 2
             periodSeconds: 30
             timeoutSeconds: 5
+      {{- $tolerations := merge $.Values.globalTolerations $.Values.manager.deploymentTolerations }}
+      {{- if $tolerations }}
+      tolerations:
+{{ toYaml $tolerations | indent 4 }}
+      {{- end }}
+
 
 {{- if $.Values.ui.enabled }}
 ---
@@ -261,4 +267,9 @@ spec:
             failureThreshold: 2
             periodSeconds: 30
             timeoutSeconds: 5
+      {{- $tolerations := merge $.Values.globalTolerations $.Values.ui.deploymentTolerations }}
+      {{- if $tolerations }}
+      tolerations:
+{{ toYaml $tolerations | indent 4 }}
+      {{- end }}
 {{- end }}
