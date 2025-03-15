@@ -133,6 +133,15 @@ spec:
             failureThreshold: 2
             periodSeconds: 30
             timeoutSeconds: 5
+      tolerations:
+        - effect: PreferNoSchedule
+          key: test_toleration
+          operator: Equal
+          value: "true"
+        - effect: PreferNoSchedule
+          key: test_toleration_manager_only
+          operator: Equal
+          value: "true"
 ---
 # Source: clabernetes/templates/deployment.yaml
 apiVersion: apps/v1
@@ -217,3 +226,8 @@ spec:
             failureThreshold: 2
             periodSeconds: 30
             timeoutSeconds: 5
+      tolerations:
+        - effect: PreferNoSchedule
+          key: test_toleration
+          operator: Equal
+          value: "true"

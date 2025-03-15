@@ -1,5 +1,16 @@
 ---
+appName: &_appName clabernetes
+globalTolerations: &globalTolerations
+  - key: test_toleration
+    operator: Equal
+    value: "true"
+    effect: PreferNoSchedule
 manager:
+  deploymentTolerations:
+    - key: test_toleration_manager_only
+      operator: Equal
+      value: "true"
+      effect: PreferNoSchedule
   resources:
     limits:
       memory: 256Mi
