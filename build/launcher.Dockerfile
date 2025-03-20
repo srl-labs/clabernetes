@@ -29,7 +29,7 @@ ARG DOCKER_VERSION="5:27.*"
 # note: there is/was a breakage for clab tools/vxlan tunnel between 0.52.0 and 0.56.x -- fixed in
 # 0.57.5 of clab!
 ARG CONTAINERLAB_VERSION="0.64.0+"
-ARG NERDCTL_VERSION="2.0.3"
+ARG NERDCTL_VERSION="2.0.4"
 
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
