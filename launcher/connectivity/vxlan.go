@@ -70,7 +70,7 @@ func (m *vxlanManager) resolveVXLANService(vxlanRemote string) (string, error) {
 
 	var err error
 
-	for attempt := 0; attempt < resolveServiceMaxAttempts; attempt++ {
+	for range resolveServiceMaxAttempts {
 		resolvedVxlanRemotes, err = net.LookupIP(vxlanRemote)
 		if err != nil {
 			m.logger.Warnf(

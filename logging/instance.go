@@ -9,7 +9,7 @@ import (
 )
 
 // Instance is a logging instance managed by the Manager.
-type Instance interface {
+type Instance interface { //nolint: interfacebloat
 	Debug(f string)
 	Debugf(f string, a ...interface{})
 	Info(f string)
