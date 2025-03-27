@@ -97,7 +97,7 @@ func GetManager() Manager {
 }
 
 // Manager is the config manager interface defining the config manager methods.
-type Manager interface {
+type Manager interface { //nolint: interfacebloat
 	// Start starts the config manager -- this should be called by the clabernetes manager during
 	// the "pre-start" phase -- we want this to happen prior to starting controller-runtime manager
 	// things. This method attempts to find the clabernetes config configmap and then watches that

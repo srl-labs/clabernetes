@@ -1,190 +1,130 @@
-linters-settings:
-  funlen:
-    lines: 150
-    statements: 50
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - opinionated
-      - performance
-      - style
-    disabled-checks:
-      - whyNoLint
-  gocyclo:
-    min-complexity: 15
-  importas:
-    no-unaliased: true
-    alias:
-      # client-go
-      - pkg: k8s.io/client-go/dynamic/(\w+)
-        alias: clientgo$1
-      # controller-runtime
-      - pkg: sigs.k8s.io/controller-runtime
-        alias: ctrlruntime
-      # controller-runtime-client
-      - pkg: sigs.k8s.io/controller-runtime/pkg/(\w+)
-        alias: ctrlruntime$1
-      # controller-runtime-controllerutil
-      - pkg: sigs.k8s.io/controller-runtime/pkg/controller/controllerutil
-        alias: ctrlruntimeutil
-      # k8s api types
-      - pkg: k8s.io/api/(\w+)/(\w+)
-        alias: k8s$1$2
-      # cover apimachinery packages
-      - pkg: k8s.io/apimachinery/pkg/types
-        alias: apimachinerytypes
-      - pkg: k8s.io/apimachinery/pkg/apis/(\w+)/(\w+)
-        alias: $1$2
-      - pkg: k8s.io/apimachinery/pkg/api/errors
-        alias: apimachineryerrors
-      - pkg: k8s.io/apimachinery/pkg/runtime
-        alias: apimachineryruntime
-      - pkg: k8s.io/apimachinery/pkg/runtime/scheme
-        alias: apimachineryruntimescheme
-      # cover clabernetes packages
-      - pkg: github.com/srl-labs/clabernetes/(\w+)
-        alias: clabernetes$1
-      - pkg: github.com/srl-labs/clabernetes/(\w+)/(\w+)
-        alias: clabernetes$1$2
-      - pkg: github.com/srl-labs/clabernetes/(\w+)/(\w+)/(\w+)
-        alias: clabernetes$1$2$3
-  lll:
-    line-length: 100
-    tab-width: 4
-  stylecheck:
-    checks:
-      - "-ST1000"
-
+---
+version: "2"
+run:
+  go: "1.23"
 linters:
-  enable:
-    - asciicheck
-    - bodyclose
-    - copyloopvar
-    - decorder
-    - dogsled
-    - dupl
-    - dupword
-    - durationcheck
-    - errcheck
-    - errchkjson
-    - errname
-    - errorlint
-    - exhaustive
-    - forbidigo
-    - forcetypeassert
-    - funlen
-    - gocheckcompilerdirectives
-    - gochecknoglobals
-    - gochecknoinits
-    - gochecksumtype
-    - gocognit
-    - goconst
-    - gocritic
-    - gocyclo
-    - godot
-    - godox
-    - err113
-    - gofmt
-    - gofumpt
-    - goimports
-    - mnd
-    - goprintffuncname
-    - gosec
-    - gosimple
-    - govet
-    - grouper
-    - importas
-    - ineffassign
-    - inamedparam
-    - lll
-    - maintidx
-    - makezero
-    - misspell
-    - nakedret
-    - nestif
-    - nilerr
-    - nilnil
-    - nlreturn
-    - noctx
-    - nolintlint
+  default: all
+  disable:
+    - containedctx
+    - contextcheck # probably should not ignore but... old cruft and its working fine :)
+    - cyclop # already using gocyclo, and its good enough!
+    - depguard
+    - exhaustruct
+    - ireturn
+    - musttag # also probably should remove but... for now
+    - nonamedreturns
+    - paralleltest
     - perfsprint
-    - prealloc
-    - predeclared
-    - reassign
-    - revive
-    - staticcheck
-    - stylecheck
-    - tenv
-    - testpackage
-    - thelper
-    - tparallel
-    - typecheck
-    - unconvert
-    - unparam
-    - unused
-    - usestdlibvars
-    - wastedassign
-    - whitespace
-    - wsl
-
+    - protogetter
+    - tagliatelle
+    - varnamelen
+    - wrapcheck
+  settings:
+    funlen:
+      lines: 150
+      statements: 50
+    gocritic:
+      disabled-checks:
+        - whyNoLint
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+    gocyclo:
+      min-complexity: 15
+    importas:
+      alias:
+        - pkg: k8s.io/client-go/dynamic/(\w+)
+          alias: clientgo$1
+        - pkg: sigs.k8s.io/controller-runtime
+          alias: ctrlruntime
+        - pkg: sigs.k8s.io/controller-runtime/pkg/(\w+)
+          alias: ctrlruntime$1
+        - pkg: sigs.k8s.io/controller-runtime/pkg/controller/controllerutil
+          alias: ctrlruntimeutil
+        - pkg: k8s.io/api/(\w+)/(\w+)
+          alias: k8s$1$2
+        - pkg: k8s.io/apimachinery/pkg/types
+          alias: apimachinerytypes
+        - pkg: k8s.io/apimachinery/pkg/apis/(\w+)/(\w+)
+          alias: $1$2
+        - pkg: k8s.io/apimachinery/pkg/api/errors
+          alias: apimachineryerrors
+        - pkg: k8s.io/apimachinery/pkg/runtime
+          alias: apimachineryruntime
+        - pkg: k8s.io/apimachinery/pkg/runtime/scheme
+          alias: apimachineryruntimescheme
+        - pkg: github.com/srl-labs/clabernetes/(\w+)
+          alias: clabernetes$1
+        - pkg: github.com/srl-labs/clabernetes/(\w+)/(\w+)
+          alias: clabernetes$1$2
+        - pkg: github.com/srl-labs/clabernetes/(\w+)/(\w+)/(\w+)
+          alias: clabernetes$1$2$3
+      no-unaliased: true
+    lll:
+      line-length: 100
+      tab-width: 4
+    staticcheck:
+      checks:
+        - -ST1000
+  exclusions:
+    generated: lax
+    rules:
+      - linters:
+          - dupl
+          - funlen
+          - gochecknoglobals
+          - lll
+          - maintidx
+          - mnd
+          - structcheck
+          - unparam
+          - unused
+        path: _test\.go
+      - linters:
+          - revive
+        path: logging/fake.go
+      - linters:
+          - gochecknoglobals
+        text: schemeBuilder is a global variable
+      - linters:
+          - gochecknoglobals
+        text: localSchemeBuilder is a global variable
+      - linters:
+          - gochecknoglobals
+        text: SchemeGroupVersion is a global variable
+      - linters:
+          - gochecknoglobals
+        text: AddToScheme is a global variable
+      - linters:
+          - revive
+        text: package-comments
+      - linters:
+          - lll
+        source: kubebuilder
+      - linters:
+          - perfsprint
+        text: can be replaced with string concatenation
+    paths:
+      - .private
+      - third_party$
+      - builtin$
+      - examples$
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-  # https://github.com/golangci/golangci-lint/issues/2439#issuecomment-1002912465
-  exclude-use-default: false
-  exclude-dirs:
-    - .private
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - mnd
-        - dupl
-        - structcheck
-        - unused
-        - unparam
-        - maintidx
-        - funlen
-        - gochecknoglobals
-        - lll
-
-    - path: logging/fake.go
-      linters:
-        - revive
-
-    # ignore globals for standard k8s things
-    - linters:
-        - gochecknoglobals
-      text: "schemeBuilder is a global variable"
-    - linters:
-        - gochecknoglobals
-      text: "localSchemeBuilder is a global variable"
-    - linters:
-        - gochecknoglobals
-      text: "SchemeGroupVersion is a global variable"
-    - linters:
-        - gochecknoglobals
-      text: "AddToScheme is a global variable"
-
-    # ignore package comments complaints in revive
-    - linters:
-        - revive
-      text: "package-comments"
-
-    # ignore long lines for kubebuilder comments
-    - linters:
-        - lll
-      source: "kubebuilder"
-
-    # prefer to sprintf -- feels more consistent overall
-    - linters:
-        - perfsprint
-      text: "can be replaced with string concatenation"
   uniq-by-line: false
-
-run:
-  go: '1.23'
-  timeout: 5m
-
-service:
-  golangci-lint-version: 1.63.x
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - .private
+      - third_party$
+      - builtin$
+      - examples$

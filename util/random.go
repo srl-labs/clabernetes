@@ -11,7 +11,7 @@ const (
 func RandomString(length int) string {
 	s := make([]byte, length)
 
-	for i := 0; i < length; i++ {
+	for i := range length {
 		s[i] = alphabet[rand.Intn(alphabetCount)] //nolint: gosec
 	}
 
