@@ -214,7 +214,7 @@ type CertificateConfig struct {
 // LinkDefinition represents a link definition in the topology file.
 type LinkDefinition struct {
 	Type       string `yaml:"type,omitempty"`
-	LinkConfig `       yaml:",inline"`
+	LinkConfig `yaml:",inline"`
 }
 
 // LinkConfig is the vendor'd (ish) clab link config object.

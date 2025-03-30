@@ -13,7 +13,7 @@ import (
 )
 
 // Clabernetes is an interface that defines the publicly available methods of the manager object.
-type Clabernetes interface {
+type Clabernetes interface { //nolint: interfacebloat
 	// GetContext returns the main/root context for the manager.
 	GetContext() context.Context
 
