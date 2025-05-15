@@ -145,11 +145,11 @@ export async function visualizeTopology(namespace: string, name: string): Promis
     connectivity.data?.spec?.pointToPointTunnels ?? {},
   )) {
     for (const tunnelDefinition of tunnelDefinitions) {
-      if (tunnelDefinition.tunnelId in recordedTunnels) {
+      if (tunnelDefinition.tunnelID in recordedTunnels) {
         continue;
       }
 
-      recordedTunnels[tunnelDefinition.tunnelId] = true;
+      recordedTunnels[tunnelDefinition.tunnelID] = true;
 
       const localFabricService = `svc/${tunnelDefinition.localNode}-vx`;
       const localInterface = `${tunnelDefinition.localNode}-${tunnelDefinition.localInterface}`;
