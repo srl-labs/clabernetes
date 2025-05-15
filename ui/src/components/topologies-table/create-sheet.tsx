@@ -114,7 +114,7 @@ export const formSchema = z.object({
         mode: z.enum(configmapModeValues).default(configmapModeValues[0]),
       }),
     ),
-    filesFromUrl: z.array(
+    filesFromURL: z.array(
       z.object({
         nodeName: z.string(),
         filePath: z.string(),
@@ -157,7 +157,7 @@ const formDefaultValues = {
   },
   deployment: {
     filesFromConfigmap: [],
-    filesFromUrl: [],
+    filesFromURL: [],
     resources: [],
   },
   imagePull: {
@@ -201,8 +201,8 @@ export function CreateSheet(): ReactElement {
   }
 
   function addFileFromUrl(): void {
-    form.setValue("deployment.filesFromUrl", [
-      ...form.getValues("deployment.filesFromUrl"),
+    form.setValue("deployment.filesFromURL", [
+      ...form.getValues("deployment.filesFromURL"),
       {
         nodeName: "",
         filePath: "",
@@ -212,9 +212,9 @@ export function CreateSheet(): ReactElement {
   }
 
   function deleteFileFromUrl(index: number): void {
-    const filesFromUrl = form.getValues("deployment.filesFromUrl");
-    filesFromUrl.splice(index, 1);
-    form.setValue("deployment.filesFromUrl", filesFromUrl);
+    const filesFromURL = form.getValues("deployment.filesFromURL");
+    filesFromURL.splice(index, 1);
+    form.setValue("deployment.filesFromURL", filesFromURL);
   }
 
   function addResources(): void {
@@ -283,12 +283,12 @@ export function CreateSheet(): ReactElement {
       });
     }
 
-    const filesFromUrl: Record<string, object[]> = {};
+    const filesFromURL: Record<string, object[]> = {};
 
-    for (const fileFromUrl of values.deployment.filesFromUrl) {
-      filesFromUrl[fileFromUrl.nodeName] = filesFromUrl[fileFromUrl.nodeName] || [];
+    for (const fileFromUrl of values.deployment.filesFromURL) {
+      filesFromURL[fileFromUrl.nodeName] = filesFromURL[fileFromUrl.nodeName] || [];
 
-      filesFromUrl[fileFromUrl.nodeName].push({
+      filesFromURL[fileFromUrl.nodeName].push({
         filePath: fileFromUrl.filePath,
         url: fileFromUrl.url,
       });
@@ -313,7 +313,7 @@ export function CreateSheet(): ReactElement {
           resources: resources,
           filesFromConfigMap: filesFromConfigmap,
           // biome-ignore lint/style/useNamingConvention: comes from k8s, its ok biome dont worry
-          filesFromURL: filesFromUrl,
+          filesFromURL: filesFromURL,
         },
         imagePull: {
           pullSecrets: values.imagePull.pullSecrets,
@@ -810,7 +810,7 @@ export function CreateSheet(): ReactElement {
                     <div className="grid grid-cols-4 items-center gap-4 pt-4">
                       <FormLabel
                         className="text-right"
-                        htmlFor="deployment.filesFromUrl"
+                        htmlFor="deployment.filesFromURL"
                       >
                         Files From Url
                       </FormLabel>
@@ -829,12 +829,12 @@ export function CreateSheet(): ReactElement {
                     </FormDescription>
                     <FormField
                       control={form.control}
-                      name="deployment.filesFromUrl"
+                      name="deployment.filesFromURL"
                       render={(): ReactElement => {
                         return (
                           <div className="p-4">
                             {form
-                              .getValues("deployment.filesFromUrl")
+                              .getValues("deployment.filesFromURL")
                               .map((fileFromConfigmap, index): ReactElement => {
                                 return (
                                   <Card
@@ -843,14 +843,14 @@ export function CreateSheet(): ReactElement {
                                   >
                                     <FormField
                                       control={form.control}
-                                      name={`deployment.filesFromUrl.${index}.nodeName`}
+                                      name={`deployment.filesFromURL.${index}.nodeName`}
                                       render={({ field: { value, onChange } }): ReactElement => {
                                         return (
                                           <FormItem>
                                             <div className="grid grid-cols-4 items-center gap-4">
                                               <FormLabel
                                                 className="text-right"
-                                                htmlFor={`deployment.filesFromUrl.${index}.nodeName`}
+                                                htmlFor={`deployment.filesFromURL.${index}.nodeName`}
                                               >
                                                 Node Name
                                               </FormLabel>
@@ -871,14 +871,14 @@ export function CreateSheet(): ReactElement {
                                     />
                                     <FormField
                                       control={form.control}
-                                      name={`deployment.filesFromUrl.${index}.url`}
+                                      name={`deployment.filesFromURL.${index}.url`}
                                       render={({ field: { value, onChange } }): ReactElement => {
                                         return (
                                           <FormItem>
                                             <div className="grid grid-cols-4 items-center gap-4">
                                               <FormLabel
                                                 className="text-right"
-                                                htmlFor={`deployment.filesFromUrl.${index}.url`}
+                                                htmlFor={`deployment.filesFromURL.${index}.url`}
                                               >
                                                 File Path
                                               </FormLabel>

@@ -392,7 +392,7 @@ export type ClabernetesContainerlabDevConnectivityV1Alpha1 = {
                 /**
                  * TunnelID is the id number of the tunnel (vnid or segment id).
                  */
-                tunnelId: number;
+                tunnelID: number;
             }>;
         };
     };
@@ -851,7 +851,7 @@ export type ClabernetesContainerlabDevConfigV1Alpha1 = {
         /**
          * InClusterDNSSuffix overrides the default in cluster dns suffix used when resolving services.
          */
-        inClusterDnsSuffix?: string;
+        inClusterDNSSuffix?: string;
         /**
          * Metadata holds "global" metadata -- that is, metadata that is applied to all objects created
          * by the clabernetes controller.
@@ -1123,7 +1123,7 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
              * on a launcher node that the file should be downloaded to. This is useful for configs that are
              * larger than the ConfigMap (etcd) 1Mb size limit.
              */
-            filesFromUrl?: {
+            filesFromURL?: {
                 [key: string]: Array<{
                     /**
                      * FilePath is the path to mount the file.
@@ -1615,7 +1615,7 @@ export type ClabernetesContainerlabDevTopologyV1Alpha1 = {
              * explicitly track this per node to know when a node needs to be restarted such that the new
              * URL is "picked up" by the node/launcher.
              */
-            filesFromUrl: {
+            filesFromURL: {
                 [key: string]: string;
             };
             /**
