@@ -114,9 +114,12 @@ func (c *clabernetes) runContainerlab() error {
 
 	args := []string{
 		"deploy",
-		"-c",
 		"-t",
 		"topo.clab.yaml",
+	}
+
+	if !(os.Getenv(clabernetesconstants.LauncherContainerlabPersist) == clabernetesconstants.True) {
+		args = append(args, "--reconfigure")
 	}
 
 	if os.Getenv(clabernetesconstants.LauncherContainerlabDebug) == clabernetesconstants.True {

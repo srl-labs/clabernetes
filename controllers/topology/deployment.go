@@ -612,6 +612,16 @@ func (r *DeploymentReconciler) renderDeploymentContainerEnv( //nolint: funlen
 		)
 	}
 
+	if owningTopology.Spec.Deployment.Persistence.Enabled {
+		envs = append(
+			envs,
+			k8scorev1.EnvVar{
+				Name:  clabernetesconstants.LauncherContainerlabPersist,
+				Value: clabernetesconstants.True,
+			},
+		)
+	}
+
 	if len(owningTopology.Spec.ImagePull.InsecureRegistries) > 0 {
 		envs = append(
 			envs,
