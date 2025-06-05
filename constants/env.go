@@ -54,7 +54,7 @@ const (
 	LauncherContainerlabTimeout = "LAUNCHER_CONTAINERLAB_TIMEOUT"
 
 	// LauncherContainerlabPersist is the environment variable name that can be used to enable the
-	// presistence of clabernetes when invoked on the launcher pod.
+	// persistence of clabernetes when invoked on the launcher pod.
 	LauncherContainerlabPersist = "LAUNCHER_CONTAINERLAB_PERSIST"
 
 	// LauncherImageEnv env var that tells the controllers what image to use for clabernetes
