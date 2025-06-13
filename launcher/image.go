@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"time"
+    "strings"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
@@ -19,7 +20,7 @@ import (
 )
 
 const (
-	imageDestination       = "/clabernetes/.image/node-image.tar"
+	imageDestination       = "/clabernetes/.node/shared-volume/"
 	imageCheckPollInterval = 5 * time.Second
 	imageCheckLogCounter   = 6
 )
@@ -100,7 +101,7 @@ func (c *clabernetes) copyImageFromCRI(imageManager claberneteslauncherimage.Man
 		return
 	}
 
-	err = c.imageImport()
+	err = c.imageImport(c.imageName, imageDestination)
 	if err != nil {
 		c.logger.Warnf("failed image pull through (import), err: %s", err)
 
@@ -337,23 +338,45 @@ func (c *clabernetes) waitForImage(
 	)
 }
 
-func (c *clabernetes) imageImport() error {
-	exportCmd := exec.Command(
+func (c *clabernetes) imageImport(imageName, destination string) error {
+    safeName := imageName
+    if idx := strings.LastIndex(imageName, "/"); idx != -1 {
+        safeName = imageName[idx+1:]
+    }
+    // Replace : with _
+    safeName = strings.ReplaceAll(safeName, ":", "_")
+	lockPath := destination + safeName + ".lock"
+	tarPath := destination + safeName + ".tar"
+    // Let's measure and log elapsed time
+    start := time.Now()
+    defer func() {
+        elapsed := time.Since(start)
+        c.logger.Infof("Import of image %q took %s", imageName, elapsed)
+    }()
+	// Wait 3 sec until the export lock file is gone (export finished) just in case
+	for {
+		if _, err := os.Stat(lockPath); os.IsNotExist(err) {
+			break
+		}
+		time.Sleep(3 * time.Second)
+	}
+
+    c.logger.Infof("Lock file is gone for %q, starting Docker import..", c.imageName)
+	importCmd := exec.Command(
 		"docker",
 		"image",
 		"load",
 		"-i",
-		"/clabernetes/.image/node-image.tar",
+		tarPath,
 	)
 
-	exportCmd.Stdout = c.logger
-	exportCmd.Stderr = c.logger
+	importCmd.Stdout = c.logger
+	importCmd.Stderr = c.logger
 
-	err := exportCmd.Run()
-	if err != nil {
+	if err := importCmd.Run(); err != nil {
 		return err
 	}
-
+    c.logger.Infof("Docker import %q completed!", c.imageName)
 	return nil
 }
 

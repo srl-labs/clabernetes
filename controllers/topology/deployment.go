@@ -461,6 +461,27 @@ func (r *DeploymentReconciler) renderDeploymentVolumes( //nolint:funlen
 		)
 	}
 
+    volumes = append(
+    volumes,
+    k8scorev1.Volume{
+        Name: "cri-image-export",
+        VolumeSource: k8scorev1.VolumeSource{
+            HostPath: &k8scorev1.HostPathVolumeSource{
+                Path: "/var/lib/clabernetes",
+                Type: clabernetesutil.ToPointer(k8scorev1.HostPathType("DirectoryOrCreate")),
+            },
+        },
+    },)
+
+    volumeMountsFromCommonSpec = append(
+        volumeMountsFromCommonSpec,
+        k8scorev1.VolumeMount{
+            Name:     "cri-image-export",
+            ReadOnly: false,
+            MountPath: "/clabernetes/.node/shared-volume",
+        },
+    )
+
 	dockerDaemonConfigSecret := owningTopology.Spec.ImagePull.DockerDaemonConfig
 	if dockerDaemonConfigSecret == "" {
 		dockerDaemonConfigSecret = r.configManagerGetter().GetDockerDaemonConfig()
