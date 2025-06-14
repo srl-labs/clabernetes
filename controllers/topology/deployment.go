@@ -30,6 +30,17 @@ const (
 	probeDefaultStartupFailureThreshold = 40
 )
 
+// DeploymentReconciler is a subcomponent of the "TopologyReconciler" but is exposed for testing
+// purposes. This is the component responsible for rendering/validating deployments for a
+// clabernetes topology resource.
+type DeploymentReconciler struct {
+	log                 claberneteslogging.Instance
+	managerAppName      string
+	managerNamespace    string
+	criKind             string
+	configManagerGetter clabernetesconfig.ManagerGetterFunc
+}
+
 // NewDeploymentReconciler returns an instance of DeploymentReconciler.
 func NewDeploymentReconciler(
 	log claberneteslogging.Instance,
@@ -45,17 +56,6 @@ func NewDeploymentReconciler(
 		criKind:             criKind,
 		configManagerGetter: configManagerGetter,
 	}
-}
-
-// DeploymentReconciler is a subcomponent of the "TopologyReconciler" but is exposed for testing
-// purposes. This is the component responsible for rendering/validating deployments for a
-// clabernetes topology resource.
-type DeploymentReconciler struct {
-	log                 claberneteslogging.Instance
-	managerAppName      string
-	managerNamespace    string
-	criKind             string
-	configManagerGetter clabernetesconfig.ManagerGetterFunc
 }
 
 // Resolve accepts a mapping of clabernetes configs and a list of deployments that are -- by owner

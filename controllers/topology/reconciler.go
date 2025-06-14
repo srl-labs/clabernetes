@@ -24,6 +24,28 @@ import (
 	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+// Reconciler (TopologyReconciler) is the base clabernetes topology reconciler that is embedded in
+// all clabernetes topology controllers, it provides common methods for reconciling the
+// common/standard resources that represent a clabernetes object (configmap, deployments,
+// services, etc.).
+type Reconciler struct {
+	Log    claberneteslogging.Instance
+	Client ctrlruntimeclient.Client
+
+	serviceAccountReconciler *ServiceAccountReconciler
+	roleBindingReconciler    *RoleBindingReconciler
+	configMapReconciler      *ConfigMapReconciler
+	connectivityReconciler   *ConnectivityReconciler
+
+	// these ones are exposed for testing purposes. no reason to not expose them really anyway so
+	// no big deal. not exposing the others at this point since there isnt a reason to (yet, but
+	// testing will probably cause them to be exposed at some point too)
+	ServiceFabricReconciler         *ServiceFabricReconciler
+	ServiceExposeReconciler         *ServiceExposeReconciler
+	PersistentVolumeClaimReconciler *PersistentVolumeClaimReconciler
+	DeploymentReconciler            *DeploymentReconciler
+}
+
 // NewReconciler creates a new generic Reconciler (TopologyReconciler).
 func NewReconciler(
 	log claberneteslogging.Instance,
@@ -75,28 +97,6 @@ func NewReconciler(
 			configManagerGetter,
 		),
 	}
-}
-
-// Reconciler (TopologyReconciler) is the base clabernetes topology reconciler that is embedded in
-// all clabernetes topology controllers, it provides common methods for reconciling the
-// common/standard resources that represent a clabernetes object (configmap, deployments,
-// services, etc.).
-type Reconciler struct {
-	Log    claberneteslogging.Instance
-	Client ctrlruntimeclient.Client
-
-	serviceAccountReconciler *ServiceAccountReconciler
-	roleBindingReconciler    *RoleBindingReconciler
-	configMapReconciler      *ConfigMapReconciler
-	connectivityReconciler   *ConnectivityReconciler
-
-	// these ones are exposed for testing purposes. no reason to not expose them really anyway so
-	// no big deal. not exposing the others at this point since there isnt a reason to (yet, but
-	// testing will probably cause them to be exposed at some point too)
-	ServiceFabricReconciler         *ServiceFabricReconciler
-	ServiceExposeReconciler         *ServiceExposeReconciler
-	PersistentVolumeClaimReconciler *PersistentVolumeClaimReconciler
-	DeploymentReconciler            *DeploymentReconciler
 }
 
 // ReconcileNamespaceResources reconciles resources that exist in a Topology's namespace but are not

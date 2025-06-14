@@ -17,19 +17,6 @@ import (
 	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-// NewServiceAccountReconciler returns an instance of ServiceAccountReconciler.
-func NewServiceAccountReconciler(
-	log claberneteslogging.Instance,
-	client ctrlruntimeclient.Client,
-	configManagerGetter clabernetesconfig.ManagerGetterFunc,
-) *ServiceAccountReconciler {
-	return &ServiceAccountReconciler{
-		log:                 log,
-		client:              client,
-		configManagerGetter: configManagerGetter,
-	}
-}
-
 func launcherServiceAccountName() string {
 	return fmt.Sprintf("%s-launcher-service-account", clabernetesconstants.Clabernetes)
 }
@@ -41,6 +28,19 @@ type ServiceAccountReconciler struct {
 	log                 claberneteslogging.Instance
 	client              ctrlruntimeclient.Client
 	configManagerGetter clabernetesconfig.ManagerGetterFunc
+}
+
+// NewServiceAccountReconciler returns an instance of ServiceAccountReconciler.
+func NewServiceAccountReconciler(
+	log claberneteslogging.Instance,
+	client ctrlruntimeclient.Client,
+	configManagerGetter clabernetesconfig.ManagerGetterFunc,
+) *ServiceAccountReconciler {
+	return &ServiceAccountReconciler{
+		log:                 log,
+		client:              client,
+		configManagerGetter: configManagerGetter,
+	}
 }
 
 // Reconcile either enforces the ServiceAccount configuration for a given namespace or removes the

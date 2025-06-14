@@ -16,6 +16,14 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+// ServiceFabricReconciler is a subcomponent of the "TopologyReconciler" but is exposed for testing
+// purposes. This is the component responsible for rendering/validating the "fabric" service for a
+// clabernetes topology resource.
+type ServiceFabricReconciler struct {
+	log                 claberneteslogging.Instance
+	configManagerGetter clabernetesconfig.ManagerGetterFunc
+}
+
 // NewServiceFabricReconciler returns an instance of ServiceFabricReconciler.
 func NewServiceFabricReconciler(
 	log claberneteslogging.Instance,
@@ -25,14 +33,6 @@ func NewServiceFabricReconciler(
 		log:                 log,
 		configManagerGetter: configManagerGetter,
 	}
-}
-
-// ServiceFabricReconciler is a subcomponent of the "TopologyReconciler" but is exposed for testing
-// purposes. This is the component responsible for rendering/validating the "fabric" service for a
-// clabernetes topology resource.
-type ServiceFabricReconciler struct {
-	log                 claberneteslogging.Instance
-	configManagerGetter clabernetesconfig.ManagerGetterFunc
 }
 
 // Resolve accepts a mapping of clabernetes configs and a list of services that are -- by owner

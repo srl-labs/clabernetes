@@ -17,6 +17,14 @@ import (
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 )
 
+// PersistentVolumeClaimReconciler is a subcomponent of the "TopologyReconciler" but is exposed for
+// testing purposes. This is the component responsible for rendering/validating the optional PVC
+// that is used to persist the containerlab directory of a topology's nodes.
+type PersistentVolumeClaimReconciler struct {
+	log                 claberneteslogging.Instance
+	configManagerGetter clabernetesconfig.ManagerGetterFunc
+}
+
 // NewPersistentVolumeClaimReconciler returns an instance of PersistentVolumeClaimReconciler.
 func NewPersistentVolumeClaimReconciler(
 	log claberneteslogging.Instance,
@@ -26,14 +34,6 @@ func NewPersistentVolumeClaimReconciler(
 		log:                 log,
 		configManagerGetter: configManagerGetter,
 	}
-}
-
-// PersistentVolumeClaimReconciler is a subcomponent of the "TopologyReconciler" but is exposed for
-// testing purposes. This is the component responsible for rendering/validating the optional PVC
-// that is used to persist the containerlab directory of a topology's nodes.
-type PersistentVolumeClaimReconciler struct {
-	log                 claberneteslogging.Instance
-	configManagerGetter clabernetesconfig.ManagerGetterFunc
 }
 
 // Resolve accepts a mapping of clabernetes configs and a list of services that are -- by owner

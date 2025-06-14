@@ -166,46 +166,6 @@ type manager struct {
 	config                *clabernetesapisv1alpha1.ConfigSpec
 }
 
-func (m *manager) load(config *clabernetesapisv1alpha1.Config) {
-	m.logger.Debug("re-loading config contents...")
-
-	dataBytes, err := yaml.Marshal(config.Spec)
-	if err != nil {
-		m.logger.Warnf("failed marshaling config contents to bytes, error: %s", err)
-
-		return
-	}
-
-	newHash := clabernetesutil.HashBytes(dataBytes)
-
-	if m.lastHash == newHash {
-		m.logger.Debug("config contents hash matches last recorded hash, nothing to do")
-
-		return
-	}
-
-	m.lock.Lock()
-	defer m.lock.Unlock()
-
-	newConfig := config.Spec.DeepCopy()
-
-	// filter out any "reserved" labels (we dont use annotations for anything so those can be left
-	// alone) -- this means anything starting w/ "appname/" i guess
-	for k := range newConfig.Metadata.Labels {
-		if strings.HasPrefix(k, fmt.Sprintf("%s/", m.appName)) {
-			m.logger.Warnf(
-				"ignoring user provided global label '%s' labels starting with '%s/' are reserved",
-				k,
-				m.appName,
-			)
-
-			delete(newConfig.Metadata.Labels, k)
-		}
-	}
-
-	m.config = newConfig
-}
-
 func (m *manager) Start() error {
 	if m.started {
 		m.logger.Info("attempting to start already started config manager, this is a no-op")
@@ -246,6 +206,46 @@ func (m *manager) Start() error {
 	go m.watchConfig()
 
 	return nil
+}
+
+func (m *manager) load(config *clabernetesapisv1alpha1.Config) {
+	m.logger.Debug("re-loading config contents...")
+
+	dataBytes, err := yaml.Marshal(config.Spec)
+	if err != nil {
+		m.logger.Warnf("failed marshaling config contents to bytes, error: %s", err)
+
+		return
+	}
+
+	newHash := clabernetesutil.HashBytes(dataBytes)
+
+	if m.lastHash == newHash {
+		m.logger.Debug("config contents hash matches last recorded hash, nothing to do")
+
+		return
+	}
+
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
+	newConfig := config.Spec.DeepCopy()
+
+	// filter out any "reserved" labels (we dont use annotations for anything so those can be left
+	// alone) -- this means anything starting w/ "appname/" i guess
+	for k := range newConfig.Metadata.Labels {
+		if strings.HasPrefix(k, fmt.Sprintf("%s/", m.appName)) {
+			m.logger.Warnf(
+				"ignoring user provided global label '%s' labels starting with '%s/' are reserved",
+				k,
+				m.appName,
+			)
+
+			delete(newConfig.Metadata.Labels, k)
+		}
+	}
+
+	m.config = newConfig
 }
 
 func (m *manager) watchConfig() {

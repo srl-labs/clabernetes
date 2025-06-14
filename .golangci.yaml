@@ -116,15 +116,3 @@ issues:
   max-issues-per-linter: 0
   max-same-issues: 0
   uniq-by-line: false
-formatters:
-  enable:
-    - gofmt
-    - gofumpt
-    - goimports
-  exclusions:
-    generated: lax
-    paths:
-      - .private
-      - third_party$
-      - builtin$
-      - examples$

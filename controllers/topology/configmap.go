@@ -16,6 +16,14 @@ import (
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 )
 
+// ConfigMapReconciler is a subcomponent of the "TopologyReconciler" but is exposed for testing
+// purposes. This is the component responsible for rendering/validating configmaps for a
+// clabernetes topology resource.
+type ConfigMapReconciler struct {
+	log                 claberneteslogging.Instance
+	configManagerGetter clabernetesconfig.ManagerGetterFunc
+}
+
 // NewConfigMapReconciler returns an instance of ConfigMapReconciler.
 func NewConfigMapReconciler(
 	log claberneteslogging.Instance,
@@ -25,14 +33,6 @@ func NewConfigMapReconciler(
 		log:                 log,
 		configManagerGetter: configManagerGetter,
 	}
-}
-
-// ConfigMapReconciler is a subcomponent of the "TopologyReconciler" but is exposed for testing
-// purposes. This is the component responsible for rendering/validating configmaps for a
-// clabernetes topology resource.
-type ConfigMapReconciler struct {
-	log                 claberneteslogging.Instance
-	configManagerGetter clabernetesconfig.ManagerGetterFunc
 }
 
 // Render accepts an object (just for name/namespace reasons) and a mapping of clabernetes

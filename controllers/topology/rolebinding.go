@@ -18,6 +18,20 @@ import (
 	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+func launcherRoleBindingName() string {
+	return fmt.Sprintf("%s-launcher-role-binding", clabernetesconstants.Clabernetes)
+}
+
+// RoleBindingReconciler is a subcomponent of the "TopologyReconciler" but is exposed for testing
+// purposes. This is the component responsible for rendering/validating (and deleting when
+// necessary) the clabernetes launcher role binding for a given namespace.
+type RoleBindingReconciler struct {
+	log                 claberneteslogging.Instance
+	client              ctrlruntimeclient.Client
+	configManagerGetter clabernetesconfig.ManagerGetterFunc
+	appName             string
+}
+
 // NewRoleBindingReconciler returns an instance of RoleBindingReconciler.
 func NewRoleBindingReconciler(
 	log claberneteslogging.Instance,
@@ -31,20 +45,6 @@ func NewRoleBindingReconciler(
 		configManagerGetter: configManagerGetter,
 		appName:             appName,
 	}
-}
-
-func launcherRoleBindingName() string {
-	return fmt.Sprintf("%s-launcher-role-binding", clabernetesconstants.Clabernetes)
-}
-
-// RoleBindingReconciler is a subcomponent of the "TopologyReconciler" but is exposed for testing
-// purposes. This is the component responsible for rendering/validating (and deleting when
-// necessary) the clabernetes launcher role binding for a given namespace.
-type RoleBindingReconciler struct {
-	log                 claberneteslogging.Instance
-	client              ctrlruntimeclient.Client
-	configManagerGetter clabernetesconfig.ManagerGetterFunc
-	appName             string
 }
 
 // Reconcile either enforces the RoleBinding configuration for a given namespace or removes the

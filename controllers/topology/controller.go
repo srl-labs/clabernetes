@@ -18,6 +18,12 @@ import (
 	ctrlruntimereconcile "sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+// Controller is the Containerlab topology controller object.
+type Controller struct {
+	*clabernetescontrollers.BaseController
+	TopologyReconciler *Reconciler
+}
+
 // NewController returns a new Controller.
 func NewController(
 	clabernetes clabernetesmanagertypes.Clabernetes,
@@ -45,12 +51,6 @@ func NewController(
 	}
 
 	return c
-}
-
-// Controller is the Containerlab topology controller object.
-type Controller struct {
-	*clabernetescontrollers.BaseController
-	TopologyReconciler *Reconciler
 }
 
 // enqueueForAll enqueues all Topology CRs for reconciliation.

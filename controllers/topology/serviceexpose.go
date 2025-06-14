@@ -29,6 +29,14 @@ func exposeTypeToServiceType(exposeType string) k8scorev1.ServiceType {
 	}
 }
 
+// ServiceExposeReconciler is a subcomponent of the "TopologyReconciler" but is exposed for testing
+// purposes. This is the component responsible for rendering/validating the "expose" service for a
+// clabernetes topology resource.
+type ServiceExposeReconciler struct {
+	log                 claberneteslogging.Instance
+	configManagerGetter clabernetesconfig.ManagerGetterFunc
+}
+
 // NewServiceExposeReconciler returns an instance of ServiceExposeReconciler.
 func NewServiceExposeReconciler(
 	log claberneteslogging.Instance,
@@ -38,14 +46,6 @@ func NewServiceExposeReconciler(
 		log:                 log,
 		configManagerGetter: configManagerGetter,
 	}
-}
-
-// ServiceExposeReconciler is a subcomponent of the "TopologyReconciler" but is exposed for testing
-// purposes. This is the component responsible for rendering/validating the "expose" service for a
-// clabernetes topology resource.
-type ServiceExposeReconciler struct {
-	log                 claberneteslogging.Instance
-	configManagerGetter clabernetesconfig.ManagerGetterFunc
 }
 
 // Resolve accepts a mapping of clabernetes configs and a list of services that are -- by owner
