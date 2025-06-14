@@ -36,6 +36,56 @@ type StatuslessTopology struct {
 	Spec clabernetesapisv1alpha1.TopologySpec `json:"spec,omitempty"`
 }
 
+// Clabverter is a struct that holds data/methods for "clabversion" -- that is, the conversion of
+// a "normal" containerlab topology to a clabernetes Containerlab resource, and any other associated
+// manifest(s).
+type Clabverter struct {
+	logger claberneteslogging.Instance
+
+	topologyFile    string
+	outputDirectory string
+	stdout          bool
+
+	destinationNamespace string
+
+	insecureRegistries []string
+	imagePullSecrets   []string
+
+	disableExpose bool
+
+	topologyPath       string
+	topologyPathParent string
+	isRemotePath       bool
+
+	topologySpecFile     string
+	topologySpecFilePath string
+
+	githubGroup         string
+	githubRepo          string
+	githubToken         string
+	naming              string
+	containerlabVersion string
+
+	rawClabConfig string
+	clabConfig    *clabernetesutilcontainerlab.Config
+
+	// mapping of nodeName -> startup-config info for the templating process; this is its own thing
+	// because configurations may be huge and configmaps have a 1M char limit, so while keeping them
+	// by themselves may not "solve" for ginormous configs, it can certainly give us a little extra
+	// breathing room by not having other data in the startup configmap.
+	startupConfigConfigMaps map[string]topologyConfigMapTemplateVars
+
+	// all other config files associated to the node(s) -- for example license file(s).
+	extraFilesConfigMaps map[string][]topologyConfigMapTemplateVars
+
+	// any files that are too big for configmaps can be mounted as fileFromURL (if we are "remote"
+	// topology at least).
+	extraFilesFromURL map[string][]topologyFileFromURLTemplateVars
+
+	// filenames -> content of all rendered files we need to either print to stdout or write to disk
+	renderedFiles []renderedContent
+}
+
 // MustNewClabverter returns an instance of Clabverter or panics.
 func MustNewClabverter(
 	topologyFile,
@@ -118,56 +168,6 @@ func MustNewClabverter(
 		containerlabVersion:     containerlabVersion,
 		renderedFiles:           []renderedContent{},
 	}
-}
-
-// Clabverter is a struct that holds data/methods for "clabversion" -- that is, the conversion of
-// a "normal" containerlab topology to a clabernetes Containerlab resource, and any other associated
-// manifest(s).
-type Clabverter struct {
-	logger claberneteslogging.Instance
-
-	topologyFile    string
-	outputDirectory string
-	stdout          bool
-
-	destinationNamespace string
-
-	insecureRegistries []string
-	imagePullSecrets   []string
-
-	disableExpose bool
-
-	topologyPath       string
-	topologyPathParent string
-	isRemotePath       bool
-
-	topologySpecFile     string
-	topologySpecFilePath string
-
-	githubGroup         string
-	githubRepo          string
-	githubToken         string
-	naming              string
-	containerlabVersion string
-
-	rawClabConfig string
-	clabConfig    *clabernetesutilcontainerlab.Config
-
-	// mapping of nodeName -> startup-config info for the templating process; this is its own thing
-	// because configurations may be huge and configmaps have a 1M char limit, so while keeping them
-	// by themselves may not "solve" for ginormous configs, it can certainly give us a little extra
-	// breathing room by not having other data in the startup configmap.
-	startupConfigConfigMaps map[string]topologyConfigMapTemplateVars
-
-	// all other config files associated to the node(s) -- for example license file(s).
-	extraFilesConfigMaps map[string][]topologyConfigMapTemplateVars
-
-	// any files that are too big for configmaps can be mounted as fileFromURL (if we are "remote"
-	// topology at least).
-	extraFilesFromURL map[string][]topologyFileFromURLTemplateVars
-
-	// filenames -> content of all rendered files we need to either print to stdout or write to disk
-	renderedFiles []renderedContent
 }
 
 // Clabvert is the main (only) entrypoint that kicks off the "clabversion" process.

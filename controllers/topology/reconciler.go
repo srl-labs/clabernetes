@@ -24,6 +24,28 @@ import (
 	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+// Reconciler (TopologyReconciler) is the base clabernetes topology reconciler that is embedded in
+// all clabernetes topology controllers, it provides common methods for reconciling the
+// common/standard resources that represent a clabernetes object (configmap, deployments,
+// services, etc.).
+type Reconciler struct {
+	Log    claberneteslogging.Instance
+	Client ctrlruntimeclient.Client
+
+	serviceAccountReconciler *ServiceAccountReconciler
+	roleBindingReconciler    *RoleBindingReconciler
+	configMapReconciler      *ConfigMapReconciler
+	connectivityReconciler   *ConnectivityReconciler
+
+	// these ones are exposed for testing purposes. no reason to not expose them really anyway so
+	// no big deal. not exposing the others at this point since there isnt a reason to (yet, but
+	// testing will probably cause them to be exposed at some point too)
+	ServiceFabricReconciler         *ServiceFabricReconciler
+	ServiceExposeReconciler         *ServiceExposeReconciler
+	PersistentVolumeClaimReconciler *PersistentVolumeClaimReconciler
+	DeploymentReconciler            *DeploymentReconciler
+}
+
 // NewReconciler creates a new generic Reconciler (TopologyReconciler).
 func NewReconciler(
 	log claberneteslogging.Instance,
@@ -75,28 +97,6 @@ func NewReconciler(
 			configManagerGetter,
 		),
 	}
-}
-
-// Reconciler (TopologyReconciler) is the base clabernetes topology reconciler that is embedded in
-// all clabernetes topology controllers, it provides common methods for reconciling the
-// common/standard resources that represent a clabernetes object (configmap, deployments,
-// services, etc.).
-type Reconciler struct {
-	Log    claberneteslogging.Instance
-	Client ctrlruntimeclient.Client
-
-	serviceAccountReconciler *ServiceAccountReconciler
-	roleBindingReconciler    *RoleBindingReconciler
-	configMapReconciler      *ConfigMapReconciler
-	connectivityReconciler   *ConnectivityReconciler
-
-	// these ones are exposed for testing purposes. no reason to not expose them really anyway so
-	// no big deal. not exposing the others at this point since there isnt a reason to (yet, but
-	// testing will probably cause them to be exposed at some point too)
-	ServiceFabricReconciler         *ServiceFabricReconciler
-	ServiceExposeReconciler         *ServiceExposeReconciler
-	PersistentVolumeClaimReconciler *PersistentVolumeClaimReconciler
-	DeploymentReconciler            *DeploymentReconciler
 }
 
 // ReconcileNamespaceResources reconciles resources that exist in a Topology's namespace but are not
@@ -667,108 +667,6 @@ func (r *Reconciler) ReconcilePersistentVolumeClaim(
 	return nil
 }
 
-func (r *Reconciler) reconcileDeploymentsHandleRestarts(
-	ctx context.Context,
-	owningTopology *clabernetesapisv1alpha1.Topology,
-	deployments *clabernetesutil.ObjectDiffer[*k8sappsv1.Deployment],
-	reconcileData *ReconcileData,
-) error {
-	r.Log.Debug("determining nodes needing restart")
-
-	r.DeploymentReconciler.DetermineNodesNeedingRestart(
-		reconcileData,
-	)
-
-	if reconcileData.NodesNeedingReboot.Len() == 0 {
-		r.Log.Debug("all nodes are up to date, no restarts required")
-
-		return nil
-	}
-
-	var restartNodeError error
-
-	for _, nodeName := range reconcileData.NodesNeedingReboot.Items() {
-		if slices.Contains(deployments.Missing, nodeName) {
-			// is a new node, don't restart, we'll deploy it soon
-			continue
-		}
-
-		r.Log.Infof(
-			"restarting the node '%s' as configurations have changed",
-			nodeName,
-		)
-
-		r.diffIfDebug(
-			reconcileData.PreviousConfigs[nodeName],
-			reconcileData.ResolvedConfigs[nodeName],
-		)
-
-		deploymentName := fmt.Sprintf("%s-%s", owningTopology.GetName(), nodeName)
-
-		if ResolveTopologyRemovePrefix(owningTopology) {
-			deploymentName = nodeName
-		}
-
-		nodeDeployment := &k8sappsv1.Deployment{}
-
-		err := r.getObj(
-			ctx,
-			nodeDeployment,
-			apimachinerytypes.NamespacedName{
-				Namespace: owningTopology.GetNamespace(),
-				Name:      deploymentName,
-			},
-			clabernetesconstants.KubernetesDeployment,
-		)
-		if err != nil {
-			if apimachineryerrors.IsNotFound(err) {
-				r.Log.Warnf(
-					"could not find deployment '%s', cannot restart after config change,"+
-						" this should not happen",
-					deploymentName,
-				)
-
-				continue
-			}
-
-			r.Log.Warnf("failed fetching deployment for node %q, err: %s", nodeName, err)
-
-			if restartNodeError == nil {
-				restartNodeError = fmt.Errorf(
-					"%w: encountered issue during node reboot process",
-					claberneteserrors.ErrReconcile,
-				)
-			}
-
-			continue
-		}
-
-		if nodeDeployment.Spec.Template.ObjectMeta.Annotations == nil {
-			nodeDeployment.Spec.Template.ObjectMeta.Annotations = map[string]string{}
-		}
-
-		now := time.Now().Format(time.RFC3339)
-
-		nodeDeployment.Spec.Template.ObjectMeta.Annotations["kubectl.kubernetes.io/restartedAt"] = now //nolint:lll
-
-		err = r.updateObj(ctx, nodeDeployment, clabernetesconstants.KubernetesDeployment)
-		if err != nil {
-			r.Log.Warnf("failed restarting deployment for node %q, err: %s", nodeName, err)
-
-			if restartNodeError == nil {
-				restartNodeError = fmt.Errorf(
-					"%w: encountered issue during node reboot process",
-					claberneteserrors.ErrReconcile,
-				)
-			}
-
-			continue
-		}
-	}
-
-	return restartNodeError
-}
-
 // ReconcileDeployments reconciles the deployments that make up a clabernetes Topology.
 func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,funlen
 	ctx context.Context,
@@ -930,6 +828,108 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,funlen
 		deployments,
 		reconcileData,
 	)
+}
+
+func (r *Reconciler) reconcileDeploymentsHandleRestarts(
+	ctx context.Context,
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	deployments *clabernetesutil.ObjectDiffer[*k8sappsv1.Deployment],
+	reconcileData *ReconcileData,
+) error {
+	r.Log.Debug("determining nodes needing restart")
+
+	r.DeploymentReconciler.DetermineNodesNeedingRestart(
+		reconcileData,
+	)
+
+	if reconcileData.NodesNeedingReboot.Len() == 0 {
+		r.Log.Debug("all nodes are up to date, no restarts required")
+
+		return nil
+	}
+
+	var restartNodeError error
+
+	for _, nodeName := range reconcileData.NodesNeedingReboot.Items() {
+		if slices.Contains(deployments.Missing, nodeName) {
+			// is a new node, don't restart, we'll deploy it soon
+			continue
+		}
+
+		r.Log.Infof(
+			"restarting the node '%s' as configurations have changed",
+			nodeName,
+		)
+
+		r.diffIfDebug(
+			reconcileData.PreviousConfigs[nodeName],
+			reconcileData.ResolvedConfigs[nodeName],
+		)
+
+		deploymentName := fmt.Sprintf("%s-%s", owningTopology.GetName(), nodeName)
+
+		if ResolveTopologyRemovePrefix(owningTopology) {
+			deploymentName = nodeName
+		}
+
+		nodeDeployment := &k8sappsv1.Deployment{}
+
+		err := r.getObj(
+			ctx,
+			nodeDeployment,
+			apimachinerytypes.NamespacedName{
+				Namespace: owningTopology.GetNamespace(),
+				Name:      deploymentName,
+			},
+			clabernetesconstants.KubernetesDeployment,
+		)
+		if err != nil {
+			if apimachineryerrors.IsNotFound(err) {
+				r.Log.Warnf(
+					"could not find deployment '%s', cannot restart after config change,"+
+						" this should not happen",
+					deploymentName,
+				)
+
+				continue
+			}
+
+			r.Log.Warnf("failed fetching deployment for node %q, err: %s", nodeName, err)
+
+			if restartNodeError == nil {
+				restartNodeError = fmt.Errorf(
+					"%w: encountered issue during node reboot process",
+					claberneteserrors.ErrReconcile,
+				)
+			}
+
+			continue
+		}
+
+		if nodeDeployment.Spec.Template.ObjectMeta.Annotations == nil {
+			nodeDeployment.Spec.Template.ObjectMeta.Annotations = map[string]string{}
+		}
+
+		now := time.Now().Format(time.RFC3339)
+
+		nodeDeployment.Spec.Template.ObjectMeta.Annotations["kubectl.kubernetes.io/restartedAt"] = now //nolint:lll
+
+		err = r.updateObj(ctx, nodeDeployment, clabernetesconstants.KubernetesDeployment)
+		if err != nil {
+			r.Log.Warnf("failed restarting deployment for node %q, err: %s", nodeName, err)
+
+			if restartNodeError == nil {
+				restartNodeError = fmt.Errorf(
+					"%w: encountered issue during node reboot process",
+					claberneteserrors.ErrReconcile,
+				)
+			}
+
+			continue
+		}
+	}
+
+	return restartNodeError
 }
 
 func (r *Reconciler) diffIfDebug(a, b any) {

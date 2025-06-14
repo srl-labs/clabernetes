@@ -16,6 +16,14 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+// ServiceFabricReconciler is a subcomponent of the "TopologyReconciler" but is exposed for testing
+// purposes. This is the component responsible for rendering/validating the "fabric" service for a
+// clabernetes topology resource.
+type ServiceFabricReconciler struct {
+	log                 claberneteslogging.Instance
+	configManagerGetter clabernetesconfig.ManagerGetterFunc
+}
+
 // NewServiceFabricReconciler returns an instance of ServiceFabricReconciler.
 func NewServiceFabricReconciler(
 	log claberneteslogging.Instance,
@@ -25,14 +33,6 @@ func NewServiceFabricReconciler(
 		log:                 log,
 		configManagerGetter: configManagerGetter,
 	}
-}
-
-// ServiceFabricReconciler is a subcomponent of the "TopologyReconciler" but is exposed for testing
-// purposes. This is the component responsible for rendering/validating the "fabric" service for a
-// clabernetes topology resource.
-type ServiceFabricReconciler struct {
-	log                 claberneteslogging.Instance
-	configManagerGetter clabernetesconfig.ManagerGetterFunc
 }
 
 // Resolve accepts a mapping of clabernetes configs and a list of services that are -- by owner
@@ -90,6 +90,56 @@ func (r *ServiceFabricReconciler) Resolve(
 	services.SetExtra(allNodes)
 
 	return services, nil
+}
+
+// Render accepts the owning topology a mapping of clabernetes sub-topology configs and a node name
+// and renders the final fabric service for this node.
+func (r *ServiceFabricReconciler) Render(
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	nodeName string,
+) *k8scorev1.Service {
+	owningTopologyName := owningTopology.GetName()
+
+	serviceName := fmt.Sprintf("%s-%s-vx", owningTopologyName, nodeName)
+
+	if ResolveTopologyRemovePrefix(owningTopology) {
+		serviceName = fmt.Sprintf("%s-vx", nodeName)
+	}
+
+	service := r.renderServiceBase(
+		owningTopology,
+		serviceName,
+		nodeName,
+	)
+
+	return service
+}
+
+// RenderAll accepts the owning topology a mapping of clabernetes sub-topology configs and a
+// list of node names and renders the final fabric services for the given nodes.
+func (r *ServiceFabricReconciler) RenderAll(
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	nodeNames []string,
+) []*k8scorev1.Service {
+	services := make([]*k8scorev1.Service, len(nodeNames))
+
+	for idx, nodeName := range nodeNames {
+		services[idx] = r.Render(
+			owningTopology,
+			nodeName,
+		)
+	}
+
+	return services
+}
+
+// Conforms checks if the existingService conforms with the renderedService.
+func (r *ServiceFabricReconciler) Conforms(
+	existingService,
+	renderedService *k8scorev1.Service,
+	expectedOwnerUID apimachinerytypes.UID,
+) bool {
+	return ServiceConforms(existingService, renderedService, expectedOwnerUID)
 }
 
 func (r *ServiceFabricReconciler) renderServiceBase(
@@ -158,54 +208,4 @@ func (r *ServiceFabricReconciler) renderServiceBase(
 			Type:     k8scorev1.ServiceTypeClusterIP,
 		},
 	}
-}
-
-// Render accepts the owning topology a mapping of clabernetes sub-topology configs and a node name
-// and renders the final fabric service for this node.
-func (r *ServiceFabricReconciler) Render(
-	owningTopology *clabernetesapisv1alpha1.Topology,
-	nodeName string,
-) *k8scorev1.Service {
-	owningTopologyName := owningTopology.GetName()
-
-	serviceName := fmt.Sprintf("%s-%s-vx", owningTopologyName, nodeName)
-
-	if ResolveTopologyRemovePrefix(owningTopology) {
-		serviceName = fmt.Sprintf("%s-vx", nodeName)
-	}
-
-	service := r.renderServiceBase(
-		owningTopology,
-		serviceName,
-		nodeName,
-	)
-
-	return service
-}
-
-// RenderAll accepts the owning topology a mapping of clabernetes sub-topology configs and a
-// list of node names and renders the final fabric services for the given nodes.
-func (r *ServiceFabricReconciler) RenderAll(
-	owningTopology *clabernetesapisv1alpha1.Topology,
-	nodeNames []string,
-) []*k8scorev1.Service {
-	services := make([]*k8scorev1.Service, len(nodeNames))
-
-	for idx, nodeName := range nodeNames {
-		services[idx] = r.Render(
-			owningTopology,
-			nodeName,
-		)
-	}
-
-	return services
-}
-
-// Conforms checks if the existingService conforms with the renderedService.
-func (r *ServiceFabricReconciler) Conforms(
-	existingService,
-	renderedService *k8scorev1.Service,
-	expectedOwnerUID apimachinerytypes.UID,
-) bool {
-	return ServiceConforms(existingService, renderedService, expectedOwnerUID)
 }

@@ -10,6 +10,14 @@ import (
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 )
 
+// DefinitionProcessor is an interface defining a definition processor -- that is, an object that
+// accepts a clabernetes topology to update based on the included (probably containerlab, but maybe
+// kne or others in the future) configuration.
+type DefinitionProcessor interface {
+	// Process processes the topology, updating the given reconcile data object as necessary.
+	Process() error
+}
+
 // NewDefinitionProcessor returns a definition processor for the given Topology.
 func NewDefinitionProcessor(
 	logger claberneteslogging.Instance,
@@ -46,14 +54,6 @@ func NewDefinitionProcessor(
 			claberneteserrors.ErrReconcile,
 		)
 	}
-}
-
-// DefinitionProcessor is an interface defining a definition processor -- that is, an object that
-// accepts a clabernetes topology to update based on the included (probably containerlab, but maybe
-// kne or others in the future) configuration.
-type DefinitionProcessor interface {
-	// Process processes the topology, updating the given reconcile data object as necessary.
-	Process() error
 }
 
 type definitionProcessor struct {

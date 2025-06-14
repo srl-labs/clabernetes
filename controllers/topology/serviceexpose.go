@@ -29,6 +29,14 @@ func exposeTypeToServiceType(exposeType string) k8scorev1.ServiceType {
 	}
 }
 
+// ServiceExposeReconciler is a subcomponent of the "TopologyReconciler" but is exposed for testing
+// purposes. This is the component responsible for rendering/validating the "expose" service for a
+// clabernetes topology resource.
+type ServiceExposeReconciler struct {
+	log                 claberneteslogging.Instance
+	configManagerGetter clabernetesconfig.ManagerGetterFunc
+}
+
 // NewServiceExposeReconciler returns an instance of ServiceExposeReconciler.
 func NewServiceExposeReconciler(
 	log claberneteslogging.Instance,
@@ -38,14 +46,6 @@ func NewServiceExposeReconciler(
 		log:                 log,
 		configManagerGetter: configManagerGetter,
 	}
-}
-
-// ServiceExposeReconciler is a subcomponent of the "TopologyReconciler" but is exposed for testing
-// purposes. This is the component responsible for rendering/validating the "expose" service for a
-// clabernetes topology resource.
-type ServiceExposeReconciler struct {
-	log                 claberneteslogging.Instance
-	configManagerGetter clabernetesconfig.ManagerGetterFunc
 }
 
 // Resolve accepts a mapping of clabernetes configs and a list of services that are -- by owner
@@ -123,6 +123,73 @@ func (r *ServiceExposeReconciler) Resolve(
 	services.SetExtra(exposedNodes)
 
 	return services, nil
+}
+
+// Render accepts the owning topology a mapping of clabernetes sub-topology configs and a node name
+// and renders the final expose service for this node.
+func (r *ServiceExposeReconciler) Render(
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	reconcileData *ReconcileData,
+	nodeName string,
+) *k8scorev1.Service {
+	if owningTopology.Spec.Expose.ExposeType == exposeTypeNone {
+		return nil
+	}
+
+	owningTopologyName := owningTopology.GetName()
+
+	serviceName := fmt.Sprintf("%s-%s", owningTopologyName, nodeName)
+
+	if ResolveTopologyRemovePrefix(owningTopology) {
+		serviceName = nodeName
+	}
+
+	service := r.renderServiceBase(
+		owningTopology,
+		serviceName,
+		nodeName,
+	)
+
+	r.renderServicePorts(
+		reconcileData,
+		service,
+		nodeName,
+	)
+
+	return service
+}
+
+// RenderAll accepts the owning topology a mapping of clabernetes sub-topology configs and a
+// list of node names and renders the final expose services for the given nodes.
+func (r *ServiceExposeReconciler) RenderAll(
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	reconcileData *ReconcileData,
+	nodeNames []string,
+) []*k8scorev1.Service {
+	services := make([]*k8scorev1.Service, len(nodeNames))
+
+	if owningTopology.Spec.Expose.ExposeType == exposeTypeNone {
+		return services
+	}
+
+	for idx, nodeName := range nodeNames {
+		services[idx] = r.Render(
+			owningTopology,
+			reconcileData,
+			nodeName,
+		)
+	}
+
+	return services
+}
+
+// Conforms checks if the existingService conforms with the renderedService.
+func (r *ServiceExposeReconciler) Conforms(
+	existingService,
+	renderedService *k8scorev1.Service,
+	expectedOwnerUID apimachinerytypes.UID,
+) bool {
+	return ServiceConforms(existingService, renderedService, expectedOwnerUID)
 }
 
 func (r *ServiceExposeReconciler) renderServiceBase(
@@ -251,71 +318,4 @@ func (r *ServiceExposeReconciler) renderServicePorts(
 	}
 
 	service.Spec.Ports = ports
-}
-
-// Render accepts the owning topology a mapping of clabernetes sub-topology configs and a node name
-// and renders the final expose service for this node.
-func (r *ServiceExposeReconciler) Render(
-	owningTopology *clabernetesapisv1alpha1.Topology,
-	reconcileData *ReconcileData,
-	nodeName string,
-) *k8scorev1.Service {
-	if owningTopology.Spec.Expose.ExposeType == exposeTypeNone {
-		return nil
-	}
-
-	owningTopologyName := owningTopology.GetName()
-
-	serviceName := fmt.Sprintf("%s-%s", owningTopologyName, nodeName)
-
-	if ResolveTopologyRemovePrefix(owningTopology) {
-		serviceName = nodeName
-	}
-
-	service := r.renderServiceBase(
-		owningTopology,
-		serviceName,
-		nodeName,
-	)
-
-	r.renderServicePorts(
-		reconcileData,
-		service,
-		nodeName,
-	)
-
-	return service
-}
-
-// RenderAll accepts the owning topology a mapping of clabernetes sub-topology configs and a
-// list of node names and renders the final expose services for the given nodes.
-func (r *ServiceExposeReconciler) RenderAll(
-	owningTopology *clabernetesapisv1alpha1.Topology,
-	reconcileData *ReconcileData,
-	nodeNames []string,
-) []*k8scorev1.Service {
-	services := make([]*k8scorev1.Service, len(nodeNames))
-
-	if owningTopology.Spec.Expose.ExposeType == exposeTypeNone {
-		return services
-	}
-
-	for idx, nodeName := range nodeNames {
-		services[idx] = r.Render(
-			owningTopology,
-			reconcileData,
-			nodeName,
-		)
-	}
-
-	return services
-}
-
-// Conforms checks if the existingService conforms with the renderedService.
-func (r *ServiceExposeReconciler) Conforms(
-	existingService,
-	renderedService *k8scorev1.Service,
-	expectedOwnerUID apimachinerytypes.UID,
-) bool {
-	return ServiceConforms(existingService, renderedService, expectedOwnerUID)
 }

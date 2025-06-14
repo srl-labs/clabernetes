@@ -177,6 +177,21 @@ func (c *clabernetes) IsReady() bool {
 	return c.ready
 }
 
+func (c *clabernetes) Exit(exitCode int) {
+	if !c.initializer {
+		// init container would never have started the http server, so we skip shutting it down
+		// of course
+		err := claberneteshttp.GetManager().Stop()
+		if err != nil {
+			c.logger.Warnf("failed shutting down http manager, err: %s", err)
+		}
+	}
+
+	claberneteslogging.GetManager().Flush()
+
+	os.Exit(exitCode)
+}
+
 func (c *clabernetes) start() {
 	c.logger.Info("starting clabernetes...")
 
@@ -215,19 +230,4 @@ func (c *clabernetes) start() {
 	c.logger.Debug("http manager started...")
 
 	c.startLeaderElection()
-}
-
-func (c *clabernetes) Exit(exitCode int) {
-	if !c.initializer {
-		// init container would never have started the http server, so we skip shutting it down
-		// of course
-		err := claberneteshttp.GetManager().Stop()
-		if err != nil {
-			c.logger.Warnf("failed shutting down http manager, err: %s", err)
-		}
-	}
-
-	claberneteslogging.GetManager().Flush()
-
-	os.Exit(exitCode)
 }

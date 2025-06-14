@@ -29,6 +29,21 @@ type Controller interface {
 	) (ctrlruntime.Result, error)
 }
 
+// BaseController is the base clabernetes controller that is embedded in all clabernetes
+// controllers, it provides common attributes for the controllers such as a log instance.
+type BaseController struct {
+	// Ctx is the outer clabernetes context, controllers can use it to check if it is done, spawn
+	// new contexts from it, and pass it to other objects such as the messaging client.
+	Ctx context.Context
+	// AppName is the name of the clabernetes app (the helm release name).
+	AppName string
+	// ControllerNamespace is the namespace the controller is running in.
+	ControllerNamespace string
+	Log                 claberneteslogging.Instance
+	Config              *clientgorest.Config
+	Client              ctrlruntimeclient.Client
+}
+
 // NewBaseController returns a new BaseController object to embed in clabernetes controllers.
 func NewBaseController(
 	ctx context.Context,
@@ -57,21 +72,6 @@ func NewBaseController(
 		Config:              config,
 		Client:              client,
 	}
-}
-
-// BaseController is the base clabernetes controller that is embedded in all clabernetes
-// controllers, it provides common attributes for the controllers such as a log instance.
-type BaseController struct {
-	// Ctx is the outer clabernetes context, controllers can use it to check if it is done, spawn
-	// new contexts from it, and pass it to other objects such as the messaging client.
-	Ctx context.Context
-	// AppName is the name of the clabernetes app (the helm release name).
-	AppName string
-	// ControllerNamespace is the namespace the controller is running in.
-	ControllerNamespace string
-	Log                 claberneteslogging.Instance
-	Config              *clientgorest.Config
-	Client              ctrlruntimeclient.Client
 }
 
 // LogReconcileStart is a convenience/consistency function to log the start of a reconcile event.

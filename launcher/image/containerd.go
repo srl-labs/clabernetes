@@ -37,30 +37,6 @@ func (m *containerdManager) Present(imageName string) (bool, error) {
 	return true, nil
 }
 
-func (m *containerdManager) pull(imageName string) error {
-	pullCmd := exec.Command(
-		"nerdctl",
-		"--address",
-		"/clabernetes/.node/containerd.sock",
-		"--namespace",
-		"k8s.io",
-		"image",
-		"pull",
-		"--all-platforms",
-		imageName,
-	)
-
-	pullCmd.Stdout = m.logger
-	pullCmd.Stderr = m.logger
-
-	err := pullCmd.Run()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (m *containerdManager) Export(imageName, destination string) error {
 	// attempt to re-pull the image -- for containerd setups that have `discard_unpacked_layers`
 	// set to true we will not be able to export the image as for whatever reason containerd wants
@@ -98,6 +74,30 @@ func (m *containerdManager) Export(imageName, destination string) error {
 	}
 
 	m.logger.Debugf("image %q exported from containerd successfully...", imageName)
+
+	return nil
+}
+
+func (m *containerdManager) pull(imageName string) error {
+	pullCmd := exec.Command(
+		"nerdctl",
+		"--address",
+		"/clabernetes/.node/containerd.sock",
+		"--namespace",
+		"k8s.io",
+		"image",
+		"pull",
+		"--all-platforms",
+		imageName,
+	)
+
+	pullCmd.Stdout = m.logger
+	pullCmd.Stderr = m.logger
+
+	err := pullCmd.Run()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

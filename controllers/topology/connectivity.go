@@ -12,6 +12,14 @@ import (
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 )
 
+// ConnectivityReconciler is a subcomponent of the "TopologyReconciler" but is exposed for testing
+// purposes. This is the component responsible for rendering/validating the Connectivity cr for the
+// Topology.
+type ConnectivityReconciler struct {
+	log                 claberneteslogging.Instance
+	configManagerGetter clabernetesconfig.ManagerGetterFunc
+}
+
 // NewConnectivityReconciler returns an instance of ConnectivityReconciler.
 func NewConnectivityReconciler(
 	log claberneteslogging.Instance,
@@ -21,14 +29,6 @@ func NewConnectivityReconciler(
 		log:                 log,
 		configManagerGetter: configManagerGetter,
 	}
-}
-
-// ConnectivityReconciler is a subcomponent of the "TopologyReconciler" but is exposed for testing
-// purposes. This is the component responsible for rendering/validating the Connectivity cr for the
-// Topology.
-type ConnectivityReconciler struct {
-	log                 claberneteslogging.Instance
-	configManagerGetter clabernetesconfig.ManagerGetterFunc
 }
 
 // Render returns a rendered Connectivity cr for the given topology/tunnels.

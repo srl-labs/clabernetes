@@ -18,6 +18,12 @@ import (
 	ctrlruntimereconcile "sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+// Controller is the Containerlab topology controller object.
+type Controller struct {
+	*clabernetescontrollers.BaseController
+	TopologyReconciler *Reconciler
+}
+
 // NewController returns a new Controller.
 func NewController(
 	clabernetes clabernetesmanagertypes.Clabernetes,
@@ -45,40 +51,6 @@ func NewController(
 	}
 
 	return c
-}
-
-// Controller is the Containerlab topology controller object.
-type Controller struct {
-	*clabernetescontrollers.BaseController
-	TopologyReconciler *Reconciler
-}
-
-// enqueueForAll enqueues all Topology CRs for reconciliation.
-func (c *Controller) enqueueForAll(
-	ctx context.Context,
-	_ ctrlruntimeclient.Object,
-) []ctrlruntimereconcile.Request {
-	topologies := &clabernetesapisv1alpha1.TopologyList{}
-
-	err := c.Client.List(ctx, topologies)
-	if err != nil {
-		c.Log.Criticalf("failed listing resource objects in EnqueueForAll, err: %s", err)
-
-		return nil
-	}
-
-	requests := make([]ctrlruntimereconcile.Request, len(topologies.Items))
-
-	for idx := range topologies.Items {
-		requests[idx] = ctrlruntimereconcile.Request{
-			NamespacedName: apimachinerytypes.NamespacedName{
-				Namespace: topologies.Items[idx].GetNamespace(),
-				Name:      topologies.Items[idx].GetName(),
-			},
-		}
-	}
-
-	return requests
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -123,4 +95,32 @@ func (c *Controller) SetupWithManager(mgr ctrlruntime.Manager) error {
 			),
 		).
 		Complete(c)
+}
+
+// enqueueForAll enqueues all Topology CRs for reconciliation.
+func (c *Controller) enqueueForAll(
+	ctx context.Context,
+	_ ctrlruntimeclient.Object,
+) []ctrlruntimereconcile.Request {
+	topologies := &clabernetesapisv1alpha1.TopologyList{}
+
+	err := c.Client.List(ctx, topologies)
+	if err != nil {
+		c.Log.Criticalf("failed listing resource objects in EnqueueForAll, err: %s", err)
+
+		return nil
+	}
+
+	requests := make([]ctrlruntimereconcile.Request, len(topologies.Items))
+
+	for idx := range topologies.Items {
+		requests[idx] = ctrlruntimereconcile.Request{
+			NamespacedName: apimachinerytypes.NamespacedName{
+				Namespace: topologies.Items[idx].GetNamespace(),
+				Name:      topologies.Items[idx].GetName(),
+			},
+		}
+	}
+
+	return requests
 }

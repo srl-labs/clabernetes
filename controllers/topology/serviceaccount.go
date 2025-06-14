@@ -17,19 +17,6 @@ import (
 	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-// NewServiceAccountReconciler returns an instance of ServiceAccountReconciler.
-func NewServiceAccountReconciler(
-	log claberneteslogging.Instance,
-	client ctrlruntimeclient.Client,
-	configManagerGetter clabernetesconfig.ManagerGetterFunc,
-) *ServiceAccountReconciler {
-	return &ServiceAccountReconciler{
-		log:                 log,
-		client:              client,
-		configManagerGetter: configManagerGetter,
-	}
-}
-
 func launcherServiceAccountName() string {
 	return fmt.Sprintf("%s-launcher-service-account", clabernetesconstants.Clabernetes)
 }
@@ -41,6 +28,19 @@ type ServiceAccountReconciler struct {
 	log                 claberneteslogging.Instance
 	client              ctrlruntimeclient.Client
 	configManagerGetter clabernetesconfig.ManagerGetterFunc
+}
+
+// NewServiceAccountReconciler returns an instance of ServiceAccountReconciler.
+func NewServiceAccountReconciler(
+	log claberneteslogging.Instance,
+	client ctrlruntimeclient.Client,
+	configManagerGetter clabernetesconfig.ManagerGetterFunc,
+) *ServiceAccountReconciler {
+	return &ServiceAccountReconciler{
+		log:                 log,
+		client:              client,
+		configManagerGetter: configManagerGetter,
+	}
 }
 
 // Reconcile either enforces the ServiceAccount configuration for a given namespace or removes the
@@ -102,69 +102,6 @@ func (r *ServiceAccountReconciler) Reconcile(
 	}
 
 	return nil
-}
-
-func (r *ServiceAccountReconciler) reconcileGetAndCreateIfNotExist( //nolint:dupl
-	ctx context.Context,
-	owningTopology *clabernetesapisv1alpha1.Topology,
-) (*k8scorev1.ServiceAccount, error) {
-	namespace := owningTopology.Namespace
-
-	existingServiceAccount := &k8scorev1.ServiceAccount{}
-
-	err := r.client.Get(
-		ctx,
-		apimachinerytypes.NamespacedName{
-			Namespace: namespace,
-			Name:      launcherServiceAccountName(),
-		},
-		existingServiceAccount,
-	)
-	if err == nil {
-		return existingServiceAccount, nil
-	}
-
-	if apimachineryerrors.IsNotFound(err) {
-		r.log.Infof("no launcher service account found in namespace %q, creating...", namespace)
-
-		renderedServiceAccount := r.Render(owningTopology, nil)
-
-		err = ctrlruntimeutil.SetOwnerReference(
-			owningTopology,
-			renderedServiceAccount,
-			r.client.Scheme(),
-		)
-		if err != nil {
-			r.log.Criticalf(
-				"failed rendering service account for namespace %q, error: %s",
-				namespace,
-				err,
-			)
-
-			return existingServiceAccount, err
-		}
-
-		err = r.client.Create(ctx, renderedServiceAccount)
-		if err != nil {
-			r.log.Criticalf(
-				"failed creating service account in namespace %q, error: %s",
-				namespace,
-				err,
-			)
-
-			return existingServiceAccount, err
-		}
-
-		return existingServiceAccount, nil
-	}
-
-	r.log.Debugf(
-		"failed getting service account in namespace %q, error: %s",
-		namespace,
-		err,
-	)
-
-	return existingServiceAccount, err
 }
 
 // Render renders a service account for the given namespace. Exported for easy testing.
@@ -237,4 +174,67 @@ func (r *ServiceAccountReconciler) Conforms(
 	}
 
 	return ourOwnerRefExists
+}
+
+func (r *ServiceAccountReconciler) reconcileGetAndCreateIfNotExist( //nolint:dupl
+	ctx context.Context,
+	owningTopology *clabernetesapisv1alpha1.Topology,
+) (*k8scorev1.ServiceAccount, error) {
+	namespace := owningTopology.Namespace
+
+	existingServiceAccount := &k8scorev1.ServiceAccount{}
+
+	err := r.client.Get(
+		ctx,
+		apimachinerytypes.NamespacedName{
+			Namespace: namespace,
+			Name:      launcherServiceAccountName(),
+		},
+		existingServiceAccount,
+	)
+	if err == nil {
+		return existingServiceAccount, nil
+	}
+
+	if apimachineryerrors.IsNotFound(err) {
+		r.log.Infof("no launcher service account found in namespace %q, creating...", namespace)
+
+		renderedServiceAccount := r.Render(owningTopology, nil)
+
+		err = ctrlruntimeutil.SetOwnerReference(
+			owningTopology,
+			renderedServiceAccount,
+			r.client.Scheme(),
+		)
+		if err != nil {
+			r.log.Criticalf(
+				"failed rendering service account for namespace %q, error: %s",
+				namespace,
+				err,
+			)
+
+			return existingServiceAccount, err
+		}
+
+		err = r.client.Create(ctx, renderedServiceAccount)
+		if err != nil {
+			r.log.Criticalf(
+				"failed creating service account in namespace %q, error: %s",
+				namespace,
+				err,
+			)
+
+			return existingServiceAccount, err
+		}
+
+		return existingServiceAccount, nil
+	}
+
+	r.log.Debugf(
+		"failed getting service account in namespace %q, error: %s",
+		namespace,
+		err,
+	)
+
+	return existingServiceAccount, err
 }
