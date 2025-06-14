@@ -91,97 +91,6 @@ func (r *PersistentVolumeClaimReconciler) Resolve(
 	return pvcs, nil
 }
 
-func (r *PersistentVolumeClaimReconciler) renderPVCBase(
-	owningTopology *clabernetesapisv1alpha1.Topology,
-	name,
-	nodeName string,
-) *k8scorev1.PersistentVolumeClaim {
-	owningTopologyName := owningTopology.GetName()
-
-	annotations, globalLabels := r.configManagerGetter().GetAllMetadata()
-
-	deploymentName := fmt.Sprintf("%s-%s", owningTopologyName, nodeName)
-
-	if ResolveTopologyRemovePrefix(owningTopology) {
-		deploymentName = nodeName
-	}
-
-	selectorLabels := map[string]string{
-		clabernetesconstants.LabelApp:           clabernetesconstants.Clabernetes,
-		clabernetesconstants.LabelName:          deploymentName,
-		clabernetesconstants.LabelTopologyOwner: owningTopologyName,
-		clabernetesconstants.LabelTopologyNode:  nodeName,
-	}
-
-	labels := map[string]string{
-		clabernetesconstants.LabelTopologyKind: GetTopologyKind(owningTopology),
-	}
-
-	for k, v := range selectorLabels {
-		labels[k] = v
-	}
-
-	for k, v := range globalLabels {
-		labels[k] = v
-	}
-
-	return &k8scorev1.PersistentVolumeClaim{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        name,
-			Namespace:   owningTopology.GetNamespace(),
-			Annotations: annotations,
-			Labels:      labels,
-		},
-	}
-}
-
-func (r *PersistentVolumeClaimReconciler) renderPVCSpec(
-	owningTopology *clabernetesapisv1alpha1.Topology,
-	pvc *k8scorev1.PersistentVolumeClaim,
-	existingPVC *k8scorev1.PersistentVolumeClaim,
-) {
-	persistence := owningTopology.Spec.Deployment.Persistence
-
-	var storageClassName *string
-
-	if persistence.StorageClassName != "" {
-		storageClassName = clabernetesutil.ToPointer(persistence.StorageClassName)
-	}
-
-	pvcSize := resource.MustParse("5Gi")
-
-	if persistence.ClaimSize != "" {
-		userClaimSize, err := resource.ParseQuantity(persistence.ClaimSize)
-		if err != nil {
-			r.log.Warnf(
-				"user provided claim size %q failed parsing, using default value instead",
-				persistence.ClaimSize,
-				err,
-			)
-		} else {
-			pvcSize = userClaimSize
-		}
-	}
-
-	pvc.Spec = k8scorev1.PersistentVolumeClaimSpec{
-		AccessModes: []k8scorev1.PersistentVolumeAccessMode{
-			k8scorev1.ReadWriteOnce,
-		},
-		Resources: k8scorev1.VolumeResourceRequirements{
-			Requests: k8scorev1.ResourceList{
-				"storage": pvcSize,
-			},
-		},
-		StorageClassName: storageClassName,
-		VolumeMode:       clabernetesutil.ToPointer(k8scorev1.PersistentVolumeFilesystem),
-	}
-
-	if existingPVC != nil {
-		// VolumeName is immutable, if this pvc already exists, ensure we copy the volume name!
-		pvc.Spec.VolumeName = existingPVC.Spec.VolumeName
-	}
-}
-
 // Render accepts the owning topology a mapping of clabernetes sub-topology configs and a node name
 // and renders the pvc for this node. Note that *Render* (but not RenderAll) accepts an existing
 // pvc as well - we do this because the VolumeName field is immutable, so we *must* use the name of
@@ -275,4 +184,95 @@ func (r *PersistentVolumeClaimReconciler) Conforms(
 	// note: spec is immutable after creation so not bothering checking that
 
 	return true
+}
+
+func (r *PersistentVolumeClaimReconciler) renderPVCBase(
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	name,
+	nodeName string,
+) *k8scorev1.PersistentVolumeClaim {
+	owningTopologyName := owningTopology.GetName()
+
+	annotations, globalLabels := r.configManagerGetter().GetAllMetadata()
+
+	deploymentName := fmt.Sprintf("%s-%s", owningTopologyName, nodeName)
+
+	if ResolveTopologyRemovePrefix(owningTopology) {
+		deploymentName = nodeName
+	}
+
+	selectorLabels := map[string]string{
+		clabernetesconstants.LabelApp:           clabernetesconstants.Clabernetes,
+		clabernetesconstants.LabelName:          deploymentName,
+		clabernetesconstants.LabelTopologyOwner: owningTopologyName,
+		clabernetesconstants.LabelTopologyNode:  nodeName,
+	}
+
+	labels := map[string]string{
+		clabernetesconstants.LabelTopologyKind: GetTopologyKind(owningTopology),
+	}
+
+	for k, v := range selectorLabels {
+		labels[k] = v
+	}
+
+	for k, v := range globalLabels {
+		labels[k] = v
+	}
+
+	return &k8scorev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        name,
+			Namespace:   owningTopology.GetNamespace(),
+			Annotations: annotations,
+			Labels:      labels,
+		},
+	}
+}
+
+func (r *PersistentVolumeClaimReconciler) renderPVCSpec(
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	pvc *k8scorev1.PersistentVolumeClaim,
+	existingPVC *k8scorev1.PersistentVolumeClaim,
+) {
+	persistence := owningTopology.Spec.Deployment.Persistence
+
+	var storageClassName *string
+
+	if persistence.StorageClassName != "" {
+		storageClassName = clabernetesutil.ToPointer(persistence.StorageClassName)
+	}
+
+	pvcSize := resource.MustParse("5Gi")
+
+	if persistence.ClaimSize != "" {
+		userClaimSize, err := resource.ParseQuantity(persistence.ClaimSize)
+		if err != nil {
+			r.log.Warnf(
+				"user provided claim size %q failed parsing, using default value instead",
+				persistence.ClaimSize,
+				err,
+			)
+		} else {
+			pvcSize = userClaimSize
+		}
+	}
+
+	pvc.Spec = k8scorev1.PersistentVolumeClaimSpec{
+		AccessModes: []k8scorev1.PersistentVolumeAccessMode{
+			k8scorev1.ReadWriteOnce,
+		},
+		Resources: k8scorev1.VolumeResourceRequirements{
+			Requests: k8scorev1.ResourceList{
+				"storage": pvcSize,
+			},
+		},
+		StorageClassName: storageClassName,
+		VolumeMode:       clabernetesutil.ToPointer(k8scorev1.PersistentVolumeFilesystem),
+	}
+
+	if existingPVC != nil {
+		// VolumeName is immutable, if this pvc already exists, ensure we copy the volume name!
+		pvc.Spec.VolumeName = existingPVC.Spec.VolumeName
+	}
 }

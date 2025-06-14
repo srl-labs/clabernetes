@@ -45,39 +45,6 @@ func (i *instance) GetLevel() string {
 	return i.level
 }
 
-func (i *instance) enqueue(m string) {
-	i.c <- m
-}
-
-func (i *instance) shouldLog(l string) bool {
-	switch i.level {
-	case clabernetesconstants.Disabled:
-		return false
-	case clabernetesconstants.Debug:
-		return true
-	case clabernetesconstants.Info:
-		switch l {
-		case clabernetesconstants.Info, clabernetesconstants.Warn, clabernetesconstants.Critical:
-			return true
-		default:
-			return false
-		}
-	case clabernetesconstants.Warn:
-		switch l {
-		case clabernetesconstants.Warn, clabernetesconstants.Critical:
-			return true
-		default:
-			return false
-		}
-	case clabernetesconstants.Critical:
-		if l == clabernetesconstants.Critical {
-			return true
-		}
-	}
-
-	return false
-}
-
 // Debug accepts a Debug level log message with no formatting.
 func (i *instance) Debug(f string) {
 	i.lock.Lock()
@@ -218,4 +185,37 @@ func (i *instance) Write(p []byte) (n int, err error) {
 	i.enqueue(i.formatter(i, clabernetesconstants.Info, string(p)))
 
 	return len(p), nil
+}
+
+func (i *instance) enqueue(m string) {
+	i.c <- m
+}
+
+func (i *instance) shouldLog(l string) bool {
+	switch i.level {
+	case clabernetesconstants.Disabled:
+		return false
+	case clabernetesconstants.Debug:
+		return true
+	case clabernetesconstants.Info:
+		switch l {
+		case clabernetesconstants.Info, clabernetesconstants.Warn, clabernetesconstants.Critical:
+			return true
+		default:
+			return false
+		}
+	case clabernetesconstants.Warn:
+		switch l {
+		case clabernetesconstants.Warn, clabernetesconstants.Critical:
+			return true
+		default:
+			return false
+		}
+	case clabernetesconstants.Critical:
+		if l == clabernetesconstants.Critical {
+			return true
+		}
+	}
+
+	return false
 }

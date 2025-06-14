@@ -104,69 +104,6 @@ func (r *RoleBindingReconciler) Reconcile(
 	return nil
 }
 
-func (r *RoleBindingReconciler) reconcileGetAndCreateIfNotExist( //nolint:dupl
-	ctx context.Context,
-	owningTopology *clabernetesapisv1alpha1.Topology,
-) (*k8srbacv1.RoleBinding, error) {
-	namespace := owningTopology.Namespace
-
-	existingRoleBinding := &k8srbacv1.RoleBinding{}
-
-	err := r.client.Get(
-		ctx,
-		apimachinerytypes.NamespacedName{
-			Namespace: namespace,
-			Name:      launcherRoleBindingName(),
-		},
-		existingRoleBinding,
-	)
-	if err == nil {
-		return existingRoleBinding, nil
-	}
-
-	if apimachineryerrors.IsNotFound(err) {
-		r.log.Infof("no launcher role binding found in namespace %q, creating...", namespace)
-
-		renderedRoleBinding := r.Render(owningTopology, nil)
-
-		err = ctrlruntimeutil.SetOwnerReference(
-			owningTopology,
-			renderedRoleBinding,
-			r.client.Scheme(),
-		)
-		if err != nil {
-			r.log.Criticalf(
-				"failed rendering role binding for namespace %q, error: %s",
-				namespace,
-				err,
-			)
-
-			return existingRoleBinding, err
-		}
-
-		err = r.client.Create(ctx, renderedRoleBinding)
-		if err != nil {
-			r.log.Criticalf(
-				"failed creating role binding in namespace %q, error: %s",
-				namespace,
-				err,
-			)
-
-			return existingRoleBinding, err
-		}
-
-		return existingRoleBinding, nil
-	}
-
-	r.log.Debugf(
-		"failed getting role binding in namespace %q, error: %s",
-		namespace,
-		err,
-	)
-
-	return existingRoleBinding, err
-}
-
 // Render renders the role binding for the given namespace. Exported for easy testing.
 func (r *RoleBindingReconciler) Render(
 	owningTopology *clabernetesapisv1alpha1.Topology,
@@ -257,4 +194,67 @@ func (r *RoleBindingReconciler) Conforms(
 	}
 
 	return ourOwnerRefExists
+}
+
+func (r *RoleBindingReconciler) reconcileGetAndCreateIfNotExist( //nolint:dupl
+	ctx context.Context,
+	owningTopology *clabernetesapisv1alpha1.Topology,
+) (*k8srbacv1.RoleBinding, error) {
+	namespace := owningTopology.Namespace
+
+	existingRoleBinding := &k8srbacv1.RoleBinding{}
+
+	err := r.client.Get(
+		ctx,
+		apimachinerytypes.NamespacedName{
+			Namespace: namespace,
+			Name:      launcherRoleBindingName(),
+		},
+		existingRoleBinding,
+	)
+	if err == nil {
+		return existingRoleBinding, nil
+	}
+
+	if apimachineryerrors.IsNotFound(err) {
+		r.log.Infof("no launcher role binding found in namespace %q, creating...", namespace)
+
+		renderedRoleBinding := r.Render(owningTopology, nil)
+
+		err = ctrlruntimeutil.SetOwnerReference(
+			owningTopology,
+			renderedRoleBinding,
+			r.client.Scheme(),
+		)
+		if err != nil {
+			r.log.Criticalf(
+				"failed rendering role binding for namespace %q, error: %s",
+				namespace,
+				err,
+			)
+
+			return existingRoleBinding, err
+		}
+
+		err = r.client.Create(ctx, renderedRoleBinding)
+		if err != nil {
+			r.log.Criticalf(
+				"failed creating role binding in namespace %q, error: %s",
+				namespace,
+				err,
+			)
+
+			return existingRoleBinding, err
+		}
+
+		return existingRoleBinding, nil
+	}
+
+	r.log.Debugf(
+		"failed getting role binding in namespace %q, error: %s",
+		namespace,
+		err,
+	)
+
+	return existingRoleBinding, err
 }

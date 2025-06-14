@@ -79,51 +79,6 @@ type manager struct {
 	loggers         []func(...interface{})
 }
 
-func (m *manager) start(i *instance) {
-	for {
-		select {
-		case <-i.done:
-			// closing down, stop the goroutine
-			return
-		case logMsg := <-i.c:
-			for _, f := range m.loggers {
-				lf := f
-
-				lf(logMsg)
-			}
-		}
-	}
-}
-
-func (m *manager) flush(i *instance, wg *sync.WaitGroup) {
-	var retryCount int
-
-	for {
-		select {
-		case logMsg := <-i.c:
-			retryCount = 0
-
-			for _, f := range m.loggers {
-				lf := f
-
-				lf(logMsg)
-			}
-		default:
-			if retryCount >= flushWaitAttempts {
-				wg.Done()
-
-				return
-			}
-
-			// the log messages may need a tiny bit more time to get slurped up in the channel for
-			// each individual instance, so we sleep and count retries to delay things a tick
-			time.Sleep(flushWaitSleep)
-
-			retryCount++
-		}
-	}
-}
-
 func (m *manager) SetLoggerFormatterAllInstances(formatter Formatter) {
 	for _, i := range m.instances {
 		i.formatter = formatter
@@ -236,4 +191,49 @@ func (m *manager) Flush() {
 	}
 
 	wg.Wait()
+}
+
+func (m *manager) start(i *instance) {
+	for {
+		select {
+		case <-i.done:
+			// closing down, stop the goroutine
+			return
+		case logMsg := <-i.c:
+			for _, f := range m.loggers {
+				lf := f
+
+				lf(logMsg)
+			}
+		}
+	}
+}
+
+func (m *manager) flush(i *instance, wg *sync.WaitGroup) {
+	var retryCount int
+
+	for {
+		select {
+		case logMsg := <-i.c:
+			retryCount = 0
+
+			for _, f := range m.loggers {
+				lf := f
+
+				lf(logMsg)
+			}
+		default:
+			if retryCount >= flushWaitAttempts {
+				wg.Done()
+
+				return
+			}
+
+			// the log messages may need a tiny bit more time to get slurped up in the channel for
+			// each individual instance, so we sleep and count retries to delay things a tick
+			time.Sleep(flushWaitSleep)
+
+			retryCount++
+		}
+	}
 }

@@ -107,6 +107,231 @@ func (r *DeploymentReconciler) Resolve(
 	return deployments, nil
 }
 
+// Render accepts the owning topology a mapping of clabernetes sub-topology configs and a node name
+// and renders the final deployment for this node.
+func (r *DeploymentReconciler) Render(
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
+	nodeName string,
+) *k8sappsv1.Deployment {
+	owningTopologyName := owningTopology.GetName()
+
+	deploymentName := fmt.Sprintf("%s-%s", owningTopologyName, nodeName)
+
+	if ResolveTopologyRemovePrefix(owningTopology) {
+		deploymentName = nodeName
+	}
+
+	configVolumeName := fmt.Sprintf("%s-config", owningTopologyName)
+
+	deployment := r.renderDeploymentBase(
+		deploymentName,
+		owningTopology.GetNamespace(),
+		owningTopologyName,
+		nodeName,
+	)
+
+	r.renderDeploymentScheduling(
+		deployment,
+		owningTopology,
+	)
+
+	volumeMountsFromCommonSpec := r.renderDeploymentVolumes(
+		deployment,
+		nodeName,
+		configVolumeName,
+		owningTopologyName,
+		owningTopology,
+	)
+
+	r.renderDeploymentContainer(
+		deployment,
+		nodeName,
+		configVolumeName,
+		volumeMountsFromCommonSpec,
+		owningTopology,
+	)
+
+	r.renderDeploymentContainerEnv(
+		deployment,
+		nodeName,
+		owningTopologyName,
+		owningTopology,
+		clabernetesConfigs,
+	)
+
+	r.renderDeploymentContainerResources(
+		deployment,
+		nodeName,
+		owningTopology,
+		clabernetesConfigs,
+	)
+
+	r.renderDeploymentContainerPrivileges(
+		deployment,
+		nodeName,
+		owningTopology,
+	)
+
+	r.renderDeploymentContainerStatus(
+		deployment,
+		nodeName,
+		owningTopology,
+	)
+
+	r.renderDeploymentDevices(
+		deployment,
+		owningTopology,
+	)
+
+	r.renderDeploymentPersistence(
+		deployment,
+		nodeName,
+		owningTopologyName,
+		owningTopology,
+	)
+
+	return deployment
+}
+
+// RenderAll accepts the owning topology a mapping of clabernetes sub-topology configs and a
+// list of node names and renders the final deployments for the given nodes.
+func (r *DeploymentReconciler) RenderAll(
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
+	nodeNames []string,
+) []*k8sappsv1.Deployment {
+	deployments := make([]*k8sappsv1.Deployment, len(nodeNames))
+
+	for idx, nodeName := range nodeNames {
+		deployments[idx] = r.Render(
+			owningTopology,
+			clabernetesConfigs,
+			nodeName,
+		)
+	}
+
+	return deployments
+}
+
+// Conforms checks if the existingDeployment conforms with the renderedDeployment.
+func (r *DeploymentReconciler) Conforms( //nolint: gocyclo
+	existingDeployment,
+	renderedDeployment *k8sappsv1.Deployment,
+	expectedOwnerUID apimachinerytypes.UID,
+) bool {
+	if !reflect.DeepEqual(existingDeployment.Spec.Replicas, renderedDeployment.Spec.Replicas) {
+		return false
+	}
+
+	if !reflect.DeepEqual(existingDeployment.Spec.Selector, renderedDeployment.Spec.Selector) {
+		return false
+	}
+
+	if renderedDeployment.Spec.Template.Spec.Hostname !=
+		existingDeployment.Spec.Template.Spec.Hostname {
+		return false
+	}
+
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
+		existingDeployment.Spec.Template.Spec.NodeSelector,
+		renderedDeployment.Spec.Template.Spec.NodeSelector,
+	) {
+		return false
+	}
+
+	if !reflect.DeepEqual(
+		existingDeployment.Spec.Template.Spec.Tolerations,
+		renderedDeployment.Spec.Template.Spec.Tolerations,
+	) {
+		return false
+	}
+
+	if !reflect.DeepEqual(
+		existingDeployment.Spec.Template.Spec.Volumes,
+		renderedDeployment.Spec.Template.Spec.Volumes,
+	) {
+		return false
+	}
+
+	if !clabernetesutilkubernetes.ContainersEqual(
+		existingDeployment.Spec.Template.Spec.Containers,
+		renderedDeployment.Spec.Template.Spec.Containers,
+	) {
+		return false
+	}
+
+	if !reflect.DeepEqual(
+		existingDeployment.Spec.Template.Spec.ServiceAccountName,
+		renderedDeployment.Spec.Template.Spec.ServiceAccountName,
+	) {
+		return false
+	}
+
+	if !reflect.DeepEqual(
+		existingDeployment.Spec.Template.Spec.RestartPolicy,
+		renderedDeployment.Spec.Template.Spec.RestartPolicy,
+	) {
+		return false
+	}
+
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
+		existingDeployment.ObjectMeta.Annotations,
+		renderedDeployment.ObjectMeta.Annotations,
+	) {
+		return false
+	}
+
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
+		existingDeployment.ObjectMeta.Labels,
+		renderedDeployment.ObjectMeta.Labels,
+	) {
+		return false
+	}
+
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
+		existingDeployment.Spec.Template.ObjectMeta.Annotations,
+		renderedDeployment.Spec.Template.ObjectMeta.Annotations,
+	) {
+		return false
+	}
+
+	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
+		existingDeployment.Spec.Template.ObjectMeta.Labels,
+		renderedDeployment.Spec.Template.ObjectMeta.Labels,
+	) {
+		return false
+	}
+
+	if len(existingDeployment.ObjectMeta.OwnerReferences) != 1 {
+		// we should have only one owner reference, the owning topology
+		return false
+	}
+
+	if existingDeployment.ObjectMeta.OwnerReferences[0].UID != expectedOwnerUID {
+		// owner ref uid is not us
+		return false
+	}
+
+	return true
+}
+
+// DetermineNodesNeedingRestart accepts reconcile data (which contains the previous and current
+// rendered sub-topologies) and updates the reconcile data NodesNeedingReboot set with each node
+// that needs restarting due to configuration changes.
+func (r *DeploymentReconciler) DetermineNodesNeedingRestart(
+	reconcileData *ReconcileData,
+) {
+	for nodeName := range reconcileData.ResolvedConfigs {
+		_, nodeExistedBefore := reconcileData.PreviousConfigs[nodeName]
+		if !nodeExistedBefore {
+			continue
+		}
+
+		determineNodeNeedsRestart(reconcileData, nodeName)
+	}
+}
+
 func (r *DeploymentReconciler) renderDeploymentBase(
 	name,
 	namespace,
@@ -991,231 +1216,6 @@ func (r *DeploymentReconciler) renderDeploymentPersistence(
 			MountPath: fmt.Sprintf("/clabernetes/clab-clabernetes-%s", nodeName),
 		},
 	)
-}
-
-// Render accepts the owning topology a mapping of clabernetes sub-topology configs and a node name
-// and renders the final deployment for this node.
-func (r *DeploymentReconciler) Render(
-	owningTopology *clabernetesapisv1alpha1.Topology,
-	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
-	nodeName string,
-) *k8sappsv1.Deployment {
-	owningTopologyName := owningTopology.GetName()
-
-	deploymentName := fmt.Sprintf("%s-%s", owningTopologyName, nodeName)
-
-	if ResolveTopologyRemovePrefix(owningTopology) {
-		deploymentName = nodeName
-	}
-
-	configVolumeName := fmt.Sprintf("%s-config", owningTopologyName)
-
-	deployment := r.renderDeploymentBase(
-		deploymentName,
-		owningTopology.GetNamespace(),
-		owningTopologyName,
-		nodeName,
-	)
-
-	r.renderDeploymentScheduling(
-		deployment,
-		owningTopology,
-	)
-
-	volumeMountsFromCommonSpec := r.renderDeploymentVolumes(
-		deployment,
-		nodeName,
-		configVolumeName,
-		owningTopologyName,
-		owningTopology,
-	)
-
-	r.renderDeploymentContainer(
-		deployment,
-		nodeName,
-		configVolumeName,
-		volumeMountsFromCommonSpec,
-		owningTopology,
-	)
-
-	r.renderDeploymentContainerEnv(
-		deployment,
-		nodeName,
-		owningTopologyName,
-		owningTopology,
-		clabernetesConfigs,
-	)
-
-	r.renderDeploymentContainerResources(
-		deployment,
-		nodeName,
-		owningTopology,
-		clabernetesConfigs,
-	)
-
-	r.renderDeploymentContainerPrivileges(
-		deployment,
-		nodeName,
-		owningTopology,
-	)
-
-	r.renderDeploymentContainerStatus(
-		deployment,
-		nodeName,
-		owningTopology,
-	)
-
-	r.renderDeploymentDevices(
-		deployment,
-		owningTopology,
-	)
-
-	r.renderDeploymentPersistence(
-		deployment,
-		nodeName,
-		owningTopologyName,
-		owningTopology,
-	)
-
-	return deployment
-}
-
-// RenderAll accepts the owning topology a mapping of clabernetes sub-topology configs and a
-// list of node names and renders the final deployments for the given nodes.
-func (r *DeploymentReconciler) RenderAll(
-	owningTopology *clabernetesapisv1alpha1.Topology,
-	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
-	nodeNames []string,
-) []*k8sappsv1.Deployment {
-	deployments := make([]*k8sappsv1.Deployment, len(nodeNames))
-
-	for idx, nodeName := range nodeNames {
-		deployments[idx] = r.Render(
-			owningTopology,
-			clabernetesConfigs,
-			nodeName,
-		)
-	}
-
-	return deployments
-}
-
-// Conforms checks if the existingDeployment conforms with the renderedDeployment.
-func (r *DeploymentReconciler) Conforms( //nolint: gocyclo
-	existingDeployment,
-	renderedDeployment *k8sappsv1.Deployment,
-	expectedOwnerUID apimachinerytypes.UID,
-) bool {
-	if !reflect.DeepEqual(existingDeployment.Spec.Replicas, renderedDeployment.Spec.Replicas) {
-		return false
-	}
-
-	if !reflect.DeepEqual(existingDeployment.Spec.Selector, renderedDeployment.Spec.Selector) {
-		return false
-	}
-
-	if renderedDeployment.Spec.Template.Spec.Hostname !=
-		existingDeployment.Spec.Template.Spec.Hostname {
-		return false
-	}
-
-	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
-		existingDeployment.Spec.Template.Spec.NodeSelector,
-		renderedDeployment.Spec.Template.Spec.NodeSelector,
-	) {
-		return false
-	}
-
-	if !reflect.DeepEqual(
-		existingDeployment.Spec.Template.Spec.Tolerations,
-		renderedDeployment.Spec.Template.Spec.Tolerations,
-	) {
-		return false
-	}
-
-	if !reflect.DeepEqual(
-		existingDeployment.Spec.Template.Spec.Volumes,
-		renderedDeployment.Spec.Template.Spec.Volumes,
-	) {
-		return false
-	}
-
-	if !clabernetesutilkubernetes.ContainersEqual(
-		existingDeployment.Spec.Template.Spec.Containers,
-		renderedDeployment.Spec.Template.Spec.Containers,
-	) {
-		return false
-	}
-
-	if !reflect.DeepEqual(
-		existingDeployment.Spec.Template.Spec.ServiceAccountName,
-		renderedDeployment.Spec.Template.Spec.ServiceAccountName,
-	) {
-		return false
-	}
-
-	if !reflect.DeepEqual(
-		existingDeployment.Spec.Template.Spec.RestartPolicy,
-		renderedDeployment.Spec.Template.Spec.RestartPolicy,
-	) {
-		return false
-	}
-
-	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
-		existingDeployment.ObjectMeta.Annotations,
-		renderedDeployment.ObjectMeta.Annotations,
-	) {
-		return false
-	}
-
-	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
-		existingDeployment.ObjectMeta.Labels,
-		renderedDeployment.ObjectMeta.Labels,
-	) {
-		return false
-	}
-
-	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
-		existingDeployment.Spec.Template.ObjectMeta.Annotations,
-		renderedDeployment.Spec.Template.ObjectMeta.Annotations,
-	) {
-		return false
-	}
-
-	if !clabernetesutilkubernetes.ExistingMapStringStringContainsAllExpectedKeyValues(
-		existingDeployment.Spec.Template.ObjectMeta.Labels,
-		renderedDeployment.Spec.Template.ObjectMeta.Labels,
-	) {
-		return false
-	}
-
-	if len(existingDeployment.ObjectMeta.OwnerReferences) != 1 {
-		// we should have only one owner reference, the owning topology
-		return false
-	}
-
-	if existingDeployment.ObjectMeta.OwnerReferences[0].UID != expectedOwnerUID {
-		// owner ref uid is not us
-		return false
-	}
-
-	return true
-}
-
-// DetermineNodesNeedingRestart accepts reconcile data (which contains the previous and current
-// rendered sub-topologies) and updates the reconcile data NodesNeedingReboot set with each node
-// that needs restarting due to configuration changes.
-func (r *DeploymentReconciler) DetermineNodesNeedingRestart(
-	reconcileData *ReconcileData,
-) {
-	for nodeName := range reconcileData.ResolvedConfigs {
-		_, nodeExistedBefore := reconcileData.PreviousConfigs[nodeName]
-		if !nodeExistedBefore {
-			continue
-		}
-
-		determineNodeNeedsRestart(reconcileData, nodeName)
-	}
 }
 
 func determineNodeNeedsRestart(
