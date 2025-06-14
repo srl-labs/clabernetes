@@ -1,11 +1,11 @@
 package image
 
 import (
-    "os"
-    "time"
-    "fmt"
-    "os/exec"
-    "strings"
+	"fmt"
+	"os"
+	"os/exec"
+	"strings"
+	"time"
 
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 )
@@ -41,21 +41,21 @@ func (m *containerdManager) Present(imageName string) (bool, error) {
 }
 
 func (m *containerdManager) Export(imageName, destination string) error {
-    // Get the part after the last /
-    safeName := imageName
-    if idx := strings.LastIndex(imageName, "/"); idx != -1 {
-        safeName = imageName[idx+1:]
-    }
-    // Replace : with _
-    safeName = strings.ReplaceAll(safeName, ":", "_")
+	// Get the part after the last /
+	safeName := imageName
+	if idx := strings.LastIndex(imageName, "/"); idx != -1 {
+		safeName = imageName[idx+1:]
+	}
+	// Replace : with _
+	safeName = strings.ReplaceAll(safeName, ":", "_")
 	lockPath := destination + safeName + ".lock"
 	tarPath := destination + safeName + ".tar"
 	// Let's measure and log elapsed time
-    start := time.Now()
-    defer func() {
-        elapsed := time.Since(start)
-        m.logger.Infof("Export of image %q took %s", imageName, elapsed)
-    }()
+	start := time.Now()
+	defer func() {
+		elapsed := time.Since(start)
+		m.logger.Infof("Export of image %q took %s", imageName, elapsed)
+	}()
 	// attempt to re-pull the image -- for containerd setups that have `discard_unpacked_layers`
 	// set to true we will not be able to export the image as for whatever reason containerd wants
 	// all layers to be present to export (even if we already ran this image on the node via the
@@ -71,7 +71,7 @@ func (m *containerdManager) Export(imageName, destination string) error {
 		// .tar exists but lock also exists, so possibly incomplete export; skip lock acquisition and proceed to wait logic below
 	} else {
 		// 2. Try to acquire the lock only if .tar does not exist
-		lockFile, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
+		lockFile, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
 		if err == nil {
 			// This pod is the "leader"
 			lockFile.Close()

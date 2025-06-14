@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
-    "strings"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
@@ -339,20 +339,20 @@ func (c *clabernetes) waitForImage(
 }
 
 func (c *clabernetes) imageImport(imageName, destination string) error {
-    safeName := imageName
-    if idx := strings.LastIndex(imageName, "/"); idx != -1 {
-        safeName = imageName[idx+1:]
-    }
-    // Replace : with _
-    safeName = strings.ReplaceAll(safeName, ":", "_")
+	safeName := imageName
+	if idx := strings.LastIndex(imageName, "/"); idx != -1 {
+		safeName = imageName[idx+1:]
+	}
+	// Replace : with _
+	safeName = strings.ReplaceAll(safeName, ":", "_")
 	lockPath := destination + safeName + ".lock"
 	tarPath := destination + safeName + ".tar"
-    // Let's measure and log elapsed time
-    start := time.Now()
-    defer func() {
-        elapsed := time.Since(start)
-        c.logger.Infof("Import of image %q took %s", imageName, elapsed)
-    }()
+	// Let's measure and log elapsed time
+	start := time.Now()
+	defer func() {
+		elapsed := time.Since(start)
+		c.logger.Infof("Import of image %q took %s", imageName, elapsed)
+	}()
 	// Wait 3 sec until the export lock file is gone (export finished) just in case
 	for {
 		if _, err := os.Stat(lockPath); os.IsNotExist(err) {
@@ -361,7 +361,7 @@ func (c *clabernetes) imageImport(imageName, destination string) error {
 		time.Sleep(3 * time.Second)
 	}
 
-    c.logger.Infof("Lock file is gone for %q, starting Docker import..", c.imageName)
+	c.logger.Infof("Lock file is gone for %q, starting Docker import..", c.imageName)
 	importCmd := exec.Command(
 		"docker",
 		"image",
@@ -376,7 +376,7 @@ func (c *clabernetes) imageImport(imageName, destination string) error {
 	if err := importCmd.Run(); err != nil {
 		return err
 	}
-    c.logger.Infof("Docker import %q completed!", c.imageName)
+	c.logger.Infof("Docker import %q completed!", c.imageName)
 	return nil
 }
 
