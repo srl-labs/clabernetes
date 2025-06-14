@@ -12,7 +12,7 @@ help:
 fmt: ## Run formatters
 	gofumpt -w .
 	gci write --skip-generated .
-	golines -w .
+	golines --base-formatter="gofmt" -w .
 
 lint: fmt ## Run linters
 	golangci-lint run
