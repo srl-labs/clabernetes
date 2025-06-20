@@ -111,6 +111,8 @@ type Expose struct {
 	// +kubebuilder:default=LoadBalancer
 	// +optional
 	ExposeType string `json:"exposeType,omitempty"`
+	// ExposeUseNodeMgmtIpAddress Notes
+	ExposeUseNodeMgmtIpAddress bool `json:"exposeUseNodeMgmtIpAddress,omitempty"`
 }
 
 // Deployment holds configurations relevant to how clabernetes configures deployments that make

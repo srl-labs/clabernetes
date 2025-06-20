@@ -184,6 +184,8 @@ func TestRenderServiceExpose(t *testing.T) {
 		owningTopologyStatus *clabernetesapisv1alpha1.TopologyStatus
 		clabernetesConfigs   map[string]*clabernetesutilcontainerlab.Config
 		nodeName             string
+		// NEW: expected LoadBalancerIP when mgmt-ipv4 feature is used
+        wantLoadBalancerIP   string
 	}{
 		{
 			name: "simple",
@@ -378,6 +380,55 @@ func TestRenderServiceExpose(t *testing.T) {
 			},
 			nodeName: "srl1",
 		},
+		// NEW: Test case for mgmt-ipv4 -> LoadBalancerIP
+        {
+            name: "use-mgmt-ipv4",
+            owningTopology: &clabernetesapisv1alpha1.Topology{
+                ObjectMeta: metav1.ObjectMeta{
+                    Name:      "render-service-expose-test",
+                    Namespace: "clabernetes",
+                },
+                Spec: clabernetesapisv1alpha1.TopologySpec{
+                    Expose: clabernetesapisv1alpha1.Expose{
+                        ExposeUseNodeMgmtIpAddress: true,
+                        ExposeType:                 string(k8scorev1.ServiceTypeLoadBalancer),
+                    },
+                    Definition: clabernetesapisv1alpha1.Definition{
+                        Containerlab: `---
+    name: test
+    topology:
+      nodes:
+        node1:
+          kind: srl
+          image: ghcr.io/nokia/srlinux
+		  mgmt-ipv4: 10.1.2.3
+`,
+                    },
+                },
+            },
+            owningTopologyStatus: &clabernetesapisv1alpha1.TopologyStatus{
+                ExposedPorts: map[string]*clabernetesapisv1alpha1.ExposedPorts{},
+            },
+            clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
+                "node1": {
+                    Name:   "node1",
+                    Prefix: clabernetesutil.ToPointer(""),
+                    Topology: &clabernetesutilcontainerlab.Topology{
+                        Defaults: &clabernetesutilcontainerlab.NodeDefinition{Ports: []string{}},
+                        Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
+                            "node1": {
+                                Kind:     "srl",
+                                Image:    "ghcr.io/nokia/srlinux",
+                                MgmtIPv4: "10.1.2.3",
+                            },
+                        },
+                    },
+                    Debug: false,
+                },
+            },
+            nodeName:           "node1",
+            wantLoadBalancerIP: "10.1.2.3",
+        },
 	}
 
 	for _, testCase := range cases {
@@ -463,6 +514,13 @@ func TestRenderServiceExpose(t *testing.T) {
 				}
 
 				clabernetestesthelper.MarshaledEqual(t, got, want)
+
+				// NEW: if we expected a LoadBalancerIP, assert it
+				if testCase.wantLoadBalancerIP != "" {
+					if got.Spec.LoadBalancerIP != testCase.wantLoadBalancerIP {
+						t.Errorf("LoadBalancerIP = %q; want %q", got.Spec.LoadBalancerIP, testCase.wantLoadBalancerIP)
+					}
+				}
 			})
 	}
 }

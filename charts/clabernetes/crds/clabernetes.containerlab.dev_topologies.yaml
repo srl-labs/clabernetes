@@ -535,6 +535,11 @@ spec:
                     - ClusterIP
                     - LoadBalancer
                     type: string
+                  exposeUseNodeMgmtIpAddress:
+                    description: |-
+                      If true, set Service.spec.loadBalancerIP to the nodes mgmt-ipv4
+                    type: boolean
+                    default: false
                 type: object
               imagePull:
                 description: |-

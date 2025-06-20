@@ -150,6 +150,26 @@ func (r *ServiceExposeReconciler) Render(
 		nodeName,
 	)
 
+	 // If configured, pull mgmt-ipv4 from the topology and assign as LoadBalancerIP.
+   	if owningTopology.Spec.Expose.ExposeUseNodeMgmtIpAddress &&
+		service.Spec.Type == k8scorev1.ServiceTypeLoadBalancer {
+
+		if cfg, ok := reconcileData.ResolvedConfigs[nodeName]; ok {
+            raw := cfg.Topology.Nodes[nodeName].MgmtIPv4
+            if raw != "" {
+                mgmt, err := clabernetesutilcontainerlab.ProcessMgmtIPv4Definition(raw)
+                if err != nil {
+                    r.log.Warnf(
+                        "failed to parse mgmt-ipv4 %q for node %q: %s",
+                        raw, nodeName, err,
+                    )
+                } else {
+                    service.Spec.LoadBalancerIP = mgmt.IP.String()
+                }
+            }
+        }
+	}
+
 	r.renderServicePorts(
 		reconcileData,
 		service,
