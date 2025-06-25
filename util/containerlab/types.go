@@ -230,7 +230,7 @@ type LinkConfig struct {
 // HealthcheckConfig represents healthcheck options a node has.
 type HealthcheckConfig struct {
 	// Test: the command to run to check the health of the container
-	Test []string `yaml:"test,omitempty"`
+	Test []string `yaml:"test"`
 	// StartPeriod: the time in seconds to wait for the container to bootstrap before running the first health check
 	StartPeriod int `yaml:"start-period,omitempty"`
 	// Retries: the number of consecutive healthcheck failures needed to report the container as unhealthy.
