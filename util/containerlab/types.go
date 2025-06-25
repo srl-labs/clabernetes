@@ -174,6 +174,8 @@ type NodeDefinition struct {
 	DNS *DNSConfig `yaml:"dns,omitempty"`
 	// Certificate Configuration
 	Certificate *CertificateConfig `yaml:"certificate,omitempty"`
+	// Healthcheck configuration
+	Healthcheck *HealthcheckConfig `yaml:"healthcheck,omitempty"`
 }
 
 // ConfigDispatcher represents the config of a configuration machine
@@ -223,4 +225,18 @@ type LinkConfig struct {
 	Labels    map[string]string      `yaml:"labels,omitempty"`
 	Vars      map[string]interface{} `yaml:"vars,omitempty"`
 	MTU       int                    `yaml:"mtu,omitempty"`
+}
+
+// HealthcheckConfig represents healthcheck options a node has.
+type HealthcheckConfig struct {
+	// Test: the command to run to check the health of the container
+	Test []string `yaml:"test,omitempty"`
+	// StartPeriod: the time in seconds to wait for the container to bootstrap before running the first health check
+	StartPeriod int `yaml:"start-period,omitempty"`
+	// Retries: the number of consecutive healthcheck failures needed to report the container as unhealthy.
+	Retries int `yaml:"retries,omitempty"`
+	// Interval: the time interval between the health checks in seconds
+	Interval int `yaml:"interval,omitempty"`
+	// Timeout: the time in seconds to wait for a single health check operation to complete.
+	Timeout int `yaml:"timeout,omitempty"`
 }
