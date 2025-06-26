@@ -238,7 +238,17 @@
                         "Extras": null,
                         "WaitFor": null,
                         "DNS": null,
-                        "Certificate": null
+                        "Certificate": null,
+                        "Healthcheck": {
+                            "Test": [
+                                "CMD-SHELL",
+                                "cat /etc/os-release"
+                            ],
+                            "StartPeriod": 3,
+                            "Retries": 1,
+                            "Interval": 5,
+                            "Timeout": 2                        
+                    }
                     }
                 },
                 "Links": [
