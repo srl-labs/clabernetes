@@ -66,7 +66,9 @@ func TestDefinitionProcess(t *testing.T) {
 					"srl2": {
 						Name: "clabernetes-srl2",
 						Topology: &clabernetesutilcontainerlab.Topology{
-							Defaults: &clabernetesutilcontainerlab.NodeDefinition{Ports: []string{}},
+							Defaults: &clabernetesutilcontainerlab.NodeDefinition{
+								Ports: []string{},
+							},
 							Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
 								"srl2": {
 									Ports: []string{},

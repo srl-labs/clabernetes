@@ -4,10 +4,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-
+	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	"gopkg.in/yaml.v3"
-
-	clab "github.com/srl-labs/clabernetes/util/containerlab"
 )
 
 func TestLoadContainerlabConfigFromString(t *testing.T) {
@@ -45,13 +43,13 @@ topology:
         start-period: 3
         retries: 1
         interval: 5
-        timeout: 2		
+        timeout: 2
 `,
 		},
 	}
 
 	for _, testCase := range cases {
-		_, err := clab.LoadContainerlabConfig(testCase.config)
+		_, err := clabernetesutilcontainerlab.LoadContainerlabConfig(testCase.config)
 		if err != nil {
 			t.Errorf("Unable to load containerlab config: %s", err)
 		}
@@ -60,7 +58,7 @@ topology:
 
 func TestLoadContainerlabConfigFromConfigObjects(t *testing.T) {
 	cases := []struct {
-		config *clab.Config
+		config *clabernetesutilcontainerlab.Config
 	}{
 		{
 			config: getMinimalValidConfigObject(),
@@ -76,7 +74,7 @@ func TestLoadContainerlabConfigFromConfigObjects(t *testing.T) {
 			t.Fatalf("Marshal error: %v", err)
 		}
 
-		cfg, err := clab.LoadContainerlabConfig(string(marshaled))
+		cfg, err := clabernetesutilcontainerlab.LoadContainerlabConfig(string(marshaled))
 		if err != nil {
 			t.Errorf("Unable to load containerlab config: %s", err)
 		}
@@ -85,19 +83,19 @@ func TestLoadContainerlabConfigFromConfigObjects(t *testing.T) {
 			t.Errorf("Configs not equal (-got +want):\n%s", diff)
 		}
 	}
-
 }
 
-func getMinimalValidConfigObjectWithFullHealthcheck() *clab.Config {
-	config := &clab.Config{Name: "minimalValidConfig"}
-	config.Topology = &clab.Topology{
-		Defaults: &clab.NodeDefinition{Ports: []string{}},
-		Nodes:    make(map[string]*clab.NodeDefinition)}
-	node := &clab.NodeDefinition{
+func getMinimalValidConfigObjectWithFullHealthcheck() *clabernetesutilcontainerlab.Config {
+	config := &clabernetesutilcontainerlab.Config{Name: "minimalValidConfig"}
+	config.Topology = &clabernetesutilcontainerlab.Topology{
+		Defaults: &clabernetesutilcontainerlab.NodeDefinition{Ports: []string{}},
+		Nodes:    make(map[string]*clabernetesutilcontainerlab.NodeDefinition),
+	}
+	node := &clabernetesutilcontainerlab.NodeDefinition{
 		Ports: []string{},
 		Kind:  "srl",
 		Image: "ghcr.io/nokia/srlinux",
-		Healthcheck: &clab.HealthcheckConfig{
+		Healthcheck: &clabernetesutilcontainerlab.HealthcheckConfig{
 			Test:        []string{"CMD-SHELL", "cat /etc/os-release"},
 			StartPeriod: 5,
 			Retries:     2,
@@ -106,22 +104,25 @@ func getMinimalValidConfigObjectWithFullHealthcheck() *clab.Config {
 		},
 	}
 	config.Topology.Nodes["srl1"] = node
+
 	return config
 }
 
-func getMinimalValidConfigObject() *clab.Config {
-	config := &clab.Config{Name: "minimalValidConfigWithFullHealthCheck"}
-	config.Topology = &clab.Topology{
-		Defaults: &clab.NodeDefinition{Ports: []string{}},
-		Nodes:    make(map[string]*clab.NodeDefinition)}
-	node := &clab.NodeDefinition{
+func getMinimalValidConfigObject() *clabernetesutilcontainerlab.Config {
+	config := &clabernetesutilcontainerlab.Config{Name: "minimalValidConfigWithFullHealthCheck"}
+	config.Topology = &clabernetesutilcontainerlab.Topology{
+		Defaults: &clabernetesutilcontainerlab.NodeDefinition{Ports: []string{}},
+		Nodes:    make(map[string]*clabernetesutilcontainerlab.NodeDefinition),
+	}
+	node := &clabernetesutilcontainerlab.NodeDefinition{
 		Ports: []string{},
 		Kind:  "srl",
 		Image: "ghcr.io/nokia/srlinux",
-		Healthcheck: &clab.HealthcheckConfig{
+		Healthcheck: &clabernetesutilcontainerlab.HealthcheckConfig{
 			Test: []string{"CMD-SHELL", "cat /etc/os-release"},
 		},
 	}
 	config.Topology.Nodes["srl1"] = node
+
 	return config
 }
