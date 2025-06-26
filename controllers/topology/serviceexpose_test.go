@@ -378,21 +378,21 @@ func TestRenderServiceExpose(t *testing.T) {
 			},
 			nodeName: "srl1",
 		},
-        {
-            name: "use-mgmt-ip-as-loadbalancer-ip-both-ipv4-and-ipv6",
-            owningTopology: &clabernetesapisv1alpha1.Topology{
-                ObjectMeta: metav1.ObjectMeta{
-                    Name:      "render-service-expose-test",
-                    Namespace: "clabernetes",
-                },
-                Spec: clabernetesapisv1alpha1.TopologySpec{
-                    Expose: clabernetesapisv1alpha1.Expose{
-                        ExposeUseNodeMgmtIpv4Address: true,
+		{
+			name: "use-mgmt-ip-as-loadbalancer-ip-both-ipv4-and-ipv6",
+			owningTopology: &clabernetesapisv1alpha1.Topology{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "render-service-expose-test",
+					Namespace: "clabernetes",
+				},
+				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Expose: clabernetesapisv1alpha1.Expose{
+						ExposeUseNodeMgmtIpv4Address: true,
 						ExposeUseNodeMgmtIpv6Address: true,
-                        ExposeType:                 string(k8scorev1.ServiceTypeLoadBalancer),
-                    },
-                    Definition: clabernetesapisv1alpha1.Definition{
-                        Containerlab: `---
+						ExposeType:                   string(k8scorev1.ServiceTypeLoadBalancer),
+					},
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
     name: test
     topology:
       nodes:
@@ -402,46 +402,46 @@ func TestRenderServiceExpose(t *testing.T) {
 		  mgmt-ipv4: 10.1.2.3
 		  mgmt-ipv6: 2001:db8:85a3::8a2e:370:7334
 `,
-                    },
-                },
-            },
-            owningTopologyStatus: &clabernetesapisv1alpha1.TopologyStatus{
-                ExposedPorts: map[string]*clabernetesapisv1alpha1.ExposedPorts{},
-            },
-            clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
-                "node1": {
-                    Name:   "node1",
-                    Prefix: clabernetesutil.ToPointer(""),
-                    Topology: &clabernetesutilcontainerlab.Topology{
-                        Defaults: &clabernetesutilcontainerlab.NodeDefinition{Ports: []string{}},
-                        Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
-                            "node1": {
-                                Kind:     "srl",
-                                Image:    "ghcr.io/nokia/srlinux",
-                                MgmtIPv4: "10.1.2.3",
+					},
+				},
+			},
+			owningTopologyStatus: &clabernetesapisv1alpha1.TopologyStatus{
+				ExposedPorts: map[string]*clabernetesapisv1alpha1.ExposedPorts{},
+			},
+			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
+				"node1": {
+					Name:   "node1",
+					Prefix: clabernetesutil.ToPointer(""),
+					Topology: &clabernetesutilcontainerlab.Topology{
+						Defaults: &clabernetesutilcontainerlab.NodeDefinition{Ports: []string{}},
+						Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
+							"node1": {
+								Kind:     "srl",
+								Image:    "ghcr.io/nokia/srlinux",
+								MgmtIPv4: "10.1.2.3",
 								MgmtIPv6: "2001:db8:85a3::8a2e:370:7334",
-                            },
-                        },
-                    },
-                    Debug: false,
-                },
-            },
-            nodeName:           "node1",
-        },
+							},
+						},
+					},
+					Debug: false,
+				},
+			},
+			nodeName: "node1",
+		},
 		{
-            name: "use-mgmt-ip-as-loadbalancer-ipv6",
-            owningTopology: &clabernetesapisv1alpha1.Topology{
-                ObjectMeta: metav1.ObjectMeta{
-                    Name:      "render-service-expose-test",
-                    Namespace: "clabernetes",
-                },
-                Spec: clabernetesapisv1alpha1.TopologySpec{
-                    Expose: clabernetesapisv1alpha1.Expose{
-                        ExposeUseNodeMgmtIpv6Address: true,
-                        ExposeType:                 string(k8scorev1.ServiceTypeLoadBalancer),
-                    },
-                    Definition: clabernetesapisv1alpha1.Definition{
-                        Containerlab: `---
+			name: "use-mgmt-ip-as-loadbalancer-ipv6",
+			owningTopology: &clabernetesapisv1alpha1.Topology{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "render-service-expose-test",
+					Namespace: "clabernetes",
+				},
+				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Expose: clabernetesapisv1alpha1.Expose{
+						ExposeUseNodeMgmtIpv6Address: true,
+						ExposeType:                   string(k8scorev1.ServiceTypeLoadBalancer),
+					},
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
     name: test
     topology:
       nodes:
@@ -450,31 +450,31 @@ func TestRenderServiceExpose(t *testing.T) {
           image: ghcr.io/nokia/srlinux
 		  mgmt-ipv6: 2001:db8:85a3::8a2e:370:7334
 `,
-                    },
-                },
-            },
-            owningTopologyStatus: &clabernetesapisv1alpha1.TopologyStatus{
-                ExposedPorts: map[string]*clabernetesapisv1alpha1.ExposedPorts{},
-            },
-            clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
-                "node1": {
-                    Name:   "node1",
-                    Prefix: clabernetesutil.ToPointer(""),
-                    Topology: &clabernetesutilcontainerlab.Topology{
-                        Defaults: &clabernetesutilcontainerlab.NodeDefinition{Ports: []string{}},
-                        Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
-                            "node1": {
-                                Kind:     "srl",
-                                Image:    "ghcr.io/nokia/srlinux",
+					},
+				},
+			},
+			owningTopologyStatus: &clabernetesapisv1alpha1.TopologyStatus{
+				ExposedPorts: map[string]*clabernetesapisv1alpha1.ExposedPorts{},
+			},
+			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
+				"node1": {
+					Name:   "node1",
+					Prefix: clabernetesutil.ToPointer(""),
+					Topology: &clabernetesutilcontainerlab.Topology{
+						Defaults: &clabernetesutilcontainerlab.NodeDefinition{Ports: []string{}},
+						Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
+							"node1": {
+								Kind:     "srl",
+								Image:    "ghcr.io/nokia/srlinux",
 								MgmtIPv6: "2001:db8:85a3::8a2e:370:7334",
-                            },
-                        },
-                    },
-                    Debug: false,
-                },
-            },
-            nodeName:           "node1",
-        },
+							},
+						},
+					},
+					Debug: false,
+				},
+			},
+			nodeName: "node1",
+		},
 	}
 
 	for _, testCase := range cases {
@@ -560,7 +560,6 @@ func TestRenderServiceExpose(t *testing.T) {
 				}
 
 				clabernetestesthelper.MarshaledEqual(t, got, want)
-
 			})
 	}
 }

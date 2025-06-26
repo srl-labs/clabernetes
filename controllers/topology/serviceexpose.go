@@ -2,9 +2,9 @@ package topology
 
 import (
 	"fmt"
+	"net"
 	"sort"
 	"strings"
-	"net"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
@@ -151,37 +151,9 @@ func (r *ServiceExposeReconciler) Render(
 		nodeName,
 	)
 
-	var mgmtProtocol string
-    if owningTopology.Spec.Expose.ExposeUseNodeMgmtIpv4Address {
-        mgmtProtocol = "ipv4"
-    } else if owningTopology.Spec.Expose.ExposeUseNodeMgmtIpv6Address {
-        mgmtProtocol = "ipv6"
-    }
-	// If configured, pull mgmt-ip (v4 or v6) from the topology and assign as LoadBalancerIP. IPv4 takes precedence if both are set.
-   	 if mgmtProtocol != "" && service.Spec.Type == k8scorev1.ServiceTypeLoadBalancer {
-        if cfg, ok := reconcileData.ResolvedConfigs[nodeName]; ok {
-            // pull raw string from the right field
-            var raw string
-            switch mgmtProtocol {
-            case "ipv4":
-                raw = cfg.Topology.Nodes[nodeName].MgmtIPv4
-            case "ipv6":
-                raw = cfg.Topology.Nodes[nodeName].MgmtIPv6
-            }
-            if raw != "" {
-                // validate (works for both v4 & v6)
-                ip := net.ParseIP(raw)
-                if ip == nil {
-                    r.log.Warnf(
-                        "failed to parse mgmt-%s %q for node %q: invalid IP; using auto-assigned LoadBalancerIP",
-                        mgmtProtocol, raw, nodeName,
-                    )
-                } else {
-                    service.Spec.LoadBalancerIP = ip.String()
-                }
-            }
-        }
-    }
+	r.processMgmtLoadbalanacerExpose(
+		owningTopology,
+		reconcileData, service, nodeName)
 
 	r.renderServicePorts(
 		reconcileData,
@@ -351,4 +323,62 @@ func (r *ServiceExposeReconciler) renderServicePorts(
 	}
 
 	service.Spec.Ports = ports
+}
+
+func (r *ServiceExposeReconciler) processMgmtLoadbalanacerExpose(
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	reconcileData *ReconcileData,
+	service *k8scorev1.Service,
+	nodeName string,
+) {
+	var mgmtProtocol string
+
+	if owningTopology.Spec.Expose.ExposeUseNodeMgmtIpv4Address {
+		mgmtProtocol = "ipv4"
+	} else if owningTopology.Spec.Expose.ExposeUseNodeMgmtIpv6Address {
+		mgmtProtocol = "ipv6"
+	}
+
+	if mgmtProtocol == "" {
+		// nothin to do cuz we dunno v4 vs v6
+		return
+	}
+
+	if service.Spec.Type != k8scorev1.ServiceTypeLoadBalancer {
+		// also nothing to do, not a lb
+		return
+	}
+
+	// If we get here pull mgmt-ip (v4 or v6) from the topology and assign as LoadBalancerIP.
+	// IPv4 takes precedence if both are set.
+	cfg, ok := reconcileData.ResolvedConfigs[nodeName]
+
+	if ok {
+		// pull raw string from the right field
+		var raw string
+
+		switch mgmtProtocol {
+		case "ipv4":
+			raw = cfg.Topology.Nodes[nodeName].MgmtIPv4
+		case "ipv6":
+			raw = cfg.Topology.Nodes[nodeName].MgmtIPv6
+		}
+
+		if raw != "" {
+			// validate (works for both v4 & v6)
+			ip := net.ParseIP(raw)
+
+			if ip == nil {
+				r.log.Warnf(
+					"failed to parse mgmt-%s %q for node %q: invalid IP;"+
+						" using auto-assigned LoadBalancerIP",
+					mgmtProtocol,
+					raw,
+					nodeName,
+				)
+			} else {
+				service.Spec.LoadBalancerIP = ip.String()
+			}
+		}
+	}
 }
