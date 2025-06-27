@@ -43,6 +43,14 @@ func TestDefinitionProcess(t *testing.T) {
         srl2:
           kind: srl
           image: ghcr.io/nokia/srlinux
+          healthcheck:
+            test:
+              - CMD-SHELL
+              - cat /etc/os-release
+            start-period: 3
+            retries: 1
+            interval: 5
+            timeout: 2
       links:
         - endpoints: ["srl1:e1-1", "srl2:e1-1"]
         - endpoints: ["srl1:e3-3", "host:eth3-3"]
@@ -55,7 +63,28 @@ func TestDefinitionProcess(t *testing.T) {
 				ResolvedHashes: clabernetesapisv1alpha1.ReconcileHashes{},
 				ResolvedConfigs: map[string]*clabernetesutilcontainerlab.Config{
 					"srl1": {},
-					"srl2": {},
+					"srl2": {
+						Name: "clabernetes-srl2",
+						Topology: &clabernetesutilcontainerlab.Topology{
+							Defaults: &clabernetesutilcontainerlab.NodeDefinition{
+								Ports: []string{},
+							},
+							Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
+								"srl2": {
+									Ports: []string{},
+									Kind:  "srl",
+									Image: "ghcr.io/nokia/srlinux",
+									Healthcheck: &clabernetesutilcontainerlab.HealthcheckConfig{
+										Test:        []string{"CMD-SHELL", "cat /etc/os-release"},
+										StartPeriod: 3,
+										Retries:     1,
+										Interval:    5,
+										Timeout:     2,
+									},
+								},
+							},
+						},
+					},
 				},
 				ResolvedTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{
 					"srl1": {},
