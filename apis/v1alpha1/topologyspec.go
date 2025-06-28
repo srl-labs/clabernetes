@@ -111,6 +111,22 @@ type Expose struct {
 	// +kubebuilder:default=LoadBalancer
 	// +optional
 	ExposeType string `json:"exposeType,omitempty"`
+	// UseNodeMgmtIpv4Address, when set to true, the controller will look up each node’s management
+	// IPv4 address (from the `mgmt-ipv4` field in your containerlab topology) and assign
+	// that address to `Service.spec.loadBalancerIP` on the corresponding LoadBalancer
+	// Service.
+	// - Only applies if `spec.expose.exposeType` is `LoadBalancer`.
+	// - If the IP is missing or fails validation, a warning is emitted and Kubernetes
+	//   will allocate an IP automatically.
+	UseNodeMgmtIpv4Address bool `json:"useNodeMgmtIpv4Address,omitempty"`
+	// UseNodeMgmtIpv6Address, when set to true, the controller will look up each node’s management
+	// IPv6 address (from the `mgmt-ipv6` field in your containerlab topology) and assign
+	// that address to `Service.spec.loadBalancerIP` on the corresponding LoadBalancer
+	// Service.
+	// - Only applies if `spec.expose.exposeType` is `LoadBalancer`.
+	// - If the IP is missing or fails validation, a warning is emitted and Kubernetes
+	// will allocate an IP automatically.
+	UseNodeMgmtIpv6Address bool `json:"useNodeMgmtIpv6Address,omitempty"`
 }
 
 // Deployment holds configurations relevant to how clabernetes configures deployments that make

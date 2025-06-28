@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.17.2
+    controller-gen.kubebuilder.io/version: v0.18.0
   name: topologies.clabernetes.containerlab.dev
 spec:
   group: clabernetes.containerlab.dev
@@ -535,6 +535,26 @@ spec:
                     - ClusterIP
                     - LoadBalancer
                     type: string
+                  useNodeMgmtIpv4Address:
+                    description: |-
+                      UseNodeMgmtIpv4Address, when set to true, the controller will look up each node’s management
+                      IPv4 address (from the `mgmt-ipv4` field in your containerlab topology) and assign
+                      that address to `Service.spec.loadBalancerIP` on the corresponding LoadBalancer
+                      Service.
+                      - Only applies if `spec.expose.exposeType` is `LoadBalancer`.
+                      - If the IP is missing or fails validation, a warning is emitted and Kubernetes
+                        will allocate an IP automatically.
+                    type: boolean
+                  useNodeMgmtIpv6Address:
+                    description: |-
+                      UseNodeMgmtIpv6Address, when set to true, the controller will look up each node’s management
+                      IPv6 address (from the `mgmt-ipv6` field in your containerlab topology) and assign
+                      that address to `Service.spec.loadBalancerIP` on the corresponding LoadBalancer
+                      Service.
+                      - Only applies if `spec.expose.exposeType` is `LoadBalancer`.
+                      - If the IP is missing or fails validation, a warning is emitted and Kubernetes
+                      will allocate an IP automatically.
+                    type: boolean
                 type: object
               imagePull:
                 description: |-
