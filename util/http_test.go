@@ -2,7 +2,6 @@ package util_test
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -88,7 +87,7 @@ func TestWriteHTTPContentsFromPath(t *testing.T) {
 				w := bytes.NewBuffer(b)
 
 				err := clabernetesutil.WriteHTTPContentsFromPath(
-					context.Background(),
+					t.Context(),
 					fakeServer.URL,
 					w,
 					testCase.headers,

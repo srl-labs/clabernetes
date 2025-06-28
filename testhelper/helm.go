@@ -47,7 +47,7 @@ func HelmTest(t *testing.T, chartName, testName, namespace, valuesFileName, char
 
 	defer func() {
 		if !*SkipCleanup {
-			err = os.Chdir(chartsDir)
+			err = os.Chdir(chartsDir) //nolint: usetesting
 			if err != nil {
 				t.Logf("failed changing to a directory, error: %s", err)
 			}

@@ -9,7 +9,6 @@
 package topology_test
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -143,7 +142,7 @@ func TestReconcileResolveDeployment(t *testing.T) {
 				)
 
 				got, err := clabernetescontrollerstopology.ReconcileResolve(
-					context.Background(),
+					t.Context(),
 					r,
 					&k8sappsv1.Deployment{},
 					&k8sappsv1.DeploymentList{},
@@ -302,7 +301,7 @@ func TestReconcileResolvePVC(t *testing.T) {
 				)
 
 				got, err := clabernetescontrollerstopology.ReconcileResolve(
-					context.Background(),
+					t.Context(),
 					r,
 					&k8scorev1.PersistentVolumeClaim{},
 					&k8scorev1.PersistentVolumeClaimList{},
@@ -466,7 +465,7 @@ func TestReconcileResolveServiceFabric(t *testing.T) {
 				)
 
 				got, err := clabernetescontrollerstopology.ReconcileResolve(
-					context.Background(),
+					t.Context(),
 					r,
 					&k8scorev1.Service{},
 					&k8scorev1.ServiceList{},
@@ -630,7 +629,7 @@ func TestReconcileResolveServiceExpose(t *testing.T) {
 				)
 
 				got, err := clabernetescontrollerstopology.ReconcileResolve(
-					context.Background(),
+					t.Context(),
 					r,
 					&k8scorev1.Service{},
 					&k8scorev1.ServiceList{},

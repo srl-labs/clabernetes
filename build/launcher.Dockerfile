@@ -1,4 +1,4 @@
-FROM golang:1.23-bookworm as builder
+FROM golang:1.24-bookworm as builder
 
 ARG VERSION
 
@@ -33,18 +33,18 @@ ARG NERDCTL_VERSION="2.0.4"
 
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
-            ca-certificates \
-            curl \
-            wget \
-            gnupg \
-            lsb-release \
-            vim \
-            iproute2 \
-            tcpdump \
-            procps \
-            openssh-client \
-            inetutils-ping \
-            traceroute
+    ca-certificates \
+    curl \
+    wget \
+    gnupg \
+    lsb-release \
+    vim \
+    iproute2 \
+    tcpdump \
+    procps \
+    openssh-client \
+    inetutils-ping \
+    traceroute
 
 RUN echo "deb [trusted=yes] https://apt.fury.io/netdevops/ /" | \
     tee -a /etc/apt/sources.list.d/netdevops.list
@@ -58,9 +58,9 @@ RUN echo \
 
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \
-            containerlab=${CONTAINERLAB_VERSION} \
-            docker-ce=${DOCKER_VERSION} \
-            docker-ce-cli=${DOCKER_VERSION} && \
+    containerlab=${CONTAINERLAB_VERSION} \
+    docker-ce=${DOCKER_VERSION} \
+    docker-ce-cli=${DOCKER_VERSION} && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/apt/archive/*.deb
 
