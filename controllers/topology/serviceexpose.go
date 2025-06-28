@@ -333,9 +333,9 @@ func (r *ServiceExposeReconciler) processMgmtLoadbalanacerExpose(
 ) {
 	var mgmtProtocol string
 
-	if owningTopology.Spec.Expose.ExposeUseNodeMgmtIpv4Address {
+	if owningTopology.Spec.Expose.UseNodeMgmtIpv4Address {
 		mgmtProtocol = "ipv4"
-	} else if owningTopology.Spec.Expose.ExposeUseNodeMgmtIpv6Address {
+	} else if owningTopology.Spec.Expose.UseNodeMgmtIpv6Address {
 		mgmtProtocol = "ipv6"
 	}
 

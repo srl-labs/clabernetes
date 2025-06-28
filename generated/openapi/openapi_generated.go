@@ -920,6 +920,20 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_Expose(
 							Format:      "",
 						},
 					},
+					"useNodeMgmtIpv4Address": {
+						SchemaProps: spec.SchemaProps{
+							Description: "UseNodeMgmtIpv4Address, when set to true, the controller will look up each node’s management IPv4 address (from the `mgmt-ipv4` field in your containerlab topology) and assign that address to `Service.spec.loadBalancerIP` on the corresponding LoadBalancer Service. - Only applies if `spec.expose.exposeType` is `LoadBalancer`. - If the IP is missing or fails validation, a warning is emitted and Kubernetes\n  will allocate an IP automatically.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"useNodeMgmtIpv6Address": {
+						SchemaProps: spec.SchemaProps{
+							Description: "UseNodeMgmtIpv6Address, when set to true, the controller will look up each node’s management IPv6 address (from the `mgmt-ipv6` field in your containerlab topology) and assign that address to `Service.spec.loadBalancerIP` on the corresponding LoadBalancer Service. - Only applies if `spec.expose.exposeType` is `LoadBalancer`. - If the IP is missing or fails validation, a warning is emitted and Kubernetes will allocate an IP automatically.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},

@@ -387,9 +387,9 @@ func TestRenderServiceExpose(t *testing.T) {
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Expose: clabernetesapisv1alpha1.Expose{
-						ExposeUseNodeMgmtIpv4Address: true,
-						ExposeUseNodeMgmtIpv6Address: true,
-						ExposeType:                   string(k8scorev1.ServiceTypeLoadBalancer),
+						UseNodeMgmtIpv4Address: true,
+						UseNodeMgmtIpv6Address: true,
+						ExposeType:             string(k8scorev1.ServiceTypeLoadBalancer),
 					},
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
@@ -437,8 +437,8 @@ func TestRenderServiceExpose(t *testing.T) {
 				},
 				Spec: clabernetesapisv1alpha1.TopologySpec{
 					Expose: clabernetesapisv1alpha1.Expose{
-						ExposeUseNodeMgmtIpv6Address: true,
-						ExposeType:                   string(k8scorev1.ServiceTypeLoadBalancer),
+						UseNodeMgmtIpv6Address: true,
+						ExposeType:             string(k8scorev1.ServiceTypeLoadBalancer),
 					},
 					Definition: clabernetesapisv1alpha1.Definition{
 						Containerlab: `---
