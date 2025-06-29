@@ -426,6 +426,12 @@ func (r *DeploymentReconciler) renderDeploymentVolumes( //nolint:funlen
 				},
 			},
 		},
+		{
+			Name: "docker",
+			VolumeSource: k8scorev1.VolumeSource{
+				EmptyDir: &k8scorev1.EmptyDirVolumeSource{},
+			},
+		},
 	}
 
 	volumeMountsFromCommonSpec := make([]k8scorev1.VolumeMount, 0)
@@ -691,6 +697,11 @@ func (r *DeploymentReconciler) renderDeploymentContainer(
 				ReadOnly:  true,
 				MountPath: "/clabernetes/configured-pull-secrets.yaml",
 				SubPath:   "configured-pull-secrets",
+			},
+			{
+				Name:      "docker",
+				ReadOnly:  false,
+				MountPath: "/var/lib/docker",
 			},
 		},
 		TerminationMessagePath:   "/dev/termination-log",

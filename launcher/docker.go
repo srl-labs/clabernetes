@@ -16,7 +16,9 @@ import (
 )
 
 const (
-	dockerDaemonConfig = "/etc/docker/daemon.json"
+	dockerDaemonConfig   = "/etc/docker/daemon.json"
+	vfsStorageDriver     = "vfs"
+	overlayStorageDriver = "overlay2"
 )
 
 func daemonConfigExists() bool {
@@ -41,9 +43,22 @@ func handleInsecureRegistries() error {
 	}
 
 	templateVars := struct {
+		StorageDriver      string
 		InsecureRegistries string
 	}{
+		StorageDriver:      vfsStorageDriver,
 		InsecureRegistries: strings.Join(quotedRegistries, ","),
+	}
+
+	// if the pod is privileged we can run w/ overlayfs instead of vfs which should
+	// be much more efficient size-wise if not also perofrmance-wise; this *does* assume
+	// the hosts kernel supports overlayfs but that *should* be true almost everywhere at
+	// this point in time... i hope :P
+	if !strings.EqualFold(
+		os.Getenv(clabernetesconstants.LauncherPrivilegedEnv),
+		clabernetesconstants.True,
+	) {
+		templateVars.StorageDriver = overlayStorageDriver
 	}
 
 	t, err := template.ParseFS(Assets, "assets/docker-daemon.json.template")

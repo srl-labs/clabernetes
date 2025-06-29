@@ -41,6 +41,7 @@ images:
     context: ../
     dockerfile: dev.Dockerfile
     rebuildStrategy: ignoreContextChanges
+    buildKit: {}
     tags:
       - ${COMMIT_HASH}
 
@@ -52,6 +53,7 @@ images:
     rebuildStrategy: ignoreContextChanges
     buildArgs:
       VERSION: ${VERSION}-${COMMIT_HASH}
+    buildKit: {}
     tags:
       - dev-latest
       - ${COMMIT_HASH}
@@ -64,6 +66,7 @@ images:
     rebuildStrategy: ignoreContextChanges
     buildArgs:
       VERSION: ${VERSION}-${COMMIT_HASH}
+    buildKit: {}
     tags:
       - dev-latest
       - ${COMMIT_HASH}
@@ -76,7 +79,6 @@ images:
     rebuildStrategy: ignoreContextChanges
     buildArgs:
       VERSION: ${VERSION}-${COMMIT_HASH}
-    # seems node things dont wanna ever build w/out buildkit?
     buildKit: {}
     tags:
       - dev-latest
@@ -90,6 +92,7 @@ images:
     rebuildStrategy: ignoreContextChanges
     buildArgs:
       VERSION: ${VERSION}-${COMMIT_HASH}
+    buildKit: {}
     tags:
       - dev-latest
       - ${COMMIT_HASH}
