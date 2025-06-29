@@ -111,6 +111,8 @@ spec:
               name: topology-basic-config
               readOnly: true
               subPath: configured-pull-secrets
+            - mountPath: /var/lib/docker
+              name: docker
             - mountPath: /clabernetes/.node/containerd.sock
               name: cri-sock
               readOnly: true
@@ -129,6 +131,8 @@ spec:
             defaultMode: 493
             name: topology-basic
           name: topology-basic-config
+        - emptyDir: {}
+          name: docker
         - hostPath:
             path: /run/containerd
             type: ""

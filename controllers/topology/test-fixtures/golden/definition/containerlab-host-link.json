@@ -71,7 +71,8 @@
                     "Extras": null,
                     "WaitFor": null,
                     "DNS": null,
-                    "Certificate": null
+                    "Certificate": null,
+                    "Healthcheck": null
                 },
                 "Kinds": null,
                 "Nodes": {
@@ -112,7 +113,8 @@
                         "Extras": null,
                         "WaitFor": null,
                         "DNS": null,
-                        "Certificate": null
+                        "Certificate": null,
+                        "Healthcheck": null
                     }
                 },
                 "Links": [

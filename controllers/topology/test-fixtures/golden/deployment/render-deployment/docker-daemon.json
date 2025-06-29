@@ -43,6 +43,10 @@
                         }
                     },
                     {
+                        "name": "docker",
+                        "emptyDir": {}
+                    },
+                    {
                         "name": "docker-daemon-config",
                         "secret": {
                             "secretName": "sneakydockerdaemonconfig",
@@ -164,6 +168,10 @@
                                 "readOnly": true,
                                 "mountPath": "/clabernetes/configured-pull-secrets.yaml",
                                 "subPath": "configured-pull-secrets"
+                            },
+                            {
+                                "name": "docker",
+                                "mountPath": "/var/lib/docker"
                             },
                             {
                                 "name": "docker-daemon-config",

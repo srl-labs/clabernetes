@@ -71,7 +71,8 @@
                     "Extras": null,
                     "WaitFor": null,
                     "DNS": null,
-                    "Certificate": null
+                    "Certificate": null,
+                    "Healthcheck": null
                 },
                 "Kinds": null,
                 "Nodes": {
@@ -112,7 +113,8 @@
                         "Extras": null,
                         "WaitFor": null,
                         "DNS": null,
-                        "Certificate": null
+                        "Certificate": null,
+                        "Healthcheck": null
                     }
                 },
                 "Links": [
@@ -197,7 +199,8 @@
                     "Extras": null,
                     "WaitFor": null,
                     "DNS": null,
-                    "Certificate": null
+                    "Certificate": null,
+                    "Healthcheck": null
                 },
                 "Kinds": null,
                 "Nodes": {
@@ -247,8 +250,8 @@
                             "StartPeriod": 3,
                             "Retries": 1,
                             "Interval": 5,
-                            "Timeout": 2                        
-                    }
+                            "Timeout": 2
+                        }
                     }
                 },
                 "Links": [
