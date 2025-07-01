@@ -19,6 +19,7 @@ type bootstrapConfig struct {
 	globalLabels                map[string]string
 	resourcesDefault            *k8scorev1.ResourceRequirements
 	resourcesByContainerlabKind map[string]map[string]*k8scorev1.ResourceRequirements
+	nodeSelectorsByImage        map[string]map[string]string
 	privilegedLauncher          bool
 	containerlabDebug           bool
 	containerlabTimeout         string
@@ -82,6 +83,14 @@ func bootstrapFromConfigMap( //nolint:gocyclo,funlen,gocognit
 	resourcesByKindData, resourcesByKindOk := inMap["resourcesByContainerlabKind"]
 	if resourcesByKindOk {
 		err := sigsyaml.Unmarshal([]byte(resourcesByKindData), &bc.resourcesByContainerlabKind)
+		if err != nil {
+			outErrors = append(outErrors, err.Error())
+		}
+	}
+
+	nodeSelectorsByImageData, nodeSelectorsByImageOk := inMap["nodeSelectorsByImage"]
+	if nodeSelectorsByImageOk {
+		err := sigsyaml.Unmarshal([]byte(nodeSelectorsByImageData), &bc.nodeSelectorsByImage)
 		if err != nil {
 			outErrors = append(outErrors, err.Error())
 		}
@@ -241,6 +250,22 @@ func mergeFromBootstrapConfigMerge( //nolint:gocyclo
 		config.Spec.Deployment.ResourcesDefault = bootstrap.resourcesDefault
 	}
 
+	if len(bootstrap.nodeSelectorsByImage) > 0 &&
+		config.Spec.Deployment.NodeSelectorsByImage == nil {
+		config.Spec.Deployment.NodeSelectorsByImage = make(
+			map[string]map[string]string,
+		)
+	}
+
+	for k, v := range bootstrap.nodeSelectorsByImage {
+		_, exists := config.Spec.Deployment.NodeSelectorsByImage[k]
+		if exists {
+			continue
+		}
+
+		config.Spec.Deployment.NodeSelectorsByImage[k] = v
+	}
+
 	if len(bootstrap.resourcesByContainerlabKind) > 0 &&
 		config.Spec.Deployment.ResourcesByContainerlabKind == nil {
 		config.Spec.Deployment.ResourcesByContainerlabKind = make(
@@ -308,6 +333,7 @@ func mergeFromBootstrapConfigReplace(
 		Deployment: clabernetesapisv1alpha1.ConfigDeployment{
 			ResourcesDefault:            bootstrap.resourcesDefault,
 			ResourcesByContainerlabKind: bootstrap.resourcesByContainerlabKind,
+			NodeSelectorsByImage:        bootstrap.nodeSelectorsByImage,
 			PrivilegedLauncher:          bootstrap.privilegedLauncher,
 			ContainerlabDebug:           bootstrap.containerlabDebug,
 			LauncherImage:               bootstrap.launcherImage,

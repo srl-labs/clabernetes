@@ -40,6 +40,10 @@ type ConfigDeployment struct {
 	// resources, regardless of containerlab kind/type, use the `resourcesDefault` field.
 	// +optional
 	ResourcesByContainerlabKind map[string]map[string]*k8scorev1.ResourceRequirements `json:"resourcesByContainerlabKind"` //nolint:lll
+	// NodeSelectorsByImage is a mapping of image glob pattern -> key-value pairs
+	// settings.
+	// +optional
+	NodeSelectorsByImage map[string]map[string]string `json:"nodeSelectorsByImage"` //nolint:lll
 	// PrivilegedLauncher, when true, sets the launcher containers to privileged. By default, we do
 	// our best to *not* need this/set this, and instead set only the capabilities we need, however
 	// its possible that some containers launched by the launcher may need/want more capabilities,
