@@ -41,6 +41,10 @@
                             "name": "render-deployment-test-node-selectors",
                             "defaultMode": 493
                         }
+                    },
+                    {
+                        "name": "docker",
+                        "emptyDir": {}
                     }
                 ],
                 "containers": [
@@ -157,7 +161,11 @@
                                 "readOnly": true,
                                 "mountPath": "/clabernetes/configured-pull-secrets.yaml",
                                 "subPath": "configured-pull-secrets"
-                            }
+                            },
+                            {
+                                 "name": "docker",
+                                 "mountPath": "/var/lib/docker"
+                            }                            
                         ],
                         "terminationMessagePath": "/dev/termination-log",
                         "terminationMessagePolicy": "File",
