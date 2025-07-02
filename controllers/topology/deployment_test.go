@@ -769,6 +769,7 @@ func TestRenderDeployment(t *testing.T) {
 					"ghcr.io/nokia/srlinux*":  {"node-flavour": "amd64"},
 					"default":                 {"node-flavour": "arm64"},
 				}
+
 				return clabernetesconfig.NewFakeManager(
 					clabernetesconfig.WithNodeSelectors(selectors),
 				)

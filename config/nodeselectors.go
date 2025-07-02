@@ -16,7 +16,9 @@ func getNodeSelectorsByImage(
 		if err != nil || !match {
 			continue
 		}
+
 		maps.Copy(nodeSelectors, selectors)
+
 		break
 	}
 

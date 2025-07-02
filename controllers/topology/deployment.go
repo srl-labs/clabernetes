@@ -940,6 +940,7 @@ func (r *DeploymentReconciler) renderDeploymentNodeSelectors(
 	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
 ) {
 	nodeImage := clabernetesConfigs[nodeName].Topology.GetNodeImage(nodeName)
+
 	nodeSelectors := r.configManagerGetter().GetNodeSelectorsByImage(nodeImage)
 	if len(nodeSelectors) == 0 {
 		maps.Copy(nodeSelectors, owningTopology.Spec.Deployment.Scheduling.NodeSelector)

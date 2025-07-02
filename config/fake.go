@@ -13,22 +13,27 @@ func GetFakeManager() Manager {
 	return NewFakeManager()
 }
 
+// fakeManager defined type alias to be used below.
 type fakeManager struct {
 	nodeSelectorsByImage map[string]map[string]string
 }
 
+// FakeOption defined type alias to be used below.
 type FakeOption func(*fakeManager)
 
-func NewFakeManager(opts ...FakeOption) *fakeManager {
+// NewFakeManager defined type alias to be used below.
+func NewFakeManager(opts ...FakeOption) Manager {
 	manager := &fakeManager{
 		nodeSelectorsByImage: make(map[string]map[string]string),
 	}
 	for _, opt := range opts {
 		opt(manager)
 	}
+
 	return manager
 }
 
+// WithNodeSelectors returns a fake manager to support nodeSelectorByImage.
 func WithNodeSelectors(selectors map[string]map[string]string) FakeOption {
 	return func(fm *fakeManager) {
 		fm.nodeSelectorsByImage = make(map[string]map[string]string)
