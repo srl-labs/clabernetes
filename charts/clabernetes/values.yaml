@@ -118,6 +118,11 @@ globalConfig:
     # "default" key in the types level as well to just have default resources for a given kind.
     resourcesByContainerlabKind: {}
 
+    # nodeSelectorsByImage is a mapping of image glob patterns (as key) and node label and value
+    # pairs (as value) to apply to the launcher pod(s) as K8s NodeSelectors.
+    # The "nodeSelectorsByImage" key holds a map[string]map[string]string.
+    nodeSelectorsByImage: {}
+
     # privilegedLauncher sets the global default value for "privilegedLauncher" -- that is, if the
     # launcher pods should run in privileged mode or not.
     privilegedLauncher: true

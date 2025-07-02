@@ -36,6 +36,9 @@ data:
   resourcesByContainerlabKind: |-
     ---
     {}
+  nodeSelectorsByImage: |-
+    {}
+    ---
   privilegedLauncher: "true"
   containerlabDebug: "false"
   inClusterDNSSuffix: svc.cluster.local
