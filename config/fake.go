@@ -1,6 +1,8 @@
 package config
 
 import (
+	"maps"
+
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	k8scorev1 "k8s.io/api/core/v1"
 )
@@ -8,10 +10,41 @@ import (
 // GetFakeManager returns a fake config manager -- eventually this should have some options to load
 // it with data for unit tests. That is a future me problem.
 func GetFakeManager() Manager {
-	return fakeManager{}
+	return NewFakeManager()
 }
 
-type fakeManager struct{}
+// fakeManager defined type alias to be used below.
+type fakeManager struct {
+	nodeSelectorsByImage map[string]map[string]string
+}
+
+// FakeOption defined type alias to be used below.
+type FakeOption func(*fakeManager)
+
+// NewFakeManager defined type alias to be used below.
+func NewFakeManager(opts ...FakeOption) Manager {
+	manager := &fakeManager{
+		nodeSelectorsByImage: make(map[string]map[string]string),
+	}
+	for _, opt := range opts {
+		opt(manager)
+	}
+
+	return manager
+}
+
+// WithNodeSelectors returns a fake manager to support nodeSelectorByImage.
+func WithNodeSelectors(selectors map[string]map[string]string) FakeOption {
+	return func(fm *fakeManager) {
+		fm.nodeSelectorsByImage = make(map[string]map[string]string)
+
+		for pattern, selectors := range selectors {
+			copiedSelectors := make(map[string]string)
+			maps.Copy(copiedSelectors, selectors)
+			fm.nodeSelectorsByImage[pattern] = copiedSelectors
+		}
+	}
+}
 
 func (f fakeManager) Start() error {
 	return nil
@@ -36,6 +69,12 @@ func (f fakeManager) GetResourcesForContainerlabKind(
 	_, _ = containerlabKind, containerlabType
 
 	return nil
+}
+
+func (f fakeManager) GetNodeSelectorsByImage(
+	imageName string,
+) map[string]string {
+	return GetNodeSelectorsByImage(imageName, f.nodeSelectorsByImage)
 }
 
 func (f fakeManager) GetPrivilegedLauncher() bool {

@@ -67,6 +67,7 @@ func InitManager(
 					ResourcesByContainerlabKind: make(
 						map[string]map[string]*k8scorev1.ResourceRequirements,
 					),
+					NodeSelectorsByImage:    make(map[string]map[string]string),
 					PrivilegedLauncher:      true,
 					ContainerlabDebug:       false,
 					LauncherImage:           os.Getenv(clabernetesconstants.LauncherImageEnv),
@@ -119,6 +120,10 @@ type Manager interface { //nolint: interfacebloat
 		containerlabKind string,
 		containerlabType string,
 	) *k8scorev1.ResourceRequirements
+	// GetNodeSelectorsByImage returns the node selectors map for an image.
+	GetNodeSelectorsByImage(
+		imageName string,
+	) map[string]string
 	// GetPrivilegedLauncher returns the global config value for the privileged launcher mode.
 	GetPrivilegedLauncher() bool
 	// GetContainerlabDebug returns the global config value for containerlabDebug.

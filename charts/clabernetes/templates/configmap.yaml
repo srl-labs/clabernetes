@@ -34,6 +34,9 @@ data:
   resourcesByContainerlabKind: |-
     ---
 {{ .Values.globalConfig.deployment.resourcesByContainerlabKind | toYaml | indent 4 }}
+  nodeSelectorsByImage: |-
+{{ .Values.globalConfig.deployment.nodeSelectorsByImage | toYaml | indent 4 }}
+    ---
   privilegedLauncher: "{{ .Values.globalConfig.deployment.privilegedLauncher }}"
   containerlabDebug: "{{ .Values.globalConfig.deployment.containerlabDebug }}"
   {{- if .Values.globalConfig.deployment.containerlabTimeout }}

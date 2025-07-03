@@ -17,6 +17,9 @@ type ConfigMetadata struct {
 	Labels map[string]string `json:"labels"`
 }
 
+// ResourceMap defined type alias to be used below.
+type ResourceMap map[string]map[string]*k8scorev1.ResourceRequirements
+
 // ConfigDeployment holds "global" or "default" configurations related to clabernetes spawned
 // deployments. In the future this will likely include more of the "normal" (topology-level)
 // deployment configs (ex: persistence, or maybe files from url).
@@ -39,7 +42,17 @@ type ConfigDeployment struct {
 	// "type" unset or "ixr6" would get the "default" resource settings. To apply global default
 	// resources, regardless of containerlab kind/type, use the `resourcesDefault` field.
 	// +optional
-	ResourcesByContainerlabKind map[string]map[string]*k8scorev1.ResourceRequirements `json:"resourcesByContainerlabKind"` //nolint:lll
+	ResourcesByContainerlabKind ResourceMap `json:"resourcesByContainerlabKind"`
+	// NodeSelectorsByImage is a mapping of image glob pattern as key and node selectors (value)
+	// to apply to each deployment. Note that in case of multiple matches, the longest (with
+	// most characters) will take precedence. A config example:
+	// {
+	//   "internal.io/nokia_sros*": {"node-flavour": "baremetal"},
+	//   "ghcr.io/nokia/srlinux*":  {"node-flavour": "amd64"},
+	//   "default":                 {"node-flavour": "cheap"},
+	// }.
+	// +optional
+	NodeSelectorsByImage map[string]map[string]string `json:"nodeSelectorsByImage"`
 	// PrivilegedLauncher, when true, sets the launcher containers to privileged. By default, we do
 	// our best to *not* need this/set this, and instead set only the capabilities we need, however
 	// its possible that some containers launched by the launcher may need/want more capabilities,

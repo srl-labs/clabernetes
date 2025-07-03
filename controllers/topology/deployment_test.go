@@ -135,6 +135,7 @@ func TestRenderDeployment(t *testing.T) {
 		imagePullThroughMode string
 		clabernetesConfigs   map[string]*clabernetesutilcontainerlab.Config
 		nodeName             string
+		configManagerGetter  clabernetesconfig.ManagerGetterFunc
 	}{
 		{
 			name: "simple",
@@ -192,7 +193,8 @@ func TestRenderDeployment(t *testing.T) {
 					Debug: false,
 				},
 			},
-			nodeName: "srl1",
+			nodeName:            "srl1",
+			configManagerGetter: clabernetesconfig.GetFakeManager,
 		},
 		{
 			name: "not-privileged-launcher",
@@ -253,7 +255,8 @@ func TestRenderDeployment(t *testing.T) {
 					Debug: false,
 				},
 			},
-			nodeName: "srl1",
+			nodeName:            "srl1",
+			configManagerGetter: clabernetesconfig.GetFakeManager,
 		},
 		{
 			name: "containerlab-debug",
@@ -314,7 +317,8 @@ func TestRenderDeployment(t *testing.T) {
 					Debug: false,
 				},
 			},
-			nodeName: "srl1",
+			nodeName:            "srl1",
+			configManagerGetter: clabernetesconfig.GetFakeManager,
 		},
 		{
 			name: "launcher-log-level",
@@ -375,7 +379,8 @@ func TestRenderDeployment(t *testing.T) {
 					Debug: false,
 				},
 			},
-			nodeName: "srl1",
+			nodeName:            "srl1",
+			configManagerGetter: clabernetesconfig.GetFakeManager,
 		},
 		{
 			name: "insecure-registries",
@@ -436,7 +441,8 @@ func TestRenderDeployment(t *testing.T) {
 					Debug: false,
 				},
 			},
-			nodeName: "srl1",
+			nodeName:            "srl1",
+			configManagerGetter: clabernetesconfig.GetFakeManager,
 		},
 		{
 			name: "docker-daemon",
@@ -497,7 +503,8 @@ func TestRenderDeployment(t *testing.T) {
 					Debug: false,
 				},
 			},
-			nodeName: "srl1",
+			nodeName:            "srl1",
+			configManagerGetter: clabernetesconfig.GetFakeManager,
 		},
 		{
 			name: "docker-config",
@@ -543,7 +550,8 @@ func TestRenderDeployment(t *testing.T) {
 					Debug: false,
 				},
 			},
-			nodeName: "srl1",
+			nodeName:            "srl1",
+			configManagerGetter: clabernetesconfig.GetFakeManager,
 		},
 		{
 			name: "scheduling",
@@ -599,7 +607,8 @@ func TestRenderDeployment(t *testing.T) {
 					Debug: false,
 				},
 			},
-			nodeName: "srl1",
+			nodeName:            "srl1",
+			configManagerGetter: clabernetesconfig.GetFakeManager,
 		},
 		{
 			name: "remove-prefix",
@@ -645,7 +654,8 @@ func TestRenderDeployment(t *testing.T) {
 					Debug: false,
 				},
 			},
-			nodeName: "srl1",
+			nodeName:            "srl1",
+			configManagerGetter: clabernetesconfig.GetFakeManager,
 		},
 		{
 			name: "custom-clab-version",
@@ -693,7 +703,77 @@ func TestRenderDeployment(t *testing.T) {
 					Debug: false,
 				},
 			},
+			nodeName:            "srl1",
+			configManagerGetter: clabernetesconfig.GetFakeManager,
+		},
+		{
+			name: "simple-node-selectors",
+			owningTopology: &clabernetesapisv1alpha1.Topology{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "render-deployment-test-node-selectors",
+					Namespace: "clabernetes",
+				},
+				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Connectivity: clabernetesconstants.ConnectivityVXLAN,
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
+    name: test
+    topology:
+      nodes:
+        srl1:
+          kind: srl
+          image: ghcr.io/nokia/srlinux
+`,
+					},
+				},
+			},
+			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
+				"srl1": {
+					Name:   "srl1",
+					Prefix: clabernetesutil.ToPointer(""),
+					Topology: &clabernetesutilcontainerlab.Topology{
+						Defaults: &clabernetesutilcontainerlab.NodeDefinition{
+							Ports: []string{
+								"21022:22/tcp",
+								"21023:23/tcp",
+								"21161:161/udp",
+								"33333:57400/tcp",
+								"60000:21/tcp",
+								"60001:80/tcp",
+								"60002:443/tcp",
+								"60003:830/tcp",
+								"60004:5000/tcp",
+								"60005:5900/tcp",
+								"60006:6030/tcp",
+								"60007:9339/tcp",
+								"60008:9340/tcp",
+								"60009:9559/tcp",
+							},
+						},
+						Kinds: nil,
+						Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
+							"srl1": {
+								Kind:  "srl",
+								Image: "ghcr.io/nokia/srlinux",
+							},
+						},
+						Links: nil,
+					},
+					Debug: false,
+				},
+			},
 			nodeName: "srl1",
+			configManagerGetter: func() clabernetesconfig.Manager {
+				selectors := map[string]map[string]string{
+					"internal.io/nokia_sros*": {"node-flavour": "baremetal"},
+					"ghcr.io/nokia/srlinux*":  {"node-flavour": "amd64"},
+					"default":                 {"node-flavour": "arm64"},
+				}
+
+				return clabernetesconfig.NewFakeManager(
+					clabernetesconfig.WithNodeSelectors(selectors),
+				)
+			},
 		},
 	}
 
@@ -708,7 +788,7 @@ func TestRenderDeployment(t *testing.T) {
 					"clabernetes",
 					"clabernetes",
 					testCase.criKind,
-					clabernetesconfig.GetFakeManager,
+					testCase.configManagerGetter,
 				)
 
 				got := reconciler.Render(

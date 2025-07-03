@@ -3,6 +3,7 @@ package topology
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"path/filepath"
 	"reflect"
 	"slices"
@@ -161,6 +162,13 @@ func (r *DeploymentReconciler) Render(
 	)
 
 	r.renderDeploymentContainerResources(
+		deployment,
+		nodeName,
+		owningTopology,
+		clabernetesConfigs,
+	)
+
+	r.renderDeploymentNodeSelectors(
 		deployment,
 		nodeName,
 		owningTopology,
@@ -398,10 +406,8 @@ func (r *DeploymentReconciler) renderDeploymentScheduling(
 	deployment *k8sappsv1.Deployment,
 	owningTopology *clabernetesapisv1alpha1.Topology,
 ) {
-	nodeSelector := owningTopology.Spec.Deployment.Scheduling.NodeSelector
 	tolerations := owningTopology.Spec.Deployment.Scheduling.Tolerations
 
-	deployment.Spec.Template.Spec.NodeSelector = nodeSelector
 	deployment.Spec.Template.Spec.Tolerations = tolerations
 }
 
@@ -925,6 +931,22 @@ func (r *DeploymentReconciler) renderDeploymentContainerResources(
 	if resources != nil {
 		deployment.Spec.Template.Spec.Containers[0].Resources = *resources
 	}
+}
+
+func (r *DeploymentReconciler) renderDeploymentNodeSelectors(
+	deployment *k8sappsv1.Deployment,
+	nodeName string,
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	clabernetesConfigs map[string]*clabernetesutilcontainerlab.Config,
+) {
+	nodeImage := clabernetesConfigs[nodeName].Topology.GetNodeImage(nodeName)
+
+	nodeSelectors := r.configManagerGetter().GetNodeSelectorsByImage(nodeImage)
+	if len(nodeSelectors) == 0 {
+		maps.Copy(nodeSelectors, owningTopology.Spec.Deployment.Scheduling.NodeSelector)
+	}
+
+	deployment.Spec.Template.Spec.NodeSelector = nodeSelectors
 }
 
 func (r *DeploymentReconciler) renderDeploymentContainerPrivileges(

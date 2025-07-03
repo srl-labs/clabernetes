@@ -65,6 +65,15 @@ func (m *manager) GetResourcesForContainerlabKind(
 	)
 }
 
+func (m *manager) GetNodeSelectorsByImage(
+	imageName string,
+) map[string]string {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	return GetNodeSelectorsByImage(imageName, m.config.Deployment.NodeSelectorsByImage)
+}
+
 func (m *manager) GetPrivilegedLauncher() bool {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
