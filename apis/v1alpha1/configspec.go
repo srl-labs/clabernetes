@@ -43,8 +43,14 @@ type ConfigDeployment struct {
 	// resources, regardless of containerlab kind/type, use the `resourcesDefault` field.
 	// +optional
 	ResourcesByContainerlabKind ResourceMap `json:"resourcesByContainerlabKind"`
-	// NodeSelectorsByImage is a mapping of image glob pattern -> key-value pairs
-	// settings.
+	// NodeSelectorsByImage is a mapping of image glob pattern as key and node selectors (value)
+	// to apply to each deployment. Note that in case of multiple matches, the longest (with
+	// most characters) will take precedence. A config example:
+	// {
+	//   "internal.io/nokia_sros*": {"node-flavour": "baremetal"},
+	//   "ghcr.io/nokia/srlinux*":  {"node-flavour": "amd64"},
+	//   "default":                 {"node-flavour": "cheap"},
+	// }.
 	// +optional
 	NodeSelectorsByImage map[string]map[string]string `json:"nodeSelectorsByImage"`
 	// PrivilegedLauncher, when true, sets the launcher containers to privileged. By default, we do

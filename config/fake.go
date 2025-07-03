@@ -74,7 +74,7 @@ func (f fakeManager) GetResourcesForContainerlabKind(
 func (f fakeManager) GetNodeSelectorsByImage(
 	imageName string,
 ) map[string]string {
-	return getNodeSelectorsByImage(imageName, f.nodeSelectorsByImage)
+	return GetNodeSelectorsByImage(imageName, f.nodeSelectorsByImage)
 }
 
 func (f fakeManager) GetPrivilegedLauncher() bool {

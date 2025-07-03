@@ -71,7 +71,7 @@ func (m *manager) GetNodeSelectorsByImage(
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
-	return getNodeSelectorsByImage(imageName, m.config.Deployment.NodeSelectorsByImage)
+	return GetNodeSelectorsByImage(imageName, m.config.Deployment.NodeSelectorsByImage)
 }
 
 func (m *manager) GetPrivilegedLauncher() bool {

@@ -5,10 +5,12 @@ import (
 	"path"
 )
 
-func getNodeSelectorsByImage(
+// GetNodeSelectorsByImage returns the node selectors to be applied to support the image provided.
+func GetNodeSelectorsByImage(
 	imageName string,
 	allSelectors map[string]map[string]string,
 ) map[string]string {
+	longestPattern := 0
 	nodeSelectors := make(map[string]string)
 
 	for pattern, selectors := range allSelectors {
@@ -17,9 +19,12 @@ func getNodeSelectorsByImage(
 			continue
 		}
 
-		maps.Copy(nodeSelectors, selectors)
+		// Choose the most specific match (longest pattern)
+		if len(pattern) > longestPattern {
+			longestPattern = len(pattern)
 
-		break
+			maps.Copy(nodeSelectors, selectors)
+		}
 	}
 
 	defaultSelectors, defaultOk := allSelectors["default"]
