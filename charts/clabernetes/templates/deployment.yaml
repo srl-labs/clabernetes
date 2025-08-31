@@ -61,7 +61,7 @@ spec:
     spec:
       {{- if .Values.manager.affinity }}
       affinity:
-        {{ toYaml .Values.manager.affinity | indent 8 }}
+{{ toYaml .Values.manager.affinity | indent 8 }}
       {{- else if (ge (int .Values.manager.replicaCount) 2) }}
       affinity:
         podAntiAffinity:
@@ -210,7 +210,7 @@ spec:
     spec:
       {{- if $.Values.ui.affinity }}
       affinity:
-        {{ toYaml $.Values.ui.affinity | indent 8 }}
+{{ toYaml $.Values.ui.affinity | indent 8 }}
       {{- else if (ge (int $.Values.ui.replicaCount) 2) }}
       affinity:
         podAntiAffinity:
