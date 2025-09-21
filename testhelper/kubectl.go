@@ -26,7 +26,13 @@ const (
 func kubectlNamespace(t *testing.T, operation Operation, namespace string) {
 	t.Helper()
 
-	cmd := exec.Command(kubectl, string(operation), "namespace", namespace) //nolint:gosec
+	cmd := exec.CommandContext( //nolint:gosec
+		t.Context(),
+		kubectl,
+		string(operation),
+		"namespace",
+		namespace,
+	)
 
 	err := cmd.Run()
 	if err != nil {
@@ -52,7 +58,8 @@ func KubectlDeleteNamespace(t *testing.T, namespace string) {
 func KubectlFileOp(t *testing.T, operation Operation, namespace, fileName string) {
 	t.Helper()
 
-	cmd := exec.Command( //nolint:gosec
+	cmd := exec.CommandContext( //nolint:gosec
+		t.Context(),
 		kubectl,
 		string(operation),
 		"--namespace",
@@ -68,7 +75,8 @@ func KubectlFileOp(t *testing.T, operation Operation, namespace, fileName string
 func KubectlGetOp(t *testing.T, kind, namespace, name string) []byte {
 	t.Helper()
 
-	cmd := exec.Command( //nolint:gosec
+	cmd := exec.CommandContext( //nolint:gosec
+		t.Context(),
 		kubectl,
 		string(Get),
 		kind,

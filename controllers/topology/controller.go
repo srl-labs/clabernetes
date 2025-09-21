@@ -21,6 +21,7 @@ import (
 // Controller is the Containerlab topology controller object.
 type Controller struct {
 	*clabernetescontrollers.BaseController
+
 	TopologyReconciler *Reconciler
 }
 

@@ -14,11 +14,11 @@ linters:
     - musttag # also probably should remove but... for now
     - nonamedreturns
     - paralleltest
-    - perfsprint
     - protogetter
     - tagliatelle
     - varnamelen
     - wrapcheck
+    - wsl # deprecated, wsl_v5 included in all ofc
   settings:
     funlen:
       lines: 150
@@ -70,7 +70,6 @@ linters:
       checks:
         - -ST1000
   exclusions:
-    generated: lax
     rules:
       - linters:
           - dupl
@@ -107,6 +106,10 @@ linters:
       - linters:
           - perfsprint
         text: can be replaced with string concatenation
+      - linters:
+          - revive
+        path: util/
+        text: meaningless package names
     paths:
       - .private
       - third_party$

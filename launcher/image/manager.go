@@ -1,6 +1,7 @@
 package image
 
 import (
+	"context"
 	"fmt"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
@@ -13,10 +14,10 @@ import (
 // a launcher pod.
 type Manager interface {
 	// Present checks if the image is already present in the node.
-	Present(imageName string) (bool, error)
+	Present(ctx context.Context, imageName string) (bool, error)
 	// Export is the main reason we are using this and not the cri interface directly (cri has no
 	// service for export!) -- and does what it says: exports an image to disk.
-	Export(imageName, destination string) error
+	Export(ctx context.Context, imageName, destination string) error
 }
 
 // NewManager returns an image Manager for the given cri.

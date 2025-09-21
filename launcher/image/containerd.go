@@ -1,6 +1,7 @@
 package image
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 
@@ -11,8 +12,9 @@ type containerdManager struct {
 	logger claberneteslogging.Instance
 }
 
-func (m *containerdManager) Present(imageName string) (bool, error) {
-	checkCmd := exec.Command( //nolint:gosec
+func (m *containerdManager) Present(ctx context.Context, imageName string) (bool, error) {
+	checkCmd := exec.CommandContext( //nolint:gosec
+		ctx,
 		"nerdctl",
 		"--address",
 		"/clabernetes/.node/containerd.sock",
@@ -37,12 +39,12 @@ func (m *containerdManager) Present(imageName string) (bool, error) {
 	return true, nil
 }
 
-func (m *containerdManager) Export(imageName, destination string) error {
+func (m *containerdManager) Export(ctx context.Context, imageName, destination string) error {
 	// attempt to re-pull the image -- for containerd setups that have `discard_unpacked_layers`
 	// set to true we will not be able to export the image as for whatever reason containerd wants
 	// all layers to be present to export (even if we already ran this image on the node via the
 	// puller pod!?!)
-	err := m.pull(imageName)
+	err := m.pull(ctx, imageName)
 	if err != nil {
 		m.logger.Warnf(
 			"image re-pull failed, this can happen when containerd sets "+
@@ -52,7 +54,8 @@ func (m *containerdManager) Export(imageName, destination string) error {
 		)
 	}
 
-	exportCmd := exec.Command(
+	exportCmd := exec.CommandContext(
+		ctx,
 		"nerdctl",
 		"--address",
 		"/clabernetes/.node/containerd.sock",
@@ -78,8 +81,9 @@ func (m *containerdManager) Export(imageName, destination string) error {
 	return nil
 }
 
-func (m *containerdManager) pull(imageName string) error {
-	pullCmd := exec.Command(
+func (m *containerdManager) pull(ctx context.Context, imageName string) error {
+	pullCmd := exec.CommandContext(
+		ctx,
 		"nerdctl",
 		"--address",
 		"/clabernetes/.node/containerd.sock",

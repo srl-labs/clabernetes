@@ -39,6 +39,7 @@ func NewController(
 // Controller is the Containerlab topology controller object.
 type Controller struct {
 	*clabernetescontrollers.BaseController
+
 	// the *uncached* (non ctrl-runtime client) so we can do watches
 	KubeClient *kubernetes.Clientset
 }

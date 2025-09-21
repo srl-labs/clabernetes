@@ -37,7 +37,7 @@ func (c *clabernetes) image() {
 		return
 	}
 
-	imagePresent, err := imageManager.Present(c.imageName)
+	imagePresent, err := imageManager.Present(c.ctx, c.imageName)
 	if err != nil {
 		c.logger.Warnf("failed image pull through (check), err: %s", err)
 
@@ -91,7 +91,7 @@ func (c *clabernetes) image() {
 }
 
 func (c *clabernetes) copyImageFromCRI(imageManager claberneteslauncherimage.Manager) {
-	err := imageManager.Export(c.imageName, imageDestination)
+	err := imageManager.Export(c.ctx, c.imageName, imageDestination)
 	if err != nil {
 		c.logger.Warnf("failed image pull through (export), err: %s", err)
 
@@ -310,7 +310,7 @@ func (c *clabernetes) waitForImage(
 			break
 		}
 
-		imagePresent, err := imageManager.Present(c.imageName)
+		imagePresent, err := imageManager.Present(c.ctx, c.imageName)
 		if err != nil {
 			return err
 		}
@@ -338,7 +338,8 @@ func (c *clabernetes) waitForImage(
 }
 
 func (c *clabernetes) imageImport() error {
-	exportCmd := exec.Command(
+	exportCmd := exec.CommandContext(
+		c.ctx,
 		"docker",
 		"image",
 		"load",
@@ -360,7 +361,8 @@ func (c *clabernetes) imageImport() error {
 func (c *clabernetes) imageCleanup() {
 	c.logger.Debug("running image (docker) cleanup in background...")
 
-	exportCmd := exec.Command(
+	exportCmd := exec.CommandContext(
+		c.ctx,
 		"docker",
 		"system",
 		"prune",

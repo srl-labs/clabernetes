@@ -2,6 +2,7 @@ package launcher
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -85,8 +86,9 @@ func handleInsecureRegistries() error {
 	return nil
 }
 
-func enableLegacyIPTables(logger io.Writer) error {
-	updateCmd := exec.Command(
+func enableLegacyIPTables(ctx context.Context, logger io.Writer) error {
+	updateCmd := exec.CommandContext(
+		ctx,
 		"update-alternatives",
 		"--set",
 		"iptables",
@@ -104,11 +106,11 @@ func enableLegacyIPTables(logger io.Writer) error {
 	return nil
 }
 
-func startDocker(logger io.Writer) error {
+func startDocker(ctx context.Context, logger io.Writer) error {
 	var attempts int
 
 	for {
-		psCmd := exec.Command("docker", "ps")
+		psCmd := exec.CommandContext(ctx, "docker", "ps")
 
 		psCmd.Stdout = logger
 		psCmd.Stderr = logger
@@ -123,7 +125,7 @@ func startDocker(logger io.Writer) error {
 			return fmt.Errorf("%w: failed starting docker", claberneteserrors.ErrLaunch)
 		}
 
-		startCmd := exec.Command("service", "docker", "start")
+		startCmd := exec.CommandContext(ctx, "service", "docker", "start")
 
 		startCmd.Stdout = logger
 		startCmd.Stderr = logger
@@ -139,7 +141,7 @@ func startDocker(logger io.Writer) error {
 	}
 }
 
-func getContainerIDs(all bool) ([]string, error) {
+func getContainerIDs(ctx context.Context, all bool) ([]string, error) {
 	args := []string{"ps"}
 
 	if all {
@@ -148,7 +150,7 @@ func getContainerIDs(all bool) ([]string, error) {
 
 	args = append(args, "--quiet")
 
-	psCmd := exec.Command("docker", args...)
+	psCmd := exec.CommandContext(ctx, "docker", args...)
 
 	output, err := psCmd.Output()
 	if err != nil {
@@ -171,6 +173,7 @@ func getContainerIDs(all bool) ([]string, error) {
 }
 
 func printContainerLogs(
+	ctx context.Context,
 	logger claberneteslogging.Instance,
 	containerIDs []string,
 ) {
@@ -180,7 +183,7 @@ func printContainerLogs(
 			containerID,
 		}
 
-		cmd := exec.Command("docker", args...) //nolint:gosec
+		cmd := exec.CommandContext(ctx, "docker", args...) //nolint:gosec
 
 		cmd.Stdout = logger
 		cmd.Stderr = logger
@@ -195,6 +198,7 @@ func printContainerLogs(
 }
 
 func tailContainerLogs(
+	ctx context.Context,
 	logger claberneteslogging.Instance,
 	nodeLogger io.Writer,
 	containerIDs []string,
@@ -214,7 +218,7 @@ func tailContainerLogs(
 				containerID,
 			}
 
-			cmd := exec.Command("docker", args...) //nolint:gosec
+			cmd := exec.CommandContext(ctx, "docker", args...) //nolint:gosec
 
 			cmd.Stdout = nodeOutWriter
 			cmd.Stderr = nodeOutWriter
@@ -231,8 +235,9 @@ func tailContainerLogs(
 	return nil
 }
 
-func getContainerIDForNodeName(nodeName string) (string, error) {
-	psCmd := exec.Command( //nolint:gosec
+func getContainerIDForNodeName(ctx context.Context, nodeName string) (string, error) {
+	psCmd := exec.CommandContext( //nolint:gosec
+		ctx,
 		"docker",
 		"ps",
 		"--quiet",
@@ -248,8 +253,9 @@ func getContainerIDForNodeName(nodeName string) (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
-func getContainerAddr(containerID string) (string, error) {
-	inspectCmd := exec.Command(
+func getContainerAddr(ctx context.Context, containerID string) (string, error) {
+	inspectCmd := exec.CommandContext(
+		ctx,
 		"docker",
 		"inspect",
 		"--format",
