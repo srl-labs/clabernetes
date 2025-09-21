@@ -110,6 +110,10 @@ linters:
           - revive
         path: util/
         text: meaningless package names
+      - linters:
+          - revive
+        path: util/containerlab/
+        text: should have comment
     paths:
       - .private
       - third_party$
