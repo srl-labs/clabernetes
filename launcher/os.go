@@ -39,7 +39,8 @@ func (c *clabernetes) handleRemounts() {
 		"/proc",
 		"/proc/sys",
 	} {
-		updateCmd := exec.Command( //nolint:gosec
+		updateCmd := exec.CommandContext( //nolint:gosec
+			c.ctx,
 			"mount",
 			"-v",
 			"-o",
@@ -78,7 +79,8 @@ func (c *clabernetes) handleCgroupV1Remounts() {
 	}
 
 	for _, path := range cgroupRemounts {
-		updateCmd := exec.Command( //nolint:gosec
+		updateCmd := exec.CommandContext( //nolint:gosec
+			c.ctx,
 			"umount",
 			fmt.Sprintf("/sys/fs/cgroup/%s", path),
 		)
@@ -97,7 +99,8 @@ func (c *clabernetes) handleCgroupV1Remounts() {
 	}
 
 	for _, path := range cgroupRemounts {
-		updateCmd := exec.Command( //nolint:gosec
+		updateCmd := exec.CommandContext( //nolint:gosec
+			c.ctx,
 			"mount",
 			"cgroup",
 			"-v",
@@ -124,7 +127,8 @@ func (c *clabernetes) handleCgroupV1Remounts() {
 
 func (c *clabernetes) isCgroupV2() (bool, error) {
 	// exec via bash to be lazy about piping :)
-	checkCgroupMountVersionCmd := exec.Command(
+	checkCgroupMountVersionCmd := exec.CommandContext(
+		c.ctx,
 		"bash",
 		"-c",
 		"mount | grep /sys/fs/cgroup",

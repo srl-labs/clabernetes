@@ -166,19 +166,19 @@ func (c *clabernetes) setup() {
 
 	c.logger.Debug("ensuring docker is running...")
 
-	err := startDocker(c.logger)
+	err := startDocker(c.ctx, c.logger)
 	if err != nil {
 		c.logger.Warn(
 			"failed ensuring docker is running, attempting to fallback to legacy ip tables",
 		)
 
 		// see https://github.com/srl-labs/clabernetes/issues/47
-		err = enableLegacyIPTables(c.logger)
+		err = enableLegacyIPTables(c.ctx, c.logger)
 		if err != nil {
 			c.logger.Fatalf("failed enabling legacy ip tables, err: %s", err)
 		}
 
-		err = startDocker(c.logger)
+		err = startDocker(c.ctx, c.logger)
 		if err != nil {
 			c.logger.Fatalf("failed ensuring docker is running, err: %s", err)
 		}
@@ -207,7 +207,7 @@ func (c *clabernetes) launch() {
 		c.reportContainerLaunchFail()
 	}
 
-	c.containerIDs, err = getContainerIDs(false)
+	c.containerIDs, err = getContainerIDs(c.ctx, false)
 	if err != nil {
 		c.logger.Warnf(
 			"failed determining container ids will continue but will not log container output,"+
@@ -219,7 +219,7 @@ func (c *clabernetes) launch() {
 	if len(c.containerIDs) > 0 {
 		c.logger.Debugf("found container ids %q", c.containerIDs)
 
-		err = tailContainerLogs(c.logger, c.nodeLogger, c.containerIDs)
+		err = tailContainerLogs(c.ctx, c.logger, c.nodeLogger, c.containerIDs)
 		if err != nil {
 			c.logger.Warnf("failed creating node log file, err: %s", err)
 		}
@@ -230,7 +230,7 @@ func (c *clabernetes) launch() {
 		)
 	}
 
-	c.nodeContainerID, err = getContainerIDForNodeName(c.nodeName)
+	c.nodeContainerID, err = getContainerIDForNodeName(c.ctx, c.nodeName)
 	if err != nil {
 		c.logger.Fatalf("failed determining node %q container id, err: %s", c.nodeName, err)
 	}
@@ -288,7 +288,7 @@ func (c *clabernetes) runProbes() {
 		if nodeAddr == "" {
 			var err error
 
-			nodeAddr, err = getContainerAddr(c.nodeContainerID)
+			nodeAddr, err = getContainerAddr(c.ctx, c.nodeContainerID)
 			if err != nil {
 				c.logger.Warnf(
 					"failed determining node %q address, error: %s",
@@ -391,7 +391,7 @@ func (c *clabernetes) watchContainers() {
 	ticker := time.NewTicker(containerCheckInterval)
 
 	for range ticker.C {
-		currentContainerIDs, err := getContainerIDs(false)
+		currentContainerIDs, err := getContainerIDs(c.ctx, false)
 		if err != nil {
 			c.logger.Warnf(
 				"failed listing container ids, error: %s",
@@ -414,7 +414,7 @@ func (c *clabernetes) watchContainers() {
 }
 
 func (c *clabernetes) reportContainerLaunchFail() {
-	allContainerIDs, err := getContainerIDs(true)
+	allContainerIDs, err := getContainerIDs(c.ctx, true)
 	if err != nil {
 		c.logger.Fatalf(
 			"failed launching containerlab, then failed gathering all container "+
@@ -422,7 +422,7 @@ func (c *clabernetes) reportContainerLaunchFail() {
 		)
 	}
 
-	printContainerLogs(c.nodeLogger, allContainerIDs)
+	printContainerLogs(c.ctx, c.nodeLogger, allContainerIDs)
 
 	claberneteslogging.GetManager().Flush()
 

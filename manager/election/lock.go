@@ -42,6 +42,7 @@ func GetLeaseLock(
 // lease.
 type ClabernetesLeaseLock struct {
 	*resourcelock.LeaseLock
+
 	appName string
 }
 

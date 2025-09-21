@@ -1,6 +1,7 @@
 package connectivity
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os/exec"
@@ -20,6 +21,7 @@ const (
 
 type vxlanManager struct {
 	*common
+
 	currentTunnels map[string]*clabernetesapisv1alpha1.PointToPointTunnel
 }
 
@@ -71,7 +73,7 @@ func (m *vxlanManager) resolveVXLANService(vxlanRemote string) (string, error) {
 	var err error
 
 	for range resolveServiceMaxAttempts {
-		resolvedVxlanRemotes, err = net.LookupIP(vxlanRemote)
+		resolvedVxlanRemotes, err = net.LookupIP(vxlanRemote) //nolint: noctx
 		if err != nil {
 			m.logger.Warnf(
 				"failed resolving remote vxlan endpoint but under max attempts will try"+
@@ -99,7 +101,9 @@ func (m *vxlanManager) resolveVXLANService(vxlanRemote string) (string, error) {
 }
 
 func (m *vxlanManager) runContainerlabVxlanToolsCreate(
-	localNodeName, cntLink, vxlanRemote string,
+	localNodeName,
+	cntLink,
+	vxlanRemote string,
 	vxlanID int,
 ) error {
 	resolvedVxlanRemote, err := m.resolveVXLANService(vxlanRemote)
@@ -109,7 +113,8 @@ func (m *vxlanManager) runContainerlabVxlanToolsCreate(
 
 	m.logger.Debugf("resolved remote vxlan tunnel service address as '%s'", resolvedVxlanRemote)
 
-	cmd := exec.Command( //nolint:gosec
+	cmd := exec.CommandContext( //nolint:gosec
+		m.ctx,
 		"containerlab",
 		"tools",
 		"vxlan",
@@ -140,9 +145,12 @@ func (m *vxlanManager) runContainerlabVxlanToolsCreate(
 }
 
 func (m *vxlanManager) runContainerlabVxlanToolsDelete(
-	localNodeName, cntLink string,
+	ctx context.Context,
+	localNodeName,
+	cntLink string,
 ) error {
-	cmd := exec.Command( //nolint:gosec
+	cmd := exec.CommandContext( //nolint:gosec
+		ctx,
 		"containerlab",
 		"tools",
 		"vxlan",
@@ -188,7 +196,9 @@ func (m *vxlanManager) updateVxlanTunnels(
 		}
 
 		err := m.runContainerlabVxlanToolsDelete(
-			existingTunnel.LocalNode, existingTunnel.LocalInterface,
+			m.ctx,
+			existingTunnel.LocalNode,
+			existingTunnel.LocalInterface,
 		)
 		if err != nil {
 			m.logger.Fatalf(
@@ -216,7 +226,9 @@ func (m *vxlanManager) updateVxlanTunnels(
 			// tunnel for this interface exists but isnt the same as our desired setup, delete the
 			// old tunnel before we create the new one
 			err := m.runContainerlabVxlanToolsDelete(
-				tunnel.LocalNode, tunnel.LocalInterface,
+				m.ctx,
+				tunnel.LocalNode,
+				tunnel.LocalInterface,
 			)
 			if err != nil {
 				m.logger.Fatalf(

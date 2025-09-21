@@ -1,4 +1,4 @@
-FROM golang:1.24-bookworm as builder
+FROM golang:1.24-bookworm AS builder
 
 ARG VERSION
 
@@ -25,11 +25,11 @@ FROM --platform=linux/amd64 debian:bookworm-slim
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-ARG DOCKER_VERSION="5:27.*"
+ARG DOCKER_VERSION="5:28.*"
 # note: there is/was a breakage for clab tools/vxlan tunnel between 0.52.0 and 0.56.x -- fixed in
 # 0.57.5 of clab!
-ARG CONTAINERLAB_VERSION="0.64.0+"
-ARG NERDCTL_VERSION="2.0.4"
+ARG CONTAINERLAB_VERSION="0.69.0+"
+ARG NERDCTL_VERSION="2.1.4"
 
 RUN apt-get update && \
     apt-get install -yq --no-install-recommends \

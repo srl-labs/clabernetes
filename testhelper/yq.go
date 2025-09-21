@@ -13,7 +13,8 @@ func YQCommand(t *testing.T, content []byte, yqPattern string) []byte {
 
 	yqCmd := fmt.Sprintf("echo '%s' | yq '%s'", string(content), yqPattern)
 
-	cmd := exec.Command( //nolint:gosec
+	cmd := exec.CommandContext( //nolint:gosec
+		t.Context(),
 		"bash",
 		"-c",
 		yqCmd,

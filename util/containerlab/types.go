@@ -215,16 +215,17 @@ type CertificateConfig struct {
 
 // LinkDefinition represents a link definition in the topology file.
 type LinkDefinition struct {
-	Type       string `yaml:"type,omitempty"`
 	LinkConfig `yaml:",inline"`
+
+	Type string `yaml:"type,omitempty"`
 }
 
 // LinkConfig is the vendor'd (ish) clab link config object.
 type LinkConfig struct {
 	Endpoints []string
-	Labels    map[string]string      `yaml:"labels,omitempty"`
-	Vars      map[string]interface{} `yaml:"vars,omitempty"`
-	MTU       int                    `yaml:"mtu,omitempty"`
+	Labels    map[string]string `yaml:"labels,omitempty"`
+	Vars      map[string]any    `yaml:"vars,omitempty"`
+	MTU       int               `yaml:"mtu,omitempty"`
 }
 
 // HealthcheckConfig represents healthcheck options a node has.

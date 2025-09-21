@@ -21,6 +21,7 @@ const (
 
 type slurpeethManager struct {
 	*common
+
 	cancelChan chan bool
 }
 
