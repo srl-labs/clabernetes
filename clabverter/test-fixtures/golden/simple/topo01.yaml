@@ -1,7 +1,6 @@
 apiVersion: clabernetes.containerlab.dev/v1alpha1
 kind: Topology
 metadata:
-  creationTimestamp: null
   name: topo01
   namespace: notclabernetes
 spec:
