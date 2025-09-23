@@ -228,6 +228,30 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_ConfigDeployment(
 							},
 						},
 					},
+					"nodeSelectorsByImage": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NodeSelectorsByImage is a mapping of image glob pattern as key and node selectors (value) to apply to each deployment. Note that in case of multiple matches, the longest (with most characters) will take precedence. A config example: {\n  \"internal.io/nokia_sros*\": {\"node-flavour\": \"baremetal\"},\n  \"ghcr.io/nokia/srlinux*\":  {\"node-flavour\": \"amd64\"},\n  \"default\":                 {\"node-flavour\": \"cheap\"},\n}.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Allows: true,
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Default: "",
+													Type:    []string{"string"},
+													Format:  "",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 					"privilegedLauncher": {
 						SchemaProps: spec.SchemaProps{
 							Description: "PrivilegedLauncher, when true, sets the launcher containers to privileged. By default, we do our best to *not* need this/set this, and instead set only the capabilities we need, however its possible that some containers launched by the launcher may need/want more capabilities, so this flag exists for users to bypass the default settings and enable fully privileged launcher pods.",

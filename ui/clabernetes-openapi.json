@@ -1498,14 +1498,12 @@
                                         "type": "string"
                                     },
                                     "useNodeMgmtIpv4Address": {
-                                        "description": "When set to true, the controller will look up each node\u2019s management IPv4\naddress (from the `mgmt-ipv4` field in your containerlab topology) and assign\nthat address to `Service.spec.loadBalancerIP` on the corresponding LoadBalancer\nService.\n- Only applies if `spec.expose.exposeType` is `LoadBalancer`.\n- If the IP is missing or fails validation, a warning is emitted and Kubernetes\n  will allocate an IP automatically.",
-                                        "type": "boolean",
-                                        "default": false
+                                        "description": "UseNodeMgmtIpv4Address, when set to true, the controller will look up each node\u2019s management\nIPv4 address (from the `mgmt-ipv4` field in your containerlab topology) and assign\nthat address to `Service.spec.loadBalancerIP` on the corresponding LoadBalancer\nService.\n- Only applies if `spec.expose.exposeType` is `LoadBalancer`.\n- If the IP is missing or fails validation, a warning is emitted and Kubernetes\n  will allocate an IP automatically.",
+                                        "type": "boolean"
                                     },
-                                    "exposeUseNodeMgmtIpv6Address": {
-                                        "description": "When set to true, the controller will look up each node\u2019s management IPv6\naddress (from the `mgmt-ipv6` field in your containerlab topology) and assign\nthat address to `Service.spec.loadBalancerIP` on the corresponding LoadBalancer\nService.\n- Only applies if `spec.expose.exposeType` is `LoadBalancer`.\n- If the IP is missing or fails validation, a warning is emitted and Kubernetes\n  will allocate an IP automatically.",
-                                        "type": "boolean",
-                                        "default": false
+                                    "useNodeMgmtIpv6Address": {
+                                        "description": "UseNodeMgmtIpv6Address, when set to true, the controller will look up each node\u2019s management\nIPv6 address (from the `mgmt-ipv6` field in your containerlab topology) and assign\nthat address to `Service.spec.loadBalancerIP` on the corresponding LoadBalancer\nService.\n- Only applies if `spec.expose.exposeType` is `LoadBalancer`.\n- If the IP is missing or fails validation, a warning is emitted and Kubernetes\nwill allocate an IP automatically.",
+                                        "type": "boolean"
                                     }
                                 },
                                 "type": "object"
