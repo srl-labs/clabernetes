@@ -192,8 +192,11 @@ ui:
     enabled: true
     ingressClass: nginx
     # you really almost certainly gotta do something with this if you want the ingress to work :)
-    host: ui.clabernetes.containerlab.dev
-
+    host: clab.nanibot.net
+    tls:
+      - secretName: public-wildcard-cert-secret
+        hosts:
+          - clab.nanibot.net
 
 #
 # clicker
