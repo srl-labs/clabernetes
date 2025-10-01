@@ -30,6 +30,6 @@ spec:
               service:
                 name: clabernetes-plus-clicker-ui
                 port:
-                  number: 443
+                  number: 80
             path: /
             pathType: ImplementationSpecific

@@ -193,7 +193,7 @@ ui:
     ingressClass: nginx
     # you really almost certainly gotta do something with this if you want the ingress to work :)
     host: ui.clabernetes.containerlab.dev
-
+    tls: []
 
 #
 # clicker

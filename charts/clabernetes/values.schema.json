@@ -96,6 +96,12 @@
             },
             "host": {
               "type": "string"
+            },
+            "tls": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
             }
           }
         }
