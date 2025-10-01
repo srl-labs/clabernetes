@@ -51,8 +51,8 @@ spec:
   type: ClusterIP
   sessionAffinity: None
   ports:
-    - name: https
-      port: 443
+    - name: http
+      port: 80
       protocol: TCP
       targetPort: 3000
   selector:
