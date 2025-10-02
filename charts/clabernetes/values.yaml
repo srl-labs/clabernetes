@@ -46,6 +46,16 @@ manager:
   # pod affinity settings, directly inserted into manager deployment spec; if not provided basic
   # common-sense anti-affinity is applied.
   affinity: {}
+  # restrictedRBAC enables a more restricted RBAC setup for the manager. When enabled, the
+  # ClusterRole given to the manager's ServiceAccount is more limited, and a Role and
+  # RoleBinding are created in each of the namespaces listed in `targetNamespaces` below to
+  # grant extra permissions.
+  restrictedRBAC:
+    enabled: false
+    targetNamespaces:
+      - c9s-lab1
+      - c9s-lab2
+      - c9s-lab3
 
 #
 # global config
