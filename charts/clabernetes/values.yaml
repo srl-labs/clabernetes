@@ -52,11 +52,7 @@ manager:
   # grant extra permissions.
   restrictedRBAC:
     enabled: false
-    targetNamespaces:
-      - c9s-lab1
-      - c9s-lab2
-      - c9s-lab3
-
+    targetNamespaces: []
 #
 # global config
 #
