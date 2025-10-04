@@ -51,6 +51,20 @@
         },
         "affinity": {
           "type": "object"
+        },
+        "restrictedRBAC": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "targetNamespaces": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
         }
       }
     },

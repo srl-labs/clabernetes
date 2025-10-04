@@ -49,6 +49,10 @@ rules:
       - persistentvolumeclaims
       - serviceaccounts
     verbs:
+    {{- if .Values.manager.restrictedRBAC.enabled }}
+      - list
+      - watch
+    {{- else }}
       - get
       - list
       - create
@@ -56,6 +60,7 @@ rules:
       - delete
       - patch
       - watch
+    {{- end }}
   - apiGroups:
       - coordination.k8s.io
     resources:
@@ -73,6 +78,10 @@ rules:
     resources:
       - deployments
     verbs:
+    {{- if .Values.manager.restrictedRBAC.enabled }}
+      - list
+      - watch
+    {{- else }}
       - get
       - list
       - create
@@ -80,11 +89,16 @@ rules:
       - delete
       - patch
       - watch
+    {{- end }}
   - apiGroups:
       - rbac.authorization.k8s.io
     resources:
       - rolebindings
     verbs:
+    {{- if .Values.manager.restrictedRBAC.enabled }}
+      - list
+      - watch
+    {{- else }}
       - get
       - list
       - create
@@ -92,6 +106,7 @@ rules:
       - delete
       - patch
       - watch
+    {{- end }}
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1

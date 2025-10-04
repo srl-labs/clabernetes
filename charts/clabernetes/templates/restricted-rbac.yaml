@@ -1,0 +1,212 @@
+{{- if .Values.manager.restrictedRBAC.enabled }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    revision: "{{ .Release.Revision }}"
+    clabernetes/app: {{ .Values.appName }}
+    clabernetes/name: "{{ .Values.appName }}-restricted-role"
+    clabernetes/component: role
+    {{- if .Values.globalLabels }}
+{{ .Values.globalLabels | toYaml | indent 4 }}
+    {{- end }}
+  {{- if .Values.globalAnnotations }}
+  annotations:
+{{ .Values.globalAnnotations | toYaml | indent 4 }}
+  {{- end }}
+  name: "{{ .Values.appName }}-restricted-role"
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+      - secrets
+      - configmaps
+      - services
+      - pods
+      - persistentvolumeclaims
+      - serviceaccounts
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - delete
+      - patch
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - delete
+      - patch
+      - watch
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - rolebindings
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - delete
+      - patch
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "{{ .Values.appName }}-restricted-role-binding"
+  namespace: {{ .Release.Namespace }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    revision: "{{ .Release.Revision }}"
+    clabernetes/app: {{ .Values.appName }}
+    clabernetes/name: "{{ .Values.appName }}-restricted-role-binding"
+    clabernetes/component: role-binding
+    {{- if .Values.globalLabels }}
+{{ .Values.globalLabels | toYaml | indent 4 }}
+    {{- end }}
+  {{- if .Values.globalAnnotations }}
+  annotations:
+{{ .Values.globalAnnotations | toYaml | indent 4 }}
+  {{- end }}
+subjects:
+  - kind: ServiceAccount
+    name: "{{ .Values.appName }}-service-account"
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: "{{ .Values.appName }}-restricted-role"
+  apiGroup: rbac.authorization.k8s.io
+---
+{{- range .Values.manager.restrictedRBAC.targetNamespaces }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
+    revision: "{{ $.Release.Revision }}"
+    clabernetes/app: {{ $.Values.appName }}
+    clabernetes/name: "{{ $.Values.appName }}-launcher-namespace"
+    clabernetes/component: namespace
+    pod-security.kubernetes.io/enforce: privileged
+    {{- if $.Values.globalLabels }}
+{{ $.Values.globalLabels | toYaml | indent 4 }}
+    {{- end }}
+  {{- if $.Values.globalAnnotations }}
+  annotations:
+{{ $.Values.globalAnnotations | toYaml | indent 4 }}
+  {{- end }}
+  name: {{ . }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
+    revision: "{{ $.Release.Revision }}"
+    clabernetes/app: {{ $.Values.appName }}
+    clabernetes/name: "{{ $.Values.appName }}-restricted-role"
+    clabernetes/component: role
+    {{- if $.Values.globalLabels }}
+{{ $.Values.globalLabels | toYaml | indent 4 }}
+    {{- end }}
+  {{- if $.Values.globalAnnotations }}
+  annotations:
+{{ $.Values.globalAnnotations | toYaml | indent 4 }}
+  {{- end }}
+  name: "{{ $.Values.appName }}-restricted-role"
+  namespace: {{ . }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+      - secrets
+      - configmaps
+      - services
+      - pods
+      - persistentvolumeclaims
+      - serviceaccounts
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - delete
+      - patch
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - delete
+      - patch
+      - watch
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - rolebindings
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - delete
+      - patch
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "{{ $.Values.appName }}-restricted-role-binding"
+  namespace: {{ . }}
+  labels:
+    chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
+    revision: "{{ $.Release.Revision }}"
+    clabernetes/app: {{ $.Values.appName }}
+    clabernetes/name: "{{ $.Values.appName }}-restricted-role-binding"
+    clabernetes/component: role-binding
+    {{- if $.Values.globalLabels }}
+{{ $.Values.globalLabels | toYaml | indent 4 }}
+    {{- end }}
+  {{- if $.Values.globalAnnotations }}
+  annotations:
+{{ $.Values.globalAnnotations | toYaml | indent 4 }}
+  {{- end }}
+subjects:
+  - kind: ServiceAccount
+    name: "{{ $.Values.appName }}-service-account"
+    namespace: {{ $.Release.Namespace }}
+roleRef:
+  kind: Role
+  name: "{{ $.Values.appName }}-restricted-role"
+  apiGroup: rbac.authorization.k8s.io
+---
+{{- end }}
+{{- end }}
