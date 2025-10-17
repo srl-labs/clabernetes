@@ -113,6 +113,18 @@ func (m *vxlanManager) runContainerlabVxlanToolsCreate(
 
 	m.logger.Debugf("resolved remote vxlan tunnel service address as '%s'", resolvedVxlanRemote)
 
+	vxlanInterfaceName := fmt.Sprintf("%s-%s", localNodeName, cntLink)
+	m.logger.Debugf("Attempting to delete existing vxlan interface '%s'", vxlanInterfaceName)
+
+	err = m.runContainerlabVxlanToolsDelete(m.ctx, localNodeName, cntLink)
+	if err != nil {
+		m.logger.Warnf(
+			"failed while deleting existing vxlan interface '%s', error: '%s'",
+			vxlanInterfaceName,
+			err,
+		)
+	}
+
 	cmd := exec.CommandContext( //nolint:gosec
 		m.ctx,
 		"containerlab",
