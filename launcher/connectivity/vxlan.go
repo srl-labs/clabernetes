@@ -115,6 +115,7 @@ func (m *vxlanManager) runContainerlabVxlanToolsCreate(
 
 	vxlanInterfaceName := fmt.Sprintf("%s-%s", localNodeName, cntLink)
 	m.logger.Debugf("Attempting to delete existing vxlan interface '%s'", vxlanInterfaceName)
+
 	err = m.runContainerlabVxlanToolsDelete(m.ctx, localNodeName, cntLink)
 	if err != nil {
 		m.logger.Warnf(
