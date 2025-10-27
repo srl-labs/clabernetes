@@ -50,6 +50,7 @@ manager:
   # ClusterRole given to the manager's ServiceAccount is more limited, and a Role and
   # RoleBinding are created in each of the namespaces listed in `targetNamespaces` below to
   # grant extra permissions.
+  # This is needed on OpenShift clusters to prevent default SCC restrictions.
   restrictedRBAC:
     enabled: false
     targetNamespaces: []

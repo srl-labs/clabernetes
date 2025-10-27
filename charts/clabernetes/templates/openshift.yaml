@@ -1,0 +1,33 @@
+{{- if and (.Capabilities.APIVersions.Has "security.openshift.io/v1") .Values.manager.restrictedRBAC.enabled -}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: anyuid-scc-rolebinding
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:openshift:scc:anyuid
+subjects:
+- kind: ServiceAccount
+  name: "{{ .Values.appName }}-service-account"
+  namespace: {{ .Release.Namespace }}
+---
+{{- range .Values.manager.restrictedRBAC.targetNamespaces -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: privileged-scc-rolebinding
+  namespace: {{ . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:openshift:scc:privileged
+subjects:
+- kind: ServiceAccount
+  name: clabernetes-launcher-service-account
+  namespace: {{ . }}
+---
+{{- end -}}
+{{- end -}}
