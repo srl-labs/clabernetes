@@ -18,24 +18,24 @@ metadata:
       {{- if $labels }}
 {{ toYaml $labels | indent 4 }}
       {{- end }}
-  {{- $annotations := merge $.Values.globalAnnotations $.Values.ui.deploymentAnnotations }}
+  {{- $annotations := merge $.Values.globalAnnotations $.Values.ui.ingress.annotations $.Values.ui.deploymentAnnotations }}
   {{- if $annotations }}
   annotations:
     kubernetes.io/ingress.class: {{ .Values.ui.ingress.ingressClass }}
 {{ toYaml $annotations | indent 4 }}
   {{- end }}
 spec:
+  ingressClassName: {{ .Values.ui.ingress.ingressClass }}
   {{- if .Values.ui.ingress.tls }}
   tls:
-  {{- range .Values.ui.ingress.tls }}
+    {{- range .Values.ui.ingress.tls }}
     - hosts:
-      {{- range .hosts }}
+        {{- range .hosts }}
         - {{ . | quote }}
-      {{- end }}
+        {{- end }}
       secretName: {{ .secretName }}
+    {{- end }}
   {{- end }}
-  {{- end }}
-  ingressClassName: {{ .Values.ui.ingress.ingressClass }}
   rules:
     - host: {{ .Values.ui.ingress.host }}
       http:
@@ -44,7 +44,7 @@ spec:
               service:
                 name: {{ .Values.appName }}-ui
                 port:
-                  number: 80
+                  number: 443
             path: /
             pathType: ImplementationSpecific
 {{- end }}
