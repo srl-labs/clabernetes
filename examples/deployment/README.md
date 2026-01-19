@@ -123,7 +123,7 @@ spec:
   deployment:
     containerlabDebug: true        # Enable debug logging
     containerlabTimeout: "30m"     # Deploy timeout
-    containerlabVersion: "0.50.0"  # Pin specific version
+    containerlabVersion: "0.72.0"  # Pin specific version
 ```
 
 ### Launcher Configuration
