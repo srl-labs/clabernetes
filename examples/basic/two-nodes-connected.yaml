@@ -1,0 +1,20 @@
+# Two Nokia SR Linux nodes connected via a point-to-point link
+# Demonstrates basic multi-node topology with connectivity
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: two-nodes
+spec:
+  definition:
+    containerlab: |
+      name: two-nodes
+      topology:
+        nodes:
+          srl1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+          srl2:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+        links:
+          - endpoints: ["srl1:e1-1", "srl2:e1-1"]

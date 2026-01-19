@@ -1,0 +1,63 @@
+# Multi-vendor topology demonstrating heterogeneous network lab
+# NOTE: Replace placeholder images with actual vendor images:
+#   - nokia_sros: vrnetlab/nokia_sros:latest
+#   - cisco_xrd: ios-xr/xrd-control-plane:latest
+# For testing, this example uses SRL images as placeholders
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: multi-vendor
+spec:
+  deployment:
+    # Different resources for different device types
+    resources:
+      default:
+        requests:
+          memory: "4Gi"
+          cpu: "2"
+      # SR OS needs more resources as it runs full virtual router
+      pe1:
+        requests:
+          memory: "8Gi"
+          cpu: "4"
+      pe2:
+        requests:
+          memory: "8Gi"
+          cpu: "4"
+  definition:
+    containerlab: |
+      name: multi-vendor
+      topology:
+        nodes:
+          # Nokia SR Linux - modern container-native NOS
+          srl1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+          srl2:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+
+          # Nokia SR OS (vSIM) - full virtual router
+          # Replace with: kind: nokia_sros, image: vrnetlab/nokia_sros:latest
+          pe1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+          pe2:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+
+          # Cisco XRd (or CSR)
+          # Replace with: kind: cisco_xrd, image: ios-xr/xrd-control-plane:latest
+          xr1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+
+        links:
+          # SRL to PE connections
+          - endpoints: ["srl1:e1-1", "pe1:e1-1"]
+          - endpoints: ["srl2:e1-1", "pe2:e1-1"]
+          # PE to XR connections
+          - endpoints: ["pe1:e1-2", "xr1:e1-1"]
+          - endpoints: ["pe2:e1-2", "xr1:e1-2"]
+          # SRL interconnect
+          - endpoints: ["srl1:e1-2", "srl2:e1-2"]

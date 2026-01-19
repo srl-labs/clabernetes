@@ -1,0 +1,55 @@
+# Topology demonstrating private registry configuration
+# For actual private registry use:
+# 1. Create pull secret:
+#    kubectl create secret docker-registry my-registry-secret \
+#      --docker-server=registry.example.com \
+#      --docker-username=myuser \
+#      --docker-password=mypass
+# 2. Replace images with your private registry images
+# 3. Uncomment pullSecrets configuration
+---
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: private-registry
+spec:
+  imagePull:
+    # Use image pull-through mode (auto tries pull-through, falls back to direct)
+    pullThroughOverride: auto
+    # Uncomment for private registry:
+    # pullSecrets:
+    #   - my-registry-secret
+    # Optional: configure insecure registries
+    # insecureRegistries:
+    #   - registry.local:5000
+  definition:
+    containerlab: |
+      name: private
+      topology:
+        nodes:
+          srl1:
+            kind: nokia_srlinux
+            # Replace with private registry image:
+            # image: registry.example.com/nokia/srlinux:23.10.1
+            image: ghcr.io/nokia/srlinux:latest
+          srl2:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+        links:
+          - endpoints: ["srl1:e1-1", "srl2:e1-1"]
+---
+# Alternative: Use dockerConfig for registry auth
+# Create a secret with config.json:
+# kubectl create secret generic docker-config \
+#   --from-file=config.json=/path/to/config.json
+---
+# apiVersion: clabernetes.containerlab.dev/v1alpha1
+# kind: Topology
+# metadata:
+#   name: private-with-docker-config
+# spec:
+#   imagePull:
+#     dockerConfig: docker-config  # Secret name containing config.json
+#   definition:
+#     containerlab: |
+#       ...
