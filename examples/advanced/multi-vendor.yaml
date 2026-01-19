@@ -1,8 +1,4 @@
 # Multi-vendor topology demonstrating heterogeneous network lab
-# NOTE: Replace placeholder images with actual vendor images:
-#   - nokia_sros: vrnetlab/nokia_sros:latest
-#   - cisco_xrd: ios-xr/xrd-control-plane:latest
-# For testing, this example uses SRL images as placeholders
 apiVersion: clabernetes.containerlab.dev/v1alpha1
 kind: Topology
 metadata:
@@ -29,7 +25,6 @@ spec:
       name: multi-vendor
       topology:
         nodes:
-          # Nokia SR Linux - modern container-native NOS
           srl1:
             kind: nokia_srlinux
             image: ghcr.io/nokia/srlinux:latest
@@ -37,27 +32,23 @@ spec:
             kind: nokia_srlinux
             image: ghcr.io/nokia/srlinux:latest
 
-          # Nokia SR OS (vSIM) - full virtual router
-          # Replace with: kind: nokia_sros, image: vrnetlab/nokia_sros:latest
           pe1:
-            kind: nokia_srlinux
-            image: ghcr.io/nokia/srlinux:latest
+            kind: juniper_vmx
+            image: vrnetlab/vr-vmx:20.2R1.10
           pe2:
-            kind: nokia_srlinux
-            image: ghcr.io/nokia/srlinux:latest
+            kind: nokia_sros
+            image: nokia_sros:20.10.R1
 
-          # Cisco XRd (or CSR)
-          # Replace with: kind: cisco_xrd, image: ios-xr/xrd-control-plane:latest
           xr1:
-            kind: nokia_srlinux
-            image: ghcr.io/nokia/srlinux:latest
+            kind: cisco_xrv
+            image: vrnetlab/vr-xrv:6.1.2
 
         links:
           # SRL to PE connections
-          - endpoints: ["srl1:e1-1", "pe1:e1-1"]
-          - endpoints: ["srl2:e1-1", "pe2:e1-1"]
+          - endpoints: ["srl1:e1-1", "pe1:eth1"]
+          - endpoints: ["srl2:e1-1", "pe2:eth1"]
           # PE to XR connections
-          - endpoints: ["pe1:e1-2", "xr1:e1-1"]
-          - endpoints: ["pe2:e1-2", "xr1:e1-2"]
+          - endpoints: ["pe1:eth2", "xr1:eth1"]
+          - endpoints: ["pe2:eth2", "xr1:eth2"]
           # SRL interconnect
           - endpoints: ["srl1:e1-2", "srl2:e1-2"]
