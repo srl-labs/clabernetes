@@ -120,6 +120,28 @@ spec:
 - Access via service name: `<topology>-<node>.<namespace>.svc.cluster.local`
 - Suitable for in-cluster automation and testing
 
+### Headless
+
+Direct pod access via DNS without load balancing:
+
+```yaml
+spec:
+  expose:
+    exposeType: Headless
+```
+
+**Characteristics:**
+- Creates a headless service (`clusterIP: None`)
+- DNS queries return pod IPs directly instead of a virtual service IP
+- No load balancing or proxying by kube-proxy
+- Useful for StatefulSet-like access patterns where you need direct pod connectivity
+
+**Use cases:**
+- Service discovery where clients need to connect directly to specific pods
+- Custom load balancing logic in client applications
+- Integration with external service meshes that handle their own load balancing
+- Scenarios where you need DNS-based pod discovery without Kubernetes proxying
+
 ### None
 
 No services but configuration preserved:
@@ -191,6 +213,7 @@ spec:
 | `disableExpose: true` | None | No | N/A |
 | `disableAutoExpose: true` | LoadBalancer | Yes | Manual only |
 | `exposeType: ClusterIP` | ClusterIP | No | Auto + Manual |
+| `exposeType: Headless` | Headless (clusterIP: None) | No | Auto + Manual |
 | `exposeType: None` | None | No | N/A |
 
 ## Accessing Nodes
@@ -217,6 +240,20 @@ apk add openssh-client
 ssh admin@my-topology-srl1.default.svc.cluster.local
 ```
 
+### With Headless
+
+```bash
+# From within the cluster - DNS returns pod IPs directly
+kubectl run debug --rm -it --image=alpine -- sh
+apk add openssh-client bind-tools
+
+# DNS lookup returns pod IP(s) instead of a virtual service IP
+nslookup my-topology-srl1.default.svc.cluster.local
+
+# Connect directly to the pod
+ssh admin@my-topology-srl1.default.svc.cluster.local
+```
+
 ### With No Services
 
 ```bash
@@ -234,7 +271,9 @@ kubectl exec -it deploy/my-topology-srl1 -- sr_cli
 
 4. **Security**: Disable auto-expose and explicitly define only required ports
 
-5. **Cost optimization**: Use `ClusterIP` when external access isn't needed
+5. **Cost optimization**: Use `ClusterIP` or `Headless` when external access isn't needed
+
+6. **Service mesh integration**: Use `exposeType: Headless` when integrating with service meshes that handle their own load balancing
 
 ## Related
 
