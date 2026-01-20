@@ -1,0 +1,53 @@
+# Topology with custom status probe configuration
+# Demonstrates health checking for different node types
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: with-probes
+spec:
+  statusProbes:
+    # Enable status probing
+    enabled: true
+    # Exclude nodes that don't support probing
+    excludedNodes:
+      - linux-host
+    # Default probe for all nodes
+    probeConfiguration:
+      # Allow 15 minutes for nodes to boot
+      startupSeconds: 900
+      sshProbeConfiguration:
+        username: admin
+        password: NokiaSrl1!
+        port: 22
+    # Override for specific nodes
+    nodeProbeConfigurations:
+      # TCP probe for nodes without SSH
+      router1:
+        tcpProbeConfiguration:
+          port: 830  # NETCONF port
+  definition:
+    containerlab: |
+      name: probed
+      topology:
+        nodes:
+          # Standard SRL - uses default SSH probe
+          srl1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+          srl2:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+
+          # Custom router - uses TCP probe
+          router1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+
+          # Linux host - excluded from probing
+          linux-host:
+            kind: linux
+            image: alpine:latest
+
+        links:
+          - endpoints: ["srl1:e1-1", "srl2:e1-1"]
+          - endpoints: ["srl2:e1-2", "router1:e1-1"]

@@ -1,0 +1,28 @@
+# Topology with persistent storage enabled
+# Node state survives pod restarts
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: persistent-topology
+spec:
+  deployment:
+    persistence:
+      # Enable PVC-backed storage for each node's lab directory
+      enabled: true
+      # Size of the persistent volume (default: 5Gi)
+      claimSize: "10Gi"
+      # Optional: specify a storage class (uses default if not set)
+      # storageClassName: "fast-ssd"
+  definition:
+    containerlab: |
+      name: persistent
+      topology:
+        nodes:
+          srl1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+          srl2:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+        links:
+          - endpoints: ["srl1:e1-1", "srl2:e1-1"]

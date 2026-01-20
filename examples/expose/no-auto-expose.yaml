@@ -1,0 +1,32 @@
+# Topology with auto-expose disabled
+# When disableAutoExpose is true, no services are created for nodes
+# Note: Currently, explicit containerlab port definitions are also cleared
+# This effectively makes the node unexposed (similar to exposeType: None)
+# Future versions may allow explicit port definitions with disableAutoExpose
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: no-auto-expose
+spec:
+  expose:
+    # Disable the automatic port list (SSH, gNMI, NETCONF, etc.)
+    # Only ports defined in the containerlab topology will be exposed
+    disableAutoExpose: true
+  definition:
+    containerlab: |
+      name: manual-ports
+      topology:
+        nodes:
+          srl1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+            ports:
+              - "22:22"
+              - "57400:57400"
+          srl2:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+            ports:
+              - "22:22"
+        links:
+          - endpoints: ["srl1:e1-1", "srl2:e1-1"]

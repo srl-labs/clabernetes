@@ -1,0 +1,54 @@
+# Multi-vendor topology demonstrating heterogeneous network lab
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: multi-vendor
+spec:
+  deployment:
+    # Different resources for different device types
+    resources:
+      default:
+        requests:
+          memory: "4Gi"
+          cpu: "2"
+      # SR OS needs more resources as it runs full virtual router
+      pe1:
+        requests:
+          memory: "8Gi"
+          cpu: "4"
+      pe2:
+        requests:
+          memory: "8Gi"
+          cpu: "4"
+  definition:
+    containerlab: |
+      name: multi-vendor
+      topology:
+        nodes:
+          srl1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+          srl2:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+
+          pe1:
+            kind: juniper_vmx
+            image: vrnetlab/vr-vmx:20.2R1.10
+          pe2:
+            kind: nokia_sros
+            image: nokia_sros:20.10.R1
+
+          xr1:
+            kind: cisco_xrv
+            image: vrnetlab/vr-xrv:6.1.2
+
+        links:
+          # SRL to PE connections
+          - endpoints: ["srl1:e1-1", "pe1:eth1"]
+          - endpoints: ["srl2:e1-1", "pe2:eth1"]
+          # PE to XR connections
+          - endpoints: ["pe1:eth2", "xr1:eth1"]
+          - endpoints: ["pe2:eth2", "xr1:eth2"]
+          # SRL interconnect
+          - endpoints: ["srl1:e1-2", "srl2:e1-2"]

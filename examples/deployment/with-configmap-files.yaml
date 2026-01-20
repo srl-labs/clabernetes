@@ -1,0 +1,68 @@
+# Topology with files mounted from ConfigMaps
+# Use for license files, startup configs, or other static files
+---
+# First, create the ConfigMap with license content
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: srl-license
+data:
+  license.key: |
+    # Your SR Linux license content here
+    # Replace with actual license data
+---
+# ConfigMap for startup configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: srl-startup-config
+data:
+  config.json: |
+    {
+      "system": {
+        "name": {
+          "host-name": "srl1"
+        }
+      },
+      "interface": [
+        {
+          "name": "mgmt0",
+          "admin-state": "enable"
+        }
+      ]
+    }
+---
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: with-configmaps
+spec:
+  deployment:
+    filesFromConfigMap:
+      # Files to mount for srl1 node
+      srl1:
+        - filePath: /opt/srlinux/etc/license.key
+          configMapName: srl-license
+          configMapPath: license.key
+          mode: read
+        - filePath: /tmp/startup-config.json
+          configMapName: srl-startup-config
+          configMapPath: config.json
+      # Files to mount for srl2 node
+      srl2:
+        - filePath: /opt/srlinux/etc/license.key
+          configMapName: srl-license
+          configMapPath: license.key
+  definition:
+    containerlab: |
+      name: configmaps
+      topology:
+        nodes:
+          srl1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+          srl2:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+        links:
+          - endpoints: ["srl1:e1-1", "srl2:e1-1"]

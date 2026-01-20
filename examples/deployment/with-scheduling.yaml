@@ -1,0 +1,35 @@
+# Topology with node scheduling constraints
+# Control which Kubernetes nodes run the topology pods
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: scheduled-topology
+spec:
+  deployment:
+    scheduling:
+      # Only schedule on nodes with these labels
+      nodeSelector:
+        kubernetes.io/arch: amd64
+        node-type: network-lab
+      # Tolerations for tainted nodes
+      tolerations:
+        - key: "dedicated"
+          operator: "Equal"
+          value: "network-lab"
+          effect: "NoSchedule"
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+  definition:
+    containerlab: |
+      name: scheduled
+      topology:
+        nodes:
+          srl1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+          srl2:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+        links:
+          - endpoints: ["srl1:e1-1", "srl2:e1-1"]

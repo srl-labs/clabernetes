@@ -1,0 +1,25 @@
+# Topology with no Kubernetes services created
+# Use this when you don't need external access to nodes
+# and want to minimize resource usage
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: no-services
+spec:
+  expose:
+    # Completely disables all service creation
+    # Nodes can still communicate via tunnels
+    disableExpose: true
+  definition:
+    containerlab: |
+      name: no-services
+      topology:
+        nodes:
+          srl1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+          srl2:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+        links:
+          - endpoints: ["srl1:e1-1", "srl2:e1-1"]

@@ -1,0 +1,15 @@
+# Minimal single Nokia SR Linux node
+# This is the simplest possible clabernetes topology
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: simple-srl
+spec:
+  definition:
+    containerlab: |
+      name: simple
+      topology:
+        nodes:
+          srl1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest

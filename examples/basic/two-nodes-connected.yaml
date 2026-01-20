@@ -1,13 +1,14 @@
+# Two Nokia SR Linux nodes connected via a point-to-point link
+# Demonstrates basic multi-node topology with connectivity and startup configs
 ---
 apiVersion: clabernetes.containerlab.dev/v1alpha1
 kind: Topology
 metadata:
-  name: clab-srl02
-  namespace: srl02
+  name: two-nodes
 spec:
   definition:
     containerlab: |-
-      name: srl02
+      name: two-nodes
       topology:
         nodes:
           srl1:
@@ -24,7 +25,7 @@ spec:
               set / interface ethernet-1/1 subinterface 0 ipv6 address 2002::192.168.0.0/127
               set / network-instance default
               set / network-instance default interface ethernet-1/1.0
-  
+
           srl2:
             kind: nokia_srlinux
             image: ghcr.io/nokia/srlinux:23.7.1
@@ -39,6 +40,6 @@ spec:
               set / interface ethernet-1/1 subinterface 0 ipv6 address 2002::192.168.0.1/127
               set / network-instance default
               set / network-instance default interface ethernet-1/1.0
-  
+
         links:
           - endpoints: ["srl1:e1-1", "srl2:e1-1"]

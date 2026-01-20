@@ -1,0 +1,65 @@
+# Data center spine-leaf topology
+# Two spines, four leaves in a fully meshed Clos architecture
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: spine-leaf
+spec:
+  deployment:
+    resources:
+      default:
+        requests:
+          memory: "4Gi"
+          cpu: "2"
+    persistence:
+      enabled: true
+      claimSize: "5Gi"
+  statusProbes:
+    enabled: true
+    probeConfiguration:
+      sshProbeConfiguration:
+        username: admin
+        password: NokiaSrl1!
+  definition:
+    containerlab: |
+      name: dc-fabric
+      topology:
+        defaults:
+          kind: nokia_srlinux
+          image: ghcr.io/nokia/srlinux:latest
+
+        nodes:
+          # Spine layer
+          spine1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+          spine2:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+
+          # Leaf layer
+          leaf1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+          leaf2:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+          leaf3:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+          leaf4:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+
+        links:
+          # Spine1 to all leaves
+          - endpoints: ["spine1:e1-1", "leaf1:e1-49"]
+          - endpoints: ["spine1:e1-2", "leaf2:e1-49"]
+          - endpoints: ["spine1:e1-3", "leaf3:e1-49"]
+          - endpoints: ["spine1:e1-4", "leaf4:e1-49"]
+
+          # Spine2 to all leaves
+          - endpoints: ["spine2:e1-1", "leaf1:e1-50"]
+          - endpoints: ["spine2:e1-2", "leaf2:e1-50"]
+          - endpoints: ["spine2:e1-3", "leaf3:e1-50"]
+          - endpoints: ["spine2:e1-4", "leaf4:e1-50"]

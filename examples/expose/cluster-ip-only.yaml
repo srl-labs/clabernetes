@@ -1,0 +1,25 @@
+# Topology with ClusterIP services only (no LoadBalancer)
+# Use this for internal-only access within the cluster
+# Reduces external attack surface and avoids LB provisioning
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: cluster-ip-only
+spec:
+  expose:
+    # ClusterIP services are created instead of LoadBalancer
+    # Access nodes via service name within the cluster
+    exposeType: ClusterIP
+  definition:
+    containerlab: |
+      name: cluster-ip
+      topology:
+        nodes:
+          srl1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+          srl2:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+        links:
+          - endpoints: ["srl1:e1-1", "srl2:e1-1"]

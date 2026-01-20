@@ -1,0 +1,45 @@
+# Topology with explicit resource limits per node
+# Useful for controlling resource consumption and ensuring QoS
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: with-resources
+spec:
+  deployment:
+    resources:
+      # Default resources for all nodes
+      default:
+        requests:
+          memory: "2Gi"
+          cpu: "1"
+        limits:
+          memory: "4Gi"
+          cpu: "2"
+      # Override for specific high-memory node
+      core-router:
+        requests:
+          memory: "8Gi"
+          cpu: "4"
+        limits:
+          memory: "16Gi"
+          cpu: "8"
+  definition:
+    containerlab: |
+      name: resources
+      topology:
+        nodes:
+          # This node gets default resources (2Gi/1cpu)
+          edge1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+          # This node gets default resources (2Gi/1cpu)
+          edge2:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+          # This node gets high resources (8Gi/4cpu)
+          core-router:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+        links:
+          - endpoints: ["edge1:e1-1", "core-router:e1-1"]
+          - endpoints: ["edge2:e1-1", "core-router:e1-2"]
