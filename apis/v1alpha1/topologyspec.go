@@ -105,9 +105,12 @@ type Expose struct {
 	//         you may want to do this if you want to tickle the pods by pod name directly for some
 	//         reason while not having extra services floating around.
 	// - ClusterIP: a clusterip service is created so you can hit that service name for the pods.
+	// - Headless: a headless service (clusterIP: None) is created. This is useful when you don't
+	//         need load-balancing or a single service IP but want to directly connect to pods via
+	//         DNS records that return pod IPs.
 	// - LoadBalancer: (default) creates a load balancer service so you can access your pods from
 	//         outside the cluster. this is/was the only behavior up to v0.2.4.
-	// +kubebuilder:validation:Enum=None;ClusterIP;LoadBalancer
+	// +kubebuilder:validation:Enum=None;ClusterIP;Headless;LoadBalancer
 	// +kubebuilder:default=LoadBalancer
 	// +optional
 	ExposeType string `json:"exposeType,omitempty"`
