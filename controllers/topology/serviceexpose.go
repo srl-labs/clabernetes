@@ -19,11 +19,14 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-const exposeTypeNone = "None"
+const (
+	exposeTypeNone     = "None"
+	exposeTypeHeadless = "Headless"
+)
 
 func exposeTypeToServiceType(exposeType string) k8scorev1.ServiceType {
 	switch exposeType {
-	case string(k8scorev1.ServiceTypeClusterIP):
+	case string(k8scorev1.ServiceTypeClusterIP), exposeTypeHeadless:
 		return k8scorev1.ServiceTypeClusterIP
 	default:
 		return k8scorev1.ServiceTypeLoadBalancer
@@ -233,6 +236,17 @@ func (r *ServiceExposeReconciler) renderServiceBase(
 		labels[k] = v
 	}
 
+	serviceSpec := k8scorev1.ServiceSpec{
+		Selector: selectorLabels,
+		// if we ever get here we know expose is not none, so we can just cast the string from
+		// our crd to the appropriate flavor service
+		Type: exposeTypeToServiceType(owningTopology.Spec.Expose.ExposeType),
+	}
+
+	if owningTopology.Spec.Expose.ExposeType == exposeTypeHeadless {
+		serviceSpec.ClusterIP = k8scorev1.ClusterIPNone
+	}
+
 	return &k8scorev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
@@ -240,12 +254,7 @@ func (r *ServiceExposeReconciler) renderServiceBase(
 			Annotations: annotations,
 			Labels:      labels,
 		},
-		Spec: k8scorev1.ServiceSpec{
-			Selector: selectorLabels,
-			// if we ever get here we know expose is not none, so we can just cast the string from
-			// our crd to the appropriate flavor service
-			Type: exposeTypeToServiceType(owningTopology.Spec.Expose.ExposeType),
-		},
+		Spec: serviceSpec,
 	}
 }
 
