@@ -1,0 +1,26 @@
+# Topology with Headless services (clusterIP: None)
+# Use this when you need DNS-based pod discovery without load balancing
+# DNS queries return pod IPs directly instead of a virtual service IP
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: headless
+spec:
+  expose:
+    # Headless services are created with clusterIP: None
+    # This allows direct pod access via DNS without kube-proxy load balancing
+    # Useful for service mesh integration or custom client-side load balancing
+    exposeType: Headless
+  definition:
+    containerlab: |
+      name: headless
+      topology:
+        nodes:
+          srl1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+          srl2:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+        links:
+          - endpoints: ["srl1:e1-1", "srl2:e1-1"]

@@ -475,6 +475,60 @@ func TestRenderServiceExpose(t *testing.T) {
 			},
 			nodeName: "node1",
 		},
+		{
+			name: "headless-expose-type",
+			owningTopology: &clabernetesapisv1alpha1.Topology{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "render-service-expose-test",
+					Namespace: "clabernetes",
+				},
+				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Expose: clabernetesapisv1alpha1.Expose{
+						ExposeType: "Headless",
+					},
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
+    name: test
+    topology:
+      nodes:
+        srl1:
+          kind: srl
+          image: ghcr.io/nokia/srlinux
+`,
+					},
+				},
+				Status: clabernetesapisv1alpha1.TopologyStatus{
+					RemoveTopologyPrefix: clabernetesutil.ToPointer(true),
+				},
+			},
+			owningTopologyStatus: &clabernetesapisv1alpha1.TopologyStatus{
+				ExposedPorts: map[string]*clabernetesapisv1alpha1.ExposedPorts{},
+			},
+			clabernetesConfigs: map[string]*clabernetesutilcontainerlab.Config{
+				"srl1": {
+					Name:   "srl1",
+					Prefix: clabernetesutil.ToPointer(""),
+					Topology: &clabernetesutilcontainerlab.Topology{
+						Defaults: &clabernetesutilcontainerlab.NodeDefinition{
+							Ports: []string{
+								"21022:22/tcp",
+								"21023:23/tcp",
+							},
+						},
+						Kinds: nil,
+						Nodes: map[string]*clabernetesutilcontainerlab.NodeDefinition{
+							"srl1": {
+								Kind:  "srl",
+								Image: "ghcr.io/nokia/srlinux",
+							},
+						},
+						Links: nil,
+					},
+					Debug: false,
+				},
+			},
+			nodeName: "srl1",
+		},
 	}
 
 	for _, testCase := range cases {
