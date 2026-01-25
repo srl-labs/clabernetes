@@ -295,7 +295,7 @@ func TestDefinitionProcess(t *testing.T) {
               }
           }
       }
-      
+
       nodes: {
         name: "srl2"
           vendor: NOKIA
@@ -310,7 +310,7 @@ func TestDefinitionProcess(t *testing.T) {
               }
           }
       }
-      
+
       links: {
         a_node: "srl1"
           a_int: "e1-1"
@@ -334,6 +334,68 @@ func TestDefinitionProcess(t *testing.T) {
 				ResolvedTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{
 					"srl1": {},
 					"srl2": {},
+				},
+			},
+			removeTopologyPrefix: false,
+		},
+		// distributed SR-SIM test (network-mode grouping)
+		{
+			name: "containerlab-network-mode-group",
+			inTopology: &clabernetesapisv1alpha1.Topology{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "process-containerlab-definition-network-mode-test",
+					Namespace: "clabernetes",
+				},
+				Spec: clabernetesapisv1alpha1.TopologySpec{
+					Definition: clabernetesapisv1alpha1.Definition{
+						Containerlab: `---
+    name: srsim-distributed
+    topology:
+      kinds:
+        nokia_srsim:
+          image: nokia_srsim:25.7.R1
+          license: /opt/nokia/sros/license.txt
+      nodes:
+        srsim-a:
+          kind: nokia_srsim
+          type: sr-7
+          env:
+            NOKIA_SROS_SLOT: A
+        srsim-b:
+          kind: nokia_srsim
+          type: sr-7
+          network-mode: container:srsim-a
+          env:
+            NOKIA_SROS_SLOT: B
+        srsim-iom1:
+          kind: nokia_srsim
+          type: sr-7
+          network-mode: container:srsim-a
+          env:
+            NOKIA_SROS_SLOT: "1"
+        external-node:
+          kind: srl
+          image: ghcr.io/nokia/srlinux
+      links:
+        - endpoints: ["srsim-iom1:1/1/c1/1", "external-node:e1-1"]
+`,
+					},
+				},
+			},
+			reconcileData: &clabernetescontrollerstopology.ReconcileData{
+				Kind:           "containerlab",
+				ResolvedHashes: clabernetesapisv1alpha1.ReconcileHashes{},
+				ResolvedConfigs: map[string]*clabernetesutilcontainerlab.Config{
+					// Only primary nodes and standalone nodes should have entries
+					// srsim-a is primary (has srsim-b and srsim-iom1 as secondaries)
+					// external-node is standalone
+					"srsim-a":       {},
+					"external-node": {},
+				},
+				ResolvedTunnels: map[string][]*clabernetesapisv1alpha1.PointToPointTunnel{
+					// Tunnel from srsim-a group to external-node
+					"srsim-a":       {},
+					"external-node": {},
 				},
 			},
 			removeTopologyPrefix: false,
