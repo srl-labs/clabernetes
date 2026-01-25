@@ -1,0 +1,57 @@
+# Nokia SR-SIM (Integrated) Example
+# This example demonstrates deploying Nokia SR OS Simulator in integrated mode.
+#
+# IMPORTANT:
+# - Only integrated SR-SIM systems (sr-1, sr-1s) are supported
+# - Distributed chassis systems (sr-7, sr-14s, etc.) are NOT supported
+#   due to Kubernetes network namespace limitations
+# - A valid SR-SIM license is required
+# - The SR-SIM image must be loaded into your container runtime
+#
+# See docs/guides/nokia-srsim.md for full documentation
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: nokia-srsim
+spec:
+  # Resource configuration for SR-SIM nodes (resource intensive)
+  deployment:
+    resources:
+      sros1:
+        requests:
+          memory: "4Gi"
+          cpu: "2"
+        limits:
+          memory: "8Gi"
+          cpu: "4"
+      sros2:
+        requests:
+          memory: "4Gi"
+          cpu: "2"
+        limits:
+          memory: "8Gi"
+          cpu: "4"
+  definition:
+    containerlab: |
+      name: nokia-srsim
+      topology:
+        kinds:
+          nokia_srsim:
+            # SR-SIM image - must be loaded from Nokia Support Portal
+            image: nokia_srsim:25.7.R1
+            # License is mandatory for SR-SIM
+            license: /opt/nokia/sros/license.txt
+        nodes:
+          sros1:
+            kind: nokia_srsim
+            # Integrated system type (sr-1 is default)
+            type: sr-1
+            # Optional: Configure MDAs via environment variables
+            env:
+              NOKIA_SROS_MDA_1: me6-100gb-qsfp28
+          sros2:
+            kind: nokia_srsim
+            type: sr-1s
+        links:
+          # SR-SIM interface format: L/M/cC/P (card/mda/connector/port)
+          - endpoints: ["sros1:1/1/c1/1", "sros2:1/1/c1/1"]
