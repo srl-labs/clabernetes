@@ -1,0 +1,63 @@
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: inline-config-test
+  namespace: inline-test
+spec:
+  definition:
+    containerlab: |-
+      name: inline-config-test
+      topology:
+          defaults:
+              ports: []
+          nodes:
+              srl1:
+                  kind: nokia_srlinux
+                  startup-config: /clabernetes/startup-config
+                  image: ghcr.io/nokia/srlinux:latest
+                  ports: []
+              sros1:
+                  kind: nokia_srsim
+                  startup-config: /clabernetes/startup-config
+                  image: nokia_srsim:latest
+                  ports: []
+          links:
+              - endpoints:
+                  - srl1:e1-1
+                  - sros1:1/1/c1/1
+      debug: false
+  deployment:
+    containerlabDebug: null
+    containerlabTimeout: ""
+    extraEnv: null
+    filesFromConfigMap:
+      srl1:
+      - configMapName: inline-config-test-srl1-startup-config
+        configMapPath: REPLACED
+        filePath: /clabernetes/startup-config
+        mode: read
+      sros1:
+      - configMapName: inline-config-test-sros1-startup-config
+        configMapPath: REPLACED
+        filePath: /clabernetes/startup-config
+        mode: read
+    filesFromURL: null
+    persistence:
+      enabled: false
+    privilegedLauncher: null
+    resources: null
+    scheduling:
+      tolerations: null
+  expose:
+    disableAutoExpose: false
+    disableExpose: false
+  imagePull:
+    insecureRegistries: null
+    pullSecrets: null
+  naming: prefixed
+  statusProbes:
+    enabled: false
+    excludedNodes: null
+    nodeProbeConfigurations: null
+    probeConfiguration:
+      startupSeconds: 0
