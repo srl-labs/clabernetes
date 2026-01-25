@@ -53,7 +53,7 @@ spec:
 
 ### Distributed Chassis Systems
 
-Distributed chassis-based SR-SIM systems (SR-7, SR-14s, etc.) use multiple containers that share a network namespace via the `network-mode: container:<name>` directive.
+Distributed chassis-based SR-SIM systems (SR-7, SR-14s, etc.) simulate a single chassis using multiple containers—one for each card slot (CPM-A, CPM-B, IOMs). These containers share a network namespace via the `network-mode: container:<name>` directive.
 
 | Platform Type | Description |
 |---------------|-------------|
@@ -63,9 +63,14 @@ Distributed chassis-based SR-SIM systems (SR-7, SR-14s, etc.) use multiple conta
 | `sr-14s` | SR-14s chassis system |
 | `sr-1x-92S` | SR-1x-92S system |
 
+**Terminology:**
+
+- **Chassis**: A single SR OS router (e.g., one SR-7). In Clabernetes, a chassis is represented by a group of containers deployed in the same pod.
+- **Cards/Slots**: Components within a chassis (CPM-A, CPM-B, IOM-1, etc.). Each card runs as a separate container sharing the chassis's network namespace.
+
 **How it works:**
 
-Clabernetes automatically detects nodes with `network-mode: container:<primary-node>` and groups them together. All nodes in a group are deployed in the same launcher pod, allowing them to share the network namespace as required by distributed SR-SIM.
+Clabernetes automatically detects containers with `network-mode: container:<primary-card>` and groups them together as a single chassis. All cards in a chassis are deployed in the same launcher pod, allowing them to share the network namespace as required by distributed SR-SIM.
 
 **Example distributed topology:**
 
@@ -77,7 +82,7 @@ metadata:
 spec:
   deployment:
     resources:
-      # Resources are specified for the primary node (group leader)
+      # Resources are specified for the primary card (chassis leader)
       srsim-a:
         requests:
           memory: "8Gi"
@@ -94,20 +99,20 @@ spec:
             image: nokia_srsim:25.7.R1
             license: /opt/nokia/sros/license.txt
         nodes:
-          # Primary node (CPM-A) - this is the "group leader"
+          # Primary card (CPM-A) - this is the chassis leader
           srsim-a:
             kind: nokia_srsim
             type: sr-7
             env:
               NOKIA_SROS_SLOT: A
-          # Secondary node (CPM-B) - references primary via network-mode
+          # Secondary card (CPM-B) - references primary via network-mode
           srsim-b:
             kind: nokia_srsim
             type: sr-7
             network-mode: container:srsim-a
             env:
               NOKIA_SROS_SLOT: B
-          # IOM slot - also references primary
+          # IOM card - also references primary
           srsim-iom1:
             kind: nokia_srsim
             type: sr-7
@@ -115,19 +120,21 @@ spec:
             env:
               NOKIA_SROS_SLOT: "1"
         links:
-          # Links to external nodes work normally
+          # Links to other chassis or external devices use VXLAN tunnels
           - endpoints: ["srsim-iom1:1/1/c1/1", "external-router:e1-1"]
 ```
 
 **Key points for distributed mode:**
 
-1. **Primary node**: The node without `network-mode` is the primary (group leader). Resources, services, and tunnels are associated with this node.
+1. **Primary card**: The card without `network-mode` (typically CPM-A) is the primary. Resources, services, and tunnels are associated with this card's name.
 
-2. **Secondary nodes**: Nodes with `network-mode: container:<primary>` are grouped with their primary and deployed in the same pod.
+2. **Secondary cards**: Cards with `network-mode: container:<primary>` (CPM-B, IOMs) are grouped with their primary and deployed in the same pod.
 
-3. **Links**: Links between nodes in the same group remain as local containerlab links. Links to nodes outside the group use VXLAN tunnels.
+3. **Links**: Links between cards in the same chassis remain as local containerlab links. Links to other chassis or external nodes use VXLAN tunnels.
 
-4. **Service names**: Services are created for the primary node only. Use the primary node name when connecting from other pods.
+4. **Service names**: Services are created for the primary card only. Use the primary card name when connecting from other pods.
+
+5. **Multiple chassis**: If you deploy multiple distributed chassis (e.g., two SR-7 routers), each chassis gets its own pod. Different chassis can be scheduled on different Kubernetes worker nodes.
 
 ### MDA and Component Configuration
 
@@ -208,13 +215,13 @@ spec:
             type: sr-1
 ```
 
-For distributed systems, specify resources for the primary node:
+For distributed chassis, specify resources for the primary card (the pod runs all cards in the chassis):
 
 ```yaml
 spec:
   deployment:
     resources:
-      srsim-a:  # Primary node name
+      srsim-a:  # Primary card name (CPM-A)
         requests:
           memory: "8Gi"
           cpu: "4"
@@ -260,6 +267,28 @@ spec:
             kind: nokia_srsim
             type: sr-1
 ```
+
+## Limitations
+
+### Cards Within a Chassis Must Be Co-located
+
+All cards (CPM-A, CPM-B, IOMs) within a single distributed chassis must run on the same Kubernetes worker node. This is a fundamental constraint of Linux network namespaces—they cannot span multiple hosts.
+
+**Impact:** A single Kubernetes worker must have sufficient resources (CPU, memory) for all cards in a chassis.
+
+**Mitigations:**
+
+- Use Kubernetes node selectors or taints/tolerations to ensure chassis pods are scheduled on appropriately sized nodes
+- Consider using integrated SR-SIM types (sr-1, sr-1s) when resource constraints are a concern
+- Plan cluster capacity with distributed chassis resource requirements in mind
+
+### Different Chassis Can Be Distributed
+
+While cards within a chassis must be co-located, different chassis (routers) in your topology can be scheduled on different Kubernetes worker nodes. For example, if you have two SR-7 routers in your topology, each can run on a different worker node—only the cards within each individual router must share a node.
+
+### Port Publishing
+
+Secondary cards (those with `network-mode: container:<primary>`) cannot have their own port mappings. All exposed ports are configured on the primary card and shared across the chassis via the common network namespace.
 
 ## Related Resources
 
