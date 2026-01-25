@@ -14,13 +14,15 @@ import (
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+	"gopkg.in/yaml.v3"
 )
 
 const (
-	bindSeparator   = ":"
-	bindPartsLen    = 2
-	bindClabNodeDir = "__clabNodeDir__"
-	bindClabDir     = "__clabDir__"
+	bindSeparator           = ":"
+	bindPartsLen            = 2
+	bindClabNodeDir         = "__clabNodeDir__"
+	bindClabDir             = "__clabDir__"
+	inlineStartupConfigPath = "/clabernetes/startup-config"
 )
 
 type extraFile struct {
@@ -115,6 +117,12 @@ func getExtraFilesForNode(
 	return paths, nil
 }
 
+// isInlineConfig checks if a startup-config value is inline content rather than a file path.
+// Inline configs contain newlines, while file paths do not.
+func isInlineConfig(config string) bool {
+	return strings.Contains(config, "\n")
+}
+
 // handleStartupConfigs parses/loads/renders the startup-config(s) for a topology -- this is its own
 // thing in part because the startup config configmap is its own thing, we do this because of size
 // imitations of configmaps, so best keep startups by themselves in case they are huge.
@@ -122,6 +130,7 @@ func (c *Clabverter) handleStartupConfigs() error {
 	c.logger.Info("handling containerlab topology startup config(s) if present...")
 
 	startupConfigs := map[string][]byte{}
+	hasInlineConfigs := false
 
 	for nodeName, nodeData := range c.clabConfig.Topology.Nodes {
 		if nodeData.StartupConfig == "" {
@@ -132,15 +141,28 @@ func (c *Clabverter) handleStartupConfigs() error {
 
 		c.logger.Debugf("loading node '%s' startup-config...", nodeName)
 
-		startupConfigContents, err := c.resolveContentAtPath(nodeData.StartupConfig)
-		if err != nil {
-			c.logger.Criticalf(
-				"failed loading startup-config contents for node '%s', error: %s",
-				nodeName,
-				err,
-			)
+		var startupConfigContents []byte
 
-			return err
+		var err error
+
+		if isInlineConfig(nodeData.StartupConfig) {
+			// Inline config - use the content directly
+			c.logger.Debugf("node '%s' has inline startup-config", nodeName)
+
+			startupConfigContents = []byte(nodeData.StartupConfig)
+			hasInlineConfigs = true
+		} else {
+			// File path - read the file
+			startupConfigContents, err = c.resolveContentAtPath(nodeData.StartupConfig)
+			if err != nil {
+				c.logger.Criticalf(
+					"failed loading startup-config contents for node '%s', error: %s",
+					nodeName,
+					err,
+				)
+
+				return err
+			}
 		}
 
 		if len(startupConfigContents) > maxBytesForConfigMap {
@@ -197,13 +219,34 @@ func (c *Clabverter) handleStartupConfigs() error {
 			},
 		)
 
+		// Determine the file path for mounting
+		filePath := c.clabConfig.Topology.Nodes[nodeName].StartupConfig
+		if isInlineConfig(filePath) {
+			// For inline configs, use a standard path and update the topology definition
+			filePath = inlineStartupConfigPath
+			c.clabConfig.Topology.Nodes[nodeName].StartupConfig = filePath
+		}
+
 		c.startupConfigConfigMaps[nodeName] = topologyConfigMapTemplateVars{
 			NodeName:      nodeName,
 			ConfigMapName: configMapName,
-			FilePath:      c.clabConfig.Topology.Nodes[nodeName].StartupConfig,
+			FilePath:      filePath,
 			FileName:      "startup-config",
 			FileMode:      clabernetesconstants.FileModeRead,
 		}
+	}
+
+	// Re-serialize clabConfig only if we had inline configs that needed path replacement
+	// This ensures the topology CRD has file paths instead of inline content
+	if hasInlineConfigs {
+		updatedClabConfig, err := yaml.Marshal(c.clabConfig)
+		if err != nil {
+			c.logger.Criticalf("failed re-serializing containerlab config: %s", err)
+
+			return err
+		}
+
+		c.rawClabConfig = string(updatedClabConfig)
 	}
 
 	c.logger.Debug("handling startup configs complete")
