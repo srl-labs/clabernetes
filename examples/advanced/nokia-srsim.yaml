@@ -1,10 +1,13 @@
-# Nokia SR-SIM (Integrated) Example
-# This example demonstrates deploying Nokia SR OS Simulator in integrated mode.
+# Nokia SR-SIM Example
+# This example demonstrates deploying Nokia SR OS Simulator with clabernetes.
+#
+# SR-SIM System Types:
+# - Integrated systems (sr-1, sr-1s): Single container per router
+# - Distributed chassis (sr-7, sr-14s): Multiple containers per chassis
+#   (CPM-A, CPM-B for control plane, IOM-1, IOM-2, etc. for line cards)
+#   These are grouped into a single Kubernetes pod using network-mode.
 #
 # IMPORTANT:
-# - Only integrated SR-SIM systems (sr-1, sr-1s) are supported
-# - Distributed chassis systems (sr-7, sr-14s, etc.) are NOT supported
-#   due to Kubernetes network namespace limitations
 # - A valid SR-SIM license is required
 # - The SR-SIM image must be loaded into your container runtime
 #
@@ -14,17 +17,18 @@ kind: Topology
 metadata:
   name: nokia-srsim
 spec:
-  # Resource configuration for SR-SIM nodes (resource intensive)
+  # Resource configuration for SR-SIM routers (resource intensive)
+  # These are keyed by containerlab node name (the router name in topology.nodes)
   deployment:
     resources:
-      node1:
+      router1:
         requests:
           memory: "4Gi"
           cpu: "2"
         limits:
           memory: "8Gi"
           cpu: "4"
-      node2:
+      router2:
         requests:
           memory: "4Gi"
           cpu: "2"
@@ -42,16 +46,16 @@ spec:
             # License is mandatory for SR-SIM
             license: /opt/nokia/sros/license.txt
         nodes:
-          node1:
+          router1:
             kind: nokia_srsim
             # Integrated system type (sr-1 is default)
             type: sr-1
             # Optional: Configure MDAs via environment variables
             env:
               NOKIA_SROS_MDA_1: me6-100gb-qsfp28
-          node2:
+          router2:
             kind: nokia_srsim
             type: sr-1s
         links:
           # SR-SIM interface format: L/M/cC/P (card/mda/connector/port)
-          - endpoints: ["node1:1/1/c1/1", "node2:1/1/c1/1"]
+          - endpoints: ["router1:1/1/c1/1", "router2:1/1/c1/1"]
