@@ -32,7 +32,7 @@ func parseNetworkModeContainer(networkMode string) string {
 // nodeGroup represents a group of nodes that share the same network namespace.
 // The primary node is the one that other nodes reference via network-mode: container:<primary>.
 type nodeGroup struct {
-	primary    string
+	primary     string
 	secondaries []string
 }
 
@@ -423,6 +423,149 @@ func getDestinationLinkEndpoint(
 	)
 }
 
+// nodeGroupContext holds the context needed for processing a node group.
+type nodeGroupContext struct {
+	containerlabConfig *clabernetesutilcontainerlab.Config
+	primaryNodeName    string
+	group              *nodeGroup
+	groupNodeNames     []string
+	groupNodesSet      map[string]struct{}
+	deepCopiedDefaults *clabernetesutilcontainerlab.NodeDefinition
+	disableExpose      bool
+	disableAutoExpose  bool
+}
+
+// buildGroupNodesList returns the list and set of nodes in the group.
+func buildGroupNodesList(
+	primaryNodeName string,
+	group *nodeGroup,
+) (groupNodeNames []string, groupNodesSet map[string]struct{}) {
+	groupNodeNames = []string{primaryNodeName}
+	if group != nil {
+		groupNodeNames = append(groupNodeNames, group.secondaries...)
+	}
+
+	groupNodesSet = make(map[string]struct{})
+	for _, name := range groupNodeNames {
+		groupNodesSet[name] = struct{}{}
+	}
+
+	return groupNodeNames, groupNodesSet
+}
+
+// buildNodesMapForGroup builds the nodes map for the sub-topology.
+func buildNodesMapForGroup(
+	ctx *nodeGroupContext,
+) map[string]*clabernetesutilcontainerlab.NodeDefinition {
+	nodesMap := make(map[string]*clabernetesutilcontainerlab.NodeDefinition)
+
+	for _, nodeName := range ctx.groupNodeNames {
+		nodeDefinition := ctx.containerlabConfig.Topology.Nodes[nodeName]
+
+		isSecondaryNode := parseNetworkModeContainer(nodeDefinition.NetworkMode) != ""
+
+		switch {
+		case isSecondaryNode:
+			nodeDefinition.Ports = []string{}
+		case !ctx.disableExpose && !ctx.disableAutoExpose:
+			defaultPorts, nodePorts := processPorts(
+				ctx.containerlabConfig.Topology.Defaults.Ports,
+				nodeDefinition.Ports,
+			)
+
+			ctx.deepCopiedDefaults.Ports = defaultPorts
+			nodeDefinition.Ports = nodePorts
+		default:
+			nodeDefinition.Ports = []string{}
+		}
+
+		nodesMap[nodeName] = nodeDefinition
+	}
+
+	return nodesMap
+}
+
+// collectKindsForGroup collects all kinds used by nodes in the group.
+func collectKindsForGroup(
+	topology *clabernetesutilcontainerlab.Topology,
+	groupNodeNames []string,
+) map[string]*clabernetesutilcontainerlab.NodeDefinition {
+	kindsMap := make(map[string]*clabernetesutilcontainerlab.NodeDefinition)
+
+	for _, nodeName := range groupNodeNames {
+		nodeKinds := getKindsForNode(topology, nodeName)
+		for kindName, kindDef := range nodeKinds {
+			if _, exists := kindsMap[kindName]; !exists {
+				kindsMap[kindName] = kindDef
+			}
+		}
+	}
+
+	if len(kindsMap) == 0 {
+		return nil
+	}
+
+	return kindsMap
+}
+
+// moveDefaultsPortsToPrimary moves default ports to the primary node when there are secondaries.
+func moveDefaultsPortsToPrimary(
+	nodesMap map[string]*clabernetesutilcontainerlab.NodeDefinition,
+	primaryNodeName string,
+	group *nodeGroup,
+	defaults *clabernetesutilcontainerlab.NodeDefinition,
+) {
+	if group == nil || len(group.secondaries) == 0 {
+		return
+	}
+
+	primaryNode := nodesMap[primaryNodeName]
+	allPorts := make([]string, 0, len(defaults.Ports)+len(primaryNode.Ports))
+	allPorts = append(allPorts, defaults.Ports...)
+	allPorts = append(allPorts, primaryNode.Ports...)
+	primaryNode.Ports = allPorts
+
+	defaults.Ports = []string{}
+}
+
+// linkEndpoints holds parsed link endpoint information.
+type linkEndpoints struct {
+	endpointA clabernetesapisv1alpha1.LinkEndpoint
+	endpointB clabernetesapisv1alpha1.LinkEndpoint
+}
+
+// parseLinkEndpoints parses and validates link endpoints.
+func parseLinkEndpoints(link *clabernetesutilcontainerlab.LinkDefinition) (*linkEndpoints, error) {
+	if len(link.Endpoints) != clabernetesapisv1alpha1.LinkEndpointElementCount {
+		return nil, fmt.Errorf(
+			"%w: endpoint '%q' has wrong syntax, unexpected number of items",
+			claberneteserrors.ErrParse, link.Endpoints,
+		)
+	}
+
+	endpointAParts := strings.Split(link.Endpoints[0], ":")
+	endpointBParts := strings.Split(link.Endpoints[1], ":")
+
+	if len(endpointAParts) != clabernetesapisv1alpha1.LinkEndpointElementCount ||
+		len(endpointBParts) != clabernetesapisv1alpha1.LinkEndpointElementCount {
+		return nil, fmt.Errorf(
+			"%w: endpoint '%q' has wrong syntax, bad endpoint:interface config",
+			claberneteserrors.ErrParse, link.Endpoints,
+		)
+	}
+
+	return &linkEndpoints{
+		endpointA: clabernetesapisv1alpha1.LinkEndpoint{
+			NodeName:      endpointAParts[0],
+			InterfaceName: endpointAParts[1],
+		},
+		endpointB: clabernetesapisv1alpha1.LinkEndpoint{
+			NodeName:      endpointBParts[0],
+			InterfaceName: endpointBParts[1],
+		},
+	}, nil
+}
+
 // processConfigForNodeGroup processes a group of nodes that share a network namespace.
 // For standalone nodes (group is nil), it processes just that single node.
 // For grouped nodes (distributed systems like SR-SIM), it creates a single sub-topology
@@ -445,83 +588,24 @@ func (p *containerlabDefinitionProcessor) processConfigForNodeGroup(
 		return err
 	}
 
-	// Build the list of all nodes in this group
-	groupNodeNames := []string{primaryNodeName}
-	if group != nil {
-		groupNodeNames = append(groupNodeNames, group.secondaries...)
+	groupNodeNames, groupNodesSet := buildGroupNodesList(primaryNodeName, group)
+
+	ctx := &nodeGroupContext{
+		containerlabConfig: containerlabConfig,
+		primaryNodeName:    primaryNodeName,
+		group:              group,
+		groupNodeNames:     groupNodeNames,
+		groupNodesSet:      groupNodesSet,
+		deepCopiedDefaults: deepCopiedDefaults,
+		disableExpose:      p.topology.Spec.Expose.DisableExpose,
+		disableAutoExpose:  p.topology.Spec.Expose.DisableAutoExpose,
 	}
 
-	// Build the set of nodes in the group for quick lookup
-	groupNodesSet := make(map[string]struct{})
-	for _, name := range groupNodeNames {
-		groupNodesSet[name] = struct{}{}
-	}
+	nodesMap := buildNodesMapForGroup(ctx)
+	resolvedKinds := collectKindsForGroup(containerlabConfig.Topology, groupNodeNames)
 
-	// Build nodes map for the sub-topology
-	nodesMap := make(map[string]*clabernetesutilcontainerlab.NodeDefinition)
-	kindsMap := make(map[string]*clabernetesutilcontainerlab.NodeDefinition)
+	moveDefaultsPortsToPrimary(nodesMap, primaryNodeName, group, deepCopiedDefaults)
 
-	for _, nodeName := range groupNodeNames {
-		nodeDefinition := containerlabConfig.Topology.Nodes[nodeName]
-
-		// Check if this is a secondary node (has network-mode set)
-		isSecondaryNode := parseNetworkModeContainer(nodeDefinition.NetworkMode) != ""
-
-		// Secondary nodes using network-mode: container:<name> cannot have port publishing
-		// because they share the network namespace with the primary node.
-		// Only the primary node should have ports exposed.
-		if isSecondaryNode {
-			nodeDefinition.Ports = []string{}
-		} else if !p.topology.Spec.Expose.DisableExpose && !p.topology.Spec.Expose.DisableAutoExpose {
-			// disable expose is *not* set and disable auto expose is *not* set, so we want to
-			// automagically add our default expose ports to the topo. we'll simply tack this onto
-			// the clab defaults ports list since that will get merged w/ any user defined ports
-			defaultPorts, nodePorts := processPorts(
-				containerlabConfig.Topology.Defaults.Ports,
-				nodeDefinition.Ports,
-			)
-
-			deepCopiedDefaults.Ports = defaultPorts
-			nodeDefinition.Ports = nodePorts
-		} else {
-			// zero value of slice is nil, that breaks deep equal checks later, so ensure we set to
-			// a non-zero (but empty) slice
-			nodeDefinition.Ports = []string{}
-		}
-
-		nodesMap[nodeName] = nodeDefinition
-
-		// Collect kinds for all nodes in the group
-		nodeKinds := getKindsForNode(containerlabConfig.Topology, nodeName)
-		for kindName, kindDef := range nodeKinds {
-			if _, exists := kindsMap[kindName]; !exists {
-				kindsMap[kindName] = kindDef
-			}
-		}
-	}
-
-	// If no kinds were collected, set to nil to match original behavior
-	var resolvedKinds map[string]*clabernetesutilcontainerlab.NodeDefinition
-	if len(kindsMap) > 0 {
-		resolvedKinds = kindsMap
-	}
-
-	// If there are secondary nodes in the group, we cannot use defaults.ports because
-	// containerlab applies defaults to all nodes. Secondary nodes with network-mode cannot
-	// have port publishing. Instead, we put all ports directly on the primary node only.
-	if group != nil && len(group.secondaries) > 0 {
-		// Move defaults ports to primary node's ports (merge them)
-		primaryNode := nodesMap[primaryNodeName]
-		allPorts := make([]string, 0, len(deepCopiedDefaults.Ports)+len(primaryNode.Ports))
-		allPorts = append(allPorts, deepCopiedDefaults.Ports...)
-		allPorts = append(allPorts, primaryNode.Ports...)
-		primaryNode.Ports = allPorts
-
-		// Clear defaults ports so they don't get applied to secondary nodes
-		deepCopiedDefaults.Ports = []string{}
-	}
-
-	// Create the sub-topology config with all nodes in the group
 	p.reconcileData.ResolvedConfigs[primaryNodeName] = &clabernetesutilcontainerlab.Config{
 		Name: fmt.Sprintf("clabernetes-%s", primaryNodeName),
 		Mgmt: containerlabConfig.Mgmt,
@@ -531,132 +615,124 @@ func (p *containerlabDefinitionProcessor) processConfigForNodeGroup(
 			Nodes:    nodesMap,
 			Links:    nil,
 		},
-		// we override existing topo prefix and set it to empty prefix - "" (rather than accept
-		// what the user has provided *or* the default of "clab").
-		// since prefixes are only useful when multiple labs are scheduled on the same node, and
-		// that will never be the case with clabernetes, the prefix is unnecessary.
 		Prefix: clabernetesutil.ToPointer(""),
 	}
 
-	// Process links for all nodes in the group
+	return p.processLinksForNodeGroup(
+		containerlabConfig,
+		primaryNodeName,
+		groupNodesSet,
+		secondaryNodes,
+		removeTopologyPrefix,
+	)
+}
+
+// processLinksForNodeGroup processes all links for nodes in the group.
+func (p *containerlabDefinitionProcessor) processLinksForNodeGroup(
+	containerlabConfig *clabernetesutilcontainerlab.Config,
+	primaryNodeName string,
+	groupNodesSet map[string]struct{},
+	secondaryNodes map[string]string,
+	removeTopologyPrefix bool,
+) error {
 	for _, link := range containerlabConfig.Topology.Links {
-		if len(link.Endpoints) != clabernetesapisv1alpha1.LinkEndpointElementCount {
-			msg := fmt.Sprintf(
-				"endpoint '%q' has wrong syntax, unexpected number of items", link.Endpoints,
-			)
+		endpoints, err := parseLinkEndpoints(link)
+		if err != nil {
+			p.logger.Critical(err.Error())
 
-			p.logger.Critical(msg)
-
-			return fmt.Errorf(
-				"%w: %s", claberneteserrors.ErrParse, msg,
-			)
+			return err
 		}
 
-		endpointAParts := strings.Split(link.Endpoints[0], ":")
-		endpointBParts := strings.Split(link.Endpoints[1], ":")
-
-		if len(endpointAParts) != clabernetesapisv1alpha1.LinkEndpointElementCount ||
-			len(endpointBParts) != clabernetesapisv1alpha1.LinkEndpointElementCount {
-			msg := fmt.Sprintf(
-				"endpoint '%q' has wrong syntax, bad endpoint:interface config", link.Endpoints,
-			)
-
-			p.logger.Critical(msg)
-
-			return fmt.Errorf(
-				"%w: %s", claberneteserrors.ErrParse, msg,
-			)
+		err = p.processLinkForGroup(
+			link,
+			endpoints,
+			primaryNodeName,
+			groupNodesSet,
+			secondaryNodes,
+			removeTopologyPrefix,
+		)
+		if err != nil {
+			return err
 		}
+	}
 
-		endpointA := clabernetesapisv1alpha1.LinkEndpoint{
-			NodeName:      endpointAParts[0],
-			InterfaceName: endpointAParts[1],
-		}
-		endpointB := clabernetesapisv1alpha1.LinkEndpoint{
-			NodeName:      endpointBParts[0],
-			InterfaceName: endpointBParts[1],
-		}
+	return nil
+}
 
-		// Check if either endpoint is in our group
-		_, endpointAInGroup := groupNodesSet[endpointA.NodeName]
-		_, endpointBInGroup := groupNodesSet[endpointB.NodeName]
+// processLinkForGroup processes a single link for a node group.
+func (p *containerlabDefinitionProcessor) processLinkForGroup(
+	link *clabernetesutilcontainerlab.LinkDefinition,
+	endpoints *linkEndpoints,
+	primaryNodeName string,
+	groupNodesSet map[string]struct{},
+	secondaryNodes map[string]string,
+	removeTopologyPrefix bool,
+) error {
+	_, endpointAInGroup := groupNodesSet[endpoints.endpointA.NodeName]
+	_, endpointBInGroup := groupNodesSet[endpoints.endpointB.NodeName]
 
-		if !endpointAInGroup && !endpointBInGroup {
-			// link doesn't apply to any node in our group, carry on
-			continue
-		}
+	if !endpointAInGroup && !endpointBInGroup {
+		return nil
+	}
 
-		// If both endpoints are in the group, it's a local link - keep as-is
-		if endpointAInGroup && endpointBInGroup {
-			p.reconcileData.ResolvedConfigs[primaryNodeName].Topology.Links = append(
-				p.reconcileData.ResolvedConfigs[primaryNodeName].Topology.Links,
-				link,
-			)
-
-			continue
-		}
-
-		// One endpoint is in the group, one is external - needs VXLAN tunnel
-		var interestingEndpoint, uninterestingEndpoint clabernetesapisv1alpha1.LinkEndpoint
-
-		if endpointAInGroup {
-			interestingEndpoint = endpointA
-			uninterestingEndpoint = endpointB
-		} else {
-			interestingEndpoint = endpointB
-			uninterestingEndpoint = endpointA
-		}
-
+	if endpointAInGroup && endpointBInGroup {
 		p.reconcileData.ResolvedConfigs[primaryNodeName].Topology.Links = append(
 			p.reconcileData.ResolvedConfigs[primaryNodeName].Topology.Links,
-			&clabernetesutilcontainerlab.LinkDefinition{
-				LinkConfig: clabernetesutilcontainerlab.LinkConfig{
-					Endpoints: []string{
-						fmt.Sprintf("%s:%s",
-							interestingEndpoint.NodeName,
-							interestingEndpoint.InterfaceName,
-						),
-						getDestinationLinkEndpoint(
-							uninterestingEndpoint.NodeName,
-							interestingEndpoint,
-							uninterestingEndpoint,
-						),
-					},
+			link,
+		)
+
+		return nil
+	}
+
+	interestingEndpoint, uninterestingEndpoint := endpoints.endpointA, endpoints.endpointB
+	if !endpointAInGroup {
+		interestingEndpoint, uninterestingEndpoint = endpoints.endpointB, endpoints.endpointA
+	}
+
+	p.reconcileData.ResolvedConfigs[primaryNodeName].Topology.Links = append(
+		p.reconcileData.ResolvedConfigs[primaryNodeName].Topology.Links,
+		&clabernetesutilcontainerlab.LinkDefinition{
+			LinkConfig: clabernetesutilcontainerlab.LinkConfig{
+				Endpoints: []string{
+					fmt.Sprintf("%s:%s",
+						interestingEndpoint.NodeName,
+						interestingEndpoint.InterfaceName,
+					),
+					getDestinationLinkEndpoint(
+						uninterestingEndpoint.NodeName,
+						interestingEndpoint,
+						uninterestingEndpoint,
+					),
 				},
 			},
-		)
+		},
+	)
 
-		if uninterestingEndpoint.NodeName == clabernetesconstants.HostKeyword {
-			// This is containerlab host entry, so no VxLAN is required
-			continue
-		}
-
-		// Determine the destination node for the tunnel.
-		// If the remote node is a secondary (part of another group), the tunnel should
-		// point to its primary's service instead, since that's where the pod will be.
-		destinationNodeName := uninterestingEndpoint.NodeName
-		if remotePrimary, isSecondary := secondaryNodes[uninterestingEndpoint.NodeName]; isSecondary {
-			destinationNodeName = remotePrimary
-		}
-
-		// Tunnel is associated with the primary node name (the pod/deployment name)
-		p.reconcileData.ResolvedTunnels[primaryNodeName] = append(
-			p.reconcileData.ResolvedTunnels[primaryNodeName],
-			&clabernetesapisv1alpha1.PointToPointTunnel{
-				LocalNode:  interestingEndpoint.NodeName,
-				RemoteNode: uninterestingEndpoint.NodeName,
-				Destination: resolveConnectivityDestination(
-					p.topology.Name,
-					destinationNodeName,
-					p.topology.Namespace,
-					removeTopologyPrefix,
-					p.configManagerGetter,
-				),
-				LocalInterface:  interestingEndpoint.InterfaceName,
-				RemoteInterface: uninterestingEndpoint.InterfaceName,
-			},
-		)
+	if uninterestingEndpoint.NodeName == clabernetesconstants.HostKeyword {
+		return nil
 	}
+
+	destinationNodeName := uninterestingEndpoint.NodeName
+	if remotePrimary, isSecondary := secondaryNodes[uninterestingEndpoint.NodeName]; isSecondary {
+		destinationNodeName = remotePrimary
+	}
+
+	p.reconcileData.ResolvedTunnels[primaryNodeName] = append(
+		p.reconcileData.ResolvedTunnels[primaryNodeName],
+		&clabernetesapisv1alpha1.PointToPointTunnel{
+			LocalNode:  interestingEndpoint.NodeName,
+			RemoteNode: uninterestingEndpoint.NodeName,
+			Destination: resolveConnectivityDestination(
+				p.topology.Name,
+				destinationNodeName,
+				p.topology.Namespace,
+				removeTopologyPrefix,
+				p.configManagerGetter,
+			),
+			LocalInterface:  interestingEndpoint.InterfaceName,
+			RemoteInterface: uninterestingEndpoint.InterfaceName,
+		},
+	)
 
 	return nil
 }
