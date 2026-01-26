@@ -1,24 +1,12 @@
 # Topology with inline startup configurations
 # Demonstrates how clabverter handles inline configs embedded directly in YAML
 #
-# This example shows the clabverter input format. When you have a containerlab
-# topology file with inline startup-config (using YAML multiline |), clabverter
-# automatically detects the inline content and creates ConfigMaps without
-# attempting to read from the filesystem.
+# When using clabverter with a containerlab topology that has inline startup-config
+# (using YAML multiline |), it automatically detects the inline content and creates
+# ConfigMaps without attempting to read from the filesystem.
 #
 # Usage with clabverter:
 #   clabverter --topology clab.yaml --output ./manifests
-#
-# The original containerlab topology (clab.yaml) might look like:
-#   name: inline-config
-#   topology:
-#     nodes:
-#       srl1:
-#         kind: nokia_srlinux
-#         startup-config: |
-#           set / interface ethernet-1/1 admin-state enable
-#
-# Clabverter converts this to the Clabernetes CR below with ConfigMaps.
 ---
 apiVersion: clabernetes.containerlab.dev/v1alpha1
 kind: Topology
