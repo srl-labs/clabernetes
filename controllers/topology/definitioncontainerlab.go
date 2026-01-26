@@ -429,7 +429,7 @@ type nodeGroupContext struct {
 	primaryNodeName    string
 	group              *nodeGroup
 	groupNodeNames     []string
-	groupNodesSet      map[string]struct{}
+	groupNodesSet      clabernetesutil.StringSet
 	deepCopiedDefaults *clabernetesutilcontainerlab.NodeDefinition
 	disableExpose      bool
 	disableAutoExpose  bool
@@ -439,16 +439,13 @@ type nodeGroupContext struct {
 func buildGroupNodesList(
 	primaryNodeName string,
 	group *nodeGroup,
-) (groupNodeNames []string, groupNodesSet map[string]struct{}) {
+) (groupNodeNames []string, groupNodesSet clabernetesutil.StringSet) {
 	groupNodeNames = []string{primaryNodeName}
 	if group != nil {
 		groupNodeNames = append(groupNodeNames, group.secondaries...)
 	}
 
-	groupNodesSet = make(map[string]struct{})
-	for _, name := range groupNodeNames {
-		groupNodesSet[name] = struct{}{}
-	}
+	groupNodesSet = clabernetesutil.NewStringSetWithValues(groupNodeNames...)
 
 	return groupNodeNames, groupNodesSet
 }
@@ -631,7 +628,7 @@ func (p *containerlabDefinitionProcessor) processConfigForNodeGroup(
 func (p *containerlabDefinitionProcessor) processLinksForNodeGroup(
 	containerlabConfig *clabernetesutilcontainerlab.Config,
 	primaryNodeName string,
-	groupNodesSet map[string]struct{},
+	groupNodesSet clabernetesutil.StringSet,
 	secondaryNodes map[string]string,
 	removeTopologyPrefix bool,
 ) error {
@@ -664,12 +661,12 @@ func (p *containerlabDefinitionProcessor) processLinkForGroup(
 	link *clabernetesutilcontainerlab.LinkDefinition,
 	endpoints *linkEndpoints,
 	primaryNodeName string,
-	groupNodesSet map[string]struct{},
+	groupNodesSet clabernetesutil.StringSet,
 	secondaryNodes map[string]string,
 	removeTopologyPrefix bool,
 ) error {
-	_, endpointAInGroup := groupNodesSet[endpoints.endpointA.NodeName]
-	_, endpointBInGroup := groupNodesSet[endpoints.endpointB.NodeName]
+	endpointAInGroup := groupNodesSet.Contains(endpoints.endpointA.NodeName)
+	endpointBInGroup := groupNodesSet.Contains(endpoints.endpointB.NodeName)
 
 	if !endpointAInGroup && !endpointBInGroup {
 		return nil
