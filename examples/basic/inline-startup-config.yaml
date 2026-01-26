@@ -1,0 +1,42 @@
+# Topology with inline startup configurations
+# Demonstrates how clabverter handles inline configs embedded directly in YAML
+#
+# When using clabverter with a containerlab topology that has inline startup-config
+# (using YAML multiline |), it automatically detects the inline content and creates
+# ConfigMaps without attempting to read from the filesystem.
+#
+# Usage with clabverter:
+#   clabverter --topology clab.yaml --output ./manifests
+---
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: inline-config
+spec:
+  definition:
+    containerlab: |-
+      name: inline-config
+      topology:
+        nodes:
+          srl1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+            startup-config: |
+              set / interface ethernet-1/1 admin-state enable
+              set / interface ethernet-1/1 subinterface 0 ipv4 admin-state enable
+              set / interface ethernet-1/1 subinterface 0 ipv4 address 10.0.0.1/24
+              set / network-instance default interface ethernet-1/1.0
+
+          sros1:
+            kind: nokia_sros
+            image: vrnetlab/nokia_sros:latest
+            startup-config: |
+              /configure system name "sros1"
+              /configure card 1 card-type iom-1
+              /configure card 1 mda 1 mda-type me6-100gb-qsfp28
+              /configure port 1/1/c1/1 admin-state enable
+              /configure router "Base" interface "toSRL" port 1/1/c1/1
+              /configure router "Base" interface "toSRL" ipv4 primary address 10.0.0.2 prefix-length 24
+
+        links:
+          - endpoints: ["srl1:e1-1", "sros1:1/1/c1/1"]

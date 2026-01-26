@@ -219,6 +219,31 @@ spec:
           configMapPath: srl2.json
 ```
 
+### Inline Startup Configurations (Clabverter)
+
+When using clabverter to convert containerlab topologies, startup-config can be specified in two ways:
+
+**File path reference** (points to external file):
+```yaml
+nodes:
+  srl1:
+    kind: nokia_srlinux
+    startup-config: configs/srl1.cfg
+```
+
+**Inline configuration** (embedded in YAML):
+```yaml
+nodes:
+  srl1:
+    kind: nokia_srlinux
+    startup-config: |
+      set / interface ethernet-1/1 admin-state enable
+      set / interface ethernet-1/1 subinterface 0 ipv4 address 10.0.0.1/24
+      set / network-instance default interface ethernet-1/1.0
+```
+
+Clabverter automatically detects inline configurations (by checking for newlines in the value) and creates ConfigMaps without attempting to read from the filesystem. Both styles are converted to the same Kubernetes ConfigMap format.
+
 ### TLS Certificates
 
 ```yaml

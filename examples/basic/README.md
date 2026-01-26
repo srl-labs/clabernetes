@@ -33,6 +33,26 @@ This creates:
   - IPv6 addressing: `2002::192.168.0.0/127` on srl1, `2002::192.168.0.1/127` on srl2
   - Interfaces added to the default network instance
 
+### inline-startup-config.yaml
+
+Demonstrates inline startup configurations embedded directly in YAML using multiline syntax.
+
+```bash
+kubectl apply -f inline-startup-config.yaml
+```
+
+This shows how startup-config can be specified inline rather than as file references:
+
+```yaml
+startup-config: |
+  set / interface ethernet-1/1 admin-state enable
+  set / network-instance default interface ethernet-1/1.0
+```
+
+**Clabverter support:** When converting containerlab topologies with inline startup-config,
+clabverter automatically detects the embedded content and creates ConfigMaps without
+attempting to read from the filesystem. Both file path references and inline configs are supported.
+
 ## Accessing Nodes
 
 Once deployed, get the service IPs:

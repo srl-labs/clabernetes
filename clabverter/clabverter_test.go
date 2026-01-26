@@ -49,6 +49,16 @@ func TestClabvert(t *testing.T) {
 			naming:              "non-prefixed",
 			containerlabVersion: "0.51.0",
 		},
+		{
+			name:                 "inline-startup-config",
+			topologyFile:         "test-fixtures/inline-startup-config/clab.yaml",
+			topologySpecFile:     "",
+			destinationNamespace: "inline-test",
+			insecureRegistries:   "",
+			imagePullSecrets:     "",
+			naming:               "prefixed",
+			containerlabVersion:  "",
+		},
 	}
 
 	for _, testCase := range cases {
