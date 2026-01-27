@@ -1,0 +1,84 @@
+# Nokia SR-SIM Distributed Chassis Example
+# This example demonstrates deploying a Nokia SR-7 distributed chassis with clabernetes.
+#
+# Distributed Chassis Architecture:
+# - CPM-A (Control Processing Module, slot A) - Primary, owns the network namespace
+# - CPM-B (Control Processing Module, slot B) - Standby, joins CPM-A's namespace
+# - IOM-1, IOM-2 (Input/Output Modules) - Line cards, join CPM-A's namespace
+#
+# All components of a single chassis are deployed in ONE Kubernetes pod.
+# The network-mode: container:<primary> directive groups them together.
+#
+# IMPORTANT:
+# - A valid SR-SIM license is required
+# - The SR-SIM image must be loaded into your container runtime
+# - Distributed chassis requires more resources than integrated systems
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: nokia-srsim-distributed
+spec:
+  # Resource configuration - keyed by the PRIMARY containerlab node name (CPM-A)
+  # All chassis components share these resources since they run in one pod
+  deployment:
+    resources:
+      chassis1-cpm-a:
+        requests:
+          memory: "8Gi"
+          cpu: "4"
+        limits:
+          memory: "16Gi"
+          cpu: "8"
+  definition:
+    containerlab: |
+      name: srsim-distributed
+      topology:
+        kinds:
+          nokia_srsim:
+            image: nokia_srsim:25.7.R1
+            license: /opt/nokia/sros/license.txt
+        nodes:
+          # CPM-A: Primary control module (slot A)
+          # This is the primary - other components reference it via network-mode
+          chassis1-cpm-a:
+            kind: nokia_srsim
+            type: sr-7
+            env:
+              NOKIA_SROS_SLOT: A
+
+          # CPM-B: Standby control module (slot B)
+          # Joins CPM-A's network namespace
+          chassis1-cpm-b:
+            kind: nokia_srsim
+            type: sr-7
+            network-mode: container:chassis1-cpm-a
+            env:
+              NOKIA_SROS_SLOT: B
+
+          # IOM-1: Line card in slot 1
+          # Joins CPM-A's network namespace
+          chassis1-iom-1:
+            kind: nokia_srsim
+            type: sr-7
+            network-mode: container:chassis1-cpm-a
+            env:
+              NOKIA_SROS_SLOT: "1"
+
+          # IOM-2: Line card in slot 2
+          # Joins CPM-A's network namespace
+          chassis1-iom-2:
+            kind: nokia_srsim
+            type: sr-7
+            network-mode: container:chassis1-cpm-a
+            env:
+              NOKIA_SROS_SLOT: "2"
+
+          # External router to connect to
+          peer-router:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+
+        links:
+          # Connect IOM-1 port to peer router
+          # Interface format for SR-7: slot/mda/connector/port
+          - endpoints: ["chassis1-iom-1:1/1/c1/1", "peer-router:e1-1"]
