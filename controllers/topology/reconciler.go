@@ -818,6 +818,79 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,funlen
 		})
 	}
 
+	// Set topology lifecycle state
+	if topologyReady {
+		reconcileData.TopologyState = clabernetesconstants.TopologyStateRunning
+	} else {
+		reconcileData.TopologyState = clabernetesconstants.TopologyStateDeploying
+	}
+
+	// Gather per-node probe statuses from pod status
+	for nodeName := range reconcileData.ResolvedConfigs {
+		probeStatus := &clabernetesapisv1alpha1.NodeProbeStatus{}
+
+		podList := &k8scorev1.PodList{}
+
+		listErr := r.Client.List(
+			ctx,
+			podList,
+			ctrlruntimeclient.InNamespace(owningTopology.Namespace),
+			ctrlruntimeclient.MatchingLabels{
+				clabernetesconstants.LabelTopologyOwner: owningTopology.Name,
+				clabernetesconstants.LabelTopologyNode:  nodeName,
+			},
+		)
+		if listErr != nil || len(podList.Items) == 0 {
+			probeStatus.StartupProbe = clabernetesconstants.ProbeStatusUnknown
+			probeStatus.ReadinessProbe = clabernetesconstants.ProbeStatusUnknown
+			probeStatus.LivenessProbe = clabernetesconstants.ProbeStatusUnknown
+		} else {
+			pod := podList.Items[0]
+
+			if len(pod.Status.ContainerStatuses) > 0 {
+				cs := pod.Status.ContainerStatuses[0]
+
+				// Startup probe
+				switch {
+				case cs.Started == nil:
+					probeStatus.StartupProbe = clabernetesconstants.ProbeStatusFailing
+				case !*cs.Started:
+					probeStatus.StartupProbe = clabernetesconstants.ProbeStatusFailing
+				default:
+					probeStatus.StartupProbe = clabernetesconstants.ProbeStatusPassing
+				}
+
+				// Readiness probe
+				if cs.Ready {
+					probeStatus.ReadinessProbe = clabernetesconstants.ProbeStatusPassing
+				} else {
+					probeStatus.ReadinessProbe = clabernetesconstants.ProbeStatusFailing
+				}
+
+				// Liveness probe (infer from container state)
+				switch {
+				case cs.State.Running != nil:
+					probeStatus.LivenessProbe = clabernetesconstants.ProbeStatusPassing
+				case cs.State.Waiting != nil &&
+					cs.State.Waiting.Reason == "CrashLoopBackOff":
+					probeStatus.LivenessProbe = clabernetesconstants.ProbeStatusFailing
+				default:
+					probeStatus.LivenessProbe = clabernetesconstants.ProbeStatusUnknown
+				}
+			} else {
+				probeStatus.StartupProbe = clabernetesconstants.ProbeStatusUnknown
+				probeStatus.ReadinessProbe = clabernetesconstants.ProbeStatusUnknown
+				probeStatus.LivenessProbe = clabernetesconstants.ProbeStatusUnknown
+			}
+		}
+
+		reconcileData.NodeProbeStatuses[nodeName] = probeStatus
+	}
+
+	if !reflect.DeepEqual(reconcileData.NodeProbeStatuses, owningTopology.Status.NodeProbeStatuses) {
+		reconcileData.ShouldUpdateResource = true
+	}
+
 	if !reflect.DeepEqual(reconcileData.NodeStatuses, reconcileData.PreviousNodeStatuses) {
 		reconcileData.ShouldUpdateResource = true
 	}
