@@ -14,6 +14,7 @@ import (
 // +kubebuilder:printcolumn:JSONPath=".status.kind",name=Kind,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 // +kubebuilder:printcolumn:JSONPath=".status.topologyReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".status.topologyState",name=State,type=string
 type Topology struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -96,9 +97,28 @@ type TopologyStatus struct {
 	// TopologyReady indicates if all nodes in the topology have reported ready. This is duplicated
 	// from the conditions so we can easily snag it for print columns!
 	TopologyReady bool `json:"topologyReady"`
+	// TopologyState is the current lifecycle state of the topology.
+	// Possible values are "deploying", "running", and "destroying".
+	// +kubebuilder:validation:Enum=deploying;running;destroying
+	TopologyState string `json:"topologyState,omitempty"`
+	// NodeProbeStatuses is a map of node name to its probe statuses.
+	// Each entry reports the current result of the startup, readiness, and liveness probes
+	// for that node's launcher pod.
+	// +optional
+	NodeProbeStatuses map[string]*NodeProbeStatus `json:"nodeProbeStatuses,omitempty"`
 	// Conditions is a list of conditions for the topology custom resource.
 	// +listType=atomic
 	Conditions []metav1.Condition `json:"conditions"`
+}
+
+// NodeProbeStatus holds the per-probe-type status for a single launcher pod.
+type NodeProbeStatus struct {
+	// StartupProbe is "passing", "failing", "unknown", or "disabled".
+	StartupProbe string `json:"startupProbe,omitempty"`
+	// ReadinessProbe is "passing", "failing", "unknown", or "disabled".
+	ReadinessProbe string `json:"readinessProbe,omitempty"`
+	// LivenessProbe is "passing", "failing", "unknown", or "disabled".
+	LivenessProbe string `json:"livenessProbe,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
