@@ -4,8 +4,10 @@ import (
 	"context"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // Reconcile handles reconciliation for this controller.
@@ -30,8 +32,28 @@ func (c *Controller) Reconcile(
 	}
 
 	if topology.DeletionTimestamp != nil {
-		// deleting nothing to do, we have no finalizers or anything at this point
+		// flip state to "destroying" so watchers can observe the transition
+		topology.Status.TopologyState = clabernetesconstants.TopologyStateDestroying
+
+		_ = c.BaseController.Client.Update(ctx, topology)
+
+		// remove finalizer so GC can proceed
+		controllerutil.RemoveFinalizer(topology, clabernetesconstants.TopologyFinalizer)
+
+		if err = c.BaseController.Client.Update(ctx, topology); err != nil {
+			return ctrlruntime.Result{}, err
+		}
+
 		return ctrlruntime.Result{}, nil
+	}
+
+	// Ensure finalizer exists on live objects (idempotent)
+	if !controllerutil.ContainsFinalizer(topology, clabernetesconstants.TopologyFinalizer) {
+		controllerutil.AddFinalizer(topology, clabernetesconstants.TopologyFinalizer)
+
+		if err = c.BaseController.Client.Update(ctx, topology); err != nil {
+			return ctrlruntime.Result{}, err
+		}
 	}
 
 	if c.BaseController.ShouldIgnoreReconcile(topology) {
