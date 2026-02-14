@@ -54,4 +54,32 @@ const (
 	// NodeStatusDeploymentDisabled is reported in the topology.status.nodereadiness map when the
 	// parent topology has the "clabernetes/disableDeployments" label set.
 	NodeStatusDeploymentDisabled = "deploymentDisabled"
+
+	// TopologyStateDeploying is reported in the topology.status.topologyState field when the
+	// topology is being deployed (not all nodes are ready yet).
+	TopologyStateDeploying = "deploying"
+
+	// TopologyStateRunning is reported in the topology.status.topologyState field when all nodes
+	// in the topology have reported ready.
+	TopologyStateRunning = "running"
+
+	// TopologyStateDestroying is reported in the topology.status.topologyState field when the
+	// topology is being deleted (DeletionTimestamp is set).
+	TopologyStateDestroying = "destroying"
+
+	// TopologyFinalizer is the finalizer added to Topology objects so that the controller can
+	// set the TopologyState to "destroying" before the object is removed.
+	TopologyFinalizer = "clabernetes/topology-state"
+
+	// ProbeStatusPassing indicates the probe is currently passing.
+	ProbeStatusPassing = "passing"
+
+	// ProbeStatusFailing indicates the probe is currently failing.
+	ProbeStatusFailing = "failing"
+
+	// ProbeStatusUnknown indicates the probe status cannot be determined.
+	ProbeStatusUnknown = "unknown"
+
+	// ProbeStatusDisabled indicates the probe is disabled.
+	ProbeStatusDisabled = "disabled"
 )
