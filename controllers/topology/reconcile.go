@@ -72,6 +72,21 @@ func (c *Controller) Reconcile(
 				topology,
 				ctrlruntimeclient.MergeFrom(base),
 			); err != nil {
+				// Finalizer removal failed. Re-fetch the object and mark it as
+				// "destroyfailed" so external watchers can observe the stuck state.
+				// Always return the original error so the controller keeps retrying.
+				if fresh, getErr := c.getTopologyFromReq(ctx, req); getErr == nil &&
+					fresh.Status.TopologyState != clabernetesconstants.TopologyStateDestroyFailed {
+					freshBase := fresh.DeepCopy()
+					fresh.Status.TopologyState = clabernetesconstants.TopologyStateDestroyFailed
+
+					_ = c.BaseController.Client.Patch( //nolint:errcheck
+						ctx,
+						fresh,
+						ctrlruntimeclient.MergeFrom(freshBase),
+					)
+				}
+
 				return ctrlruntime.Result{}, err
 			}
 		}

@@ -889,10 +889,18 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,funlen
 		reconcileData.NodeProbeStatuses[nodeName] = probeStatus
 	}
 
-	// Set topology lifecycle state based on readiness and failure detection.
+	// Set topology lifecycle state based on readiness, failure detection, and prior state.
+	// "degraded" is only set when the topology was previously running (or already degraded)
+	// so that regressions are distinguished from initial deployment failures.
+	prevState := owningTopology.Status.TopologyState
+	wasRunning := prevState == clabernetesconstants.TopologyStateRunning ||
+		prevState == clabernetesconstants.TopologyStateDegraded
+
 	switch {
 	case topologyReady:
 		reconcileData.TopologyState = clabernetesconstants.TopologyStateRunning
+	case wasRunning:
+		reconcileData.TopologyState = clabernetesconstants.TopologyStateDegraded
 	case anyNodeFailed:
 		reconcileData.TopologyState = clabernetesconstants.TopologyStateDeployFailed
 	default:
