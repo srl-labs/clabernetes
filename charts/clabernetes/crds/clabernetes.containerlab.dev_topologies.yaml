@@ -809,8 +809,9 @@ spec:
             description: TopologyStatus is the status for a Topology resource.
             properties:
               conditions:
-                description: Conditions is a list of conditions for the topology custom
-                  resource.
+                description: |-
+                  Conditions is a list of conditions for the topology custom resource. The "TopologyReady"
+                  condition is set to True when all nodes report ready, and False otherwise.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -872,7 +873,7 @@ spec:
                   type: string
                 description: |-
                   Configs is a map of node name -> containerlab config -- in other words, this is the original
-                  Topology.Spec.Definition converted to containerlab "sub-topologies" The actual
+                  Topology.Spec.Definition converted to containerlab "sub-topologies". The actual
                   "sub-topologies"/"sub-configs" are stored as a string -- this is the actual containerlab
                   topology that gets mounted in the launcher pod.
                 type: object
@@ -910,45 +911,65 @@ spec:
                 type: object
               kind:
                 description: Kind is the topology kind this CR represents -- for example
-                  "containerlab".
+                  "containerlab" or "kne".
                 enum:
                 - containerlab
                 - kne
                 type: string
               nodeProbeStatuses:
                 additionalProperties:
-                  description: NodeProbeStatus holds the per-probe-type status for
-                    a single launcher pod.
+                  description: |-
+                    NodeProbeStatus holds the per-probe-type status for a single launcher pod. Each field
+                    reflects the latest observed result for that probe type. Possible values:
+                      - "passing"  — the probe is configured and currently succeeding.
+                      - "failing"  — the probe is configured and currently failing.
+                      - "unknown"  — the probe result cannot be determined (e.g. pod not yet scheduled).
+                      - "disabled" — the probe is not configured for this node.
                   properties:
                     livenessProbe:
-                      description: LivenessProbe is "passing", "failing", "unknown",
-                        or "disabled".
+                      description: |-
+                        LivenessProbe reports whether the launcher container is considered live. It is inferred
+                        from the container state: a Running container is "passing"; a container in
+                        CrashLoopBackOff is "failing"; any other waiting or terminated state is "unknown".
                       type: string
                     readinessProbe:
-                      description: ReadinessProbe is "passing", "failing", "unknown",
-                        or "disabled".
+                      description: |-
+                        ReadinessProbe reports whether the launcher container's readiness probe is passing.
+                        The readiness probe re-checks the node-status file on a regular interval. A passing
+                        readiness probe means the node is ready to accept traffic. Value is derived from
+                        pod.status.containerStatuses[0].ready.
                       type: string
                     startupProbe:
-                      description: StartupProbe is "passing", "failing", "unknown",
-                        or "disabled".
+                      description: |-
+                        StartupProbe reports whether the launcher container's startup probe is passing. A startup
+                        probe passes once the node-status file is written by the containerlab process inside the
+                        launcher, indicating the lab node has initialised. Value is derived from
+                        pod.status.containerStatuses[0].started.
                       type: string
                   type: object
                 description: |-
-                  NodeProbeStatuses is a map of node name to its probe statuses.
-                  Each entry reports the current result of the startup, readiness, and liveness probes
-                  for that node's launcher pod.
+                  NodeProbeStatuses is a map of node name to its per-probe status. Each entry reports the
+                  current result of the startup, readiness, and liveness probes for that node's launcher pod.
+                  Possible values for each probe field: "passing", "failing", "unknown", "disabled".
+                  This provides finer-grained observability than nodeReadiness, which only reports a
+                  combined ready/notready/unknown summary.
                 type: object
               nodeReadiness:
                 additionalProperties:
                   type: string
                 description: |-
-                  NodeReadiness is a map of nodename to readiness status. The readiness status is as reported
-                  by the k8s startup/readiness probe (which is in turn managed by the status probe
-                  configuration of the topology). The possible values are "notready" and "ready", "unknown".
+                  NodeReadiness is a map of node name to its simplified readiness status as reported by the
+                  launcher pod's startup/readiness probes. Possible values:
+                    - "ready"              — startup and readiness probes are both passing.
+                    - "notready"           — the pod exists but probes have not yet passed.
+                    - "unknown"            — no deployment exists for this node (e.g. missing).
+                    - "deploymentDisabled" — the topology has the disableDeployments label set.
+                  For per-probe granularity see nodeProbeStatuses.
                 type: object
               reconcileHashes:
-                description: ReconcileHashes holds the hashes form the last reconciliation
-                  run.
+                description: |-
+                  ReconcileHashes holds the hashes from the last reconciliation run. These are used to detect
+                  configuration drift and determine whether a resource update is required.
                 properties:
                   config:
                     description: |-
@@ -990,18 +1011,41 @@ spec:
                 type: boolean
               topologyReady:
                 description: |-
-                  TopologyReady indicates if all nodes in the topology have reported ready. This is duplicated
-                  from the conditions so we can easily snag it for print columns!
+                  TopologyReady is true when every node in the topology has reported ready. This field
+                  mirrors the "TopologyReady" condition and is surfaced here for convenient use as a
+                  kubectl print column.
                 type: boolean
               topologyState:
                 description: |-
-                  TopologyState is the current lifecycle state of the topology.
-                  Possible values are "deploying", "running", and "destroying".
+                  TopologyState is the current lifecycle state of the topology. It follows a finite state
+                  machine with the following states and transitions:
+
+                    deploying    — initial bring-up; the topology has been accepted by the controller but
+                                   one or more nodes have not yet reported ready.
+
+                    deployfailed — one or more nodes entered a terminal failure state (CrashLoopBackOff,
+                                   pod phase Failed) before the topology ever reached "running".
+
+                    running      — all nodes have reported ready; the topology is fully operational.
+
+                    degraded     — the topology was previously "running" but one or more nodes have since
+                                   become unready or failed. Distinguishes a regression from an initial
+                                   startup failure.
+
+                    destroying   — a delete request has been received; the controller holds this state for
+                                   a short observability window (≈5 s) so that external watchers can see the
+                                   transition before the object is garbage-collected.
+
+                    destroyfailed — the controller attempted to release the topology finalizer during
+                                   deletion but the operation failed. The object will remain until the
+                                   condition is resolved and the finalizer can be removed.
                 enum:
                 - deploying
                 - running
                 - destroying
                 - deployfailed
+                - degraded
+                - destroyfailed
                 type: string
             required:
             - conditions
