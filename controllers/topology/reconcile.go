@@ -7,6 +7,7 @@ import (
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
+	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -32,28 +33,45 @@ func (c *Controller) Reconcile(
 	}
 
 	if topology.DeletionTimestamp != nil {
-		// flip state to "destroying" so watchers can observe the transition
-		topology.Status.TopologyState = clabernetesconstants.TopologyStateDestroying
+		// Two-pass deletion so watchers can observe the "destroying" state:
+		//   Pass 1: set topologyState = "destroying", leave the finalizer in place, return.
+		//   Pass 2: state is already "destroying", remove the finalizer so GC can proceed.
+		//
+		// We only write the status if the topology was already reconciled at least once
+		// (status.kind is set) to avoid writing an otherwise-invalid status back.
+		if topology.Status.Kind != "" &&
+			topology.Status.TopologyState != clabernetesconstants.TopologyStateDestroying {
+			base := topology.DeepCopy()
+			topology.Status.TopologyState = clabernetesconstants.TopologyStateDestroying
 
-		_ = c.BaseController.Client.Update(ctx, topology)
+			if err = c.BaseController.Client.Patch(
+				ctx,
+				topology,
+				ctrlruntimeclient.MergeFrom(base),
+			); err != nil {
+				return ctrlruntime.Result{}, err
+			}
 
-		// remove finalizer so GC can proceed
-		controllerutil.RemoveFinalizer(topology, clabernetesconstants.TopologyFinalizer)
+			// Return here — the watcher will re-enqueue on the Patch above; pass 2 will
+			// then remove the finalizer.
+			return ctrlruntime.Result{}, nil
+		}
 
-		if err = c.BaseController.Client.Update(ctx, topology); err != nil {
-			return ctrlruntime.Result{}, err
+		// Pass 2 (or topology was never reconciled): remove finalizer so GC can proceed.
+		if controllerutil.ContainsFinalizer(topology, clabernetesconstants.TopologyFinalizer) {
+			base := topology.DeepCopy()
+			controllerutil.RemoveFinalizer(topology, clabernetesconstants.TopologyFinalizer)
+
+			if err = c.BaseController.Client.Patch(
+				ctx,
+				topology,
+				ctrlruntimeclient.MergeFrom(base),
+			); err != nil {
+				return ctrlruntime.Result{}, err
+			}
 		}
 
 		return ctrlruntime.Result{}, nil
-	}
-
-	// Ensure finalizer exists on live objects (idempotent)
-	if !controllerutil.ContainsFinalizer(topology, clabernetesconstants.TopologyFinalizer) {
-		controllerutil.AddFinalizer(topology, clabernetesconstants.TopologyFinalizer)
-
-		if err = c.BaseController.Client.Update(ctx, topology); err != nil {
-			return ctrlruntime.Result{}, err
-		}
 	}
 
 	if c.BaseController.ShouldIgnoreReconcile(topology) {
@@ -93,6 +111,12 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, err
 	}
 
+	// Also force an update when the finalizer has not been added yet so we can piggyback it
+	// on the same write as the valid status (avoids a separate write with empty status).
+	if !controllerutil.ContainsFinalizer(topology, clabernetesconstants.TopologyFinalizer) {
+		reconcileData.ShouldUpdateResource = true
+	}
+
 	if reconcileData.ShouldUpdateResource {
 		// we should update because config hash or something changed, so snag the updated status
 		// data out of the reconcile data, put it in the resource, and push the update
@@ -107,6 +131,10 @@ func (c *Controller) Reconcile(
 
 			return ctrlruntime.Result{}, err
 		}
+
+		// Add the finalizer so the controller can observe deletion and set "destroying" state.
+		// This is done here (not earlier) so it rides the same write as the valid status.
+		controllerutil.AddFinalizer(topology, clabernetesconstants.TopologyFinalizer)
 
 		err = c.BaseController.Client.Update(ctx, topology)
 		if err != nil {
