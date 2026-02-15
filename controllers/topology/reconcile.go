@@ -9,7 +9,7 @@ import (
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	ctrlruntimeutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // destroyingStateObservabilityDelay is the time we hold the "destroying" state before removing
@@ -80,7 +80,7 @@ func (c *Controller) Reconcile(
 
 	// Also force an update when the finalizer has not been added yet so we can piggyback it
 	// on the same write as the valid status (avoids a separate write with empty status).
-	if !controllerutil.ContainsFinalizer(topology, clabernetesconstants.TopologyFinalizer) {
+	if !ctrlruntimeutil.ContainsFinalizer(topology, clabernetesconstants.TopologyFinalizer) {
 		reconcileData.ShouldUpdateResource = true
 	}
 
@@ -101,7 +101,7 @@ func (c *Controller) Reconcile(
 
 		// Add the finalizer so the controller can observe deletion and set "destroying" state.
 		// This is done here (not earlier) so it rides the same write as the valid status.
-		controllerutil.AddFinalizer(topology, clabernetesconstants.TopologyFinalizer)
+		ctrlruntimeutil.AddFinalizer(topology, clabernetesconstants.TopologyFinalizer)
 
 		err = c.BaseController.Client.Update(ctx, topology)
 		if err != nil {
@@ -218,12 +218,12 @@ func (c *Controller) handleDeletion(
 		return ctrlruntime.Result{RequeueAfter: destroyingStateObservabilityDelay}, nil
 	}
 
-	if !controllerutil.ContainsFinalizer(topology, clabernetesconstants.TopologyFinalizer) {
+	if !ctrlruntimeutil.ContainsFinalizer(topology, clabernetesconstants.TopologyFinalizer) {
 		return ctrlruntime.Result{}, nil
 	}
 
 	base := topology.DeepCopy()
-	controllerutil.RemoveFinalizer(topology, clabernetesconstants.TopologyFinalizer)
+	ctrlruntimeutil.RemoveFinalizer(topology, clabernetesconstants.TopologyFinalizer)
 
 	err := c.BaseController.Client.Patch(ctx, topology, ctrlruntimeclient.MergeFrom(base))
 	if err != nil {
