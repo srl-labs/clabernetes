@@ -71,6 +71,12 @@ func (c *Controller) Reconcile(
 		return ctrlruntime.Result{}, err
 	}
 
+	snapshotErr := c.ReconcileSnapshotAnnotation(ctx, topology)
+	if snapshotErr != nil {
+		c.BaseController.Log.Warnf("failed handling snapshot annotation, error: %s", snapshotErr)
+		// Non-fatal: do not block normal topology reconciliation
+	}
+
 	if reconcileData.ShouldUpdateResource {
 		// we should update because config hash or something changed, so snag the updated status
 		// data out of the reconcile data, put it in the resource, and push the update
