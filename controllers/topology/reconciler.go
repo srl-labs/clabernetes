@@ -818,14 +818,10 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,funlen
 		})
 	}
 
-	// Set topology lifecycle state
-	if topologyReady {
-		reconcileData.TopologyState = clabernetesconstants.TopologyStateRunning
-	} else {
-		reconcileData.TopologyState = clabernetesconstants.TopologyStateDeploying
-	}
+	// Gather per-node probe statuses from pod status.
+	// We collect these first so we can use the results to determine the topology state.
+	anyNodeFailed := false
 
-	// Gather per-node probe statuses from pod status
 	for nodeName := range reconcileData.ResolvedConfigs {
 		probeStatus := &clabernetesapisv1alpha1.NodeProbeStatus{}
 
@@ -846,6 +842,11 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,funlen
 			probeStatus.LivenessProbe = clabernetesconstants.ProbeStatusUnknown
 		} else {
 			pod := podList.Items[0]
+
+			// A pod in the Failed phase is a terminal failure (OOMKilled, Error, etc.)
+			if pod.Status.Phase == k8scorev1.PodFailed {
+				anyNodeFailed = true
+			}
 
 			if len(pod.Status.ContainerStatuses) > 0 {
 				cs := pod.Status.ContainerStatuses[0]
@@ -874,6 +875,7 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,funlen
 				case cs.State.Waiting != nil &&
 					cs.State.Waiting.Reason == "CrashLoopBackOff":
 					probeStatus.LivenessProbe = clabernetesconstants.ProbeStatusFailing
+					anyNodeFailed = true
 				default:
 					probeStatus.LivenessProbe = clabernetesconstants.ProbeStatusUnknown
 				}
@@ -885,6 +887,16 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,funlen
 		}
 
 		reconcileData.NodeProbeStatuses[nodeName] = probeStatus
+	}
+
+	// Set topology lifecycle state based on readiness and failure detection.
+	switch {
+	case topologyReady:
+		reconcileData.TopologyState = clabernetesconstants.TopologyStateRunning
+	case anyNodeFailed:
+		reconcileData.TopologyState = clabernetesconstants.TopologyStateDeployFailed
+	default:
+		reconcileData.TopologyState = clabernetesconstants.TopologyStateDeploying
 	}
 
 	if !reflect.DeepEqual(reconcileData.NodeProbeStatuses, owningTopology.Status.NodeProbeStatuses) {

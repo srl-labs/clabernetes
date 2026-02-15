@@ -2,6 +2,7 @@ package topology
 
 import (
 	"context"
+	"time"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
@@ -10,6 +11,10 @@ import (
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
+
+// destroyingStateObservabilityDelay is the time we hold the "destroying" state before removing
+// the finalizer, giving external watchers a chance to observe the transition.
+const destroyingStateObservabilityDelay = 5 * time.Second
 
 // Reconcile handles reconciliation for this controller.
 func (c *Controller) Reconcile(
@@ -52,9 +57,9 @@ func (c *Controller) Reconcile(
 				return ctrlruntime.Result{}, err
 			}
 
-			// Return here — the watcher will re-enqueue on the Patch above; pass 2 will
-			// then remove the finalizer.
-			return ctrlruntime.Result{}, nil
+			// Return with a delay so external watchers have time to observe "destroying"
+			// before the finalizer is removed and the object disappears.
+			return ctrlruntime.Result{RequeueAfter: destroyingStateObservabilityDelay}, nil
 		}
 
 		// Pass 2 (or topology was never reconciled): remove finalizer so GC can proceed.
