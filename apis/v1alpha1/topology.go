@@ -99,7 +99,7 @@ type TopologyStatus struct {
 	TopologyReady bool `json:"topologyReady"`
 	// TopologyState is the current lifecycle state of the topology.
 	// Possible values are "deploying", "running", and "destroying".
-	// +kubebuilder:validation:Enum=deploying;running;destroying
+	// +kubebuilder:validation:Enum=deploying;running;destroying;deployfailed
 	TopologyState string `json:"topologyState,omitempty"`
 	// NodeProbeStatuses is a map of node name to its probe statuses.
 	// Each entry reports the current result of the startup, readiness, and liveness probes

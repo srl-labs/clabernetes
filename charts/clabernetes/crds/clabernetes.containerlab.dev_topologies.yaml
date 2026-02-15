@@ -1001,6 +1001,7 @@ spec:
                 - deploying
                 - running
                 - destroying
+                - deployfailed
                 type: string
             required:
             - conditions
