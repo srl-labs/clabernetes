@@ -823,8 +823,6 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,funlen
 	anyNodeFailed := false
 
 	for nodeName := range reconcileData.ResolvedConfigs {
-		probeStatus := &clabernetesapisv1alpha1.NodeProbeStatus{}
-
 		podList := &k8scorev1.PodList{}
 
 		listErr := r.Client.List(
@@ -836,54 +834,10 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,funlen
 				clabernetesconstants.LabelTopologyNode:  nodeName,
 			},
 		)
-		if listErr != nil || len(podList.Items) == 0 {
-			probeStatus.StartupProbe = clabernetesconstants.ProbeStatusUnknown
-			probeStatus.ReadinessProbe = clabernetesconstants.ProbeStatusUnknown
-			probeStatus.LivenessProbe = clabernetesconstants.ProbeStatusUnknown
-		} else {
-			pod := podList.Items[0]
 
-			// A pod in the Failed phase is a terminal failure (OOMKilled, Error, etc.)
-			if pod.Status.Phase == k8scorev1.PodFailed {
-				anyNodeFailed = true
-			}
-
-			if len(pod.Status.ContainerStatuses) > 0 {
-				cs := pod.Status.ContainerStatuses[0]
-
-				// Startup probe
-				switch {
-				case cs.Started == nil:
-					probeStatus.StartupProbe = clabernetesconstants.ProbeStatusFailing
-				case !*cs.Started:
-					probeStatus.StartupProbe = clabernetesconstants.ProbeStatusFailing
-				default:
-					probeStatus.StartupProbe = clabernetesconstants.ProbeStatusPassing
-				}
-
-				// Readiness probe
-				if cs.Ready {
-					probeStatus.ReadinessProbe = clabernetesconstants.ProbeStatusPassing
-				} else {
-					probeStatus.ReadinessProbe = clabernetesconstants.ProbeStatusFailing
-				}
-
-				// Liveness probe (infer from container state)
-				switch {
-				case cs.State.Running != nil:
-					probeStatus.LivenessProbe = clabernetesconstants.ProbeStatusPassing
-				case cs.State.Waiting != nil &&
-					cs.State.Waiting.Reason == "CrashLoopBackOff":
-					probeStatus.LivenessProbe = clabernetesconstants.ProbeStatusFailing
-					anyNodeFailed = true
-				default:
-					probeStatus.LivenessProbe = clabernetesconstants.ProbeStatusUnknown
-				}
-			} else {
-				probeStatus.StartupProbe = clabernetesconstants.ProbeStatusUnknown
-				probeStatus.ReadinessProbe = clabernetesconstants.ProbeStatusUnknown
-				probeStatus.LivenessProbe = clabernetesconstants.ProbeStatusUnknown
-			}
+		probeStatus, nodeFailed := r.probeStatusFromPodList(podList, listErr)
+		if nodeFailed {
+			anyNodeFailed = true
 		}
 
 		reconcileData.NodeProbeStatuses[nodeName] = probeStatus
@@ -907,7 +861,10 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,funlen
 		reconcileData.TopologyState = clabernetesconstants.TopologyStateDeploying
 	}
 
-	if !reflect.DeepEqual(reconcileData.NodeProbeStatuses, owningTopology.Status.NodeProbeStatuses) {
+	if !reflect.DeepEqual(
+		reconcileData.NodeProbeStatuses,
+		owningTopology.Status.NodeProbeStatuses,
+	) {
 		reconcileData.ShouldUpdateResource = true
 	}
 
@@ -1023,6 +980,63 @@ func (r *Reconciler) reconcileDeploymentsHandleRestarts(
 	}
 
 	return restartNodeError
+}
+
+// probeStatusFromPodList derives a NodeProbeStatus from the first pod in
+// podList. When the list is empty or listErr is non-nil all probes are set to
+// "unknown". It also returns whether this node should be counted as failed
+// (pod phase Failed, or the container is in CrashLoopBackOff).
+func (r *Reconciler) probeStatusFromPodList(
+	podList *k8scorev1.PodList,
+	listErr error,
+) (*clabernetesapisv1alpha1.NodeProbeStatus, bool) {
+	unknown := &clabernetesapisv1alpha1.NodeProbeStatus{
+		StartupProbe:   clabernetesconstants.ProbeStatusUnknown,
+		ReadinessProbe: clabernetesconstants.ProbeStatusUnknown,
+		LivenessProbe:  clabernetesconstants.ProbeStatusUnknown,
+	}
+
+	if listErr != nil || len(podList.Items) == 0 {
+		return unknown, false
+	}
+
+	pod := podList.Items[0]
+	nodeFailed := pod.Status.Phase == k8scorev1.PodFailed
+
+	if len(pod.Status.ContainerStatuses) == 0 {
+		return unknown, nodeFailed
+	}
+
+	cs := pod.Status.ContainerStatuses[0]
+	status := &clabernetesapisv1alpha1.NodeProbeStatus{}
+
+	// Startup probe
+	switch {
+	case cs.Started == nil, !*cs.Started:
+		status.StartupProbe = clabernetesconstants.ProbeStatusFailing
+	default:
+		status.StartupProbe = clabernetesconstants.ProbeStatusPassing
+	}
+
+	// Readiness probe
+	if cs.Ready {
+		status.ReadinessProbe = clabernetesconstants.ProbeStatusPassing
+	} else {
+		status.ReadinessProbe = clabernetesconstants.ProbeStatusFailing
+	}
+
+	// Liveness probe (inferred from container state)
+	switch {
+	case cs.State.Running != nil:
+		status.LivenessProbe = clabernetesconstants.ProbeStatusPassing
+	case cs.State.Waiting != nil && cs.State.Waiting.Reason == "CrashLoopBackOff":
+		status.LivenessProbe = clabernetesconstants.ProbeStatusFailing
+		nodeFailed = true
+	default:
+		status.LivenessProbe = clabernetesconstants.ProbeStatusUnknown
+	}
+
+	return status, nodeFailed
 }
 
 func (r *Reconciler) diffIfDebug(a, b any) {
