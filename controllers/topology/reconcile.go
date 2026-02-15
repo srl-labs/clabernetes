@@ -38,60 +38,7 @@ func (c *Controller) Reconcile(
 	}
 
 	if topology.DeletionTimestamp != nil {
-		// Two-pass deletion so watchers can observe the "destroying" state:
-		//   Pass 1: set topologyState = "destroying", leave the finalizer in place, return.
-		//   Pass 2: state is already "destroying", remove the finalizer so GC can proceed.
-		//
-		// We only write the status if the topology was already reconciled at least once
-		// (status.kind is set) to avoid writing an otherwise-invalid status back.
-		if topology.Status.Kind != "" &&
-			topology.Status.TopologyState != clabernetesconstants.TopologyStateDestroying {
-			base := topology.DeepCopy()
-			topology.Status.TopologyState = clabernetesconstants.TopologyStateDestroying
-
-			if err = c.BaseController.Client.Patch(
-				ctx,
-				topology,
-				ctrlruntimeclient.MergeFrom(base),
-			); err != nil {
-				return ctrlruntime.Result{}, err
-			}
-
-			// Return with a delay so external watchers have time to observe "destroying"
-			// before the finalizer is removed and the object disappears.
-			return ctrlruntime.Result{RequeueAfter: destroyingStateObservabilityDelay}, nil
-		}
-
-		// Pass 2 (or topology was never reconciled): remove finalizer so GC can proceed.
-		if controllerutil.ContainsFinalizer(topology, clabernetesconstants.TopologyFinalizer) {
-			base := topology.DeepCopy()
-			controllerutil.RemoveFinalizer(topology, clabernetesconstants.TopologyFinalizer)
-
-			if err = c.BaseController.Client.Patch(
-				ctx,
-				topology,
-				ctrlruntimeclient.MergeFrom(base),
-			); err != nil {
-				// Finalizer removal failed. Re-fetch the object and mark it as
-				// "destroyfailed" so external watchers can observe the stuck state.
-				// Always return the original error so the controller keeps retrying.
-				if fresh, getErr := c.getTopologyFromReq(ctx, req); getErr == nil &&
-					fresh.Status.TopologyState != clabernetesconstants.TopologyStateDestroyFailed {
-					freshBase := fresh.DeepCopy()
-					fresh.Status.TopologyState = clabernetesconstants.TopologyStateDestroyFailed
-
-					_ = c.BaseController.Client.Patch( //nolint:errcheck
-						ctx,
-						fresh,
-						ctrlruntimeclient.MergeFrom(freshBase),
-					)
-				}
-
-				return ctrlruntime.Result{}, err
-			}
-		}
-
-		return ctrlruntime.Result{}, nil
+		return c.handleDeletion(ctx, req, topology)
 	}
 
 	if c.BaseController.ShouldIgnoreReconcile(topology) {
@@ -240,4 +187,60 @@ func (c *Controller) reconcileResources(
 	}
 
 	return nil
+}
+
+// handleDeletion implements a two-pass deletion so that external watchers can
+// observe the "destroying" state before the finalizer is removed and the object
+// disappears from the API:
+//
+//	Pass 1 — set topologyState = "destroying", leave the finalizer, requeue.
+//	Pass 2 — state is already "destroying"; remove the finalizer so GC proceeds.
+//
+// The status write in pass 1 is skipped when the topology was never fully
+// reconciled (status.kind is empty), to avoid persisting an otherwise-invalid
+// status.
+func (c *Controller) handleDeletion(
+	ctx context.Context,
+	req ctrlruntime.Request,
+	topology *clabernetesapisv1alpha1.Topology,
+) (ctrlruntime.Result, error) {
+	if topology.Status.Kind != "" &&
+		topology.Status.TopologyState != clabernetesconstants.TopologyStateDestroying {
+		base := topology.DeepCopy()
+		topology.Status.TopologyState = clabernetesconstants.TopologyStateDestroying
+
+		err := c.BaseController.Client.Patch(ctx, topology, ctrlruntimeclient.MergeFrom(base))
+		if err != nil {
+			return ctrlruntime.Result{}, err
+		}
+
+		// Hold the state briefly so external watchers can observe the transition.
+		return ctrlruntime.Result{RequeueAfter: destroyingStateObservabilityDelay}, nil
+	}
+
+	if !controllerutil.ContainsFinalizer(topology, clabernetesconstants.TopologyFinalizer) {
+		return ctrlruntime.Result{}, nil
+	}
+
+	base := topology.DeepCopy()
+	controllerutil.RemoveFinalizer(topology, clabernetesconstants.TopologyFinalizer)
+
+	err := c.BaseController.Client.Patch(ctx, topology, ctrlruntimeclient.MergeFrom(base))
+	if err != nil {
+		// Finalizer removal failed. Re-fetch and mark as "destroyfailed" so
+		// external watchers can observe the stuck state. Always return the
+		// original error so the controller keeps retrying.
+		fresh, getErr := c.getTopologyFromReq(ctx, req)
+		if getErr == nil &&
+			fresh.Status.TopologyState != clabernetesconstants.TopologyStateDestroyFailed {
+			freshBase := fresh.DeepCopy()
+			fresh.Status.TopologyState = clabernetesconstants.TopologyStateDestroyFailed
+
+			_ = c.BaseController.Client.Patch(ctx, fresh, ctrlruntimeclient.MergeFrom(freshBase))
+		}
+
+		return ctrlruntime.Result{}, err
+	}
+
+	return ctrlruntime.Result{}, nil
 }
