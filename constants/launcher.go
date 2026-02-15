@@ -67,6 +67,11 @@ const (
 	// topology is being deleted (DeletionTimestamp is set).
 	TopologyStateDestroying = "destroying"
 
+	// TopologyStateDeployFailed is reported in the topology.status.topologyState field when the
+	// topology is deploying but one or more nodes have entered a terminal failure state
+	// (e.g. CrashLoopBackOff or pod Failed phase).
+	TopologyStateDeployFailed = "deployfailed"
+
 	// TopologyFinalizer is the finalizer added to Topology objects so that the controller can
 	// set the TopologyState to "destroying" before the object is removed.
 	TopologyFinalizer = "clabernetes/topology-state"
