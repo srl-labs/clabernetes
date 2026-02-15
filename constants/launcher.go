@@ -72,6 +72,16 @@ const (
 	// (e.g. CrashLoopBackOff or pod Failed phase).
 	TopologyStateDeployFailed = "deployfailed"
 
+	// TopologyStateDegraded is reported in the topology.status.topologyState field when the
+	// topology was previously "running" but one or more nodes have since become unready or
+	// entered a failure state. This distinguishes a regression from an initial startup failure.
+	TopologyStateDegraded = "degraded"
+
+	// TopologyStateDestroyFailed is reported in the topology.status.topologyState field when
+	// the controller attempted to release the topology finalizer during deletion but the
+	// operation failed. The object remains until the condition is resolved.
+	TopologyStateDestroyFailed = "destroyfailed"
+
 	// TopologyFinalizer is the finalizer added to Topology objects so that the controller can
 	// set the TopologyState to "destroying" before the object is removed.
 	TopologyFinalizer = "clabernetes/topology-state"
