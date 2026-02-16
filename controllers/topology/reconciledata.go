@@ -26,8 +26,9 @@ type ReconcileData struct {
 	PreviousNodeStatuses map[string]string
 	NodeStatuses         map[string]string
 	TopologyReady        bool
-	TopologyState        string
-	NodeProbeStatuses    map[string]*clabernetesapisv1alpha1.NodeProbeStatus
+
+	TopologyState     clabernetesapisv1alpha1.TopologyState
+	NodeProbeStatuses map[string]clabernetesapisv1alpha1.NodeProbeStatuses
 
 	NodesNeedingReboot clabernetesutil.StringSet
 
@@ -55,7 +56,7 @@ func NewReconcileData(
 
 		PreviousNodeStatuses: owningTopology.Status.NodeReadiness,
 		NodeStatuses:         make(map[string]string),
-		NodeProbeStatuses:    make(map[string]*clabernetesapisv1alpha1.NodeProbeStatus),
+		NodeProbeStatuses:    make(map[string]clabernetesapisv1alpha1.NodeProbeStatuses),
 		NodesNeedingReboot:   clabernetesutil.NewStringSet(),
 	}
 
