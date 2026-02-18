@@ -103,6 +103,16 @@ func NormalizeTopology(t *testing.T, objectData []byte) []byte {
 		objectData,
 		"del(.status.topologyReady)",
 	)
+	objectData = YQCommand(
+		t,
+		objectData,
+		"del(.status.topologyState)",
+	)
+	objectData = YQCommand(
+		t,
+		objectData,
+		"del(.status.nodeProbeStatuses)",
+	)
 
 	return objectData
 }

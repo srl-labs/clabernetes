@@ -668,7 +668,7 @@ func (r *Reconciler) ReconcilePersistentVolumeClaim(
 }
 
 // ReconcileDeployments reconciles the deployments that make up a clabernetes Topology.
-func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,funlen
+func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,gocognit,funlen
 	ctx context.Context,
 	owningTopology *clabernetesapisv1alpha1.Topology,
 	reconcileData *ReconcileData,
@@ -818,7 +818,27 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,funlen
 		})
 	}
 
+	r.collectNodeProbeStatuses(
+		ctx,
+		owningTopology,
+		reconcileData,
+		deployments,
+	)
+
+	r.resolveTopologyState(owningTopology, reconcileData)
+
 	if !reflect.DeepEqual(reconcileData.NodeStatuses, reconcileData.PreviousNodeStatuses) {
+		reconcileData.ShouldUpdateResource = true
+	}
+
+	if reconcileData.TopologyState != owningTopology.Status.TopologyState {
+		reconcileData.ShouldUpdateResource = true
+	}
+
+	if !reflect.DeepEqual(
+		reconcileData.NodeProbeStatuses,
+		owningTopology.Status.NodeProbeStatuses,
+	) {
 		reconcileData.ShouldUpdateResource = true
 	}
 
@@ -828,6 +848,163 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,funlen
 		deployments,
 		reconcileData,
 	)
+}
+
+func (r *Reconciler) collectNodeProbeStatuses(
+	ctx context.Context,
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	reconcileData *ReconcileData,
+	deployments *clabernetesutil.ObjectDiffer[*k8sappsv1.Deployment],
+) {
+	for nodeName, deployment := range deployments.Current {
+		probeStatuses := clabernetesapisv1alpha1.NodeProbeStatuses{
+			StartupProbe:   clabernetesapisv1alpha1.NodeProbeStatusUnknown,
+			ReadinessProbe: clabernetesapisv1alpha1.NodeProbeStatusUnknown,
+			LivenessProbe:  clabernetesapisv1alpha1.NodeProbeStatusDisabled,
+		}
+
+		podList := &k8scorev1.PodList{}
+
+		err := r.Client.List(
+			ctx,
+			podList,
+			ctrlruntimeclient.InNamespace(owningTopology.GetNamespace()),
+			ctrlruntimeclient.MatchingLabels(deployment.Spec.Selector.MatchLabels),
+		)
+		if err != nil {
+			r.Log.Warnf(
+				"failed listing pods for node %q, cannot determine probe statuses: %s",
+				nodeName,
+				err,
+			)
+
+			reconcileData.NodeProbeStatuses[nodeName] = probeStatuses
+
+			continue
+		}
+
+		if len(podList.Items) == 0 {
+			reconcileData.NodeProbeStatuses[nodeName] = probeStatuses
+
+			continue
+		}
+
+		// use the first pod (deployments have replicas=1)
+		pod := podList.Items[0]
+
+		container := deployment.Spec.Template.Spec.Containers[0]
+
+		if container.StartupProbe != nil {
+			probeStatuses.StartupProbe = probeStatusFromPodCondition(
+				pod.Status.ContainerStatuses,
+				true,
+			)
+		} else {
+			probeStatuses.StartupProbe = clabernetesapisv1alpha1.NodeProbeStatusDisabled
+		}
+
+		if container.ReadinessProbe != nil {
+			probeStatuses.ReadinessProbe = probeStatusFromPodCondition(
+				pod.Status.ContainerStatuses,
+				false,
+			)
+		} else {
+			probeStatuses.ReadinessProbe = clabernetesapisv1alpha1.NodeProbeStatusDisabled
+		}
+
+		if container.LivenessProbe != nil {
+			// liveness probe - check if pod is running (not being restarted)
+			if pod.Status.Phase == k8scorev1.PodRunning {
+				probeStatuses.LivenessProbe = clabernetesapisv1alpha1.NodeProbeStatusPassing
+			} else {
+				probeStatuses.LivenessProbe = clabernetesapisv1alpha1.NodeProbeStatusFailing
+			}
+		}
+
+		reconcileData.NodeProbeStatuses[nodeName] = probeStatuses
+	}
+
+	for _, missingName := range deployments.Missing {
+		reconcileData.NodeProbeStatuses[missingName] = clabernetesapisv1alpha1.NodeProbeStatuses{
+			StartupProbe:   clabernetesapisv1alpha1.NodeProbeStatusUnknown,
+			ReadinessProbe: clabernetesapisv1alpha1.NodeProbeStatusUnknown,
+			LivenessProbe:  clabernetesapisv1alpha1.NodeProbeStatusUnknown,
+		}
+	}
+}
+
+func probeStatusFromPodCondition(
+	containerStatuses []k8scorev1.ContainerStatus,
+	isStartup bool,
+) clabernetesapisv1alpha1.NodeProbeStatus {
+	if len(containerStatuses) == 0 {
+		return clabernetesapisv1alpha1.NodeProbeStatusUnknown
+	}
+
+	cs := containerStatuses[0]
+
+	if isStartup {
+		if cs.Started != nil && *cs.Started {
+			return clabernetesapisv1alpha1.NodeProbeStatusPassing
+		}
+
+		// if the container is waiting or not started, startup probe is still pending/failing
+		if cs.State.Waiting != nil || (cs.Started != nil && !*cs.Started) {
+			return clabernetesapisv1alpha1.NodeProbeStatusFailing
+		}
+
+		return clabernetesapisv1alpha1.NodeProbeStatusUnknown
+	}
+
+	// readiness: check if container is ready
+	if cs.Ready {
+		return clabernetesapisv1alpha1.NodeProbeStatusPassing
+	}
+
+	if cs.State.Running != nil {
+		// running but not ready means readiness probe is failing
+		return clabernetesapisv1alpha1.NodeProbeStatusFailing
+	}
+
+	return clabernetesapisv1alpha1.NodeProbeStatusUnknown
+}
+
+func (r *Reconciler) resolveTopologyState(
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	reconcileData *ReconcileData,
+) {
+	previousState := owningTopology.Status.TopologyState
+	hasEverBeenRunning := previousState == clabernetesapisv1alpha1.TopologyStateRunning ||
+		previousState == clabernetesapisv1alpha1.TopologyStateDegraded
+
+	if reconcileData.TopologyReady {
+		reconcileData.TopologyState = clabernetesapisv1alpha1.TopologyStateRunning
+
+		return
+	}
+
+	// not all nodes are ready
+
+	if hasEverBeenRunning {
+		// was running before, now degraded
+		reconcileData.TopologyState = clabernetesapisv1alpha1.TopologyStateDegraded
+
+		return
+	}
+
+	// never been running -- check if any nodes are in terminal failure
+	for _, nodeStatus := range reconcileData.NodeStatuses {
+		if nodeStatus == clabernetesconstants.NodeStatusNotReady {
+			// for now we keep deploying -- deployfailed could be determined by checking
+			// if a deployment has been in a crash loop for a long time, but that is complex
+			// and we'd rather keep it simple for now
+			reconcileData.TopologyState = clabernetesapisv1alpha1.TopologyStateDeploying
+
+			return
+		}
+	}
+
+	reconcileData.TopologyState = clabernetesapisv1alpha1.TopologyStateDeploying
 }
 
 func (r *Reconciler) reconcileDeploymentsHandleRestarts(

@@ -4,6 +4,57 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// TopologyState represents the high-level lifecycle state of a Topology.
+// +kubebuilder:validation:Enum=deploying;running;degraded;deployfailed
+type TopologyState string
+
+const (
+	// TopologyStateDeploying indicates the topology is being deployed and not all nodes are ready.
+	TopologyStateDeploying TopologyState = "deploying"
+
+	// TopologyStateRunning indicates all nodes in the topology are ready.
+	TopologyStateRunning TopologyState = "running"
+
+	// TopologyStateDegraded indicates the topology was previously running but one or more nodes
+	// are no longer ready.
+	TopologyStateDegraded TopologyState = "degraded"
+
+	// TopologyStateDeployFailed indicates one or more nodes have terminally failed before the
+	// topology ever reached the running state.
+	TopologyStateDeployFailed TopologyState = "deployfailed"
+)
+
+// NodeProbeStatus represents the status of a single probe type on a node.
+// +kubebuilder:validation:Enum=passing;failing;unknown;disabled
+type NodeProbeStatus string
+
+const (
+	// NodeProbeStatusPassing indicates the probe is succeeding.
+	NodeProbeStatusPassing NodeProbeStatus = "passing"
+
+	// NodeProbeStatusFailing indicates the probe is failing.
+	NodeProbeStatusFailing NodeProbeStatus = "failing"
+
+	// NodeProbeStatusUnknown indicates the probe status is not yet known.
+	NodeProbeStatusUnknown NodeProbeStatus = "unknown"
+
+	// NodeProbeStatusDisabled indicates the probe is not configured.
+	NodeProbeStatusDisabled NodeProbeStatus = "disabled"
+)
+
+// NodeProbeStatuses holds the individual probe statuses for a single node.
+type NodeProbeStatuses struct {
+	// StartupProbe is the status of the node's startup probe.
+	// +kubebuilder:validation:Enum=passing;failing;unknown;disabled
+	StartupProbe NodeProbeStatus `json:"startupProbe"`
+	// ReadinessProbe is the status of the node's readiness probe.
+	// +kubebuilder:validation:Enum=passing;failing;unknown;disabled
+	ReadinessProbe NodeProbeStatus `json:"readinessProbe"`
+	// LivenessProbe is the status of the node's liveness probe.
+	// +kubebuilder:validation:Enum=passing;failing;unknown;disabled
+	LivenessProbe NodeProbeStatus `json:"livenessProbe"`
+}
+
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
@@ -12,6 +63,7 @@ import (
 // +k8s:openapi-gen=true
 // +kubebuilder:resource:path="topologies"
 // +kubebuilder:printcolumn:JSONPath=".status.kind",name=Kind,type=string
+// +kubebuilder:printcolumn:JSONPath=".status.topologyState",name=State,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 // +kubebuilder:printcolumn:JSONPath=".status.topologyReady",name=Ready,type=boolean
 type Topology struct {
@@ -96,6 +148,13 @@ type TopologyStatus struct {
 	// TopologyReady indicates if all nodes in the topology have reported ready. This is duplicated
 	// from the conditions so we can easily snag it for print columns!
 	TopologyReady bool `json:"topologyReady"`
+	// TopologyState is the high-level lifecycle state of the topology.
+	// +kubebuilder:validation:Enum=deploying;running;degraded;deployfailed
+	// +optional
+	TopologyState TopologyState `json:"topologyState,omitempty"`
+	// NodeProbeStatuses is a map of node name to per-probe status information.
+	// +optional
+	NodeProbeStatuses map[string]NodeProbeStatuses `json:"nodeProbeStatuses,omitempty"`
 	// Conditions is a list of conditions for the topology custom resource.
 	// +listType=atomic
 	Conditions []metav1.Condition `json:"conditions"`

@@ -30,7 +30,6 @@ func (c *Controller) Reconcile(
 	}
 
 	if topology.DeletionTimestamp != nil {
-		// deleting nothing to do, we have no finalizers or anything at this point
 		return ctrlruntime.Result{}, nil
 	}
 

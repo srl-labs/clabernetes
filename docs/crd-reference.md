@@ -5,6 +5,8 @@ This document provides a comprehensive reference for all Custom Resource Definit
 ## Table of Contents
 
 - [Topology CRD](#topology-crd)
+  - [TopologySpec Fields](#topologyspec-fields)
+  - [TopologyStatus Fields](#topologystatus-fields)
 - [Config CRD](#config-crd)
 - [Connectivity CRD](#connectivity-crd)
 - [ImageRequest CRD](#imagerequest-crd)
@@ -303,6 +305,68 @@ Tunnel type for inter-node connectivity.
 |-------|-------------|
 | `vxlan` | VXLAN tunnels (default) |
 | `slurpeeth` | Experimental TCP tunnel mode |
+
+---
+
+### TopologyStatus Fields
+
+The `status` subresource is managed exclusively by the controller. It is never set by the
+user. Use `kubectl get topology <name> -o yaml` or `kubectl explain topology.status` to
+inspect the current values.
+
+#### topologyState
+
+The current lifecycle state of the topology. Visible as the **State** column in
+`kubectl get topologies`.
+
+| Value | Description |
+|-------|-------------|
+| `deploying` | Resources are being created/updated; not all nodes have reported ready yet. |
+| `deployfailed` | One or more nodes entered a terminal failure (CrashLoopBackOff / pod Failed) before the topology ever reached `running`. |
+| `running` | All nodes have reported ready. The topology is fully operational. |
+| `degraded` | The topology was previously `running` but one or more nodes have since become unready or started crashing. |
+| `destroying` | A delete request has been received. The controller holds this state for ~5 s so external watchers can observe the transition. |
+| `destroyfailed` | The finalizer removal patch failed during deletion. The object remains until the issue is resolved. |
+
+See the [Topology Lifecycle guide](guides/topology-lifecycle.md) for the full state machine
+diagram and troubleshooting steps.
+
+#### topologyReady
+
+Boolean. `true` when every node in the topology has reported ready. Mirrors the
+`TopologyReady` condition and is surfaced here for `kubectl get` print columns.
+
+#### nodeReadiness
+
+Map of node name → simplified readiness string. Updated every reconcile cycle.
+
+| Value | Description |
+|-------|-------------|
+| `ready` | Startup and readiness probes both passing. |
+| `notready` | Pod exists but probes have not yet passed. |
+| `unknown` | No deployment found for this node. |
+| `deploymentDisabled` | The topology has the `clabernetes/disableDeployments` label set. |
+
+#### nodeProbeStatuses
+
+Map of node name → per-probe status object. Provides finer-grained observability than
+`nodeReadiness`. Each node entry has three fields:
+
+| Field | Description |
+|-------|-------------|
+| `startupProbe` | Derived from `pod.status.containerStatuses[0].started`. Passing once the lab node writes its status file. |
+| `readinessProbe` | Derived from `pod.status.containerStatuses[0].ready`. Passing when the node is ready to accept traffic. |
+| `livenessProbe` | Inferred from container state: `Running` → passing; `CrashLoopBackOff` → failing; other → unknown. |
+
+Possible values for all probe fields: `passing`, `failing`, `unknown`, `disabled`.
+
+#### conditions
+
+List of `metav1.Condition` entries managed by the controller. Currently contains:
+
+| Type | True when | False when |
+|------|-----------|------------|
+| `TopologyReady` | All nodes report ready. | Any node is not ready. |
 
 ---
 
