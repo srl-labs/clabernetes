@@ -43,14 +43,14 @@ func (c *Controller) ReconcileSnapshotAnnotation(
 
 	snapshot := &clabernetesapisv1alpha1.Snapshot{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      snapshotName,
+			Name:			 snapshotName,
 			Namespace: topology.Namespace,
 			Labels: map[string]string{
 				clabernetesconstants.LabelTopologyOwner: topology.Name,
 			},
 		},
 		Spec: clabernetesapisv1alpha1.SnapshotSpec{
-			TopologyRef:       topology.Name,
+			TopologyRef:			 topology.Name,
 			TopologyNamespace: topology.Namespace,
 		},
 	}
@@ -60,6 +60,7 @@ func (c *Controller) ReconcileSnapshotAnnotation(
 		return fmt.Errorf("failed creating Snapshot CR %q: %w", snapshotName, err)
 	}
 
+	// TODO: Replace the []byte with appendf
 	// Remove the snapshotRequested annotation from the Topology
 	patchBytes := []byte(fmt.Sprintf(
 		`{"metadata":{"annotations":{%q:null}}}`,
