@@ -399,6 +399,7 @@
                 "tunnelID": 0,
                 "destination": "process-containerlab-definition-network-mode-test-srsim-a-vx.clabernetes.svc.cluster.local",
                 "localNode": "external-node",
+                "localNodeKind": "srl",
                 "localInterface": "e1-1",
                 "remoteNode": "srsim-iom1",
                 "remoteInterface": "1/1/c1/1"
@@ -409,6 +410,7 @@
                 "tunnelID": 0,
                 "destination": "process-containerlab-definition-network-mode-test-external-node-vx.clabernetes.svc.cluster.local",
                 "localNode": "srsim-iom1",
+                "localNodeKind": "nokia_srsim",
                 "localInterface": "1/1/c1/1",
                 "remoteNode": "external-node",
                 "remoteInterface": "e1-1"
@@ -419,6 +421,8 @@
     "PreviousNodeStatuses": null,
     "NodeStatuses": null,
     "TopologyReady": false,
+    "TopologyState": "",
+    "NodeProbeStatuses": null,
     "NodesNeedingReboot": null,
     "ShouldUpdateResource": false
 }
