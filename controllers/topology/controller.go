@@ -6,6 +6,7 @@ import (
 	clabernetesapis "github.com/srl-labs/clabernetes/apis"
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
+	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
 	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
 	k8sappsv1 "k8s.io/api/apps/v1"
@@ -88,6 +89,11 @@ func (c *Controller) SetupWithManager(mgr ctrlruntime.Manager) error {
 				&clabernetesapisv1alpha1.Topology{},
 			),
 		).
+		// watch pods so pod status changes (probe results) trigger topology reconciliation
+		Watches(
+			&k8scorev1.Pod{},
+			ctrlruntimehandler.EnqueueRequestsFromMapFunc(c.enqueueForPod),
+		).
 		// watch our config cr too so we get any config updates handled
 		Watches(
 			&clabernetesapisv1alpha1.Config{},
@@ -96,6 +102,26 @@ func (c *Controller) SetupWithManager(mgr ctrlruntime.Manager) error {
 			),
 		).
 		Complete(c)
+}
+
+// enqueueForPod enqueues the owning Topology when a pod status changes.
+func (c *Controller) enqueueForPod(
+	_ context.Context,
+	obj ctrlruntimeclient.Object,
+) []ctrlruntimereconcile.Request {
+	labels := obj.GetLabels()
+
+	ownerName, ok := labels[clabernetesconstants.LabelTopologyOwner]
+	if !ok {
+		return nil
+	}
+
+	return []ctrlruntimereconcile.Request{{
+		NamespacedName: apimachinerytypes.NamespacedName{
+			Namespace: obj.GetNamespace(),
+			Name:      ownerName,
+		},
+	}}
 }
 
 // enqueueForAll enqueues all Topology CRs for reconciliation.

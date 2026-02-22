@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.18.0
+    controller-gen.kubebuilder.io/version: v0.20.0
   name: topologies.clabernetes.containerlab.dev
 spec:
   group: clabernetes.containerlab.dev
@@ -17,6 +17,9 @@ spec:
   - additionalPrinterColumns:
     - jsonPath: .status.kind
       name: Kind
+      type: string
+    - jsonPath: .status.topologyState
+      name: State
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
@@ -912,6 +915,64 @@ spec:
                 - containerlab
                 - kne
                 type: string
+              nodeProbeStatuses:
+                additionalProperties:
+                  description: NodeProbeStatuses holds the individual probe statuses
+                    for a single node.
+                  properties:
+                    livenessProbe:
+                      allOf:
+                      - enum:
+                        - passing
+                        - failing
+                        - unknown
+                        - disabled
+                      - enum:
+                        - passing
+                        - failing
+                        - unknown
+                        - disabled
+                      description: LivenessProbe is the status of the node's liveness
+                        probe.
+                      type: string
+                    readinessProbe:
+                      allOf:
+                      - enum:
+                        - passing
+                        - failing
+                        - unknown
+                        - disabled
+                      - enum:
+                        - passing
+                        - failing
+                        - unknown
+                        - disabled
+                      description: ReadinessProbe is the status of the node's readiness
+                        probe.
+                      type: string
+                    startupProbe:
+                      allOf:
+                      - enum:
+                        - passing
+                        - failing
+                        - unknown
+                        - disabled
+                      - enum:
+                        - passing
+                        - failing
+                        - unknown
+                        - disabled
+                      description: StartupProbe is the status of the node's startup
+                        probe.
+                      type: string
+                  required:
+                  - livenessProbe
+                  - readinessProbe
+                  - startupProbe
+                  type: object
+                description: NodeProbeStatuses is a map of node name to per-probe
+                  status information.
+                type: object
               nodeReadiness:
                 additionalProperties:
                   type: string
@@ -967,6 +1028,21 @@ spec:
                   TopologyReady indicates if all nodes in the topology have reported ready. This is duplicated
                   from the conditions so we can easily snag it for print columns!
                 type: boolean
+              topologyState:
+                allOf:
+                - enum:
+                  - deploying
+                  - running
+                  - degraded
+                  - deployfailed
+                - enum:
+                  - deploying
+                  - running
+                  - degraded
+                  - deployfailed
+                description: TopologyState is the high-level lifecycle state of the
+                  topology.
+                type: string
             required:
             - conditions
             - configs
