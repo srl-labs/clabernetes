@@ -70,3 +70,15 @@ const (
 	// puller pod.
 	LabelPullerNodeTarget = "clabernetes/pullerNodeTarget"
 )
+
+const (
+	// AnnotationSnapshotRequested is set to "true" on a Topology to trigger a snapshot.
+	// The controller will create a Snapshot CR + ConfigMap, then remove this annotation.
+	AnnotationSnapshotRequested = "clabernetes/snapshotRequested"
+
+	// AnnotationSnapshotTimestamp records the RFC3339 timestamp of the last completed snapshot.
+	AnnotationSnapshotTimestamp = "clabernetes/snapshotTimestamp"
+
+	// AnnotationSnapshotLatest holds the name of the most recent Snapshot CR for this topology.
+	AnnotationSnapshotLatest = "clabernetes/snapshotLatest"
+)
