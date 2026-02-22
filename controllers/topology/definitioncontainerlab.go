@@ -732,9 +732,12 @@ func (p *containerlabDefinitionProcessor) processLinkForGroup(
 	p.reconcileData.ResolvedTunnels[primaryNodeName] = append(
 		p.reconcileData.ResolvedTunnels[primaryNodeName],
 		&clabernetesapisv1alpha1.PointToPointTunnel{
-			LocalNode:     interestingEndpoint.NodeName,
-			LocalNodeKind: getEffectiveNodeKind(containerlabConfig.Topology, interestingEndpoint.NodeName),
-			RemoteNode:    uninterestingEndpoint.NodeName,
+			LocalNode: interestingEndpoint.NodeName,
+			LocalNodeKind: getEffectiveNodeKind(
+				containerlabConfig.Topology,
+				interestingEndpoint.NodeName,
+			),
+			RemoteNode: uninterestingEndpoint.NodeName,
 			Destination: resolveConnectivityDestination(
 				p.topology.Name,
 				destinationNodeName,
