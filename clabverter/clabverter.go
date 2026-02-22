@@ -17,7 +17,10 @@ import (
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 	clabernetesutilcontainerlab "github.com/srl-labs/clabernetes/util/containerlab"
 	clabernetesutilkubernetes "github.com/srl-labs/clabernetes/util/kubernetes"
+	k8scorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 	sigsyaml "sigs.k8s.io/yaml"
 )
 
@@ -84,6 +87,11 @@ type Clabverter struct {
 
 	// filenames -> content of all rendered files we need to either print to stdout or write to disk
 	renderedFiles []renderedContent
+
+	// fromSnapshot is an optional Snapshot CR name (or its backing ConfigMap name) to restore
+	// from. When set, filesFromConfigMap entries are pre-populated in the rendered Topology
+	// manifest for each node that has saved configs in the snapshot.
+	fromSnapshot string
 }
 
 // MustNewClabverter returns an instance of Clabverter or panics.
@@ -100,6 +108,7 @@ func MustNewClabverter(
 	debug,
 	quiet,
 	stdout bool,
+	fromSnapshot string,
 ) *Clabverter {
 	logLevel := clabernetesconstants.Info
 
@@ -167,6 +176,7 @@ func MustNewClabverter(
 		naming:                  naming,
 		containerlabVersion:     containerlabVersion,
 		renderedFiles:           []renderedContent{},
+		fromSnapshot:            fromSnapshot,
 	}
 }
 
@@ -211,6 +221,13 @@ func (c *Clabverter) Clabvert() error {
 	err = c.handleAssociatedFiles()
 	if err != nil {
 		return err
+	}
+
+	if c.fromSnapshot != "" {
+		err = c.handleFromSnapshot()
+		if err != nil {
+			return err
+		}
 	}
 
 	err = c.handleManifest()
@@ -638,6 +655,133 @@ func (c *Clabverter) findClabTopologyFile() error {
 
 	return nil
 }
+
+// handleFromSnapshot looks up the snapshot ConfigMap and pre-populates startupConfigConfigMaps
+// with filesFromConfigMap entries for each node that has saved configs in the snapshot.
+func (c *Clabverter) handleFromSnapshot() error {
+	c.logger.Infof("loading snapshot %q to pre-populate filesFromConfigMap...", c.fromSnapshot)
+
+	// Build a kubernetes client from the default kubeconfig
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	configOverrides := &clientcmd.ConfigOverrides{}
+
+	kubeConfig, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		loadingRules,
+		configOverrides,
+	).ClientConfig()
+	if err != nil {
+		return fmt.Errorf("failed building kubeconfig for snapshot lookup: %w", err)
+	}
+
+	kubeClient, err := kubernetes.NewForConfig(kubeConfig)
+	if err != nil {
+		return fmt.Errorf("failed creating kubernetes client for snapshot lookup: %w", err)
+	}
+
+	// Determine the namespace to look up the ConfigMap in
+	namespace := c.destinationNamespace
+	if namespace == "" {
+		namespace = "default"
+	}
+
+	// Look up the ConfigMap (the snapshot ConfigMap has the same name as the Snapshot CR)
+	configMap, err := kubeClient.CoreV1().ConfigMaps(namespace).Get(
+		context.Background(),
+		c.fromSnapshot,
+		metav1.GetOptions{},
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"failed fetching snapshot ConfigMap %q in namespace %q: %w",
+			c.fromSnapshot,
+			namespace,
+			err,
+		)
+	}
+
+	c.logger.Infof(
+		"found snapshot ConfigMap %q with %d keys",
+		c.fromSnapshot,
+		len(configMap.Data),
+	)
+
+	// Group keys by node name (keys are in format "<nodeName>/<fileName>")
+	nodeFiles := groupConfigMapKeysByNode(configMap)
+
+	// For each node in the topology that has saved configs, add filesFromConfigMap entries
+	for nodeName, fileKeys := range nodeFiles {
+		if _, ok := c.clabConfig.Topology.Nodes[nodeName]; !ok {
+			c.logger.Debugf(
+				"snapshot has data for node %q but it is not in the current topology, skipping",
+				nodeName,
+			)
+
+			continue
+		}
+
+		for _, key := range fileKeys {
+			// Determine the mount path: for startup-config files, use the standard path
+			// For other files, derive from the key name
+			fileName := key[strings.LastIndex(key, "/")+1:]
+
+			// skip save-output files, they are informational only
+			if fileName == "save-output" {
+				continue
+			}
+
+			mountPath := fmt.Sprintf("/clabernetes/%s", fileName)
+
+			// If there's already a startup config for this node from the topology file,
+			// use its path; otherwise use a generic path
+			if existingEntry, exists := c.startupConfigConfigMaps[nodeName]; exists {
+				mountPath = existingEntry.FilePath
+			}
+
+			c.logger.Debugf(
+				"adding snapshot filesFromConfigMap entry for node %q: key=%q mountPath=%q",
+				nodeName,
+				key,
+				mountPath,
+			)
+
+			// Override or add the entry for this node
+			c.startupConfigConfigMaps[nodeName] = topologyConfigMapTemplateVars{
+				NodeName:      nodeName,
+				ConfigMapName: c.fromSnapshot,
+				FilePath:      mountPath,
+				FileName:      key,
+				FileMode:      clabernetesconstants.FileModeRead,
+			}
+
+			// Only use the first non-save-output file per node (the startup config)
+			break
+		}
+	}
+
+	c.logger.Info("snapshot filesFromConfigMap entries populated")
+
+	return nil
+}
+
+// groupConfigMapKeysByNode groups ConfigMap data keys by node name.
+// Keys are expected to be in format "<nodeName>/<fileName>".
+func groupConfigMapKeysByNode(configMap *k8scorev1.ConfigMap) map[string][]string {
+	nodeFiles := make(map[string][]string)
+
+	for key := range configMap.Data {
+		parts := strings.SplitN(key, "/", splitInTwo)
+		if len(parts) != splitInTwo {
+			continue
+		}
+
+		nodeName := parts[0]
+		nodeFiles[nodeName] = append(nodeFiles[nodeName], key)
+	}
+
+	return nodeFiles
+}
+
+const splitInTwo = 2
 
 func (c *Clabverter) getGitHubHeaders() map[string]string {
 	if c.githubToken == "" {
