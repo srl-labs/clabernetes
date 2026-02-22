@@ -18,4 +18,7 @@ const (
 
 	// Connectivity is the Kind of the Connectivity custom resource.
 	Connectivity = "connectivity"
+
+	// Snapshot is the Kind of the Snapshot custom resource.
+	Snapshot = "snapshot"
 )
