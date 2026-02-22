@@ -371,6 +371,19 @@ func processPorts(
 	return defaultPortsAsString, nodePortsAsString
 }
 
+// getEffectiveNodeKind returns the effective containerlab kind for a node, resolving the
+// inheritance chain: node-level kind → topology defaults kind → empty string.
+func getEffectiveNodeKind(
+	clabTopo *clabernetesutilcontainerlab.Topology,
+	nodeName string,
+) string {
+	if node, ok := clabTopo.Nodes[nodeName]; ok && node.Kind != "" {
+		return node.Kind
+	}
+
+	return clabTopo.Defaults.Kind
+}
+
 func getKindsForNode(
 	clabTopo *clabernetesutilcontainerlab.Topology,
 	nodeName string,
@@ -641,6 +654,7 @@ func (p *containerlabDefinitionProcessor) processLinksForNodeGroup(
 		}
 
 		err = p.processLinkForGroup(
+			containerlabConfig,
 			link,
 			endpoints,
 			primaryNodeName,
@@ -658,6 +672,7 @@ func (p *containerlabDefinitionProcessor) processLinksForNodeGroup(
 
 // processLinkForGroup processes a single link for a node group.
 func (p *containerlabDefinitionProcessor) processLinkForGroup(
+	containerlabConfig *clabernetesutilcontainerlab.Config,
 	link *clabernetesutilcontainerlab.LinkDefinition,
 	endpoints *linkEndpoints,
 	primaryNodeName string,
@@ -717,8 +732,9 @@ func (p *containerlabDefinitionProcessor) processLinkForGroup(
 	p.reconcileData.ResolvedTunnels[primaryNodeName] = append(
 		p.reconcileData.ResolvedTunnels[primaryNodeName],
 		&clabernetesapisv1alpha1.PointToPointTunnel{
-			LocalNode:  interestingEndpoint.NodeName,
-			RemoteNode: uninterestingEndpoint.NodeName,
+			LocalNode:     interestingEndpoint.NodeName,
+			LocalNodeKind: getEffectiveNodeKind(containerlabConfig.Topology, interestingEndpoint.NodeName),
+			RemoteNode:    uninterestingEndpoint.NodeName,
 			Destination: resolveConnectivityDestination(
 				p.topology.Name,
 				destinationNodeName,
