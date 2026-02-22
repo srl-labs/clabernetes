@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
@@ -18,6 +19,15 @@ const (
 	resolveServiceMaxAttempts = 5
 	resolveServiceSleep       = 10 * time.Second
 )
+
+// sanitizeSrsimInterfaceName replaces forward slashes with hyphens in SR-SIM interface names
+// (e.g. "1/1/c1/1" → "1-1-c1-1"), mirroring containerlab's own SanitizeInterfaceName logic.
+// This is necessary because Linux interface names cannot contain "/" characters, so containerlab
+// uses hyphens when creating the host-side veth for SR-SIM endpoints. The name passed to
+// "containerlab tools vxlan" must match that sanitized name.
+func sanitizeSrsimInterfaceName(name string) string {
+	return strings.ReplaceAll(name, "/", "-")
+}
 
 type vxlanManager struct {
 	*common
@@ -35,6 +45,7 @@ func (m *vxlanManager) Run() {
 	for _, tunnel := range m.initialTunnels {
 		err := m.runContainerlabVxlanToolsCreate(
 			tunnel.LocalNode,
+			tunnel.LocalNodeKind,
 			tunnel.LocalInterface,
 			tunnel.Destination,
 			tunnel.TunnelID,
@@ -102,6 +113,7 @@ func (m *vxlanManager) resolveVXLANService(vxlanRemote string) (string, error) {
 
 func (m *vxlanManager) runContainerlabVxlanToolsCreate(
 	localNodeName,
+	localNodeKind,
 	cntLink,
 	vxlanRemote string,
 	vxlanID int,
@@ -114,9 +126,13 @@ func (m *vxlanManager) runContainerlabVxlanToolsCreate(
 	m.logger.Debugf("resolved remote vxlan tunnel service address as '%s'", resolvedVxlanRemote)
 
 	vxlanInterfaceName := fmt.Sprintf("%s-%s", localNodeName, cntLink)
+	if localNodeKind == clabernetesconstants.ContainerlabKindNokiaSrsim {
+		vxlanInterfaceName = sanitizeSrsimInterfaceName(vxlanInterfaceName)
+	}
+
 	m.logger.Debugf("Attempting to delete existing vxlan interface '%s'", vxlanInterfaceName)
 
-	err = m.runContainerlabVxlanToolsDelete(m.ctx, localNodeName, cntLink)
+	err = m.runContainerlabVxlanToolsDelete(m.ctx, localNodeName, localNodeKind, cntLink)
 	if err != nil {
 		m.logger.Warnf(
 			"failed while deleting existing vxlan interface '%s', error: '%s'",
@@ -136,7 +152,7 @@ func (m *vxlanManager) runContainerlabVxlanToolsCreate(
 		"--id",
 		strconv.Itoa(vxlanID),
 		"--link",
-		fmt.Sprintf("%s-%s", localNodeName, cntLink),
+		vxlanInterfaceName,
 		"--port",
 		strconv.Itoa(clabernetesconstants.VXLANServicePort),
 	)
@@ -159,8 +175,14 @@ func (m *vxlanManager) runContainerlabVxlanToolsCreate(
 func (m *vxlanManager) runContainerlabVxlanToolsDelete(
 	ctx context.Context,
 	localNodeName,
+	localNodeKind,
 	cntLink string,
 ) error {
+	prefix := fmt.Sprintf("vx-%s-%s", localNodeName, cntLink)
+	if localNodeKind == clabernetesconstants.ContainerlabKindNokiaSrsim {
+		prefix = sanitizeSrsimInterfaceName(prefix)
+	}
+
 	cmd := exec.CommandContext( //nolint:gosec
 		ctx,
 		"containerlab",
@@ -168,7 +190,7 @@ func (m *vxlanManager) runContainerlabVxlanToolsDelete(
 		"vxlan",
 		"delete",
 		"--prefix",
-		fmt.Sprintf("vx-%s-%s", localNodeName, cntLink),
+		prefix,
 	)
 
 	m.logger.Debugf(
@@ -210,6 +232,7 @@ func (m *vxlanManager) updateVxlanTunnels(
 		err := m.runContainerlabVxlanToolsDelete(
 			m.ctx,
 			existingTunnel.LocalNode,
+			existingTunnel.LocalNodeKind,
 			existingTunnel.LocalInterface,
 		)
 		if err != nil {
@@ -240,6 +263,7 @@ func (m *vxlanManager) updateVxlanTunnels(
 			err := m.runContainerlabVxlanToolsDelete(
 				m.ctx,
 				tunnel.LocalNode,
+				tunnel.LocalNodeKind,
 				tunnel.LocalInterface,
 			)
 			if err != nil {
@@ -259,6 +283,7 @@ func (m *vxlanManager) updateVxlanTunnels(
 	for _, tunnel := range tunnelsToReCreate {
 		err := m.runContainerlabVxlanToolsCreate(
 			tunnel.LocalNode,
+			tunnel.LocalNodeKind,
 			tunnel.LocalInterface,
 			tunnel.Destination,
 			tunnel.TunnelID,
