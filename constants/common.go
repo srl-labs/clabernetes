@@ -44,4 +44,7 @@ const (
 
 	// HostKeyword is the containerlab reserved keyword to define host links endpoints.
 	HostKeyword = "host"
+
+	// ContainerlabKindNokiaSrsim is the containerlab kind identifier for Nokia SR-SIM nodes.
+	ContainerlabKindNokiaSrsim = "nokia_srsim"
 )
