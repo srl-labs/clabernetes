@@ -1,0 +1,53 @@
+---
+# Two-node SR Linux topology restored from a snapshot.
+#
+# After saving a snapshot (see two-srl-with-configs.yaml), this manifest
+# shows how to re-launch the topology and load the saved running config via
+# filesFromConfigMap.
+#
+# The ConfigMap key format produced by the snapshot controller is:
+#   <nodeName>/<filename>
+#
+# For SR Linux, containerlab save writes:
+#   /clabernetes/clab-clabernetes-<nodeName>/<nodeName>/checkpoint-0.json
+#
+# So the ConfigMap will contain keys such as:
+#   srl1/checkpoint-0.json   → saved SR Linux checkpoint
+#   srl1/save-output         → stdout from "containerlab save" (informational)
+#   srl2/checkpoint-0.json
+#   srl2/save-output
+#
+# Replace <snapshot-name> below with the actual Snapshot/ConfigMap name, e.g.:
+#   two-srl-20260215-103000
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: two-srl
+spec:
+  deployment:
+    filesFromConfigMap:
+      srl1:
+        - filePath: /clabernetes/clab-clabernetes-srl1/srl1/checkpoint-0.json
+          configMapName: <snapshot-name>
+          configMapPath: srl1/checkpoint-0.json
+          mode: read
+      srl2:
+        - filePath: /clabernetes/clab-clabernetes-srl2/srl2/checkpoint-0.json
+          configMapName: <snapshot-name>
+          configMapPath: srl2/checkpoint-0.json
+          mode: read
+  definition:
+    containerlab: |
+      name: two-srl
+      topology:
+        nodes:
+          srl1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+            startup-config: /clabernetes/clab-clabernetes-srl1/srl1/checkpoint-0.json
+          srl2:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:latest
+            startup-config: /clabernetes/clab-clabernetes-srl2/srl2/checkpoint-0.json
+        links:
+          - endpoints: ["srl1:e1-1", "srl2:e1-1"]

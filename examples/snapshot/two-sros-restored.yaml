@@ -1,0 +1,46 @@
+---
+# Two-node Nokia SR OS (vrnetlab) topology restored from a snapshot.
+#
+# After triggering a snapshot on two-sros-with-snapshot.yaml, use the
+# ConfigMap produced by the snapshot controller to bootstrap the next run.
+#
+# SR OS save path inside launcher pod:
+#   /clabernetes/clab-clabernetes-<nodeName>/<nodeName>/config.txt
+#
+# Replace <snapshot-name> with the actual Snapshot CR / ConfigMap name, e.g.:
+#   two-sros-20260215-103000
+#
+# You can also auto-generate this manifest with:
+#   clabverter --topology two-sros.clab.yaml --from-snapshot two-sros-20260215-103000
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: two-sros
+spec:
+  deployment:
+    filesFromConfigMap:
+      sros1:
+        - filePath: /clabernetes/clab-clabernetes-sros1/sros1/config.txt
+          configMapName: <snapshot-name>
+          configMapPath: sros1/config.txt
+          mode: read
+      sros2:
+        - filePath: /clabernetes/clab-clabernetes-sros2/sros2/config.txt
+          configMapName: <snapshot-name>
+          configMapPath: sros2/config.txt
+          mode: read
+  definition:
+    containerlab: |
+      name: two-sros
+      topology:
+        nodes:
+          sros1:
+            kind: nokia_sros
+            image: vrnetlab/nokia_sros:latest
+            startup-config: /clabernetes/clab-clabernetes-sros1/sros1/config.txt
+          sros2:
+            kind: nokia_sros
+            image: vrnetlab/nokia_sros:latest
+            startup-config: /clabernetes/clab-clabernetes-sros2/sros2/config.txt
+        links:
+          - endpoints: ["sros1:1/1/c1/1", "sros2:1/1/c1/1"]

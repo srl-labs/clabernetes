@@ -1,0 +1,69 @@
+---
+# Two-node Nokia SR-SIM topology restored from a snapshot.
+#
+# After triggering a snapshot on two-srsim-with-snapshot.yaml, this manifest
+# loads the saved configs back on the next launch.
+#
+# SR-SIM save path inside launcher pod:
+#   /clabernetes/clab-clabernetes-<nodeName>/<nodeName>/config.cfg
+#
+# Replace <snapshot-name> with the actual Snapshot CR / ConfigMap name, e.g.:
+#   two-srsim-20260215-103000
+#
+# Note: The startup-config path must match what containerlab expects for
+# nokia_srsim. Typically this is the saved checkpoint file.
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: two-srsim
+spec:
+  deployment:
+    resources:
+      router1:
+        requests:
+          memory: "4Gi"
+          cpu: "2"
+        limits:
+          memory: "8Gi"
+          cpu: "4"
+      router2:
+        requests:
+          memory: "4Gi"
+          cpu: "2"
+        limits:
+          memory: "8Gi"
+          cpu: "4"
+    filesFromConfigMap:
+      router1:
+        - filePath: /clabernetes/clab-clabernetes-router1/router1/config.cfg
+          configMapName: <snapshot-name>
+          configMapPath: router1/config.cfg
+          mode: read
+      router2:
+        - filePath: /clabernetes/clab-clabernetes-router2/router2/config.cfg
+          configMapName: <snapshot-name>
+          configMapPath: router2/config.cfg
+          mode: read
+  definition:
+    containerlab: |
+      name: two-srsim
+      topology:
+        kinds:
+          nokia_srsim:
+            image: nokia_srsim:25.7.R1
+            license: /opt/nokia/sros/license.txt
+        nodes:
+          router1:
+            kind: nokia_srsim
+            type: sr-1
+            startup-config: /clabernetes/clab-clabernetes-router1/router1/config.cfg
+            env:
+              NOKIA_SROS_MDA_1: me6-100gb-qsfp28
+          router2:
+            kind: nokia_srsim
+            type: sr-1s
+            startup-config: /clabernetes/clab-clabernetes-router2/router2/config.cfg
+            env:
+              NOKIA_SROS_MDA_1: me6-100gb-qsfp28
+        links:
+          - endpoints: ["router1:1/1/c1/1", "router2:1/1/c1/1"]
