@@ -20,6 +20,7 @@ const (
 	debug                = "debug"
 	quiet                = "quiet"
 	stdout               = "stdout"
+	fromSnapshot         = "fromSnapshot"
 )
 
 // Entrypoint returns the clabernetes clabverter entrypoint.
@@ -106,6 +107,14 @@ func Entrypoint() *cli.App {
 				Required: false,
 				Value:    false,
 			},
+			&cli.StringFlag{
+				Name: fromSnapshot,
+				Usage: "name of a Snapshot CR (or its backing ConfigMap) to restore from." +
+					" When set, filesFromConfigMap entries are pre-populated in the rendered" +
+					" Topology manifest for each node that has saved configs in the snapshot.",
+				Required: false,
+				Value:    "",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			err := clabernetesclabverter.MustNewClabverter(
@@ -121,6 +130,7 @@ func Entrypoint() *cli.App {
 				c.Bool(debug),
 				c.Bool(quiet),
 				c.Bool(stdout),
+				c.String(fromSnapshot),
 			).Clabvert()
 
 			claberneteslogging.GetManager().Flush()
