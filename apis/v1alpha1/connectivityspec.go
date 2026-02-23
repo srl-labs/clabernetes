@@ -11,9 +11,6 @@ type PointToPointTunnel struct {
 	// LocalNodeName is the name (in the clabernetes topology) of the local node for this side of
 	// the tunnel.
 	LocalNode string `json:"localNode"`
-	// LocalNodeKind is the containerlab kind of the local node (e.g. "nokia_srsim", "srl").
-	// Used by the launcher to apply any kind-specific interface name handling.
-	LocalNodeKind string `json:"localNodeKind"`
 	// LocalInterface is the local termination of this tunnel.
 	LocalInterface string `json:"localInterface"`
 	// RemoteNode is the name (in the clabernetes topology) of the remote node for this side of the

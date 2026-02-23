@@ -62,11 +62,6 @@ spec:
                           LocalNodeName is the name (in the clabernetes topology) of the local node for this side of
                           the tunnel.
                         type: string
-                      localNodeKind:
-                        description: |-
-                          LocalNodeKind is the containerlab kind of the local node (e.g. "nokia_srsim", "srl").
-                          Used by the launcher to apply any kind-specific interface name handling.
-                        type: string
                       remoteInterface:
                         description: |-
                           RemoteInterface is the remote termination interface of this tunnel -- necessary to store so
@@ -86,7 +81,6 @@ spec:
                     - destination
                     - localInterface
                     - localNode
-                    - localNodeKind
                     - remoteInterface
                     - remoteNode
                     - tunnelID
