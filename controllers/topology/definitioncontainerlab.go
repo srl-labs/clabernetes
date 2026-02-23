@@ -377,7 +377,8 @@ func getEffectiveNodeKind(
 	clabTopo *clabernetesutilcontainerlab.Topology,
 	nodeName string,
 ) string {
-	if node, ok := clabTopo.Nodes[nodeName]; ok && node.Kind != "" {
+	node, ok := clabTopo.Nodes[nodeName]
+	if ok && node.Kind != "" {
 		return node.Kind
 	}
 
