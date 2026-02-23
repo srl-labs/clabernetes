@@ -248,7 +248,6 @@
                 "tunnelID": 0,
                 "destination": "process-kne-definition-test-srl2-vx.clabernetes.svc.cluster.local",
                 "localNode": "srl1",
-                "localNodeKind": "",
                 "localInterface": "e1-1",
                 "remoteNode": "srl2",
                 "remoteInterface": "e1-1"
@@ -259,7 +258,6 @@
                 "tunnelID": 0,
                 "destination": "process-kne-definition-test-srl1-vx.clabernetes.svc.cluster.local",
                 "localNode": "srl2",
-                "localNodeKind": "",
                 "localInterface": "e1-1",
                 "remoteNode": "srl1",
                 "remoteInterface": "e1-1"

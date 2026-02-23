@@ -14,7 +14,6 @@ spec:
       - destination: topology-basic-srl2-vx.NAMESPACE.svc.cluster.local
         localInterface: e1-1
         localNode: srl1
-        localNodeKind: srl
         remoteInterface: e1-1
         remoteNode: srl2
         tunnelID: 1
@@ -22,7 +21,6 @@ spec:
       - destination: topology-basic-srl1-vx.NAMESPACE.svc.cluster.local
         localInterface: e1-1
         localNode: srl2
-        localNodeKind: srl
         remoteInterface: e1-1
         remoteNode: srl1
         tunnelID: 1

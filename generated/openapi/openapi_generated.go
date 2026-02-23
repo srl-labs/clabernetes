@@ -1370,14 +1370,6 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_PointToPointTunnel(ref common.Ref
 							Format:      "",
 						},
 					},
-					"localNodeKind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "LocalNodeKind is the containerlab kind of the local node (e.g. \"nokia_srsim\", \"srl\"). Used by the launcher to apply any kind-specific interface name handling.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"localInterface": {
 						SchemaProps: spec.SchemaProps{
 							Description: "LocalInterface is the local termination of this tunnel.",
@@ -1403,7 +1395,7 @@ func schema_srl_labs_clabernetes_apis_v1alpha1_PointToPointTunnel(ref common.Ref
 						},
 					},
 				},
-				Required: []string{"tunnelID", "destination", "localNode", "localNodeKind", "localInterface", "remoteNode", "remoteInterface"},
+				Required: []string{"tunnelID", "destination", "localNode", "localInterface", "remoteNode", "remoteInterface"},
 			},
 		},
 	}
