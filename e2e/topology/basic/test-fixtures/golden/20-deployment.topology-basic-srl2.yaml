@@ -60,13 +60,13 @@ spec:
             - name: APP_NAME
               value: clabernetes
             - name: MANAGER_NAMESPACE
-              value: c9s
+              value: clabernetes
             - name: LAUNCHER_CRI_KIND
-              value: unknown
+              value: containerd
             - name: LAUNCHER_IMAGE_PULL_THROUGH_MODE
               value: auto
             - name: LAUNCHER_LOGGER_LEVEL
-              value: info
+              value: debug
             - name: LAUNCHER_TOPOLOGY_NAME
               value: topology-basic
             - name: LAUNCHER_NODE_NAME
@@ -112,6 +112,10 @@ spec:
               subPath: configured-pull-secrets
             - mountPath: /var/lib/docker
               name: docker
+            - mountPath: /clabernetes/.node/containerd.sock
+              name: cri-sock
+              readOnly: true
+              subPath: containerd.sock
           workingDir: /clabernetes
       dnsPolicy: ClusterFirst
       hostname: srl2
@@ -128,4 +132,8 @@ spec:
           name: topology-basic-config
         - emptyDir: {}
           name: docker
+        - hostPath:
+            path: /run/containerd
+            type: ""
+          name: cri-sock
 status: {}
