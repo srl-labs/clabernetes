@@ -72,9 +72,7 @@
                     "WaitFor": null,
                     "DNS": null,
                     "Certificate": null,
-                    "Healthcheck": null,
-                    "Aliases": null,
-                    "Components": null
+                    "Healthcheck": null
                 },
                 "Kinds": null,
                 "Nodes": {
@@ -116,31 +114,29 @@
                         "WaitFor": null,
                         "DNS": null,
                         "Certificate": null,
-                        "Healthcheck": null,
-                        "Aliases": null,
-                        "Components": null
+                        "Healthcheck": null
                     }
                 },
                 "Links": [
                     {
+                        "Type": "",
                         "Endpoints": [
                             "srl1:e1-1",
                             "host:srl1-e1-1"
                         ],
                         "Labels": null,
                         "Vars": null,
-                        "MTU": 0,
-                        "Type": ""
+                        "MTU": 0
                     },
                     {
+                        "Type": "",
                         "Endpoints": [
                             "srl1:e3-3",
                             "host:eth3-3"
                         ],
                         "Labels": null,
                         "Vars": null,
-                        "MTU": 0,
-                        "Type": ""
+                        "MTU": 0
                     }
                 ]
             },
@@ -204,9 +200,7 @@
                     "WaitFor": null,
                     "DNS": null,
                     "Certificate": null,
-                    "Healthcheck": null,
-                    "Aliases": null,
-                    "Components": null
+                    "Healthcheck": null
                 },
                 "Kinds": null,
                 "Nodes": {
@@ -257,21 +251,19 @@
                             "Retries": 1,
                             "Interval": 5,
                             "Timeout": 2
-                        },
-                        "Aliases": null,
-                        "Components": null
+                        }
                     }
                 },
                 "Links": [
                     {
+                        "Type": "",
                         "Endpoints": [
                             "srl2:e1-1",
                             "host:srl2-e1-1"
                         ],
                         "Labels": null,
                         "Vars": null,
-                        "MTU": 0,
-                        "Type": ""
+                        "MTU": 0
                     }
                 ]
             },
@@ -305,8 +297,6 @@
     "PreviousNodeStatuses": null,
     "NodeStatuses": null,
     "TopologyReady": false,
-    "TopologyState": "",
-    "NodeProbeStatuses": null,
     "NodesNeedingReboot": null,
     "ShouldUpdateResource": false
 }

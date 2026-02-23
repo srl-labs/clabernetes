@@ -419,8 +419,6 @@
     "PreviousNodeStatuses": null,
     "NodeStatuses": null,
     "TopologyReady": false,
-    "TopologyState": "",
-    "NodeProbeStatuses": null,
     "NodesNeedingReboot": null,
     "ShouldUpdateResource": false
 }
