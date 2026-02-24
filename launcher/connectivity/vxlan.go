@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
@@ -18,6 +19,15 @@ const (
 	resolveServiceMaxAttempts = 5
 	resolveServiceSleep       = 10 * time.Second
 )
+
+// sanitizeInterfaceName replaces forward slashes with hyphens in interface names
+// (e.g. "1/1/c1/1" → "1-1-c1-1"), mirroring containerlab's own SanitizeInterfaceName logic.
+// This is necessary because Linux interface names cannot contain "/" characters, so containerlab
+// uses hyphens when creating the host-side veth. The name passed to "containerlab tools vxlan"
+// must match that sanitized name.
+func sanitizeInterfaceName(name string) string {
+	return strings.ReplaceAll(name, "/", "-")
+}
 
 type vxlanManager struct {
 	*common
@@ -113,7 +123,8 @@ func (m *vxlanManager) runContainerlabVxlanToolsCreate(
 
 	m.logger.Debugf("resolved remote vxlan tunnel service address as '%s'", resolvedVxlanRemote)
 
-	vxlanInterfaceName := fmt.Sprintf("%s-%s", localNodeName, cntLink)
+	vxlanInterfaceName := sanitizeInterfaceName(fmt.Sprintf("%s-%s", localNodeName, cntLink))
+
 	m.logger.Debugf("Attempting to delete existing vxlan interface '%s'", vxlanInterfaceName)
 
 	err = m.runContainerlabVxlanToolsDelete(m.ctx, localNodeName, cntLink)
@@ -136,7 +147,7 @@ func (m *vxlanManager) runContainerlabVxlanToolsCreate(
 		"--id",
 		strconv.Itoa(vxlanID),
 		"--link",
-		fmt.Sprintf("%s-%s", localNodeName, cntLink),
+		vxlanInterfaceName,
 		"--port",
 		strconv.Itoa(clabernetesconstants.VXLANServicePort),
 	)
@@ -161,6 +172,8 @@ func (m *vxlanManager) runContainerlabVxlanToolsDelete(
 	localNodeName,
 	cntLink string,
 ) error {
+	prefix := sanitizeInterfaceName(fmt.Sprintf("vx-%s-%s", localNodeName, cntLink))
+
 	cmd := exec.CommandContext( //nolint:gosec
 		ctx,
 		"containerlab",
@@ -168,7 +181,7 @@ func (m *vxlanManager) runContainerlabVxlanToolsDelete(
 		"vxlan",
 		"delete",
 		"--prefix",
-		fmt.Sprintf("vx-%s-%s", localNodeName, cntLink),
+		prefix,
 	)
 
 	m.logger.Debugf(
