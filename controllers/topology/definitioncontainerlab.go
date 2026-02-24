@@ -641,7 +641,6 @@ func (p *containerlabDefinitionProcessor) processLinksForNodeGroup(
 		}
 
 		err = p.processLinkForGroup(
-			containerlabConfig,
 			link,
 			endpoints,
 			primaryNodeName,
@@ -659,7 +658,6 @@ func (p *containerlabDefinitionProcessor) processLinksForNodeGroup(
 
 // processLinkForGroup processes a single link for a node group.
 func (p *containerlabDefinitionProcessor) processLinkForGroup(
-	containerlabConfig *clabernetesutilcontainerlab.Config,
 	link *clabernetesutilcontainerlab.LinkDefinition,
 	endpoints *linkEndpoints,
 	primaryNodeName string,
