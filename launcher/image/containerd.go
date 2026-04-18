@@ -54,7 +54,7 @@ func (m *containerdManager) Export(ctx context.Context, imageName, destination s
 		)
 	}
 
-	exportCmd := exec.CommandContext(
+	exportCmd := exec.CommandContext( //nolint: gosec
 		ctx,
 		"nerdctl",
 		"--address",
@@ -82,7 +82,7 @@ func (m *containerdManager) Export(ctx context.Context, imageName, destination s
 }
 
 func (m *containerdManager) pull(ctx context.Context, imageName string) error {
-	pullCmd := exec.CommandContext(
+	pullCmd := exec.CommandContext( //nolint: gosec
 		ctx,
 		"nerdctl",
 		"--address",

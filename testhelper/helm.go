@@ -111,7 +111,7 @@ func HelmTest(t *testing.T, chartName, testName, namespace, valuesFileName, char
 func HelmCommand(t *testing.T, chartsDir string, args ...string) []byte {
 	t.Helper()
 
-	cmd := exec.CommandContext(
+	cmd := exec.CommandContext( //nolint: gosec
 		t.Context(),
 		helm,
 		args...,

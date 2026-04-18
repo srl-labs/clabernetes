@@ -15,7 +15,7 @@ var onlyOneSignalHandler = make(chan struct{}) //nolint: gochecknoglobals
 // SignalHandledContext returns a context that will be canceled if a SIGINT or SIGTERM is
 // received.
 func SignalHandledContext(
-	logf func(f string, a ...interface{}),
+	logf func(f string, a ...any),
 ) (context.Context, context.CancelFunc) {
 	// panics when called twice, this way there can only be one signal handled context
 	close(onlyOneSignalHandler)

@@ -77,7 +77,7 @@ func (c *clabernetes) installContainerlabVersion(version string) error {
 
 	tarName := fmt.Sprintf("containerlab_%s_Linux_amd64.tar.gz", version)
 
-	outTarFile, err := os.Create(fmt.Sprintf("%s/%s", dir, tarName))
+	outTarFile, err := os.Create(fmt.Sprintf("%s/%s", dir, tarName)) //nolint: gosec
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (c *clabernetes) installContainerlabVersion(version string) error {
 		return err
 	}
 
-	inTarFile, err := os.Open(fmt.Sprintf("%s/%s", dir, tarName))
+	inTarFile, err := os.Open(fmt.Sprintf("%s/%s", dir, tarName)) //nolint: gosec
 	if err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func (c *clabernetes) runContainerlab() error {
 		args = append(args, []string{"--timeout", containerlabTimeout}...)
 	}
 
-	cmd := exec.CommandContext(c.ctx, "containerlab", args...)
+	cmd := exec.CommandContext(c.ctx, "containerlab", args...) //nolint: gosec
 
 	cmd.Stdout = containerlabOutWriter
 	cmd.Stderr = containerlabOutWriter

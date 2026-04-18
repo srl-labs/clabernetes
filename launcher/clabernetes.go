@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -308,7 +309,10 @@ func (c *clabernetes) runProbes() {
 				Timeout: statusProbeCheckTimeout,
 			}
 
-			tcpConn, err := dialer.Dial("tcp", fmt.Sprintf("%s:%d", nodeAddr, tcpProbePort))
+			tcpConn, err := dialer.Dial(
+				"tcp",
+				net.JoinHostPort(nodeAddr, strconv.Itoa(tcpProbePort)),
+			)
 			if err != nil {
 				tcpProbeOk = false
 			} else {

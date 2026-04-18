@@ -2,6 +2,7 @@ package topology
 
 import (
 	"fmt"
+	"maps"
 	"net"
 	"sort"
 	"strings"
@@ -228,13 +229,8 @@ func (r *ServiceExposeReconciler) renderServiceBase(
 
 	}
 
-	for k, v := range selectorLabels {
-		labels[k] = v
-	}
-
-	for k, v := range globalLabels {
-		labels[k] = v
-	}
+	maps.Copy(labels, selectorLabels)
+	maps.Copy(labels, globalLabels)
 
 	serviceSpec := k8scorev1.ServiceSpec{
 		Selector: selectorLabels,

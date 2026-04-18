@@ -13,7 +13,7 @@ type StringSet interface {
 // NewStringSet returns an object satisfying the StringSet interface.
 func NewStringSet() StringSet {
 	ss := &stringSet{
-		objs: make(map[string]interface{}),
+		objs: make(map[string]any),
 	}
 
 	return ss
@@ -23,7 +23,7 @@ func NewStringSet() StringSet {
 // values pre-loaded to the set.
 func NewStringSetWithValues(vals ...string) StringSet {
 	ss := &stringSet{
-		objs: make(map[string]interface{}),
+		objs: make(map[string]any),
 	}
 
 	for _, s := range vals {
@@ -34,7 +34,7 @@ func NewStringSetWithValues(vals ...string) StringSet {
 }
 
 type stringSet struct {
-	objs map[string]interface{}
+	objs map[string]any
 }
 
 func (ss *stringSet) Add(s string) {

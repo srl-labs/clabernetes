@@ -358,13 +358,8 @@ func (r *DeploymentReconciler) renderDeploymentBase(
 
 	labels := map[string]string{}
 
-	for k, v := range selectorLabels {
-		labels[k] = v
-	}
-
-	for k, v := range globalLabels {
-		labels[k] = v
-	}
+	maps.Copy(labels, selectorLabels)
+	maps.Copy(labels, globalLabels)
 
 	return &k8sappsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -535,7 +530,7 @@ func (r *DeploymentReconciler) renderDeploymentVolumes( //nolint:funlen
 		)
 	}
 
-	volumesFromConfigMaps := make([]clabernetesapisv1alpha1.FileFromConfigMap, 0)
+	volumesFromConfigMaps := make([]clabernetesapisv1alpha1.FileFromConfigMap, 0) //nolint: prealloc
 
 	volumesFromConfigMaps = append(
 		volumesFromConfigMaps,
@@ -1084,7 +1079,7 @@ func (r *DeploymentReconciler) renderDeploymentContainerStatus(
 		TimeoutSeconds:      1,
 		SuccessThreshold:    1,
 		PeriodSeconds:       probePeriodSeconds,
-		FailureThreshold:    int32(failureThresholds), //nolint:gosec
+		FailureThreshold:    int32(failureThresholds),
 	}
 
 	// after the startup probe has done its thing we set run the readiness probe -- since the

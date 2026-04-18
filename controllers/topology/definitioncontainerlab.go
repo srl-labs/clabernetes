@@ -2,6 +2,7 @@ package topology
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
@@ -197,12 +198,8 @@ func getNextPort(allocatedPorts []int64) int64 {
 	for possiblePort := 60_000; possiblePort < 65_000; possiblePort++ {
 		var possiblePortFound bool
 
-		for _, allocatedPort := range allocatedPorts {
-			if int64(possiblePort) == allocatedPort {
-				possiblePortFound = true
-
-				break
-			}
+		if slices.Contains(allocatedPorts, int64(possiblePort)) {
+			possiblePortFound = true
 		}
 
 		if !possiblePortFound {
