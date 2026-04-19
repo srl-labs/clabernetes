@@ -3,6 +3,7 @@ package imagerequest
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
@@ -114,22 +115,15 @@ func (c *Controller) spawnImagePullerPod(
 
 	labels := make(map[string]string)
 
-	for k, v := range selectorLabels {
-		labels[k] = v
-	}
-
-	for k, v := range globalLabels {
-		labels[k] = v
-	}
+	maps.Copy(labels, selectorLabels)
+	maps.Copy(labels, globalLabels)
 
 	annotations := map[string]string{
 		// image string wont be valid for a label, so we'll put it here
 		"clabernetes/pullerRequestedImage": imageRequest.Spec.RequestedImage,
 	}
 
-	for k, v := range globalAnnotations {
-		annotations[k] = v
-	}
+	maps.Copy(annotations, globalAnnotations)
 
 	requestedPullSecrets := make(
 		[]k8scorev1.LocalObjectReference,

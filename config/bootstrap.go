@@ -177,13 +177,13 @@ func bootstrapFromConfigMap( //nolint:gocyclo,funlen,gocognit
 	var err error
 
 	if len(outErrors) > 0 {
-		errors := ""
+		var b strings.Builder
 
 		for idx, outError := range outErrors {
-			errors += fmt.Sprintf("error %d '%s'", idx, outError)
+			fmt.Fprintf(&b, "error %d '%s'", idx, outError)
 		}
 
-		err = fmt.Errorf("%w: %s", claberneteserrors.ErrParse, errors)
+		err = fmt.Errorf("%w: %s", claberneteserrors.ErrParse, b.String())
 	}
 
 	return bc, err

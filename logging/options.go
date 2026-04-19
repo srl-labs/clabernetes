@@ -5,7 +5,7 @@ type Option func(m *manager)
 
 // WithLogger appends a logger (a function that accepts an interface) to the logging Manager's set
 // of loggers.
-func WithLogger(logger func(...interface{})) Option {
+func WithLogger(logger func(...any)) Option {
 	return func(m *manager) {
 		m.loggers = append(m.loggers, logger)
 	}

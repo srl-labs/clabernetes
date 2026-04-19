@@ -1,6 +1,8 @@
 package config
 
 import (
+	"maps"
+
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 	k8scorev1 "k8s.io/api/core/v1"
 )
@@ -12,9 +14,7 @@ func (m *manager) GetGlobalAnnotations() map[string]string {
 	// we dont want to pass by ref, so make a new map
 	outAnnotations := make(map[string]string)
 
-	for k, v := range m.config.Metadata.Annotations {
-		outAnnotations[k] = v
-	}
+	maps.Copy(outAnnotations, m.config.Metadata.Annotations)
 
 	return outAnnotations
 }
@@ -26,9 +26,7 @@ func (m *manager) GetGlobalLabels() map[string]string {
 	// we dont want to pass by ref, so make a new map
 	outLabels := make(map[string]string)
 
-	for k, v := range m.config.Metadata.Labels {
-		outLabels[k] = v
-	}
+	maps.Copy(outLabels, m.config.Metadata.Labels)
 
 	return outLabels
 }
@@ -39,15 +37,11 @@ func (m *manager) GetAllMetadata() (outAnnotations, outLabels map[string]string)
 
 	outAnnotations = make(map[string]string)
 
-	for k, v := range m.config.Metadata.Annotations {
-		outAnnotations[k] = v
-	}
+	maps.Copy(outAnnotations, m.config.Metadata.Annotations)
 
 	outLabels = make(map[string]string)
 
-	for k, v := range m.config.Metadata.Labels {
-		outLabels[k] = v
-	}
+	maps.Copy(outLabels, m.config.Metadata.Labels)
 
 	return outAnnotations, outLabels
 }

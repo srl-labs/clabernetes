@@ -3,6 +3,7 @@ package topology
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
@@ -115,9 +116,7 @@ func (r *ServiceAccountReconciler) Render(
 		clabernetesconstants.LabelApp: clabernetesconstants.Clabernetes,
 	}
 
-	for k, v := range globalLabels {
-		labels[k] = v
-	}
+	maps.Copy(labels, globalLabels)
 
 	renderedServiceAccount := &k8scorev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{

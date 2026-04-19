@@ -34,7 +34,7 @@ func InitManager(options ...Option) {
 		}
 
 		if len(m.loggers) == 0 {
-			m.loggers = []func(...interface{}){printLog}
+			m.loggers = []func(...any){printLog}
 		}
 
 		managerInstance = m
@@ -76,7 +76,7 @@ type manager struct {
 	formatter       Formatter
 	instances       map[string]*instance
 	instanceCancels map[string]context.CancelFunc
-	loggers         []func(...interface{})
+	loggers         []func(...any)
 }
 
 func (m *manager) SetLoggerFormatterAllInstances(formatter Formatter) {
@@ -130,7 +130,7 @@ func (m *manager) RegisterLogger(name, level string) error {
 		level:     level,
 		formatter: m.formatter,
 		c:         make(chan string),
-		done:      make(chan interface{}),
+		done:      make(chan any),
 	}
 
 	go m.start(m.instances[name])

@@ -31,9 +31,9 @@ const (
 // should not be present in clabverter output.
 type StatuslessTopology struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
-	Spec clabernetesapisv1alpha1.TopologySpec `json:"spec,omitempty"`
+	Spec clabernetesapisv1alpha1.TopologySpec `json:"spec"`
 }
 
 // Clabverter is a struct that holds data/methods for "clabversion" -- that is, the conversion of

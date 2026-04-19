@@ -11,15 +11,15 @@ import (
 // Instance is a logging instance managed by the Manager.
 type Instance interface { //nolint: interfacebloat
 	Debug(f string)
-	Debugf(f string, a ...interface{})
+	Debugf(f string, a ...any)
 	Info(f string)
-	Infof(f string, a ...interface{})
+	Infof(f string, a ...any)
 	Warn(f string)
-	Warnf(f string, a ...interface{})
+	Warnf(f string, a ...any)
 	Critical(f string)
-	Criticalf(f string, a ...interface{})
+	Criticalf(f string, a ...any)
 	Fatal(f string)
-	Fatalf(f string, a ...interface{})
+	Fatalf(f string, a ...any)
 	// Write implements io.Writer so that an instance can be used most places. Messages received
 	// via Write will always have the current formatter applied, and all messages will be queued
 	// for egress unless this logging instance's level is Disabled.
@@ -34,7 +34,7 @@ type instance struct {
 	level     string
 	formatter Formatter
 	c         chan string
-	done      chan interface{}
+	done      chan any
 }
 
 func (i *instance) GetName() string {
@@ -58,7 +58,7 @@ func (i *instance) Debug(f string) {
 }
 
 // Debugf accepts a Debug level log message normal fmt.Sprintf type formatting.
-func (i *instance) Debugf(f string, a ...interface{}) {
+func (i *instance) Debugf(f string, a ...any) {
 	i.lock.Lock()
 	defer i.lock.Unlock()
 
@@ -82,7 +82,7 @@ func (i *instance) Info(f string) {
 }
 
 // Infof accepts an Info level log message normal fmt.Sprintf type formatting.
-func (i *instance) Infof(f string, a ...interface{}) {
+func (i *instance) Infof(f string, a ...any) {
 	i.lock.Lock()
 	defer i.lock.Unlock()
 
@@ -106,7 +106,7 @@ func (i *instance) Warn(f string) {
 }
 
 // Warnf accepts a Warn level log message normal fmt.Sprintf type formatting.
-func (i *instance) Warnf(f string, a ...interface{}) {
+func (i *instance) Warnf(f string, a ...any) {
 	i.lock.Lock()
 	defer i.lock.Unlock()
 
@@ -130,7 +130,7 @@ func (i *instance) Critical(f string) {
 }
 
 // Criticalf accepts a Critical level log message normal fmt.Sprintf type formatting.
-func (i *instance) Criticalf(f string, a ...interface{}) {
+func (i *instance) Criticalf(f string, a ...any) {
 	i.lock.Lock()
 	defer i.lock.Unlock()
 
@@ -159,7 +159,7 @@ func (i *instance) Fatal(f string) {
 // Fatalf accepts a Fatal level log message normal fmt.Sprintf type formatting. After emitting the
 // message the log manager is flushed and the program is crashed via the calbernetesutil.Panic
 // function.
-func (i *instance) Fatalf(f string, a ...interface{}) {
+func (i *instance) Fatalf(f string, a ...any) {
 	i.lock.Lock()
 	defer i.lock.Unlock()
 

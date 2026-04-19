@@ -3,6 +3,7 @@ package topology
 import (
 	"context"
 	"fmt"
+	"maps"
 	"reflect"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
@@ -115,9 +116,7 @@ func (r *RoleBindingReconciler) Render(
 		clabernetesconstants.LabelApp: clabernetesconstants.Clabernetes,
 	}
 
-	for k, v := range globalLabels {
-		labels[k] = v
-	}
+	maps.Copy(labels, globalLabels)
 
 	renderedRoleBinding := &k8srbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{

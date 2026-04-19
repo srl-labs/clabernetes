@@ -3,6 +3,7 @@ package clicker
 import (
 	"context"
 	"fmt"
+	"maps"
 	"math/rand"
 	"os"
 	"strings"
@@ -362,9 +363,7 @@ func (c *clabernetes) buildPods(
 			clabernetesconstants.LabelClickerNodeTarget: nodeName,
 		}
 
-		for k, v := range globalLabels {
-			labels[k] = v
-		}
+		maps.Copy(labels, globalLabels)
 
 		pods = append(
 			pods,

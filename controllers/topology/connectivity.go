@@ -1,6 +1,7 @@
 package topology
 
 import (
+	"maps"
 	"reflect"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
@@ -47,9 +48,7 @@ func (r *ConnectivityReconciler) Render(
 		clabernetesconstants.LabelTopologyKind:  GetTopologyKind(owningTopology),
 	}
 
-	for k, v := range globalLabels {
-		labels[k] = v
-	}
+	maps.Copy(labels, globalLabels)
 
 	return &clabernetesapisv1alpha1.Connectivity{
 		ObjectMeta: metav1.ObjectMeta{

@@ -2,6 +2,7 @@ package topology
 
 import (
 	"fmt"
+	"maps"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
@@ -212,13 +213,8 @@ func (r *PersistentVolumeClaimReconciler) renderPVCBase(
 		clabernetesconstants.LabelTopologyKind: GetTopologyKind(owningTopology),
 	}
 
-	for k, v := range selectorLabels {
-		labels[k] = v
-	}
-
-	for k, v := range globalLabels {
-		labels[k] = v
-	}
+	maps.Copy(labels, selectorLabels)
+	maps.Copy(labels, globalLabels)
 
 	return &k8scorev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{

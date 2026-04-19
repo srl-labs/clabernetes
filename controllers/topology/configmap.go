@@ -2,6 +2,7 @@ package topology
 
 import (
 	"fmt"
+	"maps"
 	"reflect"
 
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
@@ -56,9 +57,7 @@ func (r *ConfigMapReconciler) Render(
 		clabernetesconstants.LabelTopologyKind:  GetTopologyKind(owningTopology),
 	}
 
-	for k, v := range globalLabels {
-		labels[k] = v
-	}
+	maps.Copy(labels, globalLabels)
 
 	data := map[string]string{
 		// we always make this key like the other keys so we can be lazy and not have to wonder if

@@ -2,6 +2,7 @@ package containerlab
 
 import (
 	"fmt"
+	"maps"
 
 	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 )
@@ -286,9 +287,8 @@ func (c *Component) Copy() *Component {
 	var envCopy map[string]string
 	if c.Env != nil {
 		envCopy = make(map[string]string, len(c.Env))
-		for k, v := range c.Env {
-			envCopy[k] = v
-		}
+
+		maps.Copy(envCopy, c.Env)
 	}
 
 	return &Component{

@@ -254,7 +254,7 @@ func getContainerIDForNodeName(ctx context.Context, nodeName string) (string, er
 }
 
 func getContainerAddr(ctx context.Context, containerID string) (string, error) {
-	inspectCmd := exec.CommandContext(
+	inspectCmd := exec.CommandContext( //nolint: gosec
 		ctx,
 		"docker",
 		"inspect",
