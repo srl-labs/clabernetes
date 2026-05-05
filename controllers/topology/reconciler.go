@@ -692,7 +692,7 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,gocognit,funlen
 		r.Log.Warn("skipping reconciling deployments due to disable deployments label set")
 
 		apimachinerymeta.SetStatusCondition(&owningTopology.Status.Conditions, metav1.Condition{
-			Type:   "TopologyReady",
+			Type:   clabernetesconstants.TopologyReadyStatus,
 			Status: "False",
 			Reason: clabernetesconstants.NodeStatusDeploymentDisabled,
 			Message: "topology has 'clabernetes/disableDeployments' label set," +
@@ -803,14 +803,14 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,gocognit,funlen
 		reconcileData.TopologyReady = true
 
 		apimachinerymeta.SetStatusCondition(&owningTopology.Status.Conditions, metav1.Condition{
-			Type:    "TopologyReady",
+			Type:    clabernetesconstants.TopologyReadyStatus,
 			Status:  "True",
 			Reason:  clabernetesconstants.NodeStatusReady,
 			Message: "all nodes report ready",
 		})
 	} else {
 		apimachinerymeta.SetStatusCondition(&owningTopology.Status.Conditions, metav1.Condition{
-			Type:   "TopologyReady",
+			Type:   clabernetesconstants.TopologyReadyStatus,
 			Status: "False",
 			Reason: clabernetesconstants.NodeStatusNotReady,
 			Message: "one or more nodes report not ready, check node status field " +
