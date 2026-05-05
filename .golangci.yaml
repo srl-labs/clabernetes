@@ -10,6 +10,7 @@ linters:
     - cyclop # already using gocyclo, and its good enough!
     - depguard
     - exhaustruct
+    - gomodguard # deprecated, gomodguard_v2 included in all ofc
     - ireturn
     - musttag # also probably should remove but... for now
     - nonamedreturns
@@ -75,6 +76,7 @@ linters:
           - dupl
           - funlen
           - gochecknoglobals
+          - goconst
           - lll
           - maintidx
           - mnd

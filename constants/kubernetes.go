@@ -45,3 +45,8 @@ const (
 	// pods.
 	LauncherCRISockPath = "/clabernetes/.node"
 )
+
+const (
+	// TopologyReadyStatus a const for the ready status, for consistency.
+	TopologyReadyStatus = "TopologyReady"
+)
