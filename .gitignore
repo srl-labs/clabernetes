@@ -43,6 +43,7 @@ cover.out
 
 # build files
 cmd/clabverter/build/
+build/try-c9s/
 
 # for crd -> openapi gen
 venv

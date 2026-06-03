@@ -11,3 +11,35 @@
 
   See [clabernetes docs](https://containerlab.dev/manual/clabernetes) for reference.
 </p>
+
+<br clear="left"/>
+
+## Try c9s
+
+You can launch a disposable KinD cluster, install the published clabernetes Helm chart, and apply a
+sample SR Linux plus multitool topology with:
+
+```bash
+make try-c9s
+```
+
+The target requires Docker and creates a single-node KinD cluster by default. It writes a KinD
+config with a fixed UI host port mapping, installs MetalLB, and prints access endpoints:
+
+```text
+UI:                http://localhost:3000
+SR Linux SSH:      ssh admin@<load-balancer-ip>
+SR Linux gNMI:     <load-balancer-ip>:57400
+SR Linux NETCONF:  <load-balancer-ip>:830
+```
+
+If KinD, kubectl, or Helm are not installed, it downloads local copies under
+`build/try-c9s/bin`. The target expects to create its own KinD cluster and aborts if any KinD
+cluster already exists. SR Linux management access uses the clabernetes LoadBalancer service
+directly.
+
+Clean up the sample resources and KinD cluster with:
+
+```bash
+make try-c9s-clean
+```
