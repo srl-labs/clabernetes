@@ -1,0 +1,191 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.21.0
+  name: nodes.clabernetes.containerlab.dev
+spec:
+  group: clabernetes.containerlab.dev
+  names:
+    kind: Node
+    listKind: NodeList
+    plural: nodes
+    shortNames:
+    - clabnode
+    singular: node
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.topologyName
+      name: Topology
+      type: string
+    - jsonPath: .spec.kind
+      name: Kind
+      type: string
+    - jsonPath: .status.ready
+      name: Ready
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          Node represents a single containerlab node -- or a group of nodes that share a network namespace
+          (for example a Nokia SR-SIM "distributed" node declared with network-mode: container:<name>) --
+          that belongs to a Topology. It carries that node's single-node containerlab "sub-topology" plus
+          the per-node configuration needed to launch it.
+
+          A Node is created and owned by the Topology controller as part of the decomposed (scalable)
+          reconcile path; see docs/design/0001-scale-node-link-crds.md. Because every per-node piece of
+          state lives in its own Node object (rather than in one ever-growing field on the Topology), a
+          Topology can describe thousands of nodes without hitting the etcd object size limit.
+
+          NOTE: the plural/CLI name for this resource ("nodes") overlaps with the core Kubernetes Node at
+          the kubectl level -- the fully qualified group (clabernetes.containerlab.dev) keeps it
+          unambiguous to the API server, and the "clabnode" short name is provided so operators can select
+          it without ambiguity. The final plural/short name is pending maintainer ratification.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NodeSpec is the spec for a Node resource.
+            properties:
+              connectivity:
+                description: |-
+                  Connectivity is the connectivity flavor (vxlan or slurpeeth) inherited from the owning
+                  Topology, recorded here so the Node can be reconciled independently.
+                enum:
+                - vxlan
+                - slurpeeth
+                type: string
+              definition:
+                description: |-
+                  Definition is the single-node containerlab sub-topology (YAML) for this node. This is exactly
+                  the content mounted into the launcher pod at /clabernetes/topo.clab.yaml today. Its size is
+                  bounded by the node's own configuration and link degree -- never by the size of the overall
+                  Topology -- which is what allows a Topology to scale to very large node counts.
+                type: string
+              filesFromConfigMap:
+                description: |-
+                  FilesFromConfigMap is the set of files mounted from ConfigMaps for this node -- this is how
+                  bind-mounted config files (for example an frr.conf, a daemons file, or a startup-config) reach
+                  the launcher. It is the per-node slice of the owning Topology's deployment.filesFromConfigMap.
+                  The file *contents* live in their own ConfigMap object(s); this field only references them, so
+                  even large per-node config sets never bloat the Node object.
+                items:
+                  description: |-
+                    FileFromConfigMap represents a file that you would like to mount (from a configmap) in the
+                    launcher pod for a given node.
+                  properties:
+                    configMapName:
+                      description: ConfigMapName is the name of the configmap to mount.
+                      type: string
+                    configMapPath:
+                      description: |-
+                        ConfigMapPath is the path/key in the configmap to mount, if not specified the configmap will
+                        be mounted without a sub-path.
+                      type: string
+                    filePath:
+                      description: FilePath is the path to mount the file.
+                      type: string
+                    mode:
+                      default: read
+                      description: |-
+                        Mode sets the file permissions when mounting the configmap. Since the configmap will be read
+                        only filesystem anyway, we basically just want to expose if the file should be mounted as
+                        executable or not. So, default permissions would be 0o444 (read) and execute would be 0o555.
+                      enum:
+                      - read
+                      - execute
+                      type: string
+                  required:
+                  - configMapName
+                  - filePath
+                  type: object
+                type: array
+                x-kubernetes-list-type: atomic
+              filesFromURL:
+                description: |-
+                  FilesFromURL is the set of files (fetched from a URL) to mount for this node. This is the
+                  per-node slice of the owning Topology's deployment.filesFromURL. URLs are used for files that
+                  exceed the ConfigMap (~1MB) size limit.
+                items:
+                  description: |-
+                    FileFromURL represents a file that you would like to mount from a URL in the launcher pod for
+                    a given node.
+                  properties:
+                    filePath:
+                      description: FilePath is the path to mount the file.
+                      type: string
+                    url:
+                      description: |-
+                        URL is the url to fetch and mount at the provided FilePath. This URL must be a url that can
+                        be simply downloaded and dumped to disk -- meaning a normal file server type endpoint or if
+                        using GitHub or similar a "raw" path.
+                      type: string
+                  required:
+                  - filePath
+                  - url
+                  type: object
+                type: array
+                x-kubernetes-list-type: atomic
+              kind:
+                description: Kind is the topology kind this node was derived from
+                  -- "containerlab" or "kne".
+                enum:
+                - containerlab
+                - kne
+                type: string
+              nodeName:
+                description: |-
+                  NodeName is the name of the (containerlab) node this resource represents. For a node group
+                  that shares a network namespace this is the name of the group's primary node.
+                type: string
+              topologyName:
+                description: |-
+                  TopologyName is the name of the Topology that owns this Node. It matches the owning Topology's
+                  name and is also recorded as a label for selection.
+                type: string
+            required:
+            - definition
+            - kind
+            - nodeName
+            - topologyName
+            type: object
+          status:
+            description: NodeStatus is the status for a Node resource.
+            properties:
+              readiness:
+                description: |-
+                  Readiness is the last reported readiness string for the node -- one of "ready", "notready",
+                  or "unknown".
+                type: string
+              ready:
+                description: Ready indicates whether this node has reported ready
+                  (via the launcher status probes).
+                type: boolean
+            required:
+            - ready
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources: {}

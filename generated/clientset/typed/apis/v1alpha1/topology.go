@@ -37,35 +37,16 @@ type TopologiesGetter interface {
 
 // TopologyInterface has methods to work with Topology resources.
 type TopologyInterface interface {
-	Create(
-		ctx context.Context,
-		topology *apisv1alpha1.Topology,
-		opts v1.CreateOptions,
-	) (*apisv1alpha1.Topology, error)
-	Update(
-		ctx context.Context,
-		topology *apisv1alpha1.Topology,
-		opts v1.UpdateOptions,
-	) (*apisv1alpha1.Topology, error)
+	Create(ctx context.Context, topology *apisv1alpha1.Topology, opts v1.CreateOptions) (*apisv1alpha1.Topology, error)
+	Update(ctx context.Context, topology *apisv1alpha1.Topology, opts v1.UpdateOptions) (*apisv1alpha1.Topology, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(
-		ctx context.Context,
-		topology *apisv1alpha1.Topology,
-		opts v1.UpdateOptions,
-	) (*apisv1alpha1.Topology, error)
+	UpdateStatus(ctx context.Context, topology *apisv1alpha1.Topology, opts v1.UpdateOptions) (*apisv1alpha1.Topology, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*apisv1alpha1.Topology, error)
 	List(ctx context.Context, opts v1.ListOptions) (*apisv1alpha1.TopologyList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(
-		ctx context.Context,
-		name string,
-		pt types.PatchType,
-		data []byte,
-		opts v1.PatchOptions,
-		subresources ...string,
-	) (result *apisv1alpha1.Topology, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *apisv1alpha1.Topology, err error)
 	TopologyExpansion
 }
 

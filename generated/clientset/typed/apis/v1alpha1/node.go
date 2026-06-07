@@ -29,42 +29,42 @@ import (
 	gentype "k8s.io/client-go/gentype"
 )
 
-// ConfigsGetter has a method to return a ConfigInterface.
+// NodesGetter has a method to return a NodeInterface.
 // A group's client should implement this interface.
-type ConfigsGetter interface {
-	Configs(namespace string) ConfigInterface
+type NodesGetter interface {
+	Nodes(namespace string) NodeInterface
 }
 
-// ConfigInterface has methods to work with Config resources.
-type ConfigInterface interface {
-	Create(ctx context.Context, config *apisv1alpha1.Config, opts v1.CreateOptions) (*apisv1alpha1.Config, error)
-	Update(ctx context.Context, config *apisv1alpha1.Config, opts v1.UpdateOptions) (*apisv1alpha1.Config, error)
+// NodeInterface has methods to work with Node resources.
+type NodeInterface interface {
+	Create(ctx context.Context, node *apisv1alpha1.Node, opts v1.CreateOptions) (*apisv1alpha1.Node, error)
+	Update(ctx context.Context, node *apisv1alpha1.Node, opts v1.UpdateOptions) (*apisv1alpha1.Node, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, config *apisv1alpha1.Config, opts v1.UpdateOptions) (*apisv1alpha1.Config, error)
+	UpdateStatus(ctx context.Context, node *apisv1alpha1.Node, opts v1.UpdateOptions) (*apisv1alpha1.Node, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*apisv1alpha1.Config, error)
-	List(ctx context.Context, opts v1.ListOptions) (*apisv1alpha1.ConfigList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*apisv1alpha1.Node, error)
+	List(ctx context.Context, opts v1.ListOptions) (*apisv1alpha1.NodeList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *apisv1alpha1.Config, err error)
-	ConfigExpansion
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *apisv1alpha1.Node, err error)
+	NodeExpansion
 }
 
-// configs implements ConfigInterface
-type configs struct {
-	*gentype.ClientWithList[*apisv1alpha1.Config, *apisv1alpha1.ConfigList]
+// nodes implements NodeInterface
+type nodes struct {
+	*gentype.ClientWithList[*apisv1alpha1.Node, *apisv1alpha1.NodeList]
 }
 
-// newConfigs returns a Configs
-func newConfigs(c *ClabernetesV1alpha1Client, namespace string) *configs {
-	return &configs{
-		gentype.NewClientWithList[*apisv1alpha1.Config, *apisv1alpha1.ConfigList](
-			"configs",
+// newNodes returns a Nodes
+func newNodes(c *ClabernetesV1alpha1Client, namespace string) *nodes {
+	return &nodes{
+		gentype.NewClientWithList[*apisv1alpha1.Node, *apisv1alpha1.NodeList](
+			"nodes",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *apisv1alpha1.Config { return &apisv1alpha1.Config{} },
-			func() *apisv1alpha1.ConfigList { return &apisv1alpha1.ConfigList{} },
+			func() *apisv1alpha1.Node { return &apisv1alpha1.Node{} },
+			func() *apisv1alpha1.NodeList { return &apisv1alpha1.NodeList{} },
 		),
 	}
 }

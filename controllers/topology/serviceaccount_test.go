@@ -125,6 +125,7 @@ func TestRenderServiceAccount(t *testing.T) {
 				}
 
 				clabernetestesthelper.MarshaledEqual(t, got, want)
-			})
+			},
+		)
 	}
 }

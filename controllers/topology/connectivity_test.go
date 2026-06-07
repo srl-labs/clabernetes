@@ -133,6 +133,7 @@ func TestRenderConnectivity(t *testing.T) {
 				}
 
 				clabernetestesthelper.MarshaledEqual(t, got, want)
-			})
+			},
+		)
 	}
 }

@@ -75,7 +75,8 @@ func TestStringSliceContainsAll(t *testing.T) {
 				if actual != testCase.expected {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }
 
@@ -116,6 +117,7 @@ func TestStringSliceDifference(t *testing.T) {
 				if !clabernetesutil.StringSliceEqual(actual, testCase.expected) {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }

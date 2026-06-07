@@ -688,7 +688,8 @@ func (p *containerlabDefinitionProcessor) processLinkForGroup(
 		&clabernetesutilcontainerlab.LinkDefinition{
 			LinkConfig: clabernetesutilcontainerlab.LinkConfig{
 				Endpoints: []string{
-					fmt.Sprintf("%s:%s",
+					fmt.Sprintf(
+						"%s:%s",
 						interestingEndpoint.NodeName,
 						interestingEndpoint.InterfaceName,
 					),

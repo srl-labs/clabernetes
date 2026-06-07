@@ -557,7 +557,8 @@ func (c *Clabverter) handleExtraFiles() error {
 
 		for extraFilePath, extraFileObj := range nodeExtraFiles {
 			safeFileName := clabernetesutilkubernetes.SafeConcatNameKubernetes(
-				strings.Split(extraFilePath, "/")...)
+				strings.Split(extraFilePath, "/")...,
+			)
 
 			safeFileName = strings.TrimPrefix(safeFileName, "-")
 

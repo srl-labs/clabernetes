@@ -44,7 +44,8 @@ func TestStringSetAdd(t *testing.T) {
 					!clabernetesutil.StringSliceContainsAll(testCase.expected, actual) {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }
 
@@ -86,7 +87,8 @@ func TestStringSetRemove(t *testing.T) {
 					!clabernetesutil.StringSliceContainsAll(testCase.expected, actual) {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }
 
@@ -124,7 +126,8 @@ func TestStringSetContains(t *testing.T) {
 				if actual != testCase.expected {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }
 
@@ -159,6 +162,7 @@ func TestStringSetLen(t *testing.T) {
 				if actual != testCase.expected {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }

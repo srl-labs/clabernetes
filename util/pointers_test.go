@@ -46,6 +46,7 @@ func TestToPointer(t *testing.T) {
 				if *actual != testCase.in {
 					clabernetestesthelper.FailOutput(t, *actual, testCase.in)
 				}
-			})
+			},
+		)
 	}
 }

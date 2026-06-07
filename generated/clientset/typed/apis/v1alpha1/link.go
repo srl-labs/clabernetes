@@ -29,42 +29,42 @@ import (
 	gentype "k8s.io/client-go/gentype"
 )
 
-// ConfigsGetter has a method to return a ConfigInterface.
+// LinksGetter has a method to return a LinkInterface.
 // A group's client should implement this interface.
-type ConfigsGetter interface {
-	Configs(namespace string) ConfigInterface
+type LinksGetter interface {
+	Links(namespace string) LinkInterface
 }
 
-// ConfigInterface has methods to work with Config resources.
-type ConfigInterface interface {
-	Create(ctx context.Context, config *apisv1alpha1.Config, opts v1.CreateOptions) (*apisv1alpha1.Config, error)
-	Update(ctx context.Context, config *apisv1alpha1.Config, opts v1.UpdateOptions) (*apisv1alpha1.Config, error)
+// LinkInterface has methods to work with Link resources.
+type LinkInterface interface {
+	Create(ctx context.Context, link *apisv1alpha1.Link, opts v1.CreateOptions) (*apisv1alpha1.Link, error)
+	Update(ctx context.Context, link *apisv1alpha1.Link, opts v1.UpdateOptions) (*apisv1alpha1.Link, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, config *apisv1alpha1.Config, opts v1.UpdateOptions) (*apisv1alpha1.Config, error)
+	UpdateStatus(ctx context.Context, link *apisv1alpha1.Link, opts v1.UpdateOptions) (*apisv1alpha1.Link, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*apisv1alpha1.Config, error)
-	List(ctx context.Context, opts v1.ListOptions) (*apisv1alpha1.ConfigList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*apisv1alpha1.Link, error)
+	List(ctx context.Context, opts v1.ListOptions) (*apisv1alpha1.LinkList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *apisv1alpha1.Config, err error)
-	ConfigExpansion
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *apisv1alpha1.Link, err error)
+	LinkExpansion
 }
 
-// configs implements ConfigInterface
-type configs struct {
-	*gentype.ClientWithList[*apisv1alpha1.Config, *apisv1alpha1.ConfigList]
+// links implements LinkInterface
+type links struct {
+	*gentype.ClientWithList[*apisv1alpha1.Link, *apisv1alpha1.LinkList]
 }
 
-// newConfigs returns a Configs
-func newConfigs(c *ClabernetesV1alpha1Client, namespace string) *configs {
-	return &configs{
-		gentype.NewClientWithList[*apisv1alpha1.Config, *apisv1alpha1.ConfigList](
-			"configs",
+// newLinks returns a Links
+func newLinks(c *ClabernetesV1alpha1Client, namespace string) *links {
+	return &links{
+		gentype.NewClientWithList[*apisv1alpha1.Link, *apisv1alpha1.LinkList](
+			"links",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,
-			func() *apisv1alpha1.Config { return &apisv1alpha1.Config{} },
-			func() *apisv1alpha1.ConfigList { return &apisv1alpha1.ConfigList{} },
+			func() *apisv1alpha1.Link { return &apisv1alpha1.Link{} },
+			func() *apisv1alpha1.LinkList { return &apisv1alpha1.LinkList{} },
 		),
 	}
 }

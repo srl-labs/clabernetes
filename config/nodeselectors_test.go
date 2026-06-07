@@ -102,6 +102,7 @@ func TestGetNodeSelectorsByName(t *testing.T) {
 				if diff := cmp.Diff(testCase.expectedSelectors, result); diff != "" {
 					t.Errorf("mismatch (-want +got):\n%s", diff)
 				}
-			})
+			},
+		)
 	}
 }

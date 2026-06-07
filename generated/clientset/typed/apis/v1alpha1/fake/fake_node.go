@@ -24,26 +24,24 @@ import (
 	gentype "k8s.io/client-go/gentype"
 )
 
-// fakeTopologies implements TopologyInterface
-type fakeTopologies struct {
-	*gentype.FakeClientWithList[*v1alpha1.Topology, *v1alpha1.TopologyList]
+// fakeNodes implements NodeInterface
+type fakeNodes struct {
+	*gentype.FakeClientWithList[*v1alpha1.Node, *v1alpha1.NodeList]
 	Fake *FakeClabernetesV1alpha1
 }
 
-func newFakeTopologies(fake *FakeClabernetesV1alpha1, namespace string) apisv1alpha1.TopologyInterface {
-	return &fakeTopologies{
-		gentype.NewFakeClientWithList[*v1alpha1.Topology, *v1alpha1.TopologyList](
+func newFakeNodes(fake *FakeClabernetesV1alpha1, namespace string) apisv1alpha1.NodeInterface {
+	return &fakeNodes{
+		gentype.NewFakeClientWithList[*v1alpha1.Node, *v1alpha1.NodeList](
 			fake.Fake,
 			namespace,
-			v1alpha1.SchemeGroupVersion.WithResource("topologies"),
-			v1alpha1.SchemeGroupVersion.WithKind("Topology"),
-			func() *v1alpha1.Topology { return &v1alpha1.Topology{} },
-			func() *v1alpha1.TopologyList { return &v1alpha1.TopologyList{} },
-			func(dst, src *v1alpha1.TopologyList) { dst.ListMeta = src.ListMeta },
-			func(list *v1alpha1.TopologyList) []*v1alpha1.Topology { return gentype.ToPointerSlice(list.Items) },
-			func(list *v1alpha1.TopologyList, items []*v1alpha1.Topology) {
-				list.Items = gentype.FromPointerSlice(items)
-			},
+			v1alpha1.SchemeGroupVersion.WithResource("nodes"),
+			v1alpha1.SchemeGroupVersion.WithKind("Node"),
+			func() *v1alpha1.Node { return &v1alpha1.Node{} },
+			func() *v1alpha1.NodeList { return &v1alpha1.NodeList{} },
+			func(dst, src *v1alpha1.NodeList) { dst.ListMeta = src.ListMeta },
+			func(list *v1alpha1.NodeList) []*v1alpha1.Node { return gentype.ToPointerSlice(list.Items) },
+			func(list *v1alpha1.NodeList, items []*v1alpha1.Node) { list.Items = gentype.FromPointerSlice(items) },
 		),
 		fake,
 	}

@@ -15,12 +15,13 @@ func FailOutput(t *testing.T, actual, expected any) {
 	case string, []byte:
 		diff := unifiedDiff(t, actual, expected)
 
-		actualExpectedOut := fmt.Sprintf("\n\033[0;36m*** actual   >>>\033[0m"+
-			"\n%s"+
-			"\n\033[0;36m<<< actual   ***\033[0m"+
-			"\n\033[0;35m*** expected >>>\033[0m"+
-			"\n%s"+
-			"\n\033[0;35m<<< expected ***\033[0m",
+		actualExpectedOut := fmt.Sprintf(
+			"\n\033[0;36m*** actual   >>>\033[0m"+
+				"\n%s"+
+				"\n\033[0;36m<<< actual   ***\033[0m"+
+				"\n\033[0;35m*** expected >>>\033[0m"+
+				"\n%s"+
+				"\n\033[0;35m<<< expected ***\033[0m",
 			actual, expected,
 		)
 		diffOut := fmt.Sprintf("\n\033[0;97m*** diff     >>>\033[0m"+
