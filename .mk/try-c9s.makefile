@@ -10,64 +10,126 @@ TRY_C9S_NAMESPACE := clabernetes
 TRY_C9S_BUILD_DIR := build/try-c9s
 TRY_C9S_STATE_DIR := $(TRY_C9S_BUILD_DIR)/$(TRY_C9S_CLUSTER_NAME)
 TRY_C9S_TOOLS_DIR := $(TRY_C9S_BUILD_DIR)/bin
-TRY_C9S_TMP_DIR := $(TRY_C9S_BUILD_DIR)/tmp
-TRY_C9S_KIND_VERSION := v0.32.0
-TRY_C9S_KUBECTL_VERSION := v1.36.1
-TRY_C9S_HELM_VERSION := v4.2.0
-TRY_C9S_OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
-TRY_C9S_ARCH_QUERY := $(shell uname -m)
-ifeq ($(TRY_C9S_ARCH_QUERY),x86_64)
-TRY_C9S_ARCH := amd64
-else ifeq ($(TRY_C9S_ARCH_QUERY),amd64)
-TRY_C9S_ARCH := amd64
-else ifeq ($(TRY_C9S_ARCH_QUERY),aarch64)
-TRY_C9S_ARCH := arm64
-else ifeq ($(TRY_C9S_ARCH_QUERY),arm64)
-TRY_C9S_ARCH := arm64
+
+## OS / arch detection
+## ----------------------------------------------------------------------------|
+OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
+ARCH_QUERY := $(shell uname -m)
+ifeq ($(ARCH_QUERY),x86_64)
+ARCH := amd64
+else ifeq ($(ARCH_QUERY),amd64)
+ARCH := amd64
+else ifeq ($(ARCH_QUERY),aarch64)
+ARCH := arm64
+else ifeq ($(ARCH_QUERY),arm64)
+ARCH := arm64
 else
-TRY_C9S_ARCH := $(TRY_C9S_ARCH_QUERY)
+ARCH := $(ARCH_QUERY)
 endif
-TRY_C9S_KIND := $(shell command -v kind 2>/dev/null || echo $(TRY_C9S_TOOLS_DIR)/kind)
-TRY_C9S_KUBECTL := $(shell command -v kubectl 2>/dev/null || echo $(TRY_C9S_TOOLS_DIR)/kubectl)
-TRY_C9S_HELM := $(shell command -v helm 2>/dev/null || echo $(TRY_C9S_TOOLS_DIR)/helm)
+
+## Tool versions
+## ----------------------------------------------------------------------------|
+KIND_VERSION ?= v0.32.0
+KUBECTL_VERSION ?= v1.36.1
+HELM_VERSION ?= v4.2.0
+YQ_VERSION ?= v4.42.1
+UV_VERSION ?= 0.10.4
+
+## Tool locations (versioned binaries downloaded into TRY_C9S_TOOLS_DIR)
+## ----------------------------------------------------------------------------|
+KIND := $(TRY_C9S_TOOLS_DIR)/kind-$(KIND_VERSION)
+KUBECTL := $(TRY_C9S_TOOLS_DIR)/kubectl-$(KUBECTL_VERSION)
+HELM := $(TRY_C9S_TOOLS_DIR)/helm-$(HELM_VERSION)
+YQ := $(TRY_C9S_TOOLS_DIR)/yq-$(YQ_VERSION)
+UV := $(TRY_C9S_TOOLS_DIR)/uv-$(UV_VERSION)
+
+## Tool download URLs
+## ----------------------------------------------------------------------------|
+KIND_SRC ?= https://kind.sigs.k8s.io/dl/$(KIND_VERSION)/kind-$(OS)-$(ARCH)
+KUBECTL_SRC ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OS)/$(ARCH)/kubectl
+HELM_SRC ?= https://get.helm.sh/helm-$(HELM_VERSION)-$(OS)-$(ARCH).tar.gz
+YQ_SRC ?= https://github.com/mikefarah/yq/releases/download/$(YQ_VERSION)/yq_$(OS)_$(ARCH)
+
+## curl wrapper used by the download helpers
+## ----------------------------------------------------------------------------|
+TRY_C9S_CURL_OPTS ?= --location --silent --fail --show-error
+TRY_C9S_CURL := curl $(TRY_C9S_CURL_OPTS)
+
 TRY_C9S_CHART_VERSION_ARG := $(if $(TRY_C9S_CHART_VERSION),--version $(TRY_C9S_CHART_VERSION),)
-TRY_C9S_HELM_WAIT_ARG := $(shell if $(TRY_C9S_HELM) version --short 2>/dev/null | grep -q '^v4'; then echo '--wait=legacy'; else echo '--wait'; fi)
+TRY_C9S_HELM_WAIT_ARG := $(if $(filter v4%,$(HELM_VERSION)),--wait=legacy,--wait)
 
 .PHONY: try-c9s
 try-c9s: try-c9s-expose ## Launch published clabernetes in KinD and apply a sample topology
 	@echo "--> TRY-C9S: clabernetes is ready to try"
 
+## Download helpers
+## ----------------------------------------------------------------------------|
+# $1 - tool name/version (for logging)
+# $2 - source URL
+# $3 - destination path
+define try-c9s-download-bin
+	{ \
+		if [ ! -f "$(3)" ]; then \
+			echo "--> TRY-C9S: downloading $(1) to $(3)"; \
+			$(TRY_C9S_CURL) --output "$(3)" "$(2)"; \
+			chmod +x "$(3)"; \
+		fi; \
+	}
+endef
+
+# $1 - destination path
+# $2 - source archive URL
+# $3 - path of the binary inside the archive
+# $4 - tar decompress flag (e.g. z for gzip)
+define try-c9s-download-bin-from-archive
+	{ \
+		if [ ! -f "$(1)" ]; then \
+			echo "--> TRY-C9S: downloading $(1)"; \
+			$(TRY_C9S_CURL) --output - "$(2)" | tar -x$(4) --to-stdout "$(3)" > "$(1)" && chmod +x "$(1)"; \
+		fi; \
+	}
+endef
+
+$(TRY_C9S_TOOLS_DIR):
+	@mkdir -p "$(TRY_C9S_TOOLS_DIR)"
+
+$(KIND): | $(TRY_C9S_TOOLS_DIR)
+	@$(call try-c9s-download-bin,kind $(KIND_VERSION),$(KIND_SRC),$(KIND))
+
+$(KUBECTL): | $(TRY_C9S_TOOLS_DIR)
+	@$(call try-c9s-download-bin,kubectl $(KUBECTL_VERSION),$(KUBECTL_SRC),$(KUBECTL))
+
+$(HELM): | $(TRY_C9S_TOOLS_DIR)
+	@$(call try-c9s-download-bin-from-archive,$(HELM),$(HELM_SRC),$(OS)-$(ARCH)/helm,z)
+
+$(YQ): | $(TRY_C9S_TOOLS_DIR)
+	@$(call try-c9s-download-bin,yq $(YQ_VERSION),$(YQ_SRC),$(YQ))
+
+# uv release assets use rust-style triples, so the os/arch are remapped here
+$(UV): | $(TRY_C9S_TOOLS_DIR)
+	@{ \
+		if [ "$(ARCH)" = "arm64" ]; then \
+			ARCH="aarch64"; \
+		elif [ "$(ARCH)" = "amd64" ]; then \
+			ARCH="x86_64"; \
+		fi; \
+		if [ "$(OS)" = "darwin" ]; then \
+			OS="apple-darwin"; \
+		elif [ "$(OS)" = "linux" ]; then \
+			OS="unknown-linux-gnu"; \
+		fi; \
+		UV_SRC="https://github.com/astral-sh/uv/releases/download/$(UV_VERSION)/uv-$${ARCH}-$${OS}.tar.gz"; \
+		$(call try-c9s-download-bin-from-archive,$(UV),$$UV_SRC,uv-$${ARCH}-$${OS}/uv,z); \
+	}
+
 .PHONY: try-c9s-tools
-try-c9s-tools:
+try-c9s-tools: | $(KIND) $(KUBECTL) $(HELM) $(YQ) $(UV) ## Download the tools (kind, kubectl, helm, yq, uv) required for try-c9s
 	@if ! command -v docker >/dev/null 2>&1; then \
 		echo "--> TRY-C9S: missing required tool: docker"; \
 		exit 1; \
 	fi
 	@docker info >/dev/null 2>&1 || { echo "--> TRY-C9S: docker is not reachable"; exit 1; }
-	@mkdir -p "$(TRY_C9S_TOOLS_DIR)" "$(TRY_C9S_TMP_DIR)"
-	@if ! command -v "$(TRY_C9S_KIND)" >/dev/null 2>&1; then \
-		if ! command -v curl >/dev/null 2>&1; then echo "--> TRY-C9S: curl is required to download kind"; exit 1; fi; \
-		echo "--> TRY-C9S: downloading kind $(TRY_C9S_KIND_VERSION) to $(TRY_C9S_KIND)"; \
-		curl -fsSL -o "$(TRY_C9S_KIND)" "https://kind.sigs.k8s.io/dl/$(TRY_C9S_KIND_VERSION)/kind-$(TRY_C9S_OS)-$(TRY_C9S_ARCH)"; \
-		chmod +x "$(TRY_C9S_KIND)"; \
-	fi
-	@if ! command -v "$(TRY_C9S_KUBECTL)" >/dev/null 2>&1; then \
-		if ! command -v curl >/dev/null 2>&1; then echo "--> TRY-C9S: curl is required to download kubectl"; exit 1; fi; \
-		echo "--> TRY-C9S: downloading kubectl $(TRY_C9S_KUBECTL_VERSION) to $(TRY_C9S_KUBECTL)"; \
-		curl -fsSL -o "$(TRY_C9S_KUBECTL)" "https://dl.k8s.io/release/$(TRY_C9S_KUBECTL_VERSION)/bin/$(TRY_C9S_OS)/$(TRY_C9S_ARCH)/kubectl"; \
-		chmod +x "$(TRY_C9S_KUBECTL)"; \
-	fi
-	@if ! command -v "$(TRY_C9S_HELM)" >/dev/null 2>&1; then \
-		if ! command -v curl >/dev/null 2>&1; then echo "--> TRY-C9S: curl is required to download helm"; exit 1; fi; \
-		if ! command -v tar >/dev/null 2>&1; then echo "--> TRY-C9S: tar is required to install helm"; exit 1; fi; \
-		echo "--> TRY-C9S: downloading helm $(TRY_C9S_HELM_VERSION) to $(TRY_C9S_HELM)"; \
-		rm -rf "$(TRY_C9S_TMP_DIR)/helm-$(TRY_C9S_OS)-$(TRY_C9S_ARCH)"; \
-		mkdir -p "$(TRY_C9S_TMP_DIR)/helm-$(TRY_C9S_OS)-$(TRY_C9S_ARCH)"; \
-		curl -fsSL -o "$(TRY_C9S_TMP_DIR)/helm.tar.gz" "https://get.helm.sh/helm-$(TRY_C9S_HELM_VERSION)-$(TRY_C9S_OS)-$(TRY_C9S_ARCH).tar.gz"; \
-		tar -xzf "$(TRY_C9S_TMP_DIR)/helm.tar.gz" -C "$(TRY_C9S_TMP_DIR)/helm-$(TRY_C9S_OS)-$(TRY_C9S_ARCH)"; \
-		mv "$(TRY_C9S_TMP_DIR)/helm-$(TRY_C9S_OS)-$(TRY_C9S_ARCH)/$(TRY_C9S_OS)-$(TRY_C9S_ARCH)/helm" "$(TRY_C9S_HELM)"; \
-		chmod +x "$(TRY_C9S_HELM)"; \
-	fi
+	@echo "--> TRY-C9S: tools are available in $(TRY_C9S_TOOLS_DIR)"
 
 .PHONY: try-c9s-kind-config
 try-c9s-kind-config: try-c9s-tools
@@ -94,22 +156,22 @@ try-c9s-kind-config: try-c9s-tools
 .PHONY: try-c9s-cluster
 try-c9s-cluster: try-c9s-kind-config
 	@echo "--> TRY-C9S: creating KinD cluster $(TRY_C9S_CLUSTER_NAME)"
-	@clusters=$$($(TRY_C9S_KIND) get clusters 2>/dev/null | grep -v '^No kind clusters found\.$$' || true); \
+	@clusters=$$($(KIND) get clusters 2>/dev/null | grep -v '^No kind clusters found\.$$' || true); \
 	if [ -n "$$clusters" ]; then \
 		echo "--> TRY-C9S: found existing KinD cluster(s):"; \
 		echo "$$clusters" | sed 's/^/    /'; \
 		echo "--> TRY-C9S: run 'make try-c9s-clean' before starting try-c9s"; \
 		exit 1; \
 	fi
-	@$(TRY_C9S_KIND) create cluster --name $(TRY_C9S_CLUSTER_NAME) --config "$(TRY_C9S_STATE_DIR)/kind.yaml"
-	@$(TRY_C9S_KIND) export kubeconfig --name $(TRY_C9S_CLUSTER_NAME)
-	@$(TRY_C9S_KUBECTL) wait --for=condition=Ready nodes --all --timeout=$(TRY_C9S_TIMEOUT)
+	@$(KIND) create cluster --name $(TRY_C9S_CLUSTER_NAME) --config "$(TRY_C9S_STATE_DIR)/kind.yaml"
+	@$(KIND) export kubeconfig --name $(TRY_C9S_CLUSTER_NAME)
+	@$(KUBECTL) wait --for=condition=Ready nodes --all --timeout=$(TRY_C9S_TIMEOUT)
 
 .PHONY: try-c9s-metallb
 try-c9s-metallb: try-c9s-cluster
 	@echo "--> TRY-C9S: installing MetalLB"
-	@$(TRY_C9S_KUBECTL) apply -f "https://raw.githubusercontent.com/metallb/metallb/v0.15.3/config/manifests/metallb-native.yaml"
-	@$(TRY_C9S_KUBECTL) -n metallb-system wait --for=condition=Ready pods --selector=app=metallb --timeout=120s
+	@$(KUBECTL) apply -f "https://raw.githubusercontent.com/metallb/metallb/v0.15.3/config/manifests/metallb-native.yaml"
+	@$(KUBECTL) -n metallb-system wait --for=condition=Ready pods --selector=app=metallb --timeout=120s
 	@echo "--> TRY-C9S: configuring MetalLB address pool from Docker network kind"
 	@ipv4_subnet=$$(docker network inspect -f '{{range .IPAM.Config}}{{.Subnet}} {{end}}' kind | tr ' ' '\n' | grep -v ':' | head -n 1); \
 	ipv6_subnet=$$(docker network inspect -f '{{range .IPAM.Config}}{{.Subnet}} {{end}}' kind | tr ' ' '\n' | grep ':' | head -n 1); \
@@ -142,12 +204,12 @@ try-c9s-metallb: try-c9s-cluster
 		printf '%s\n' 'spec:'; \
 		printf '%s\n' '  ipAddressPools:'; \
 		printf '%s\n' '    - kind'; \
-	} | $(TRY_C9S_KUBECTL) apply -f -
+	} | $(KUBECTL) apply -f -
 
 .PHONY: try-c9s-install
 try-c9s-install: try-c9s-metallb
 	@echo "--> TRY-C9S: installing published clabernetes chart"
-	@$(TRY_C9S_HELM) upgrade --install clabernetes $(TRY_C9S_CHART) $(TRY_C9S_CHART_VERSION_ARG) \
+	@$(HELM) upgrade --install clabernetes $(TRY_C9S_CHART) $(TRY_C9S_CHART_VERSION_ARG) \
 		--namespace $(TRY_C9S_NAMESPACE) \
 		--create-namespace \
 		$(TRY_C9S_HELM_WAIT_ARG) \
@@ -155,28 +217,28 @@ try-c9s-install: try-c9s-metallb
 		--set ui.ingress.enabled=false \
 		--set manager.replicaCount=1 \
 		--set ui.replicaCount=1
-	@$(TRY_C9S_KUBECTL) -n $(TRY_C9S_NAMESPACE) rollout status deploy/clabernetes-manager --timeout=$(TRY_C9S_TIMEOUT)
-	@$(TRY_C9S_KUBECTL) -n $(TRY_C9S_NAMESPACE) rollout status deploy/clabernetes-ui --timeout=$(TRY_C9S_TIMEOUT)
+	@$(KUBECTL) -n $(TRY_C9S_NAMESPACE) rollout status deploy/clabernetes-manager --timeout=$(TRY_C9S_TIMEOUT)
+	@$(KUBECTL) -n $(TRY_C9S_NAMESPACE) rollout status deploy/clabernetes-ui --timeout=$(TRY_C9S_TIMEOUT)
 
 .PHONY: try-c9s-apply-topology
 try-c9s-apply-topology: try-c9s-install
 	@echo "--> TRY-C9S: applying sample topology $(TRY_C9S_TOPOLOGY)"
-	@$(TRY_C9S_KUBECTL) -n default apply -f $(TRY_C9S_TOPOLOGY)
+	@$(KUBECTL) -n default apply -f $(TRY_C9S_TOPOLOGY)
 	@echo "--> TRY-C9S: waiting up to $(TRY_C9S_TIMEOUT) for topology $(TRY_C9S_TOPOLOGY_NAME)"
-	@if ! $(TRY_C9S_KUBECTL) -n default wait \
+	@if ! $(KUBECTL) -n default wait \
 		--for=condition=TopologyReady \
 		topology/$(TRY_C9S_TOPOLOGY_NAME) \
 		--timeout=$(TRY_C9S_TIMEOUT); then \
 		echo "--> TRY-C9S: topology did not report ready before timeout; current status:"; \
-		$(TRY_C9S_KUBECTL) -n default get topology $(TRY_C9S_TOPOLOGY_NAME) || true; \
-		$(TRY_C9S_KUBECTL) -n default get pods -l clabernetes/topologyOwner=$(TRY_C9S_TOPOLOGY_NAME) || true; \
+		$(KUBECTL) -n default get topology $(TRY_C9S_TOPOLOGY_NAME) || true; \
+		$(KUBECTL) -n default get pods -l clabernetes/topologyOwner=$(TRY_C9S_TOPOLOGY_NAME) || true; \
 	fi
 
 .PHONY: try-c9s-ui-service
 try-c9s-ui-service: try-c9s-apply-topology
 	@echo "--> TRY-C9S: creating fixed UI NodePort service"
 	@mkdir -p "$(TRY_C9S_STATE_DIR)"
-	@$(TRY_C9S_KUBECTL) -n default delete service try-c9s-srl --ignore-not-found=true >/dev/null 2>&1 || true
+	@$(KUBECTL) -n default delete service try-c9s-srl --ignore-not-found=true >/dev/null 2>&1 || true
 	@{ \
 		printf '%s\n' '---'; \
 		printf '%s\n' 'apiVersion: v1'; \
@@ -199,11 +261,11 @@ try-c9s-ui-service: try-c9s-apply-topology
 		printf '%s\n' '    clabernetes/name: clabernetes-ui'; \
 		printf '%s\n' '    clabernetes/component: ui'; \
 	} > "$(TRY_C9S_STATE_DIR)/ui-service.yaml"
-	@$(TRY_C9S_KUBECTL) apply -f "$(TRY_C9S_STATE_DIR)/ui-service.yaml"
+	@$(KUBECTL) apply -f "$(TRY_C9S_STATE_DIR)/ui-service.yaml"
 
 .PHONY: try-c9s-print-access
 try-c9s-print-access:
-	@srl_ip=$$($(TRY_C9S_KUBECTL) -n default get svc "$(TRY_C9S_TOPOLOGY_NAME)-srl1" -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true); \
+	@srl_ip=$$($(KUBECTL) -n default get svc "$(TRY_C9S_TOPOLOGY_NAME)-srl1" -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true); \
 	echo "--> TRY-C9S: UI: http://localhost:$(TRY_C9S_UI_PORT)"; \
 	if [ -n "$$srl_ip" ]; then \
 		echo "--> TRY-C9S: SR Linux SSH: ssh admin@$$srl_ip"; \
@@ -224,10 +286,10 @@ try-c9s-expose: try-c9s-ui-service
 
 .PHONY: try-c9s-clean
 try-c9s-clean: ## Remove try-c9s sample resources and KinD cluster
-	@if command -v "$(TRY_C9S_KIND)" >/dev/null 2>&1 && $(TRY_C9S_KIND) get clusters | grep -qx '$(TRY_C9S_CLUSTER_NAME)'; then \
-		$(TRY_C9S_KIND) export kubeconfig --name $(TRY_C9S_CLUSTER_NAME) >/dev/null; \
-		$(TRY_C9S_KUBECTL) -n default delete -f $(TRY_C9S_TOPOLOGY) --ignore-not-found=true >/dev/null 2>&1 || true; \
-		$(TRY_C9S_KIND) delete cluster --name $(TRY_C9S_CLUSTER_NAME); \
+	@if command -v "$(KIND)" >/dev/null 2>&1 && $(KIND) get clusters | grep -qx '$(TRY_C9S_CLUSTER_NAME)'; then \
+		$(KIND) export kubeconfig --name $(TRY_C9S_CLUSTER_NAME) >/dev/null; \
+		$(KUBECTL) -n default delete -f $(TRY_C9S_TOPOLOGY) --ignore-not-found=true >/dev/null 2>&1 || true; \
+		$(KIND) delete cluster --name $(TRY_C9S_CLUSTER_NAME); \
 	else \
 		echo "--> TRY-C9S: KinD cluster $(TRY_C9S_CLUSTER_NAME) does not exist"; \
 	fi
