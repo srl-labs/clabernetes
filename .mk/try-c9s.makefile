@@ -1,4 +1,4 @@
-TRY_C9S_CLUSTER_NAME ?= c9s-demo
+TRY_C9S_CLUSTER_NAME ?= try-c9s
 TRY_C9S_CHART ?= oci://ghcr.io/srl-labs/clabernetes/clabernetes
 TRY_C9S_CHART_VERSION ?=
 TRY_C9S_TOPOLOGY ?= examples/basic/srl-multitool.yaml
@@ -10,6 +10,12 @@ TRY_C9S_NAMESPACE := clabernetes
 TRY_C9S_BUILD_DIR := build/try-c9s
 TRY_C9S_STATE_DIR := $(TRY_C9S_BUILD_DIR)/$(TRY_C9S_CLUSTER_NAME)
 TRY_C9S_TOOLS_DIR := $(TRY_C9S_BUILD_DIR)/bin
+
+## Manifest templates (rendered into the state dir with yq before applying)
+## ----------------------------------------------------------------------------|
+TRY_C9S_KIND_TEMPLATE := $(TRY_C9S_BUILD_DIR)/kind.yaml
+TRY_C9S_METALLB_TEMPLATE := $(TRY_C9S_BUILD_DIR)/metallb.yaml
+TRY_C9S_UI_SERVICE_TEMPLATE := $(TRY_C9S_BUILD_DIR)/ui-service.yaml
 
 ## OS / arch detection
 ## ----------------------------------------------------------------------------|
@@ -93,6 +99,9 @@ endef
 $(TRY_C9S_TOOLS_DIR):
 	@mkdir -p "$(TRY_C9S_TOOLS_DIR)"
 
+$(TRY_C9S_STATE_DIR):
+	@mkdir -p "$(TRY_C9S_STATE_DIR)"
+
 $(KIND): | $(TRY_C9S_TOOLS_DIR)
 	@$(call try-c9s-download-bin,kind $(KIND_VERSION),$(KIND_SRC),$(KIND))
 
@@ -132,29 +141,14 @@ try-c9s-tools: | $(KIND) $(KUBECTL) $(HELM) $(YQ) $(UV) ## Download the tools (k
 	@echo "--> TRY-C9S: tools are available in $(TRY_C9S_TOOLS_DIR)"
 
 .PHONY: try-c9s-kind-config
-try-c9s-kind-config: try-c9s-tools
-	@mkdir -p "$(TRY_C9S_STATE_DIR)"
+try-c9s-kind-config: try-c9s-tools | $(TRY_C9S_STATE_DIR)
 	@echo "--> TRY-C9S: writing KinD config $(TRY_C9S_STATE_DIR)/kind.yaml"
-	@{ \
-		printf '%s\n' '---'; \
-		printf '%s\n' 'kind: Cluster'; \
-		printf '%s\n' 'apiVersion: kind.x-k8s.io/v1alpha4'; \
-		printf '%s\n' 'networking:'; \
-		printf '%s\n' '  ipFamily: dual'; \
-		printf '%s\n' 'nodes:'; \
-		printf '%s\n' '  - role: control-plane'; \
-		printf '%s\n' '    extraPortMappings:'; \
-		printf '%s\n' '      - containerPort: 32767'; \
-		printf '%s\n' '        hostPort: $(TRY_C9S_UI_PORT)'; \
-		printf '%s\n' '        listenAddress: "0.0.0.0"'; \
-		printf '%s\n' '    kubeadmConfigPatches:'; \
-		printf '%s\n' '      - |'; \
-		printf '%s\n' '        kind: KubeletConfiguration'; \
-		printf '%s\n' '        streamingConnectionIdleTimeout: "96h0m0s"'; \
-	} > "$(TRY_C9S_STATE_DIR)/kind.yaml"
+	@TRY_C9S_UI_PORT="$(TRY_C9S_UI_PORT)" $(YQ) \
+		'.nodes[0].extraPortMappings[0].hostPort = env(TRY_C9S_UI_PORT)' \
+		"$(TRY_C9S_KIND_TEMPLATE)" > "$(TRY_C9S_STATE_DIR)/kind.yaml"
 
 .PHONY: try-c9s-cluster
-try-c9s-cluster: try-c9s-kind-config
+try-c9s-cluster: try-c9s-kind-config try-c9s-tools
 	@echo "--> TRY-C9S: creating KinD cluster $(TRY_C9S_CLUSTER_NAME)"
 	@clusters=$$($(KIND) get clusters 2>/dev/null | grep -v '^No kind clusters found\.$$' || true); \
 	if [ -n "$$clusters" ]; then \
@@ -168,7 +162,7 @@ try-c9s-cluster: try-c9s-kind-config
 	@$(KUBECTL) wait --for=condition=Ready nodes --all --timeout=$(TRY_C9S_TIMEOUT)
 
 .PHONY: try-c9s-metallb
-try-c9s-metallb: try-c9s-cluster
+try-c9s-metallb: try-c9s-cluster | $(TRY_C9S_STATE_DIR)
 	@echo "--> TRY-C9S: installing MetalLB"
 	@$(KUBECTL) apply -f "https://raw.githubusercontent.com/metallb/metallb/v0.15.3/config/manifests/metallb-native.yaml"
 	@$(KUBECTL) -n metallb-system wait --for=condition=Ready pods --selector=app=metallb --timeout=120s
@@ -178,33 +172,18 @@ try-c9s-metallb: try-c9s-cluster
 	if [ -z "$$ipv4_subnet" ]; then echo "--> TRY-C9S: could not detect IPv4 subnet for Docker network kind"; exit 1; fi; \
 	ipv4_prefix=$$(echo "$$ipv4_subnet" | awk -F. '{print $$1 "." $$2}'); \
 	ipv4_pool="$${ipv4_prefix}.255.0/24"; \
-	ipv6_pool=""; \
+	cp "$(TRY_C9S_METALLB_TEMPLATE)" "$(TRY_C9S_STATE_DIR)/metallb.yaml"; \
+	TRY_C9S_IPV4_POOL="$$ipv4_pool" $(YQ) -i \
+		'(select(.kind == "IPAddressPool") | .spec.addresses) += [strenv(TRY_C9S_IPV4_POOL)]' \
+		"$(TRY_C9S_STATE_DIR)/metallb.yaml"; \
 	if [ -n "$$ipv6_subnet" ]; then \
 		ipv6_prefix=$$(echo "$$ipv6_subnet" | awk -F: '{print $$1 ":" $$2 ":" $$3 ":" $$4}'); \
 		ipv6_pool="$${ipv6_prefix}:ffff:ffff:ffff:ffff/120"; \
+		TRY_C9S_IPV6_POOL="$$ipv6_pool" $(YQ) -i \
+			'(select(.kind == "IPAddressPool") | .spec.addresses) += [strenv(TRY_C9S_IPV6_POOL)]' \
+			"$(TRY_C9S_STATE_DIR)/metallb.yaml"; \
 	fi; \
-	{ \
-		printf '%s\n' '---'; \
-		printf '%s\n' 'apiVersion: metallb.io/v1beta1'; \
-		printf '%s\n' 'kind: IPAddressPool'; \
-		printf '%s\n' 'metadata:'; \
-		printf '%s\n' '  name: kind'; \
-		printf '%s\n' '  namespace: metallb-system'; \
-		printf '%s\n' 'spec:'; \
-		printf '%s\n' '  addresses:'; \
-		printf '  - %s\n' "$$ipv4_pool"; \
-		if [ -n "$$ipv6_pool" ]; then printf '  - %s\n' "$$ipv6_pool"; fi; \
-		printf '%s\n' '  avoidBuggyIPs: true'; \
-		printf '%s\n' '---'; \
-		printf '%s\n' 'apiVersion: metallb.io/v1beta1'; \
-		printf '%s\n' 'kind: L2Advertisement'; \
-		printf '%s\n' 'metadata:'; \
-		printf '%s\n' '  name: kind'; \
-		printf '%s\n' '  namespace: metallb-system'; \
-		printf '%s\n' 'spec:'; \
-		printf '%s\n' '  ipAddressPools:'; \
-		printf '%s\n' '    - kind'; \
-	} | $(KUBECTL) apply -f -
+	$(KUBECTL) apply -f "$(TRY_C9S_STATE_DIR)/metallb.yaml"
 
 .PHONY: try-c9s-install
 try-c9s-install: try-c9s-metallb
@@ -235,32 +214,12 @@ try-c9s-apply-topology: try-c9s-install
 	fi
 
 .PHONY: try-c9s-ui-service
-try-c9s-ui-service: try-c9s-apply-topology
+try-c9s-ui-service: try-c9s-apply-topology | $(TRY_C9S_STATE_DIR)
 	@echo "--> TRY-C9S: creating fixed UI NodePort service"
-	@mkdir -p "$(TRY_C9S_STATE_DIR)"
 	@$(KUBECTL) -n default delete service try-c9s-srl --ignore-not-found=true >/dev/null 2>&1 || true
-	@{ \
-		printf '%s\n' '---'; \
-		printf '%s\n' 'apiVersion: v1'; \
-		printf '%s\n' 'kind: Service'; \
-		printf '%s\n' 'metadata:'; \
-		printf '%s\n' '  labels:'; \
-		printf '%s\n' '    try-c9s: "true"'; \
-		printf '%s\n' '  name: try-c9s-ui'; \
-		printf '%s\n' '  namespace: $(TRY_C9S_NAMESPACE)'; \
-		printf '%s\n' 'spec:'; \
-		printf '%s\n' '  type: NodePort'; \
-		printf '%s\n' '  ports:'; \
-		printf '%s\n' '    - name: http'; \
-		printf '%s\n' '      nodePort: 32767'; \
-		printf '%s\n' '      port: 80'; \
-		printf '%s\n' '      protocol: TCP'; \
-		printf '%s\n' '      targetPort: 3000'; \
-		printf '%s\n' '  selector:'; \
-		printf '%s\n' '    clabernetes/app: clabernetes'; \
-		printf '%s\n' '    clabernetes/name: clabernetes-ui'; \
-		printf '%s\n' '    clabernetes/component: ui'; \
-	} > "$(TRY_C9S_STATE_DIR)/ui-service.yaml"
+	@TRY_C9S_NAMESPACE="$(TRY_C9S_NAMESPACE)" $(YQ) \
+		'.metadata.namespace = strenv(TRY_C9S_NAMESPACE)' \
+		"$(TRY_C9S_UI_SERVICE_TEMPLATE)" > "$(TRY_C9S_STATE_DIR)/ui-service.yaml"
 	@$(KUBECTL) apply -f "$(TRY_C9S_STATE_DIR)/ui-service.yaml"
 
 .PHONY: try-c9s-print-access

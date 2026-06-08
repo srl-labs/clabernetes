@@ -43,7 +43,9 @@ cover.out
 
 # build files
 cmd/clabverter/build/
-build/try-c9s/
+# ignore generated try-c9s state (tools + per-cluster rendered manifests),
+# but keep the manifest templates committed at build/try-c9s/*.yaml
+build/try-c9s/*/
 
 # for crd -> openapi gen
 venv

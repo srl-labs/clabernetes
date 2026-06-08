@@ -21,7 +21,7 @@ spec:
         nodes:
           srl1:
             kind: nokia_srlinux
-            image: ghcr.io/nokia/srlinux:latest
+            image: ghcr.io/nokia/srlinux:26.3
             startup-config: |
               set / interface ethernet-1/1 admin-state enable
               set / interface ethernet-1/1 subinterface 0
