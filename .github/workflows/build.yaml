@@ -5,9 +5,23 @@ on:
   workflow_call: {}
   workflow_dispatch: {}
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: linux/amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
       - name: checkout
         uses: actions/checkout@v6
@@ -25,22 +39,50 @@ jobs:
           echo "GOLINES_VERSION=$GOLINES_VERSION" >> "$GITHUB_ENV"
           echo "GOTESTSUM_VERSION=$GOTESTSUM_VERSION" >> "$GITHUB_ENV"
           echo "HELM_VERSION=$HELM_VERSION" >> "$GITHUB_ENV"
+          echo "YQ_VERSION=$YQ_VERSION" >> "$GITHUB_ENV"
 
       - name: store short hash
         run: |
           echo "COMMIT_HASH=$(git describe --always --abbrev=8)" >> "$GITHUB_ENV"
 
-      - name: set up go
-        uses: actions/setup-go@v6
+      - name: login to ghcr
+        if: github.ref_name == 'main'
+        uses: docker/login-action@v4
         with:
-          go-version: ${{ env.GO_VERSION }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: install devspace
+      - name: set up buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: build images
         run: |
-          curl -L -o devspace \
-            "https://github.com/loft-sh/devspace/releases/download/${{ env.DEVSPACE_VERSION }}/devspace-linux-amd64" &&
-            install -c -m 0755 devspace /usr/local/bin
-        working-directory: /tmp
+          PUSH="${{ github.ref_name == 'main' && 'true' || 'false' }}" \
+            PLATFORMS="${{ matrix.platform }}" \
+            BUILD_VERSION="0.0.0-${{ env.COMMIT_HASH }}" \
+            IMAGE_TAGS="dev-latest,${{ env.COMMIT_HASH }}" \
+            IMAGE_TAG_SUFFIX="-${{ matrix.arch }}" \
+            bash hack/build-images.sh
+
+  publish:
+    if: github.ref_name == 'main'
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: load env vars for workflow run
+        run: |
+          source .github/vars.env
+          echo "HELM_VERSION=$HELM_VERSION" >> "$GITHUB_ENV"
+
+      - name: store short hash
+        run: |
+          echo "COMMIT_HASH=$(git describe --always --abbrev=8)" >> "$GITHUB_ENV"
 
       - name: install helm
         run: |
@@ -57,16 +99,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: build images
-        run: |
-          devspace run build --skip-push
+      - name: set up buildx
+        uses: docker/setup-buildx-action@v4
 
-      - name: <on main> build and push images and helm chart
-        if: github.ref_name == 'main'
+      - name: publish image manifests and helm chart
         run: |
-          # we already built but everything will be cached so just re-run to let devspace push them
-          devspace run build
-          
+          IMAGE_TAGS="dev-latest,${{ env.COMMIT_HASH }}" \
+            bash hack/create-image-manifests.sh
+
           helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
           
           helm package charts/clicker --version 0.0.0

@@ -9,8 +9,10 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"runtime"
 
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
+	claberneteserrors "github.com/srl-labs/clabernetes/errors"
 	clabernetesutil "github.com/srl-labs/clabernetes/util"
 )
 
@@ -65,6 +67,28 @@ func extractContainerlabBin(r io.Reader) error {
 	}
 }
 
+func containerlabReleaseArch(goarch string) (string, error) {
+	switch goarch {
+	case "amd64", "arm64":
+		return goarch, nil
+	default:
+		return "", fmt.Errorf(
+			"%w: unsupported containerlab release architecture %q",
+			claberneteserrors.ErrLaunch,
+			goarch,
+		)
+	}
+}
+
+func containerlabReleaseTarName(version, goarch string) (string, error) {
+	arch, err := containerlabReleaseArch(goarch)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("containerlab_%s_Linux_%s.tar.gz", version, arch), nil
+}
+
 func (c *clabernetes) installContainerlabVersion(version string) error {
 	dir, err := os.MkdirTemp("", "")
 	if err != nil {
@@ -75,7 +99,10 @@ func (c *clabernetes) installContainerlabVersion(version string) error {
 		_ = os.RemoveAll(dir)
 	}()
 
-	tarName := fmt.Sprintf("containerlab_%s_Linux_amd64.tar.gz", version)
+	tarName, err := containerlabReleaseTarName(version, runtime.GOARCH)
+	if err != nil {
+		return err
+	}
 
 	outTarFile, err := os.Create(fmt.Sprintf("%s/%s", dir, tarName)) //nolint: gosec
 	if err != nil {

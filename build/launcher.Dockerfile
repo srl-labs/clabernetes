@@ -1,6 +1,12 @@
-FROM golang:1.25-bookworm AS builder
+# syntax=docker/dockerfile:1
+
+ARG BUILDPLATFORM
+
+FROM --platform=${BUILDPLATFORM} golang:1.25-bookworm AS builder
 
 ARG VERSION
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /clabernetes
 
@@ -10,9 +16,11 @@ COPY . .
 
 RUN go mod download
 
-RUN CGO_ENABLED=0 \
-    GOOS=linux \
-    GOARCH=amd64 \
+RUN TARGET_OS="${TARGETOS:-linux}" && \
+    TARGET_ARCH="${TARGETARCH:-$(go env GOARCH)}" && \
+    CGO_ENABLED=0 \
+    GOOS="${TARGET_OS}" \
+    GOARCH="${TARGET_ARCH}" \
     go build \
     -ldflags "-s -w -X github.com/srl-labs/clabernetes/constants.Version=${VERSION}" \
     -trimpath \
@@ -21,10 +29,11 @@ RUN CGO_ENABLED=0 \
     build/manager \
     cmd/clabernetes/main.go
 
-FROM --platform=linux/amd64 debian:bookworm-slim
+FROM debian:bookworm-slim
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
+ARG TARGETARCH
 ARG DOCKER_VERSION="5:28.*"
 ARG CONTAINERLAB_VERSION="0.74.3+"
 ARG NERDCTL_VERSION="2.1.4"
@@ -62,7 +71,14 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/apt/archive/*.deb
 
-RUN curl -L https://github.com/containerd/nerdctl/releases/download/v${NERDCTL_VERSION}/nerdctl-${NERDCTL_VERSION}-linux-amd64.tar.gz | tar -xz -C /usr/bin/ && rm /usr/bin/containerd-rootless*.sh
+RUN TARGET_ARCH="${TARGETARCH:-$(dpkg --print-architecture)}" && \
+    case "${TARGET_ARCH}" in \
+      amd64|arm64) NERDCTL_ARCH="${TARGET_ARCH}" ;; \
+      *) echo "unsupported TARGETARCH for nerdctl: ${TARGET_ARCH}" >&2; exit 1 ;; \
+    esac && \
+    curl -L "https://github.com/containerd/nerdctl/releases/download/v${NERDCTL_VERSION}/nerdctl-${NERDCTL_VERSION}-linux-${NERDCTL_ARCH}.tar.gz" | \
+      tar -xz -C /usr/bin/ && \
+    rm /usr/bin/containerd-rootless*.sh
 
 # https://github.com/docker/cli/issues/4807
 RUN sed -i 's/ulimit -Hn/# ulimit -Hn/g' /etc/init.d/docker

@@ -6,6 +6,10 @@ on:
     types:
       - created
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   lint:
     uses: ./.github/workflows/lint.yaml
@@ -13,11 +17,21 @@ jobs:
   test:
     uses: ./.github/workflows/test.yaml
 
-  release:
+  build-images:
     needs:
       - lint
       - test
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: linux/amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
       - name: checkout
         uses: actions/checkout@v6
@@ -35,6 +49,7 @@ jobs:
           echo "GOLINES_VERSION=$GOLINES_VERSION" >> "$GITHUB_ENV"
           echo "GOTESTSUM_VERSION=$GOTESTSUM_VERSION" >> "$GITHUB_ENV"
           echo "HELM_VERSION=$HELM_VERSION" >> "$GITHUB_ENV"
+          echo "YQ_VERSION=$YQ_VERSION" >> "$GITHUB_ENV"
           echo "GORELEASER_VERSION=$GORELEASER_VERSION" >> "$GITHUB_ENV"
 
       - name: set release version var
@@ -44,12 +59,63 @@ jobs:
           
           echo "RELEASE_VERSION=$RELEASE_VERSION" >> "$GITHUB_ENV"
 
-      - name: install devspace
+      - name: store short hash
         run: |
-          curl -L -o devspace \
-            "https://github.com/loft-sh/devspace/releases/download/${{ env.DEVSPACE_VERSION }}/devspace-linux-amd64" &&
-            install -c -m 0755 devspace /usr/local/bin
-        working-directory: /tmp
+          echo "COMMIT_HASH=$(git describe --always --abbrev=8)" >> "$GITHUB_ENV"
+
+      - name: login to ghcr
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: set up buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: build and push images
+        run: |
+          PUSH=true \
+            PLATFORMS="${{ matrix.platform }}" \
+            BUILD_VERSION="${{ env.RELEASE_VERSION }}" \
+            IMAGE_TAGS="latest,${{ env.RELEASE_VERSION }},${{ env.COMMIT_HASH }}" \
+            IMAGE_TAG_SUFFIX="-${{ matrix.arch }}" \
+            bash hack/build-images.sh
+
+  release:
+    needs:
+      - build-images
+    runs-on: ubuntu-24.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: load env vars for workflow run
+        run: |
+          source .github/vars.env
+          echo "GO_VERSION=$GO_VERSION" >> "$GITHUB_ENV"
+          echo "DEVSPACE_VERSION=$DEVSPACE_VERSION" >> "$GITHUB_ENV"
+          echo "GCI_VERSION=$GCI_VERSION" >> "$GITHUB_ENV"
+          echo "GOFUMPT_VERSION=$GOFUMPT_VERSION" >> "$GITHUB_ENV"
+          echo "GOLANGCI_LINT_VERSION=$GOLANGCI_LINT_VERSION" >> "$GITHUB_ENV"
+          echo "GOLINES_VERSION=$GOLINES_VERSION" >> "$GITHUB_ENV"
+          echo "GOTESTSUM_VERSION=$GOTESTSUM_VERSION" >> "$GITHUB_ENV"
+          echo "HELM_VERSION=$HELM_VERSION" >> "$GITHUB_ENV"
+          echo "YQ_VERSION=$YQ_VERSION" >> "$GITHUB_ENV"
+          echo "GORELEASER_VERSION=$GORELEASER_VERSION" >> "$GITHUB_ENV"
+
+      - name: set release version var
+        run: |
+          RELEASE_TAG=${{ github.ref_name }}
+          RELEASE_VERSION=${RELEASE_TAG#v}
+          
+          echo "RELEASE_VERSION=$RELEASE_VERSION" >> "$GITHUB_ENV"
+
+      - name: store short hash
+        run: |
+          echo "COMMIT_HASH=$(git describe --always --abbrev=8)" >> "$GITHUB_ENV"
 
       - name: install helm
         run: |
@@ -65,6 +131,9 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: set up buildx
+        uses: docker/setup-buildx-action@v4
 
       # note: we run goreleaser before any helm packaging since helm updates the chart.yaml files
       # w/ the release tag/version which upsets goreleaser (and we dont want to .gitignore the chart
@@ -89,12 +158,13 @@ jobs:
             gh release upload ${{ github.ref_name }} "$filename"
           done
         env:
-          GITHUB_TOKEN: ${{ github.TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
 
-      - name: build and push images
-        run: |         
-          devspace run build --profile release --var RELEASE_VERSION=${{ env.RELEASE_VERSION }}
+      - name: publish image manifests
+        run: |
+          IMAGE_TAGS="latest,${{ env.RELEASE_VERSION }},${{ env.COMMIT_HASH }}" \
+            bash hack/create-image-manifests.sh
 
       - name: package and push charts
         run: |          
