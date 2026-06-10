@@ -1,4 +1,4 @@
-package launcher
+package launcher //nolint:testpackage // tests cover unexported release archive helpers
 
 import "testing"
 

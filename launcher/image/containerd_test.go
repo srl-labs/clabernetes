@@ -1,4 +1,4 @@
-package image
+package image //nolint:testpackage // tests cover unexported native platform helper
 
 import (
 	"fmt"

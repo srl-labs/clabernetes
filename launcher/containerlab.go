@@ -104,7 +104,7 @@ func (c *clabernetes) installContainerlabVersion(version string) error {
 		return err
 	}
 
-	outTarFile, err := os.Create(fmt.Sprintf("%s/%s", dir, tarName)) //nolint: gosec
+	outTarFile, err := os.Create(fmt.Sprintf("%s/%s", dir, tarName))
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func (c *clabernetes) installContainerlabVersion(version string) error {
 		return err
 	}
 
-	inTarFile, err := os.Open(fmt.Sprintf("%s/%s", dir, tarName)) //nolint: gosec
+	inTarFile, err := os.Open(fmt.Sprintf("%s/%s", dir, tarName))
 	if err != nil {
 		return err
 	}
