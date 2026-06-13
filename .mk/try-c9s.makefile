@@ -154,8 +154,7 @@ try-c9s-cluster: try-c9s-kind-config try-c9s-tools
 	if [ -n "$$clusters" ]; then \
 		echo "--> TRY-C9S: found existing KinD cluster(s):"; \
 		echo "$$clusters" | sed 's/^/    /'; \
-		echo "--> TRY-C9S: run 'make try-c9s-clean' before starting try-c9s"; \
-		exit 1; \
+		echo "--> TRY-C9S: running multiple kind clusters may cause side effects..."; \
 	fi
 	@$(KIND) create cluster --name $(TRY_C9S_CLUSTER_NAME) --config "$(TRY_C9S_STATE_DIR)/kind.yaml"
 	@$(KIND) export kubeconfig --name $(TRY_C9S_CLUSTER_NAME)
