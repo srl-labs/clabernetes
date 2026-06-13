@@ -1,0 +1,41 @@
+# One Nokia SR Linux node connected to a network multitool host.
+apiVersion: clabernetes.containerlab.dev/v1alpha1
+kind: Topology
+metadata:
+  name: srl-multitool
+spec:
+  statusProbes:
+    enabled: true
+    excludedNodes:
+      - multitool
+    probeConfiguration:
+      startupSeconds: 1200
+      sshProbeConfiguration:
+        username: admin
+        password: NokiaSrl1!
+        port: 22
+  definition:
+    containerlab: |
+      name: srl-multitool
+      topology:
+        nodes:
+          srl1:
+            kind: nokia_srlinux
+            image: ghcr.io/nokia/srlinux:26.3
+            startup-config: |
+              set / interface ethernet-1/1 admin-state enable
+              set / interface ethernet-1/1 subinterface 0
+              set / interface ethernet-1/1 subinterface 0 ipv4
+              set / interface ethernet-1/1 subinterface 0 ipv4 admin-state enable
+              set / interface ethernet-1/1 subinterface 0 ipv4 address 192.0.2.0/31
+              set / network-instance default
+              set / network-instance default interface ethernet-1/1.0
+
+          multitool:
+            kind: linux
+            image: ghcr.io/srl-labs/network-multitool:latest
+            exec:
+              - ip addr add 192.0.2.1/31 dev eth1
+
+        links:
+          - endpoints: ["srl1:e1-1", "multitool:eth1"]

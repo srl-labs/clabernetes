@@ -16,6 +16,21 @@ This creates:
 - One launcher pod running the SR Linux container
 - A LoadBalancer service exposing common management ports (SSH, gNMI, etc.)
 
+### srl-multitool.yaml
+
+A Nokia SR Linux node connected to a Linux host running the network multitool image.
+
+```bash
+kubectl apply -f srl-multitool.yaml
+```
+
+This creates:
+- One launcher pod running the SR Linux container
+- One launcher pod running the multitool container
+- A point-to-point link between `srl1:e1-1` and `multitool:eth1`
+- IPv4 addressing: `192.0.2.0/31` on srl1 and `192.0.2.1/31` on multitool
+- An SR Linux SSH readiness probe, with the multitool host excluded from probing
+
 ### two-nodes-connected.yaml
 
 Two SR Linux nodes connected via a point-to-point link with pre-configured IP addressing.

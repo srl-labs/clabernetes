@@ -6,8 +6,10 @@ ifeq (set-chart-versions,$(firstword $(MAKECMDGOALS)))
   $(eval $(BUMP_CHART_VERSION_ARGS):;@:)
 endif
 
+include .mk/try-c9s.makefile
+
 help:
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -hE '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 fmt: ## Run formatters
 	gofumpt -w -extra .
