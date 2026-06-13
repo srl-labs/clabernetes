@@ -5,16 +5,11 @@ TRY_C9S_TOPOLOGY ?= examples/basic/srl-multitool.yaml
 TRY_C9S_TOPOLOGY_NAME ?= srl-multitool
 TRY_C9S_UI_PORT ?= 3000
 TRY_C9S_TIMEOUT ?= 600s
-TRY_C9S_PLATFORM ?= auto
-TRY_C9S_HELM_EXTRA_ARGS ?=
 
 TRY_C9S_NAMESPACE := clabernetes
 TRY_C9S_BUILD_DIR := build/try-c9s
 TRY_C9S_STATE_DIR := $(TRY_C9S_BUILD_DIR)/$(TRY_C9S_CLUSTER_NAME)
 TRY_C9S_TOOLS_DIR := $(TRY_C9S_BUILD_DIR)/bin
-TRY_C9S_PLATFORM_FILE := $(TRY_C9S_STATE_DIR)/platform
-TRY_C9S_RENDERED_CHART := $(TRY_C9S_STATE_DIR)/clabernetes-rendered.yaml
-TRY_C9S_IMAGE_LIST := $(TRY_C9S_STATE_DIR)/images.txt
 
 ## Manifest templates (rendered into the state dir with yq before applying)
 ## ----------------------------------------------------------------------------|
@@ -68,11 +63,6 @@ TRY_C9S_CURL := curl $(TRY_C9S_CURL_OPTS)
 
 TRY_C9S_CHART_VERSION_ARG := $(if $(TRY_C9S_CHART_VERSION),--version $(TRY_C9S_CHART_VERSION),)
 TRY_C9S_HELM_WAIT_ARG := $(if $(filter v4%,$(HELM_VERSION)),--wait=legacy,--wait)
-TRY_C9S_HELM_VALUES_ARGS := \
-	--set ui.ingress.enabled=false \
-	--set manager.replicaCount=1 \
-	--set ui.replicaCount=1 \
-	$(TRY_C9S_HELM_EXTRA_ARGS)
 
 .PHONY: try-c9s
 try-c9s: try-c9s-expose ## Launch published clabernetes in KinD and apply a sample topology
@@ -150,100 +140,6 @@ try-c9s-tools: | $(KIND) $(KUBECTL) $(HELM) $(YQ) $(UV) ## Download the tools (k
 	@docker info >/dev/null 2>&1 || { echo "--> TRY-C9S: docker is not reachable"; exit 1; }
 	@echo "--> TRY-C9S: tools are available in $(TRY_C9S_TOOLS_DIR)"
 
-.PHONY: try-c9s-platform
-try-c9s-platform: try-c9s-tools | $(TRY_C9S_STATE_DIR)
-	@{ \
-		requested="$(TRY_C9S_PLATFORM)"; \
-		if [ "$$requested" = "auto" ]; then \
-			os=$$(docker version --format '{{.Server.Os}}' 2>/dev/null); \
-			arch=$$(docker version --format '{{.Server.Arch}}' 2>/dev/null); \
-		elif echo "$$requested" | grep -q '/'; then \
-			os="$${requested%/*}"; \
-			arch="$${requested#*/}"; \
-		else \
-			os="linux"; \
-			arch="$$requested"; \
-		fi; \
-		case "$$arch" in \
-			x86_64) arch="amd64" ;; \
-			aarch64) arch="arm64" ;; \
-		esac; \
-		if [ "$$os" != "linux" ]; then \
-			echo "--> TRY-C9S: unsupported target OS '$$os'; c9s images are linux containers"; \
-			exit 1; \
-		fi; \
-		case "$$arch" in \
-			amd64|arm64) ;; \
-			*) echo "--> TRY-C9S: unsupported target architecture '$$arch'"; exit 1 ;; \
-		esac; \
-		echo "$$os/$$arch" > "$(TRY_C9S_PLATFORM_FILE)"; \
-		echo "--> TRY-C9S: target platform $$os/$$arch"; \
-	}
-
-.PHONY: try-c9s-platform-preflight
-try-c9s-platform-preflight: try-c9s-platform try-c9s-tools | $(TRY_C9S_STATE_DIR)
-	@platform=$$(cat "$(TRY_C9S_PLATFORM_FILE)"); \
-	echo "--> TRY-C9S: rendering chart to discover c9s images"; \
-	$(HELM) template clabernetes $(TRY_C9S_CHART) $(TRY_C9S_CHART_VERSION_ARG) \
-		--namespace $(TRY_C9S_NAMESPACE) \
-		$(TRY_C9S_HELM_VALUES_ARGS) > "$(TRY_C9S_RENDERED_CHART)"; \
-	{ \
-		$(YQ) -r '[.. | select(tag == "!!map" and has("image")) | .image, .. | select(tag == "!!map" and .name == "LAUNCHER_IMAGE" and has("value")) | .value] | .[]' "$(TRY_C9S_RENDERED_CHART)"; \
-		if [ -f "$(TRY_C9S_TOPOLOGY)" ]; then \
-			$(YQ) -r '.spec.definition.containerlab // ""' "$(TRY_C9S_TOPOLOGY)" | \
-				$(YQ) -r '[.. | select(tag == "!!map" and has("image")) | .image] | .[]' -; \
-		else \
-			echo "--> TRY-C9S: topology '$(TRY_C9S_TOPOLOGY)' is not a local file, skipping topology image preflight" >&2; \
-		fi; \
-	} | sed '/^null$$/d;/^$$/d' | sort -u > "$(TRY_C9S_IMAGE_LIST)"; \
-	if [ ! -s "$(TRY_C9S_IMAGE_LIST)" ]; then \
-		echo "--> TRY-C9S: no images found during preflight"; \
-		exit 1; \
-	fi; \
-	echo "--> TRY-C9S: checking image manifests for $$platform"; \
-	failed=0; \
-	supports_platform() { \
-		image="$$1"; \
-		target_platform="$$2"; \
-		manifest=$$(docker manifest inspect "$$image" 2>/dev/null) || return 2; \
-		if printf '%s' "$$manifest" | $(YQ) -r '[.. | select(tag == "!!map" and has("os") and has("architecture")) | .os + "/" + .architecture] | .[]' | grep -qx "$$target_platform"; then \
-			return 0; \
-		fi; \
-		verbose=$$(docker manifest inspect --verbose "$$image" 2>/dev/null) || return 2; \
-		if printf '%s' "$$verbose" | $(YQ) -r '[.. | select(tag == "!!map" and has("os") and has("architecture")) | .os + "/" + .architecture] | .[]' | grep -qx "$$target_platform"; then \
-			return 0; \
-		fi; \
-		imagetools=$$(docker buildx imagetools inspect --format '{{json .}}' "$$image" 2>/dev/null) || return 2; \
-		if printf '%s' "$$imagetools" | $(YQ) -r '[.. | select(tag == "!!map" and has("os") and has("architecture")) | .os + "/" + .architecture] | .[]' | grep -qx "$$target_platform"; then \
-			return 0; \
-		fi; \
-		return 1; \
-	}; \
-	while IFS= read -r image; do \
-		case "$$image" in \
-			*'$$'*|*'{'*|*'}'*) \
-				echo "--> TRY-C9S: skipping unresolved image reference '$$image'"; \
-				continue; \
-				;; \
-		esac; \
-		if supports_platform "$$image" "$$platform"; then \
-			echo "--> TRY-C9S: image $$image supports $$platform"; \
-		else \
-			status=$$?; \
-			if [ "$$status" -eq 2 ]; then \
-				echo "--> TRY-C9S: failed inspecting image $$image"; \
-			else \
-				echo "--> TRY-C9S: image $$image does not advertise $$platform"; \
-			fi; \
-			failed=1; \
-		fi; \
-	done < "$(TRY_C9S_IMAGE_LIST)"; \
-	if [ "$$failed" -ne 0 ]; then \
-		echo "--> TRY-C9S: platform preflight failed for $$platform"; \
-		echo "--> TRY-C9S: publish multi-arch images or override images with TRY_C9S_HELM_EXTRA_ARGS"; \
-		exit 1; \
-	fi
-
 .PHONY: try-c9s-kind-config
 try-c9s-kind-config: try-c9s-tools | $(TRY_C9S_STATE_DIR)
 	@echo "--> TRY-C9S: writing KinD config $(TRY_C9S_STATE_DIR)/kind.yaml"
@@ -252,7 +148,7 @@ try-c9s-kind-config: try-c9s-tools | $(TRY_C9S_STATE_DIR)
 		"$(TRY_C9S_KIND_TEMPLATE)" > "$(TRY_C9S_STATE_DIR)/kind.yaml"
 
 .PHONY: try-c9s-cluster
-try-c9s-cluster: try-c9s-platform-preflight try-c9s-kind-config try-c9s-tools
+try-c9s-cluster: try-c9s-kind-config try-c9s-tools
 	@echo "--> TRY-C9S: creating KinD cluster $(TRY_C9S_CLUSTER_NAME)"
 	@clusters=$$($(KIND) get clusters 2>/dev/null | grep -v '^No kind clusters found\.$$' || true); \
 	if [ -n "$$clusters" ]; then \
@@ -264,14 +160,6 @@ try-c9s-cluster: try-c9s-platform-preflight try-c9s-kind-config try-c9s-tools
 	@$(KIND) create cluster --name $(TRY_C9S_CLUSTER_NAME) --config "$(TRY_C9S_STATE_DIR)/kind.yaml"
 	@$(KIND) export kubeconfig --name $(TRY_C9S_CLUSTER_NAME)
 	@$(KUBECTL) wait --for=condition=Ready nodes --all --timeout=$(TRY_C9S_TIMEOUT)
-	@expected_platform=$$(cat "$(TRY_C9S_PLATFORM_FILE)"); \
-	expected_arch="$${expected_platform#*/}"; \
-	node_archs=$$($(KUBECTL) get nodes -o jsonpath='{range .items[*]}{.status.nodeInfo.architecture}{"\n"}{end}' | sort -u); \
-	if [ "$$node_archs" != "$$expected_arch" ]; then \
-		echo "--> TRY-C9S: KinD node architecture '$$node_archs' does not match expected '$$expected_arch'"; \
-		exit 1; \
-	fi; \
-	echo "--> TRY-C9S: KinD node architecture $$expected_arch confirmed"
 
 .PHONY: try-c9s-metallb
 try-c9s-metallb: try-c9s-cluster | $(TRY_C9S_STATE_DIR)
@@ -305,7 +193,9 @@ try-c9s-install: try-c9s-metallb
 		--create-namespace \
 		$(TRY_C9S_HELM_WAIT_ARG) \
 		--timeout $(TRY_C9S_TIMEOUT) \
-		$(TRY_C9S_HELM_VALUES_ARGS)
+		--set ui.ingress.enabled=false \
+		--set manager.replicaCount=1 \
+		--set ui.replicaCount=1
 	@$(KUBECTL) -n $(TRY_C9S_NAMESPACE) rollout status deploy/clabernetes-manager --timeout=$(TRY_C9S_TIMEOUT)
 	@$(KUBECTL) -n $(TRY_C9S_NAMESPACE) rollout status deploy/clabernetes-ui --timeout=$(TRY_C9S_TIMEOUT)
 
