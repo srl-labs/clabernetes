@@ -202,7 +202,7 @@ try-c9s-install: try-c9s-metallb
 try-c9s-apply-topology: try-c9s-install
 	@echo "--> TRY-C9S: applying sample topology $(TRY_C9S_TOPOLOGY)"
 	@$(KUBECTL) -n default apply -f $(TRY_C9S_TOPOLOGY)
-	@echo "--> TRY-C9S: waiting up to $(TRY_C9S_TIMEOUT) for topology $(TRY_C9S_TOPOLOGY_NAME)"
+	@echo "--> TRY-C9S: waiting up to $(TRY_C9S_TIMEOUT) for topology $(TRY_C9S_TOPOLOGY_NAME) to be ready"
 	@if ! $(KUBECTL) -n default wait \
 		--for=condition=TopologyReady \
 		topology/$(TRY_C9S_TOPOLOGY_NAME) \
