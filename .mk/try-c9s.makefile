@@ -73,7 +73,7 @@ try-c9s: try-c9s-expose ## Launch published clabernetes in KinD and apply a samp
 # $1 - tool name/version (for logging)
 # $2 - source URL
 # $3 - destination path
-define try-c9s-download-bin
+define download-bin
 	{ \
 		if [ ! -f "$(3)" ]; then \
 			echo "--> TRY-C9S: downloading $(1) to $(3)"; \
@@ -87,7 +87,7 @@ endef
 # $2 - source archive URL
 # $3 - path of the binary inside the archive
 # $4 - tar decompress flag (e.g. z for gzip)
-define try-c9s-download-bin-from-archive
+define download-bin-from-archive
 	{ \
 		if [ ! -f "$(1)" ]; then \
 			echo "--> TRY-C9S: downloading $(1)"; \
@@ -103,16 +103,16 @@ $(TRY_C9S_STATE_DIR):
 	@mkdir -p "$(TRY_C9S_STATE_DIR)"
 
 $(KIND): | $(TRY_C9S_TOOLS_DIR)
-	@$(call try-c9s-download-bin,kind $(KIND_VERSION),$(KIND_SRC),$(KIND))
+	@$(call download-bin,kind $(KIND_VERSION),$(KIND_SRC),$(KIND))
 
 $(KUBECTL): | $(TRY_C9S_TOOLS_DIR)
-	@$(call try-c9s-download-bin,kubectl $(KUBECTL_VERSION),$(KUBECTL_SRC),$(KUBECTL))
+	@$(call download-bin,kubectl $(KUBECTL_VERSION),$(KUBECTL_SRC),$(KUBECTL))
 
 $(HELM): | $(TRY_C9S_TOOLS_DIR)
-	@$(call try-c9s-download-bin-from-archive,$(HELM),$(HELM_SRC),$(OS)-$(ARCH)/helm,z)
+	@$(call download-bin-from-archive,$(HELM),$(HELM_SRC),$(OS)-$(ARCH)/helm,z)
 
 $(YQ): | $(TRY_C9S_TOOLS_DIR)
-	@$(call try-c9s-download-bin,yq $(YQ_VERSION),$(YQ_SRC),$(YQ))
+	@$(call download-bin,yq $(YQ_VERSION),$(YQ_SRC),$(YQ))
 
 # uv release assets use rust-style triples, so the os/arch are remapped here
 $(UV): | $(TRY_C9S_TOOLS_DIR)
@@ -128,7 +128,7 @@ $(UV): | $(TRY_C9S_TOOLS_DIR)
 			OS="unknown-linux-gnu"; \
 		fi; \
 		UV_SRC="https://github.com/astral-sh/uv/releases/download/$(UV_VERSION)/uv-$${ARCH}-$${OS}.tar.gz"; \
-		$(call try-c9s-download-bin-from-archive,$(UV),$$UV_SRC,uv-$${ARCH}-$${OS}/uv,z); \
+		$(call download-bin-from-archive,$(UV),$$UV_SRC,uv-$${ARCH}-$${OS}/uv,z); \
 	}
 
 .PHONY: try-c9s-tools
@@ -154,8 +154,7 @@ try-c9s-cluster: try-c9s-kind-config try-c9s-tools
 	if [ -n "$$clusters" ]; then \
 		echo "--> TRY-C9S: found existing KinD cluster(s):"; \
 		echo "$$clusters" | sed 's/^/    /'; \
-		echo "--> TRY-C9S: run 'make try-c9s-clean' before starting try-c9s"; \
-		exit 1; \
+		echo "--> TRY-C9S: running multiple kind clusters may cause side effects..."; \
 	fi
 	@$(KIND) create cluster --name $(TRY_C9S_CLUSTER_NAME) --config "$(TRY_C9S_STATE_DIR)/kind.yaml"
 	@$(KIND) export kubeconfig --name $(TRY_C9S_CLUSTER_NAME)
@@ -203,7 +202,7 @@ try-c9s-install: try-c9s-metallb
 try-c9s-apply-topology: try-c9s-install
 	@echo "--> TRY-C9S: applying sample topology $(TRY_C9S_TOPOLOGY)"
 	@$(KUBECTL) -n default apply -f $(TRY_C9S_TOPOLOGY)
-	@echo "--> TRY-C9S: waiting up to $(TRY_C9S_TIMEOUT) for topology $(TRY_C9S_TOPOLOGY_NAME)"
+	@echo "--> TRY-C9S: waiting up to $(TRY_C9S_TIMEOUT) for topology $(TRY_C9S_TOPOLOGY_NAME) to be ready"
 	@if ! $(KUBECTL) -n default wait \
 		--for=condition=TopologyReady \
 		topology/$(TRY_C9S_TOPOLOGY_NAME) \

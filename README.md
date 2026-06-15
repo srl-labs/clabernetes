@@ -34,11 +34,12 @@ SR Linux NETCONF:  <load-balancer-ip>:830
 ```
 
 If KinD, kubectl, or Helm are not installed, it downloads local copies under
-`build/try-c9s/bin`. The target expects to create its own KinD cluster and aborts if any KinD
-cluster already exists. SR Linux management access uses the clabernetes LoadBalancer service
+`build/try-c9s/bin`.
+
+SR Linux management access uses the clabernetes LoadBalancer service
 directly.
 
-Clean up the sample resources and KinD cluster with:
+Clean up the sample resources and the KinD cluster with:
 
 ```bash
 make try-c9s-clean
