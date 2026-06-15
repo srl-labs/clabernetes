@@ -606,6 +606,7 @@ func (p *containerlabDefinitionProcessor) processConfigForNodeGroup(
 		Topology: &clabernetesutilcontainerlab.Topology{
 			Defaults: deepCopiedDefaults,
 			Kinds:    resolvedKinds,
+			Groups:   containerlabConfig.Topology.Groups,
 			Nodes:    nodesMap,
 			Links:    nil,
 		},
