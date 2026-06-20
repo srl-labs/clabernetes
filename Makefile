@@ -6,6 +6,7 @@ ifeq (set-chart-versions,$(firstword $(MAKECMDGOALS)))
   $(eval $(BUMP_CHART_VERSION_ARGS):;@:)
 endif
 
+include .mk/tools.makefile
 include .mk/try-c9s.makefile
 
 help:
@@ -34,11 +35,7 @@ cov:  ## Produce html coverage report; removes all the generated bits for sanity
 	cat cover.out | grep -v "/generated/" | grep -v "zz_generated.deepcopy.go" > cover.out.clean && rm cover.out && mv cover.out.clean cover.out
 	go tool cover -html=cover.out
 
-install-tools: ## Install lint/test tools
-	go install mvdan.cc/gofumpt@latest
-	go install github.com/daixiang0/gci@latest
-	go install github.com/segmentio/golines@latest
-	go install gotest.tools/gotestsum@latest
+install-tools: install-gofumpt install-gci install-golines install-gotestsum ## Install pinned lint/test tools (versions from .github/vars.env)
 
 install-code-generators: ## Install latest code-generator tools
 	go install k8s.io/code-generator/cmd/deepcopy-gen@latest
