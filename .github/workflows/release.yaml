@@ -17,74 +17,32 @@ jobs:
   test:
     uses: ./.github/workflows/test.yaml
 
-  build-images:
+  prep:
     needs:
       - lint
       - test
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: amd64
-            platform: linux/amd64
-            runner: ubuntu-24.04
-          - arch: arm64
-            platform: linux/arm64
-            runner: ubuntu-24.04-arm
-    runs-on: ${{ matrix.runner }}
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.v.outputs.version }}
     steps:
-      - name: checkout
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-
-      - name: load env vars for workflow run
-        run: |
-          source .github/vars.env
-          echo "GO_VERSION=$GO_VERSION" >> "$GITHUB_ENV"
-          echo "DEVSPACE_VERSION=$DEVSPACE_VERSION" >> "$GITHUB_ENV"
-          echo "GCI_VERSION=$GCI_VERSION" >> "$GITHUB_ENV"
-          echo "GOFUMPT_VERSION=$GOFUMPT_VERSION" >> "$GITHUB_ENV"
-          echo "GOLANGCI_LINT_VERSION=$GOLANGCI_LINT_VERSION" >> "$GITHUB_ENV"
-          echo "GOLINES_VERSION=$GOLINES_VERSION" >> "$GITHUB_ENV"
-          echo "GOTESTSUM_VERSION=$GOTESTSUM_VERSION" >> "$GITHUB_ENV"
-          echo "HELM_VERSION=$HELM_VERSION" >> "$GITHUB_ENV"
-          echo "YQ_VERSION=$YQ_VERSION" >> "$GITHUB_ENV"
-          echo "GORELEASER_VERSION=$GORELEASER_VERSION" >> "$GITHUB_ENV"
-
-      - name: set release version var
+      - name: set release version
+        id: v
         run: |
           RELEASE_TAG=${{ github.ref_name }}
-          RELEASE_VERSION=${RELEASE_TAG#v}
-          
-          echo "RELEASE_VERSION=$RELEASE_VERSION" >> "$GITHUB_ENV"
+          echo "version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
 
-      - name: store short hash
-        run: |
-          echo "COMMIT_HASH=$(git describe --always --abbrev=8)" >> "$GITHUB_ENV"
-
-      - name: login to ghcr
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: set up buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: build and push images
-        run: |
-          PUSH=true \
-            PLATFORMS="${{ matrix.platform }}" \
-            BUILD_VERSION="${{ env.RELEASE_VERSION }}" \
-            IMAGE_TAGS="latest,${{ env.RELEASE_VERSION }},${{ env.COMMIT_HASH }}" \
-            IMAGE_TAG_SUFFIX="-${{ matrix.arch }}" \
-            bash hack/build-images.sh
+  images:
+    needs: prep
+    uses: ./.github/workflows/images.yaml
+    with:
+      push: true
+      build-version: ${{ needs.prep.outputs.version }}
+    secrets: inherit
 
   release:
     needs:
-      - build-images
+      - prep
+      - images
     runs-on: ubuntu-24.04
     steps:
       - name: checkout
@@ -95,27 +53,7 @@ jobs:
       - name: load env vars for workflow run
         run: |
           source .github/vars.env
-          echo "GO_VERSION=$GO_VERSION" >> "$GITHUB_ENV"
-          echo "DEVSPACE_VERSION=$DEVSPACE_VERSION" >> "$GITHUB_ENV"
-          echo "GCI_VERSION=$GCI_VERSION" >> "$GITHUB_ENV"
-          echo "GOFUMPT_VERSION=$GOFUMPT_VERSION" >> "$GITHUB_ENV"
-          echo "GOLANGCI_LINT_VERSION=$GOLANGCI_LINT_VERSION" >> "$GITHUB_ENV"
-          echo "GOLINES_VERSION=$GOLINES_VERSION" >> "$GITHUB_ENV"
-          echo "GOTESTSUM_VERSION=$GOTESTSUM_VERSION" >> "$GITHUB_ENV"
-          echo "HELM_VERSION=$HELM_VERSION" >> "$GITHUB_ENV"
-          echo "YQ_VERSION=$YQ_VERSION" >> "$GITHUB_ENV"
           echo "GORELEASER_VERSION=$GORELEASER_VERSION" >> "$GITHUB_ENV"
-
-      - name: set release version var
-        run: |
-          RELEASE_TAG=${{ github.ref_name }}
-          RELEASE_VERSION=${RELEASE_TAG#v}
-          
-          echo "RELEASE_VERSION=$RELEASE_VERSION" >> "$GITHUB_ENV"
-
-      - name: store short hash
-        run: |
-          echo "COMMIT_HASH=$(git describe --always --abbrev=8)" >> "$GITHUB_ENV"
 
       - name: install helm
         run: make install-helm
@@ -127,9 +65,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: set up buildx
-        uses: docker/setup-buildx-action@v4
-
       # note: we run goreleaser before any helm packaging since helm updates the chart.yaml files
       # w/ the release tag/version which upsets goreleaser (and we dont want to .gitignore the chart
       # manifest obviously)
@@ -140,7 +75,7 @@ jobs:
           args: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+          RELEASE_VERSION: ${{ needs.prep.outputs.version }}
 
       # simply use gh cli to upload since we dont actually want an action that makes the release
       # for us, just wanna upload assets
@@ -156,19 +91,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
 
-      - name: publish image manifests
-        run: |
-          IMAGE_TAGS="latest,${{ env.RELEASE_VERSION }},${{ env.COMMIT_HASH }}" \
-            bash hack/create-image-manifests.sh
-
       - name: package and push charts
-        run: |          
+        run: |
           helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
 
-          make set-chart-versions ${{ env.RELEASE_VERSION }}
+          make set-chart-versions ${{ needs.prep.outputs.version }}
 
-          helm package charts/clicker --version ${{ env.RELEASE_VERSION }}
-          helm push clicker-${{ env.RELEASE_VERSION }}.tgz oci://ghcr.io/srl-labs/clabernetes
-          
-          helm package charts/clabernetes --version ${{ env.RELEASE_VERSION }}
-          helm push clabernetes-${{ env.RELEASE_VERSION }}.tgz oci://ghcr.io/srl-labs/clabernetes
+          helm package charts/clicker --version ${{ needs.prep.outputs.version }}
+          helm push clicker-${{ needs.prep.outputs.version }}.tgz oci://ghcr.io/srl-labs/clabernetes
+
+          helm package charts/clabernetes --version ${{ needs.prep.outputs.version }}
+          helm push clabernetes-${{ needs.prep.outputs.version }}.tgz oci://ghcr.io/srl-labs/clabernetes
