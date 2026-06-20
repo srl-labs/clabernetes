@@ -51,9 +51,7 @@ jobs:
           fetch-depth: 1
 
       - name: load env vars for workflow run
-        run: |
-          source .github/vars.env
-          echo "GORELEASER_VERSION=$GORELEASER_VERSION" >> "$GITHUB_ENV"
+        run: cat .github/vars.env >> "$GITHUB_ENV"
 
       - name: install helm
         run: make install-helm
