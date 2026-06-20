@@ -86,19 +86,10 @@ jobs:
           echo "YQ_VERSION=$YQ_VERSION" >> "$GITHUB_ENV"
 
       - name: install helm
-        run: |
-          curl -L -o helm.tar.gz \
-            "https://get.helm.sh/helm-${{ env.HELM_VERSION }}-linux-amd64.tar.gz"
-          tar -zxvf helm.tar.gz
-          mv linux-amd64/helm /usr/local/bin/helm
-        working-directory: /tmp
+        run: make install-helm
 
       - name: install yq
-        run: |
-          curl -L -o yq \
-            "https://github.com/mikefarah/yq/releases/download/${{ env.YQ_VERSION }}/yq_linux_amd64"
-          install -c -m 0755 yq /usr/local/bin/yq
-        working-directory: /tmp
+        run: make install-yq
 
       - name: login to ghcr
         uses: docker/login-action@v4

@@ -42,9 +42,8 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: install go test tools
-        run: |
-          go install gotest.tools/gotestsum@${{ env.GOTESTSUM_VERSION }}
+      - name: install test tools
+        run: make install-test-tools
 
       - name: setup tmate session
         uses: mxschmitt/action-tmate@v3
@@ -82,16 +81,11 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: install go test tools
-        run: |
-          go install gotest.tools/gotestsum@${{ env.GOTESTSUM_VERSION }}
+      - name: install test tools
+        run: make install-test-tools
 
       - name: install devspace
-        run: |
-          curl -L -o devspace \
-            "https://github.com/loft-sh/devspace/releases/download/${{ env.DEVSPACE_VERSION}}/devspace-linux-amd64" &&
-            install -c -m 0755 devspace /usr/local/bin
-        working-directory: /tmp
+        run: make install-devspace
 
       - name: spin up kind cluster
         uses: helm/kind-action@v1.14.0
