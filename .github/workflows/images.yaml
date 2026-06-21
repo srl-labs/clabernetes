@@ -136,7 +136,9 @@ jobs:
         with:
           images: ghcr.io/srl-labs/clabernetes/${{ matrix.image }}
           flavor: latest=auto
-          tags: ${{ inputs.tags }}
+          tags: |
+            ${{ inputs.tags }}
+            type=raw,value=${{ inputs.build-version }}
 
       - name: create manifest list and push
         working-directory: ${{ runner.temp }}/digests
@@ -148,4 +150,4 @@ jobs:
       - name: inspect image
         run: |
           docker buildx imagetools inspect \
-            ghcr.io/srl-labs/clabernetes/${{ matrix.image }}:${{ steps.meta.outputs.version }}
+            ghcr.io/srl-labs/clabernetes/${{ matrix.image }}:${{ inputs.build-version }}

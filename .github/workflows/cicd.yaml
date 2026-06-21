@@ -119,7 +119,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # builds + pushes the charts pinned to this run's short-sha image tags, packaged at
+      # builds + pushes the charts pinned to this run's build-version image tags, packaged at
       # 0.0.0-<short_sha> (a valid semver prerelease) so the oci tag is unique and does not
       # collide with the main/dev 0.0.0 charts.
       - name: package and push charts
@@ -130,12 +130,8 @@ jobs:
 
           make set-chart-versions "$RELEASE_VERSION"
 
-          export CLICKER_IMAGE="ghcr.io/srl-labs/clabernetes/clabernetes-clicker:${{ needs.prep.outputs.short_sha }}"
-          echo "clicker image->" $CLICKER_IMAGE
-          yq -i eval '.image = strenv(CLICKER_IMAGE)' charts/clicker/values.yaml
-
-          export MANAGER_IMAGE="ghcr.io/srl-labs/clabernetes/clabernetes-manager:${{ needs.prep.outputs.short_sha }}"
-          export LAUNCHER_IMAGE="ghcr.io/srl-labs/clabernetes/clabernetes-launcher:${{ needs.prep.outputs.short_sha }}"
+          export MANAGER_IMAGE="ghcr.io/srl-labs/clabernetes/clabernetes-manager:$RELEASE_VERSION"
+          export LAUNCHER_IMAGE="ghcr.io/srl-labs/clabernetes/clabernetes-launcher:$RELEASE_VERSION"
           echo "manager image->" $MANAGER_IMAGE
           echo "launcher image->" $LAUNCHER_IMAGE
           yq -i eval '.manager.image = strenv(MANAGER_IMAGE)' charts/clabernetes/values.yaml
