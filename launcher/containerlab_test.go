@@ -16,13 +16,13 @@ func TestContainerlabReleaseTarName(t *testing.T) {
 			name:     "amd64",
 			version:  "0.76.0",
 			goarch:   "amd64",
-			expected: "containerlab_0.76.0_Linux_amd64.tar.gz",
+			expected: "containerlab_0.76.0_linux_amd64.tar.gz",
 		},
 		{
 			name:     "arm64",
 			version:  "0.76.0",
 			goarch:   "arm64",
-			expected: "containerlab_0.76.0_Linux_arm64.tar.gz",
+			expected: "containerlab_0.76.0_linux_arm64.tar.gz",
 		},
 		{
 			name:    "unsupported",
