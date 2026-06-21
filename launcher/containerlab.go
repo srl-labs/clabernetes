@@ -86,7 +86,7 @@ func containerlabReleaseTarName(version, goarch string) (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("containerlab_%s_Linux_%s.tar.gz", version, arch), nil
+	return fmt.Sprintf("containerlab_%s_linux_%s.tar.gz", version, arch), nil
 }
 
 func (c *clabernetes) installContainerlabVersion(version string) error {
