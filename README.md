@@ -44,3 +44,36 @@ Clean up the sample resources and the KinD cluster with:
 ```bash
 make try-c9s-clean
 ```
+
+## Local e2e
+
+You can run the full e2e suite locally against a disposable KinD cluster using
+**locally built** images (no published images, no devspace) with:
+
+```bash
+make test-e2e-local
+```
+
+This downloads pinned tools into `build/e2e/bin`, creates a single-node KinD
+cluster, builds the manager/launcher/ui images, loads them into the cluster,
+installs the local Helm chart, and runs the `e2e/...` Go tests. Re-runs are
+cheap: tools are cached and the cluster is reused.
+
+To iterate on just the tests against the already-running cluster, use:
+
+```bash
+make e2e-test
+```
+
+`make e2e-test` runs the full setup automatically if the cluster is missing, and
+otherwise reuses the existing cluster.
+
+CI runs the exact same `e2e-*` make targets (see
+[.github/workflows/test.yaml](.github/workflows/test.yaml)), so local and CI
+share all of the setup code.
+
+Tear down the e2e cluster with:
+
+```bash
+make e2e-clean
+```
