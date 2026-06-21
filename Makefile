@@ -8,6 +8,16 @@ endif
 
 include .mk/tools.makefile
 include .mk/try-c9s.makefile
+include .mk/e2e.makefile
+
+## Image names + tag used by the build-* targets. IMAGE_TAG defaults to "latest"
+## for one-off local builds; the e2e flow overrides it (IMAGE_TAG=dev-latest).
+IMAGE_TAG ?= latest
+IMAGE_BASE ?= ghcr.io/srl-labs/clabernetes
+MANAGER_IMAGE ?= $(IMAGE_BASE)/clabernetes-manager
+LAUNCHER_IMAGE ?= $(IMAGE_BASE)/clabernetes-launcher
+UI_IMAGE ?= $(IMAGE_BASE)/clabernetes-ui
+CLABVERTER_IMAGE ?= $(IMAGE_BASE)/clabverter
 
 help:
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -80,14 +90,17 @@ delete-generated: ## Deletes all zz_*.go (generated) files, and crds
 	rm assets/crd/*.yaml || true
 	rm -rf generated/*
 
-build-manager: ## Builds the clabernetes manager container; typically built via devspace, but this is a handy shortcut for one offs.
-	docker build -t ghcr.io/srl-labs/clabernetes/clabernetes-manager:latest -f ./build/manager.Dockerfile .
+build-manager: ## Builds the clabernetes manager container; typically built via devspace, but this is a handy shortcut for one offs. Override the tag with IMAGE_TAG.
+	docker build -t $(MANAGER_IMAGE):$(IMAGE_TAG) -f ./build/manager.Dockerfile .
 
-build-launcher: ## Builds the clabernetes launcher container; typically built via devspace, but this is a handy shortcut for one offs.
-	docker build -t ghcr.io/srl-labs/clabernetes/clabernetes-launcher:latest -f ./build/launcher.Dockerfile .
+build-launcher: ## Builds the clabernetes launcher container; typically built via devspace, but this is a handy shortcut for one offs. Override the tag with IMAGE_TAG.
+	docker build -t $(LAUNCHER_IMAGE):$(IMAGE_TAG) -f ./build/launcher.Dockerfile .
 
-build-clabverter: ## Builds the clabverter container; typically built via devspace, but this is a handy shortcut for one offs.
-	docker build -t ghcr.io/srl-labs/clabernetes/clabverter:latest -f ./build/clabverter.Dockerfile .
+build-ui: ## Builds the clabernetes ui container; typically built via devspace, but this is a handy shortcut for one offs. Override the tag with IMAGE_TAG.
+	docker build -t $(UI_IMAGE):$(IMAGE_TAG) -f ./build/ui.Dockerfile ui/
+
+build-clabverter: ## Builds the clabverter container; typically built via devspace, but this is a handy shortcut for one offs. Override the tag with IMAGE_TAG.
+	docker build -t $(CLABVERTER_IMAGE):$(IMAGE_TAG) -f ./build/clabverter.Dockerfile .
 
 set-chart-versions: ## Sets the helm chart versions to the given value.
 	./hack/set-chart-versions.sh $(BUMP_CHART_VERSION_ARGS)
