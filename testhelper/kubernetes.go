@@ -171,6 +171,9 @@ func NormalizeDeployment(t *testing.T, objectData []byte) []byte {
 
 	// we dont care about testing that the image was set "right" really, so just remove it
 	objectData = YQCommand(t, objectData, "del(.spec.template.spec.containers[0].image)")
+	// these fields are defaulted differently across Kubernetes versions
+	objectData = YQCommand(t, objectData, ".spec.template.metadata.creationTimestamp = null")
+	objectData = YQCommand(t, objectData, ".status = {}")
 
 	return objectData
 }
