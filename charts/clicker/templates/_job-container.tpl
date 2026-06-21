@@ -10,7 +10,7 @@
   imagePullPolicy: {{ .Values.imagePullPolicy }}
   command: [
     "/clabernetes/manager",
-     "clicker",
+    "clicker",
      {{- if .Values.overrideNodes }}
      "--overrideNodes",
      {{- end }}

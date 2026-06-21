@@ -41,7 +41,7 @@ spec:
           imagePullPolicy: IfNotPresent
           command: [
             "/clabernetes/manager",
-             "clicker",
+            "clicker",
           ]
           env:
             - name: APP_NAME

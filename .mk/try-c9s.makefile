@@ -17,21 +17,8 @@ TRY_C9S_KIND_TEMPLATE := $(TRY_C9S_BUILD_DIR)/kind.yaml
 TRY_C9S_METALLB_TEMPLATE := $(TRY_C9S_BUILD_DIR)/metallb.yaml
 TRY_C9S_UI_SERVICE_TEMPLATE := $(TRY_C9S_BUILD_DIR)/ui-service.yaml
 
-## OS / arch detection
-## ----------------------------------------------------------------------------|
-OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
-ARCH_QUERY := $(shell uname -m)
-ifeq ($(ARCH_QUERY),x86_64)
-ARCH := amd64
-else ifeq ($(ARCH_QUERY),amd64)
-ARCH := amd64
-else ifeq ($(ARCH_QUERY),aarch64)
-ARCH := arm64
-else ifeq ($(ARCH_QUERY),arm64)
-ARCH := arm64
-else
-ARCH := $(ARCH_QUERY)
-endif
+## OS/arch detection (OS/ARCH), the curl wrapper (CURL), and the download-bin /
+## download-bin-from-archive helpers come from .mk/tools.makefile.
 
 ## Tool versions
 ## ----------------------------------------------------------------------------|
@@ -56,45 +43,12 @@ KUBECTL_SRC ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OS)/$(ARCH)/ku
 HELM_SRC ?= https://get.helm.sh/helm-$(HELM_VERSION)-$(OS)-$(ARCH).tar.gz
 YQ_SRC ?= https://github.com/mikefarah/yq/releases/download/$(YQ_VERSION)/yq_$(OS)_$(ARCH)
 
-## curl wrapper used by the download helpers
-## ----------------------------------------------------------------------------|
-TRY_C9S_CURL_OPTS ?= --location --silent --fail --show-error
-TRY_C9S_CURL := curl $(TRY_C9S_CURL_OPTS)
-
 TRY_C9S_CHART_VERSION_ARG := $(if $(TRY_C9S_CHART_VERSION),--version $(TRY_C9S_CHART_VERSION),)
 TRY_C9S_HELM_WAIT_ARG := $(if $(filter v4%,$(HELM_VERSION)),--wait=legacy,--wait)
 
 .PHONY: try-c9s
 try-c9s: try-c9s-expose ## Launch published clabernetes in KinD and apply a sample topology
 	@echo "--> TRY-C9S: clabernetes is ready to try"
-
-## Download helpers
-## ----------------------------------------------------------------------------|
-# $1 - tool name/version (for logging)
-# $2 - source URL
-# $3 - destination path
-define download-bin
-	{ \
-		if [ ! -f "$(3)" ]; then \
-			echo "--> TRY-C9S: downloading $(1) to $(3)"; \
-			$(TRY_C9S_CURL) --output "$(3)" "$(2)"; \
-			chmod +x "$(3)"; \
-		fi; \
-	}
-endef
-
-# $1 - destination path
-# $2 - source archive URL
-# $3 - path of the binary inside the archive
-# $4 - tar decompress flag (e.g. z for gzip)
-define download-bin-from-archive
-	{ \
-		if [ ! -f "$(1)" ]; then \
-			echo "--> TRY-C9S: downloading $(1)"; \
-			$(TRY_C9S_CURL) --output - "$(2)" | tar -x$(4) --to-stdout "$(3)" > "$(1)" && chmod +x "$(1)"; \
-		fi; \
-	}
-endef
 
 $(TRY_C9S_TOOLS_DIR):
 	@mkdir -p "$(TRY_C9S_TOOLS_DIR)"

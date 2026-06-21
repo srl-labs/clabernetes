@@ -6,6 +6,10 @@ on:
     types:
       - created
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   lint:
     uses: ./.github/workflows/lint.yaml
@@ -13,11 +17,33 @@ jobs:
   test:
     uses: ./.github/workflows/test.yaml
 
-  release:
+  prep:
     needs:
       - lint
       - test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - name: set release version
+        id: v
+        run: |
+          RELEASE_TAG=${{ github.ref_name }}
+          echo "version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+
+  images:
+    needs: prep
+    uses: ./.github/workflows/images.yaml
+    with:
+      push: true
+      build-version: ${{ needs.prep.outputs.version }}
+    secrets: inherit
+
+  release:
+    needs:
+      - prep
+      - images
+    runs-on: ubuntu-24.04
     steps:
       - name: checkout
         uses: actions/checkout@v6
@@ -25,39 +51,10 @@ jobs:
           fetch-depth: 1
 
       - name: load env vars for workflow run
-        run: |
-          source .github/vars.env
-          echo "GO_VERSION=$GO_VERSION" >> "$GITHUB_ENV"
-          echo "DEVSPACE_VERSION=$DEVSPACE_VERSION" >> "$GITHUB_ENV"
-          echo "GCI_VERSION=$GCI_VERSION" >> "$GITHUB_ENV"
-          echo "GOFUMPT_VERSION=$GOFUMPT_VERSION" >> "$GITHUB_ENV"
-          echo "GOLANGCI_LINT_VERSION=$GOLANGCI_LINT_VERSION" >> "$GITHUB_ENV"
-          echo "GOLINES_VERSION=$GOLINES_VERSION" >> "$GITHUB_ENV"
-          echo "GOTESTSUM_VERSION=$GOTESTSUM_VERSION" >> "$GITHUB_ENV"
-          echo "HELM_VERSION=$HELM_VERSION" >> "$GITHUB_ENV"
-          echo "GORELEASER_VERSION=$GORELEASER_VERSION" >> "$GITHUB_ENV"
-
-      - name: set release version var
-        run: |
-          RELEASE_TAG=${{ github.ref_name }}
-          RELEASE_VERSION=${RELEASE_TAG#v}
-          
-          echo "RELEASE_VERSION=$RELEASE_VERSION" >> "$GITHUB_ENV"
-
-      - name: install devspace
-        run: |
-          curl -L -o devspace \
-            "https://github.com/loft-sh/devspace/releases/download/${{ env.DEVSPACE_VERSION }}/devspace-linux-amd64" &&
-            install -c -m 0755 devspace /usr/local/bin
-        working-directory: /tmp
+        run: cat .github/vars.env >> "$GITHUB_ENV"
 
       - name: install helm
-        run: |
-          curl -L -o helm.tar.gz \
-            "https://get.helm.sh/helm-${{ env.HELM_VERSION }}-linux-amd64.tar.gz"
-          tar -zxvf helm.tar.gz
-          mv linux-amd64/helm /usr/local/bin/helm
-        working-directory: /tmp
+        run: make install-helm
 
       - name: login to ghcr
         uses: docker/login-action@v4
@@ -76,7 +73,7 @@ jobs:
           args: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+          RELEASE_VERSION: ${{ needs.prep.outputs.version }}
 
       # simply use gh cli to upload since we dont actually want an action that makes the release
       # for us, just wanna upload assets
@@ -89,21 +86,17 @@ jobs:
             gh release upload ${{ github.ref_name }} "$filename"
           done
         env:
-          GITHUB_TOKEN: ${{ github.TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
 
-      - name: build and push images
-        run: |         
-          devspace run build --profile release --var RELEASE_VERSION=${{ env.RELEASE_VERSION }}
-
       - name: package and push charts
-        run: |          
+        run: |
           helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
 
-          make set-chart-versions ${{ env.RELEASE_VERSION }}
+          make set-chart-versions ${{ needs.prep.outputs.version }}
 
-          helm package charts/clicker --version ${{ env.RELEASE_VERSION }}
-          helm push clicker-${{ env.RELEASE_VERSION }}.tgz oci://ghcr.io/srl-labs/clabernetes
-          
-          helm package charts/clabernetes --version ${{ env.RELEASE_VERSION }}
-          helm push clabernetes-${{ env.RELEASE_VERSION }}.tgz oci://ghcr.io/srl-labs/clabernetes
+          helm package charts/clicker --version ${{ needs.prep.outputs.version }}
+          helm push clicker-${{ needs.prep.outputs.version }}.tgz oci://ghcr.io/srl-labs/clabernetes
+
+          helm package charts/clabernetes --version ${{ needs.prep.outputs.version }}
+          helm push clabernetes-${{ needs.prep.outputs.version }}.tgz oci://ghcr.io/srl-labs/clabernetes

@@ -4,12 +4,17 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"runtime"
 
 	claberneteslogging "github.com/srl-labs/clabernetes/logging"
 )
 
 type containerdManager struct {
 	logger claberneteslogging.Instance
+}
+
+func nativePlatform() string {
+	return fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
 }
 
 func (m *containerdManager) Present(ctx context.Context, imageName string) (bool, error) {
@@ -91,7 +96,8 @@ func (m *containerdManager) pull(ctx context.Context, imageName string) error {
 		"k8s.io",
 		"image",
 		"pull",
-		"--all-platforms",
+		"--platform",
+		nativePlatform(),
 		imageName,
 	)
 
