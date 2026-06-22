@@ -13,6 +13,19 @@ import (
 	apimachinerywatch "k8s.io/apimachinery/pkg/watch"
 )
 
+// connectivityObjectName returns the name of the Connectivity custom resource this launcher should
+// read for its tunnels. In the decomposed (scalable) reconcile path the controller sets
+// LauncherConnectivityNameEnv to a per-node Connectivity object; in the legacy path it is unset and
+// we fall back to the topology-wide object. See docs/design/0001-scale-node-link-crds.md.
+func connectivityObjectName() string {
+	name := os.Getenv(clabernetesconstants.LauncherConnectivityNameEnv)
+	if name != "" {
+		return name
+	}
+
+	return os.Getenv(clabernetesconstants.LauncherTopologyNameEnv)
+}
+
 func watchConnectivity(
 	ctx context.Context,
 	logger claberneteslogging.Instance,
@@ -22,10 +35,8 @@ func watchConnectivity(
 	nodeName := os.Getenv(clabernetesconstants.LauncherNodeNameEnv)
 
 	listOptions := metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("metadata.name=%s", os.Getenv(
-			clabernetesconstants.LauncherTopologyNameEnv,
-		)),
-		Watch: true,
+		FieldSelector: fmt.Sprintf("metadata.name=%s", connectivityObjectName()),
+		Watch:         true,
 	}
 
 	watch, err := clabernetesClient.ClabernetesV1alpha1().

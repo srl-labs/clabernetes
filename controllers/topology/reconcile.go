@@ -120,12 +120,13 @@ func (c *Controller) reconcileResources(
 			return err
 		}
 
-		// Phase 1 still uses the existing monolithic Connectivity object so the decomposed launcher
-		// pods form their tunnels exactly as today; per-node connectivity is Phase 2.
-		err = c.TopologyReconciler.ReconcileConnectivity(ctx, topology, reconcileData)
+		// per-node connectivity: write one small Connectivity object per node (and the Link ledger),
+		// retiring the single topology-wide Connectivity that grew with topology size. The launchers
+		// are pointed at their own object by the Node controller.
+		err = c.TopologyReconciler.ReconcilePerNodeConnectivity(ctx, topology, reconcileData)
 		if err != nil {
 			c.BaseController.Log.Criticalf(
-				"failed reconciling clabernetes connectivity resource, error: %s",
+				"failed reconciling per-node clabernetes connectivity resources, error: %s",
 				err,
 			)
 

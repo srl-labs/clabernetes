@@ -264,6 +264,14 @@ func (r *Reconciler) reconcileDeployment(
 
 		rewireConfigVolume(deployment, owningTopology.GetName(), configMapName)
 
+		// point this node's launcher at its own per-node Connectivity object (instead of the
+		// topology-wide one) so connectivity scales with the topology; see
+		// docs/design/0001-scale-node-link-crds.md.
+		rewireConnectivityEnv(
+			deployment,
+			clabernetestopology.PerNodeConnectivityName(owningTopology.GetName(), nodeName),
+		)
+
 		err := ctrlruntimeutil.SetOwnerReference(node, deployment, r.Client.Scheme())
 		if err != nil {
 			return nil, err
@@ -325,6 +333,39 @@ func rewireConfigVolume(
 		}
 
 		volume.ConfigMap.LocalObjectReference.Name = configMapName
+	}
+}
+
+// rewireConnectivityEnv sets the LauncherConnectivityNameEnv on every container of the rendered
+// deployment so the launcher reads its per-node Connectivity object rather than the topology-wide
+// one. The topology-wide deployment renderer does not set this env, so the launcher would otherwise
+// fall back to the legacy object.
+func rewireConnectivityEnv(deployment *k8sappsv1.Deployment, connectivityName string) {
+	containers := deployment.Spec.Template.Spec.Containers
+
+	for i := range containers {
+		envs := containers[i].Env
+
+		set := false
+
+		for j := range envs {
+			if envs[j].Name == clabernetesconstants.LauncherConnectivityNameEnv {
+				envs[j].Value = connectivityName
+				set = true
+
+				break
+			}
+		}
+
+		if !set {
+			containers[i].Env = append(
+				envs,
+				k8scorev1.EnvVar{
+					Name:  clabernetesconstants.LauncherConnectivityNameEnv,
+					Value: connectivityName,
+				},
+			)
+		}
 	}
 }
 

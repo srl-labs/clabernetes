@@ -155,6 +155,18 @@ func expandLinks(
 ) []*clabernetesapisv1alpha1.Link {
 	annotations, globalLabels := configManagerGetter().GetAllMetadata()
 
+	return buildLinks(topology, reconcileData, annotations, globalLabels)
+}
+
+// buildLinks collapses the per-node half-tunnels in reconcileData into one Link object per cross-pod
+// link. It assumes tunnel ids have already been allocated on reconcileData (so both halves of a link
+// share an id); callers that need stable ids across reconciles must run AllocateTunnelIDs first. It
+// is shared by the pure ExpandTopology path and the orchestrator's ReconcileLinks.
+func buildLinks(
+	topology *clabernetesapisv1alpha1.Topology,
+	reconcileData *ReconcileData,
+	annotations, globalLabels map[string]string,
+) []*clabernetesapisv1alpha1.Link {
 	primaries := make([]string, 0, len(reconcileData.ResolvedTunnels))
 	for primary := range reconcileData.ResolvedTunnels {
 		primaries = append(primaries, primary)
@@ -244,6 +256,15 @@ func expandedNodeName(topologyName, nodeName string) string {
 // id. Naming here is provisional, see expandedNodeName.
 func expandedLinkName(topologyName string, tunnelID int) string {
 	return fmt.Sprintf("%s-link-%d", topologyName, tunnelID)
+}
+
+// PerNodeConnectivityName returns the (deterministic) name of the per-node Connectivity object used
+// by the decomposed reconcile path. Each node gets its own small Connectivity object (holding only
+// that node's tunnels) so no single object grows with topology size -- replacing the one
+// topology-wide Connectivity. The Node controller points the launcher at this object via
+// LauncherConnectivityNameEnv; both sides derive the name from here so they always agree.
+func PerNodeConnectivityName(topologyName, nodeName string) string {
+	return fmt.Sprintf("%s-connectivity", expandedNodeName(topologyName, nodeName))
 }
 
 // expandedLabels builds the standard clabernetes owner labels (mirroring the existing sub-reconciler

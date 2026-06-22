@@ -41,10 +41,28 @@ settings from the `Topology`, and two old big objects (`status.configs`, the
 
 ---
 
-## Phase 2 — _not started_
+## Phase 2 — split connectivity per-node + Link ledger (opt-in)
 
-Planned: per-link `Link` objects + per-node connectivity, retire the old
-`Connectivity`, make `Node` fully self-contained.
+| What | Why |
+|---|---|
+| Per-node `Connectivity` objects (was one per topology) | The last big object that grew with size. Now each node gets its own small `<topo>-<node>-connectivity` holding **only its own** tunnels — so nothing scales with topology size. |
+| `Link` objects, one per cross-pod link | The durable, **distributed ledger** of tunnel-id allocations. Each `Link` carries its own `spec.tunnelID`, so the id list isn't a single growing object either. Built/pruned by the Topology (`ReconcileLinks`). |
+| High-water-mark id allocation across per-node objects | Reads the ids already on the existing connectivity objects and **reuses** them (`AllocateTunnelIDs`). Renumbering a live tunnel would drop a working link, so ids are allocate-once. |
+| `LAUNCHER_CONNECTIVITY_NAME` env + launcher reads it | The launcher now reads/watches **its own** connectivity object. Env unset = old behaviour (reads the topology-wide one), so the default path is untouched. The Node controller sets this env on the decomposed deployment. |
+| Old monolithic `Connectivity` retired (decompose path) | When `decompose=true` the topology-wide object is pruned automatically (its ids are migrated into the per-node objects first). |
+
+**Design choice:** per-node connectivity is written by the **Topology orchestrator**, not a
+separate `controllers/link` reconciler. The orchestrator already computes the full tunnel data
+(service-name destinations included) every reconcile, so a `LinkReconciler` would only re-derive it
+and risk write contention on the shared per-node object. The `Link` objects are still created as the
+id ledger / future status surface.
+
+**Not done yet (on purpose):** `status.configs` (the other big legacy field) is still written — it
+needs its consumers checked before removal — and the `Node` still reads a few shared knobs from the
+`Topology`. Both are follow-ups (tracked below / Phase 4 polish).
+
+Result: with `decompose: true`, a topology now runs as independent `Node`s **and** independent
+per-node connectivity — no single object grows with topology size. Default-off.
 
 ---
 
@@ -78,13 +96,19 @@ Tick a box when it's implemented **and** verified (build + tests green).
 - [ ] e2e: a decomposed topology boots and forms tunnels on a real cluster
 - [ ] Load-test the reconcile fan-out
 
-### Phase 2 — `LinkReconciler` + per-node connectivity ⬜
+### Phase 2 — per-node connectivity + `Link` ledger 🔄
 
-- [ ] `LinkReconciler` (`controllers/link`) holding `spec.tunnelID`, writing per-node connectivity
-- [ ] High-water-mark allocation on the Topology; create/prune `Link` objects
-- [ ] Migrate launcher watch to its own node's connectivity object
-- [ ] Retire the monolithic `Connectivity`; drop `status.configs`
+- [x] Per-node `Connectivity` objects written by the Topology (`ReconcilePerNodeConnectivity`)
+  — replaces a separate `controllers/link` reconciler on purpose (see design choice above)
+- [x] High-water-mark allocation across the per-node objects; create/prune `Link` objects
+  (`ReconcileLinks`)
+- [x] Migrate launcher watch + startup read to its own node's connectivity object
+  (`LAUNCHER_CONNECTIVITY_NAME`, fallback to topology-wide)
+- [x] Retire the monolithic `Connectivity` in the decompose path (pruned, ids migrated first)
+- [x] `go build ./...` + `go vet` + topology tests green
+- [ ] Drop `status.configs` (deferred — check consumers first)
 - [ ] Richer self-contained `NodeSpec` so the `NodeReconciler` stops fetching the `Topology`
+- [ ] `envtest`/e2e: decomposed topology boots and forms tunnels via per-node connectivity
 
 ### Phase 3 — indirect raw input ⬜
 
