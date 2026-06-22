@@ -782,42 +782,6 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,gocognit,funlen
 		reconcileData.NodeStatuses[missingDeploymentName] = clabernetesconstants.NodeStatusUnknown //nolint:lll
 	}
 
-	topologyReady := true
-
-	for nodeName := range reconcileData.ResolvedConfigs {
-		state, ok := reconcileData.NodeStatuses[nodeName]
-		if !ok {
-			topologyReady = false
-
-			break
-		}
-
-		if state != clabernetesconstants.NodeStatusReady {
-			topologyReady = false
-
-			break
-		}
-	}
-
-	if topologyReady {
-		reconcileData.TopologyReady = true
-
-		apimachinerymeta.SetStatusCondition(&owningTopology.Status.Conditions, metav1.Condition{
-			Type:    clabernetesconstants.TopologyReadyStatus,
-			Status:  "True",
-			Reason:  clabernetesconstants.NodeStatusReady,
-			Message: "all nodes report ready",
-		})
-	} else {
-		apimachinerymeta.SetStatusCondition(&owningTopology.Status.Conditions, metav1.Condition{
-			Type:   clabernetesconstants.TopologyReadyStatus,
-			Status: "False",
-			Reason: clabernetesconstants.NodeStatusNotReady,
-			Message: "one or more nodes report not ready, check node status field " +
-				"for more information",
-		})
-	}
-
 	r.collectNodeProbeStatuses(
 		ctx,
 		owningTopology,
@@ -825,15 +789,7 @@ func (r *Reconciler) ReconcileDeployments( //nolint: gocyclo,gocognit,funlen
 		deployments,
 	)
 
-	r.resolveTopologyState(owningTopology, reconcileData)
-
-	if !reflect.DeepEqual(reconcileData.NodeStatuses, reconcileData.PreviousNodeStatuses) {
-		reconcileData.ShouldUpdateResource = true
-	}
-
-	if reconcileData.TopologyState != owningTopology.Status.TopologyState {
-		reconcileData.ShouldUpdateResource = true
-	}
+	r.applyTopologyReadiness(owningTopology, reconcileData)
 
 	if !reflect.DeepEqual(
 		reconcileData.NodeProbeStatuses,
@@ -967,6 +923,62 @@ func probeStatusFromPodCondition(
 	}
 
 	return clabernetesapisv1alpha1.NodeProbeStatusUnknown
+}
+
+// applyTopologyReadiness rolls the per-node statuses in reconcileData.NodeStatuses up to the
+// Topology: it sets the TopologyReady condition, reconcileData.TopologyReady, and the derived
+// TopologyState, and flags the resource for update when readiness/state changed. It is shared by the
+// monolithic path (which fills NodeStatuses from the deployments it manages) and the decomposed path
+// (which fills NodeStatuses from the owned Node objects) so both report identical Topology status.
+func (r *Reconciler) applyTopologyReadiness(
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	reconcileData *ReconcileData,
+) {
+	topologyReady := true
+
+	for nodeName := range reconcileData.ResolvedConfigs {
+		state, ok := reconcileData.NodeStatuses[nodeName]
+		if !ok {
+			topologyReady = false
+
+			break
+		}
+
+		if state != clabernetesconstants.NodeStatusReady {
+			topologyReady = false
+
+			break
+		}
+	}
+
+	if topologyReady {
+		reconcileData.TopologyReady = true
+
+		apimachinerymeta.SetStatusCondition(&owningTopology.Status.Conditions, metav1.Condition{
+			Type:    clabernetesconstants.TopologyReadyStatus,
+			Status:  "True",
+			Reason:  clabernetesconstants.NodeStatusReady,
+			Message: "all nodes report ready",
+		})
+	} else {
+		apimachinerymeta.SetStatusCondition(&owningTopology.Status.Conditions, metav1.Condition{
+			Type:   clabernetesconstants.TopologyReadyStatus,
+			Status: "False",
+			Reason: clabernetesconstants.NodeStatusNotReady,
+			Message: "one or more nodes report not ready, check node status field " +
+				"for more information",
+		})
+	}
+
+	r.resolveTopologyState(owningTopology, reconcileData)
+
+	if !reflect.DeepEqual(reconcileData.NodeStatuses, reconcileData.PreviousNodeStatuses) {
+		reconcileData.ShouldUpdateResource = true
+	}
+
+	if reconcileData.TopologyState != owningTopology.Status.TopologyState {
+		reconcileData.ShouldUpdateResource = true
+	}
 }
 
 func (r *Reconciler) resolveTopologyState(

@@ -71,8 +71,8 @@ per-node connectivity — no single object grows with topology size. Default-off
 | What | Why |
 |---|---|
 | `spec.definition.containerlabRef` (ConfigMap **or** URL) | The raw clab YAML is the *last* whole-topology object — for thousands of nodes the string itself can blow the ~1MB ceiling. Now it can live in a ConfigMap / at a URL and the Topology only holds a tiny reference. |
-| Controller resolves the ref into a **deep-copied working Topology** | The resolved (big) definition is inlined only on a throwaway copy used for processing/expansion. The original small-spec object is what gets persisted — so the raw definition is **never written back** onto the Topology (which would re-create the ceiling). |
-| No pipeline changes downstream | The working copy has `definition.containerlab` filled, so every existing processor / `ExpandTopology` works unchanged. `Node` objects already carry their own per-node sub-config, so the Node controller never needs the raw input. |
+| Controller resolves the ref and carries the body on `reconcileData.ResolvedDefinition` | The resolved (big) definition is held only in-memory for this reconcile; processors prefer it over the inline spec field. The original small-spec object is the one persisted — so the raw definition is **never written back** onto the Topology (which would re-create the ceiling). Carrying it on the reconcile data (not a deep-copied Topology) keeps a single Topology object, so status **conditions** written directly on it aren't lost. |
+| No pipeline changes downstream | The processor reads `ResolvedDefinition` (or the inline field when empty), so every existing processor / `ExpandTopology` works unchanged. `Node` objects already carry their own per-node sub-config, so the Node controller never needs the raw input. |
 
 Additive & **ungated** — works for inline and decomposed topologies alike. Mutually exclusive with
 inline `containerlab`/`kne` (errors if both set).
@@ -80,6 +80,25 @@ inline `containerlab`/`kne` (errors if both set).
 **Deferred (documented):** `clabverter` does not yet auto-emit a ConfigMap ref for very large inputs
 — it's an independent UX convenience (users can hand-write the ConfigMap + ref today) and would churn
 the golden-file fixtures, so it's a separate follow-up.
+
+---
+
+## Phase 4 — status aggregation up to the Topology (decompose path)
+
+| What | Why |
+|---|---|
+| `ReconcileNodeStatuses()` rolls owned `Node`s' readiness up to the Topology | In the decompose path the **Node controller** owns the deployments, so the Topology no longer sees them directly. It now reads each `Node.status.readiness` and writes it into the Topology's `status.nodeReadiness` — the same surface the monolithic path fills from its own deployments. |
+| Shared `applyTopologyReadiness()` helper (used by both paths) | Computes the `TopologyReady` condition + `TopologyState` (Running/Degraded/Deploying) from the per-node map in one place, so decomposed and monolithic topologies report status identically. |
+| Carry the resolved definition on `reconcileData` (not a deep-copied Topology) | Phase 3 originally processed a throwaway deep-copy; with status aggregation now writing **conditions** directly on the Topology, a copy would silently drop them when a `containerlabRef` is used. Refactored so there is a single Topology object end-to-end. |
+
+**Result:** with `decompose: true`, the Topology's `.status` (node readiness, `TopologyReady`,
+`TopologyState`) is populated from the owned `Node` objects — parity with the legacy path's status.
+
+**Deliberately NOT done — needs real-cluster evidence, not code:**
+- **Flipping the `decompose` default to `true`** — must wait until the decomposed path has soaked on a
+  real cluster (the e2e / load-test boxes below are still unchecked). Flipping blind would change every
+  user's behaviour with no soak data. **Recommendation: keep default `false`.**
+- **e2e at scale / migration UX / docs** — require a live cluster to produce; tracked as open boxes.
 
 ---
 
@@ -130,13 +149,20 @@ Tick a box when it's implemented **and** verified (build + tests green).
 ### Phase 3 — indirect raw input 🔄
 
 - [x] `spec.definition.containerlabRef` (ConfigMap **or** URL) for the raw input
-  (`controllers/topology/definitionref.go`) — resolved into a throwaway working copy, never
-  persisted back; API type + deepcopy + topology CRD YAML
+  (`controllers/topology/definitionref.go`) — resolved body carried on `reconcileData.ResolvedDefinition`,
+  never persisted back; API type + deepcopy + topology CRD YAML
 - [x] `go build ./...` + `go vet` + topology/apis/clabverter tests green
 - [ ] `clabverter` emits a reference instead of inline for very large inputs (deferred — UX
   convenience, golden-fixture churn)
 
-### Phase 4 — polish + default flip ⬜
+### Phase 4 — status aggregation up to the Topology 🔄
 
-- [ ] Status aggregation up to the Topology; migration UX; docs; e2e at scale
-- [ ] Flip the default once the decomposed path has soaked
+- [x] `ReconcileNodeStatuses` rolls owned `Node` readiness into the Topology status (decompose path)
+- [x] Shared `applyTopologyReadiness` (`TopologyReady` condition + `TopologyState`) used by both paths
+- [x] Single-Topology refactor (resolved definition on `reconcileData`, no deep-copy) so status
+  conditions aren't lost with `containerlabRef`
+- [x] `go build ./...` + `go vet` + topology tests green
+- [ ] e2e at scale: decomposed topology status matches the legacy path on a real cluster
+- [ ] Migration UX + user docs
+- [ ] **Flip the `decompose` default** — blocked on the soak/e2e/load-test boxes above (recommend
+  keeping default `false` until then)

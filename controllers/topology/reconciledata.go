@@ -12,6 +12,13 @@ import (
 type ReconcileData struct {
 	Kind string
 
+	// ResolvedDefinition is the raw topology definition to process, *after* resolving any indirect
+	// source (spec.definition.containerlabRef -- a ConfigMap or URL). It is empty when the definition
+	// is inlined directly in spec.definition, in which case processors read the inline field. This
+	// keeps the (potentially huge) raw definition off the persisted Topology object. See
+	// docs/design/0001-scale-node-link-crds.md.
+	ResolvedDefinition string
+
 	PreviousHashes clabernetesapisv1alpha1.ReconcileHashes
 	ResolvedHashes clabernetesapisv1alpha1.ReconcileHashes
 

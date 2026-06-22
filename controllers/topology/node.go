@@ -21,8 +21,14 @@ const nodeKind = "node"
 func (r *Reconciler) ReconcileNodes(
 	ctx context.Context,
 	owningTopology *clabernetesapisv1alpha1.Topology,
+	reconcileData *ReconcileData,
 ) error {
-	expanded, err := ExpandTopology(r.Log, owningTopology, clabernetesconfig.GetManager)
+	expanded, err := ExpandTopology(
+		r.Log,
+		owningTopology,
+		reconcileData.ResolvedDefinition,
+		clabernetesconfig.GetManager,
+	)
 	if err != nil {
 		return err
 	}
@@ -95,6 +101,48 @@ func (r *Reconciler) ReconcileNodes(
 			return err
 		}
 	}
+
+	return nil
+}
+
+// ReconcileNodeStatuses is the decomposed-path equivalent of the readiness rollup that the monolithic
+// path does inside ReconcileDeployments: it reads the owned Node objects' reported readiness and
+// aggregates it up to the Topology status (NodeReadiness, the TopologyReady condition, TopologyState).
+// In the decomposed path the Topology no longer manages the deployments directly -- the Node
+// controller does -- so the Topology learns each node's readiness from the Node's own status. Gated;
+// see docs/design/0001-scale-node-link-crds.md.
+func (r *Reconciler) ReconcileNodeStatuses(
+	ctx context.Context,
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	reconcileData *ReconcileData,
+) error {
+	existingNodeList := &clabernetesapisv1alpha1.NodeList{}
+
+	err := r.Client.List(
+		ctx,
+		existingNodeList,
+		ctrlruntimeclient.InNamespace(owningTopology.GetNamespace()),
+		ctrlruntimeclient.MatchingLabels{
+			clabernetesconstants.LabelTopologyOwner: owningTopology.GetName(),
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	for idx := range existingNodeList.Items {
+		node := &existingNodeList.Items[idx]
+
+		state := node.Status.Readiness
+		if state == "" {
+			// node exists but hasn't been reconciled yet -- treat as unknown for now.
+			state = clabernetesconstants.NodeStatusUnknown
+		}
+
+		reconcileData.NodeStatuses[node.Spec.NodeName] = state
+	}
+
+	r.applyTopologyReadiness(owningTopology, reconcileData)
 
 	return nil
 }

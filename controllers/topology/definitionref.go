@@ -15,38 +15,30 @@ import (
 // defaultDefinitionRefConfigMapKey is the ConfigMap key read when a DefinitionRef omits ConfigMapKey.
 const defaultDefinitionRefConfigMapKey = "containerlab"
 
-// resolveDefinition returns the Topology to use for definition processing and expansion. When the
-// Topology sources its containerlab definition indirectly (spec.definition.containerlabRef), this
-// returns a *deep copy* with the resolved definition inlined -- so the rest of the reconcile pipeline
-// is entirely unchanged -- while leaving the original (small-spec) Topology untouched. The original
-// is what gets persisted, so the (potentially huge) raw definition is never written back onto the
-// Topology object. When no ref is set the original Topology is returned unchanged.
-func (c *Controller) resolveDefinition(
+// resolveDefinitionRef resolves an indirect containerlab definition (spec.definition.containerlabRef
+// -- a ConfigMap or URL) and returns the raw definition body. Callers stash it on
+// reconcileData.ResolvedDefinition so the processors use it instead of the inline field; the raw
+// definition is therefore never written back onto the (small-spec) Topology object, which is what
+// would otherwise re-create the ~1MB ceiling. Returns an empty string when no ref is set (the
+// definition is inlined directly). See docs/design/0001-scale-node-link-crds.md.
+func (c *Controller) resolveDefinitionRef(
 	ctx context.Context,
 	topology *clabernetesapisv1alpha1.Topology,
-) (*clabernetesapisv1alpha1.Topology, error) {
+) (string, error) {
 	ref := topology.Spec.Definition.ContainerlabRef
 	if ref == nil {
-		return topology, nil
+		return "", nil
 	}
 
 	if topology.Spec.Definition.Containerlab != "" {
-		return nil, fmt.Errorf(
+		return "", fmt.Errorf(
 			"%w: both spec.definition.containerlab and spec.definition.containerlabRef are set,"+
 				" exactly one must be provided",
 			claberneteserrors.ErrReconcile,
 		)
 	}
 
-	raw, err := c.loadDefinitionRef(ctx, topology.GetNamespace(), ref)
-	if err != nil {
-		return nil, err
-	}
-
-	working := topology.DeepCopy()
-	working.Spec.Definition.Containerlab = raw
-
-	return working, nil
+	return c.loadDefinitionRef(ctx, topology.GetNamespace(), ref)
 }
 
 // loadDefinitionRef fetches the raw definition referenced by ref -- from a ConfigMap in the given

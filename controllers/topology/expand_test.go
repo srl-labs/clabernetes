@@ -35,6 +35,7 @@ func expandTopologyForTest(
 	expanded, err := clabernetescontrollerstopology.ExpandTopology(
 		&claberneteslogging.FakeInstance{},
 		topology,
+		"",
 		clabernetesconfig.GetFakeManager,
 	)
 	if err != nil {

@@ -71,9 +71,16 @@ func buildNodeGroups(
 }
 
 func (p *containerlabDefinitionProcessor) Process() error {
+	// prefer the resolved definition (set when the definition is sourced indirectly via
+	// spec.definition.containerlabRef); otherwise fall back to the inline definition.
+	rawDefinition := p.reconcileData.ResolvedDefinition
+	if rawDefinition == "" {
+		rawDefinition = p.topology.Spec.Definition.Containerlab
+	}
+
 	// load the containerlab topo from the CR to make sure its all good
 	containerlabConfig, err := clabernetesutilcontainerlab.LoadContainerlabConfig(
-		p.topology.Spec.Definition.Containerlab,
+		rawDefinition,
 	)
 	if err != nil {
 		p.logger.Criticalf("failed parsing containerlab config, error: %s", err)

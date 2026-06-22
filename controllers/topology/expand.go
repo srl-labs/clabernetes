@@ -38,12 +38,17 @@ type ExpandedTopology struct {
 func ExpandTopology(
 	logger claberneteslogging.Instance,
 	topology *clabernetesapisv1alpha1.Topology,
+	resolvedDefinition string,
 	configManagerGetter clabernetesconfig.ManagerGetterFunc,
 ) (*ExpandedTopology, error) {
 	reconcileData, err := NewReconcileData(topology)
 	if err != nil {
 		return nil, err
 	}
+
+	// carry any indirectly-sourced (ConfigMap/URL) definition through to the processor so the
+	// expansion matches the live reconcile path; empty when the definition is inlined directly.
+	reconcileData.ResolvedDefinition = resolvedDefinition
 
 	processor, err := NewDefinitionProcessor(
 		logger,
