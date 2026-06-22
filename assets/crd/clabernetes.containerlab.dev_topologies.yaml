@@ -75,6 +75,30 @@ spec:
                   containerlab:
                     description: Containerlab holds a valid containerlab topology.
                     type: string
+                  containerlabRef:
+                    description: |-
+                      ContainerlabRef sources the containerlab definition indirectly -- from a ConfigMap or a URL --
+                      instead of inlining it in `containerlab`. This keeps the Topology object itself small for very
+                      large (thousands of nodes) topologies whose raw definition would otherwise approach the ~1MB
+                      object ceiling. The controller reads it once at reconcile time and never writes the raw
+                      definition back onto the Topology. Mutually exclusive with `containerlab` and `kne`; see
+                      docs/design/0001-scale-node-link-crds.md.
+                    properties:
+                      configMapKey:
+                        description: |-
+                          ConfigMapKey is the key within ConfigMapName whose value is the raw definition. Defaults to
+                          "containerlab" when unset.
+                        type: string
+                      configMapName:
+                        description: |-
+                          ConfigMapName is the name of a ConfigMap in the Topology's namespace that holds the raw
+                          definition. Mutually exclusive with URL.
+                        type: string
+                      url:
+                        description: |-
+                          URL is an HTTP(S) URL to fetch the raw definition from. Mutually exclusive with ConfigMapName.
+                        type: string
+                    type: object
                   kne:
                     description: Kne holds a valid kne topology.
                     type: string

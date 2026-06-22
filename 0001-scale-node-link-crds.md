@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft / proposal — Phase 0 done (inert); Phase 1 & 2 implemented (gated `spec.deployment.decompose`: per-node Node + ConfigMap + Connectivity + Link ledger; builds & tests pass) |
+| **Status** | Draft / proposal — Phase 0 done (inert); Phase 1 & 2 implemented (gated `spec.deployment.decompose`: per-node Node + ConfigMap + Connectivity + Link ledger); Phase 3 implemented (additive `spec.definition.containerlabRef` ConfigMap/URL); builds & tests pass |
 | **Scope** | `clabernetes` only — **no changes** to `containerlab` or `clab-api-server` |
 | **Goal** | Remove the single-object size ceiling so a `Topology` can describe **thousands** of nodes |
 | **Supersedes** | The earlier `containerlabRef` / `nodeConfigRefs` ConfigMap experiment (never merged) |

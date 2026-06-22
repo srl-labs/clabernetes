@@ -66,6 +66,30 @@ type Definition struct {
 	// Kne holds a valid kne topology.
 	// +optional
 	Kne string `json:"kne,omitempty"`
+	// ContainerlabRef sources the containerlab definition indirectly -- from a ConfigMap or a URL --
+	// instead of inlining it in `containerlab`. This keeps the Topology object itself small for very
+	// large (thousands of nodes) topologies whose raw definition would otherwise approach the ~1MB
+	// object ceiling. The controller reads it once at reconcile time and never writes the raw
+	// definition back onto the Topology. Mutually exclusive with `containerlab` and `kne`; see
+	// docs/design/0001-scale-node-link-crds.md.
+	// +optional
+	ContainerlabRef *DefinitionRef `json:"containerlabRef,omitempty"`
+}
+
+// DefinitionRef points at an external source for a topology definition -- either a ConfigMap in the
+// Topology's namespace or an HTTP(S) URL.
+type DefinitionRef struct {
+	// ConfigMapName is the name of a ConfigMap in the Topology's namespace that holds the raw
+	// definition. Mutually exclusive with URL.
+	// +optional
+	ConfigMapName string `json:"configMapName,omitempty"`
+	// ConfigMapKey is the key within ConfigMapName whose value is the raw definition. Defaults to
+	// "containerlab" when unset.
+	// +optional
+	ConfigMapKey string `json:"configMapKey,omitempty"`
+	// URL is an HTTP(S) URL to fetch the raw definition from. Mutually exclusive with ConfigMapName.
+	// +optional
+	URL string `json:"url,omitempty"`
 }
 
 // Expose holds configurations relevant to how clabernetes exposes a topology.

@@ -58,14 +58,25 @@ func (c *Controller) Reconcile(
 	// reconcile the naming -- we *must* do this to ensure that our status field is set!
 	c.TopologyReconciler.ReconcileNaming(topology, reconcileData)
 
-	err = c.processDefinition(topology, reconcileData)
+	// resolve any indirect (ConfigMap/URL) definition into a working copy with the definition inlined;
+	// the original `topology` keeps its small spec and is what we persist, so the raw definition is
+	// never written back. When no ref is set workingTopology *is* topology. See
+	// docs/design/0001-scale-node-link-crds.md.
+	workingTopology, err := c.resolveDefinition(ctx, topology)
+	if err != nil {
+		c.BaseController.Log.Criticalf("failed resolving topology definition, error: %s", err)
+
+		return ctrlruntime.Result{}, err
+	}
+
+	err = c.processDefinition(workingTopology, reconcileData)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed processing topology definition, error: %s", err)
 
 		return ctrlruntime.Result{}, err
 	}
 
-	err = c.reconcileResources(ctx, topology, reconcileData)
+	err = c.reconcileResources(ctx, workingTopology, reconcileData)
 	if err != nil {
 		return ctrlruntime.Result{}, err
 	}

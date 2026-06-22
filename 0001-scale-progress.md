@@ -66,6 +66,23 @@ per-node connectivity — no single object grows with topology size. Default-off
 
 ---
 
+## Phase 3 — indirect raw input (the last big object)
+
+| What | Why |
+|---|---|
+| `spec.definition.containerlabRef` (ConfigMap **or** URL) | The raw clab YAML is the *last* whole-topology object — for thousands of nodes the string itself can blow the ~1MB ceiling. Now it can live in a ConfigMap / at a URL and the Topology only holds a tiny reference. |
+| Controller resolves the ref into a **deep-copied working Topology** | The resolved (big) definition is inlined only on a throwaway copy used for processing/expansion. The original small-spec object is what gets persisted — so the raw definition is **never written back** onto the Topology (which would re-create the ceiling). |
+| No pipeline changes downstream | The working copy has `definition.containerlab` filled, so every existing processor / `ExpandTopology` works unchanged. `Node` objects already carry their own per-node sub-config, so the Node controller never needs the raw input. |
+
+Additive & **ungated** — works for inline and decomposed topologies alike. Mutually exclusive with
+inline `containerlab`/`kne` (errors if both set).
+
+**Deferred (documented):** `clabverter` does not yet auto-emit a ConfigMap ref for very large inputs
+— it's an independent UX convenience (users can hand-write the ConfigMap + ref today) and would churn
+the golden-file fixtures, so it's a separate follow-up.
+
+---
+
 # Checklist
 
 Tick a box when it's implemented **and** verified (build + tests green).
@@ -110,10 +127,14 @@ Tick a box when it's implemented **and** verified (build + tests green).
 - [ ] Richer self-contained `NodeSpec` so the `NodeReconciler` stops fetching the `Topology`
 - [ ] `envtest`/e2e: decomposed topology boots and forms tunnels via per-node connectivity
 
-### Phase 3 — indirect raw input ⬜
+### Phase 3 — indirect raw input 🔄
 
-- [ ] `spec.definition.containerlabRef` (ConfigMap) / URL for the raw input
-- [ ] `clabverter` emits a reference instead of inline for very large inputs
+- [x] `spec.definition.containerlabRef` (ConfigMap **or** URL) for the raw input
+  (`controllers/topology/definitionref.go`) — resolved into a throwaway working copy, never
+  persisted back; API type + deepcopy + topology CRD YAML
+- [x] `go build ./...` + `go vet` + topology/apis/clabverter tests green
+- [ ] `clabverter` emits a reference instead of inline for very large inputs (deferred — UX
+  convenience, golden-fixture churn)
 
 ### Phase 4 — polish + default flip ⬜
 
