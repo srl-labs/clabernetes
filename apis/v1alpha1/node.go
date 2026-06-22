@@ -20,6 +20,7 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 // unambiguous to the API server, and the "clabnode" short name is provided so operators can select
 // it without ambiguity. The final plural/short name is pending maintainer ratification.
 // +k8s:openapi-gen=true
+// +kubebuilder:subresource:status
 // +kubebuilder:resource:path=nodes,shortName=clabnode
 // +kubebuilder:printcolumn:JSONPath=".spec.topologyName",name=Topology,type=string
 // +kubebuilder:printcolumn:JSONPath=".spec.kind",name=Kind,type=string

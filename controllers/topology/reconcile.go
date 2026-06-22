@@ -108,6 +108,33 @@ func (c *Controller) reconcileResources(
 	topology *clabernetesapisv1alpha1.Topology,
 	reconcileData *ReconcileData,
 ) error {
+	if topology.Spec.Deployment.Decompose {
+		// experimental decomposed path: instead of rendering the per-node resources directly, expand
+		// the Topology into Node objects and let the Node controller reconcile each one. This is
+		// gated behind spec.deployment.decompose so the default behaviour is completely unaffected.
+		// See docs/design/0001-scale-node-link-crds.md.
+		err := c.TopologyReconciler.ReconcileNodes(ctx, topology)
+		if err != nil {
+			c.BaseController.Log.Criticalf("failed reconciling nodes, error: %s", err)
+
+			return err
+		}
+
+		// Phase 1 still uses the existing monolithic Connectivity object so the decomposed launcher
+		// pods form their tunnels exactly as today; per-node connectivity is Phase 2.
+		err = c.TopologyReconciler.ReconcileConnectivity(ctx, topology, reconcileData)
+		if err != nil {
+			c.BaseController.Log.Criticalf(
+				"failed reconciling clabernetes connectivity resource, error: %s",
+				err,
+			)
+
+			return err
+		}
+
+		return nil
+	}
+
 	err := c.TopologyReconciler.ReconcileConfigMap(
 		ctx,
 		topology,

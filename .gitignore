@@ -51,3 +51,7 @@ build/e2e/bin/
 
 # for crd -> openapi gen
 venv
+
+# nixos
+flake.nix
+flake.lock

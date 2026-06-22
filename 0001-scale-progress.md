@@ -1,0 +1,97 @@
+# Scale effort — plain-language progress log
+
+Short notes on what each phase changed and *why*. One glance = caught up.
+Full design lives in `0001-scale-node-link-crds.md`.
+
+**Big picture:** today a whole topology lives in a few giant objects, so K8s/etcd
+(~1 MB per object) caps a lab at ~a few hundred nodes. The fix: split a `Topology`
+into many small `Node` (and later `Link`) objects so nothing grows too big.
+
+---
+
+## Phase 0 — foundation (no behaviour change)
+
+| What | Why |
+|---|---|
+| New `Node` and `Link` CRD types | The small per-node / per-link objects we split a topology into. |
+| `ExpandTopology()` pure function | Turns one `Topology` → list of `Node`s + `Link`s. Pure = easy to test, changes nothing at runtime. |
+| Unit tests + generated CRD/clientset | Prove the split is correct; wire the types into K8s. |
+
+Result: types and logic exist but are **inert** — nothing runs yet.
+
+---
+
+## Phase 1 — make `Node` objects actually run (opt-in)
+
+| What | Why |
+|---|---|
+| `decompose` boolean (on `Topology.spec.deployment`) | The **on/off switch**. `false` by default → existing labs behave exactly as before. Set `true` to try the new split path. Safe to ship. |
+| `Node` status subresource | Lets the controller write a `Node`'s ready/not-ready into `.status` cleanly (standard K8s way to separate "what I want" from "what's happening"). |
+| New `NodeController` (`controllers/node/`) | Watches `Node` objects and builds that node's ConfigMap + Deployment + Service(s) + PVC — i.e. one node's pod, on its own. |
+| Per-node ConfigMap (was one big shared one) | This is the actual ceiling we remove: instead of one ConfigMap that grows with every node, each node gets its own small one. |
+| `ReconcileNodes()` on the Topology | When `decompose=true`: expand the topology and create/update/delete the matching `Node` objects (the Topology becomes a manager, not a doer). |
+| Still keeps the old `Connectivity` object | So tunnels between nodes keep working today. Splitting connectivity per-node is Phase 2. |
+
+Result: with `decompose: true`, a topology runs as many independent `Node`s.
+Default-off, so nobody is affected until they opt in.
+
+**Not done yet (on purpose):** the `NodeController` still reads some shared
+settings from the `Topology`, and two old big objects (`status.configs`, the
+`Connectivity`) still exist. Those go away in Phase 2.
+
+---
+
+## Phase 2 — _not started_
+
+Planned: per-link `Link` objects + per-node connectivity, retire the old
+`Connectivity`, make `Node` fully self-contained.
+
+---
+
+# Checklist
+
+Tick a box when it's implemented **and** verified (build + tests green).
+
+### Phase 0 — inert foundation ✅
+
+- [x] Design doc (`0001-scale-node-link-crds.md`)
+- [x] `Node` / `Link` CRD types + scheme registration
+- [x] Generated CRD YAML + deepcopy + clientset + openapi (`make run-generate`)
+- [x] Pure `ExpandTopology` → `([]Node, []Link)` (`controllers/topology/expand.go`)
+- [x] Expansion unit tests
+- [x] **No runtime behaviour change** — verified inert
+
+### Phase 1 — `NodeReconciler` + gated Topology fan-out 🔄
+
+- [x] `decompose` gate on `Topology.spec.deployment` (default `false`) + CRD YAML
+- [x] `Node` status subresource + CRD YAML
+- [x] `controllers/node` package (`Controller` / `Reconcile` / `Reconciler`)
+- [x] Per-node ConfigMap + Deployment + fabric Service + expose Service + PVC, reusing the existing
+  Topology sub-reconcilers
+- [x] `Node.status.ready` from the Deployment's `Available` condition
+- [x] `ReconcileNodes` on the Topology — expand → create/update/prune owned `Node`s (gated); still
+  reconciles the old `Connectivity` so tunnels form
+- [x] `NodeController` registered in `manager/start.go`
+- [x] RBAC — covered by the existing manager `*` rule on `clabernetes.containerlab.dev`
+- [x] `go build ./...` + topology tests green
+- [ ] `envtest`/unit coverage for the `NodeReconciler`
+- [ ] e2e: a decomposed topology boots and forms tunnels on a real cluster
+- [ ] Load-test the reconcile fan-out
+
+### Phase 2 — `LinkReconciler` + per-node connectivity ⬜
+
+- [ ] `LinkReconciler` (`controllers/link`) holding `spec.tunnelID`, writing per-node connectivity
+- [ ] High-water-mark allocation on the Topology; create/prune `Link` objects
+- [ ] Migrate launcher watch to its own node's connectivity object
+- [ ] Retire the monolithic `Connectivity`; drop `status.configs`
+- [ ] Richer self-contained `NodeSpec` so the `NodeReconciler` stops fetching the `Topology`
+
+### Phase 3 — indirect raw input ⬜
+
+- [ ] `spec.definition.containerlabRef` (ConfigMap) / URL for the raw input
+- [ ] `clabverter` emits a reference instead of inline for very large inputs
+
+### Phase 4 — polish + default flip ⬜
+
+- [ ] Status aggregation up to the Topology; migration UX; docs; e2e at scale
+- [ ] Flip the default once the decomposed path has soaked
