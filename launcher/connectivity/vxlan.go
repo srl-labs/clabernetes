@@ -172,7 +172,7 @@ func (m *vxlanManager) runContainerlabVxlanToolsDelete(
 	localNodeName,
 	cntLink string,
 ) error {
-	prefix := sanitizeInterfaceName(fmt.Sprintf("vx-%s-%s", localNodeName, cntLink))
+	name := sanitizeInterfaceName(fmt.Sprintf("vx-%s-%s", localNodeName, cntLink))
 
 	cmd := exec.CommandContext( //nolint:gosec
 		ctx,
@@ -180,8 +180,8 @@ func (m *vxlanManager) runContainerlabVxlanToolsDelete(
 		"tools",
 		"vxlan",
 		"delete",
-		"--prefix",
-		prefix,
+		"--name",
+		name,
 	)
 
 	m.logger.Debugf(
