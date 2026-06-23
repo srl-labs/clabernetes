@@ -30,10 +30,7 @@ type fakeConnectivities struct {
 	Fake *FakeClabernetesV1alpha1
 }
 
-func newFakeConnectivities(
-	fake *FakeClabernetesV1alpha1,
-	namespace string,
-) apisv1alpha1.ConnectivityInterface {
+func newFakeConnectivities(fake *FakeClabernetesV1alpha1, namespace string) apisv1alpha1.ConnectivityInterface {
 	return &fakeConnectivities{
 		gentype.NewFakeClientWithList[*v1alpha1.Connectivity, *v1alpha1.ConnectivityList](
 			fake.Fake,

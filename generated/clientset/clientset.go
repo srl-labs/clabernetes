@@ -81,30 +81,19 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 	configShallowCopy := *c
 	if configShallowCopy.RateLimiter == nil && configShallowCopy.QPS > 0 {
 		if configShallowCopy.Burst <= 0 {
-			return nil, fmt.Errorf(
-				"burst is required to be greater than 0 when RateLimiter is not set and QPS is set to greater than 0",
-			)
+			return nil, fmt.Errorf("burst is required to be greater than 0 when RateLimiter is not set and QPS is set to greater than 0")
 		}
-		configShallowCopy.RateLimiter = flowcontrol.NewTokenBucketRateLimiter(
-			configShallowCopy.QPS,
-			configShallowCopy.Burst,
-		)
+		configShallowCopy.RateLimiter = flowcontrol.NewTokenBucketRateLimiter(configShallowCopy.QPS, configShallowCopy.Burst)
 	}
 
 	var cs Clientset
 	var err error
-	cs.clabernetesV1alpha1, err = clabernetesv1alpha1.NewForConfigAndClient(
-		&configShallowCopy,
-		httpClient,
-	)
+	cs.clabernetesV1alpha1, err = clabernetesv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
 
-	cs.DiscoveryClient, err = discovery.NewDiscoveryClientForConfigAndClient(
-		&configShallowCopy,
-		httpClient,
-	)
+	cs.DiscoveryClient, err = discovery.NewDiscoveryClientForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}

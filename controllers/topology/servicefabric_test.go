@@ -118,7 +118,8 @@ func TestResolveServiceFabric(t *testing.T) {
 				}
 
 				clabernetestesthelper.MarshaledEqual(t, got.Extra, testCase.expectedExtra)
-			})
+			},
+		)
 	}
 }
 
@@ -225,6 +226,7 @@ func TestRenderServiceFabric(t *testing.T) {
 				}
 
 				clabernetestesthelper.MarshaledEqual(t, got, want)
-			})
+			},
+		)
 	}
 }

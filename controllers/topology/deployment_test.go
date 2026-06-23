@@ -123,7 +123,8 @@ func TestResolveDeployment(t *testing.T) {
 				}
 
 				clabernetestesthelper.MarshaledEqual(t, got.Extra, testCase.expectedExtra)
-			})
+			},
+		)
 	}
 }
 
@@ -819,7 +820,8 @@ func TestRenderDeployment(t *testing.T) {
 				}
 
 				clabernetestesthelper.MarshaledEqual(t, got, want)
-			})
+			},
+		)
 	}
 }
 
@@ -1524,6 +1526,7 @@ func TestDeploymentConforms(t *testing.T) {
 						testCase.rendered,
 					)
 				}
-			})
+			},
+		)
 	}
 }

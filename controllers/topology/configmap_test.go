@@ -490,6 +490,7 @@ func TestConfigMapConforms(t *testing.T) {
 				if actual != testCase.conforms {
 					clabernetestesthelper.FailOutput(t, testCase.existing, testCase.rendered)
 				}
-			})
+			},
+		)
 	}
 }

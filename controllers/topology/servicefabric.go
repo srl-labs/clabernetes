@@ -168,7 +168,6 @@ func (r *ServiceFabricReconciler) renderServiceBase(
 	labels := map[string]string{
 		clabernetesconstants.LabelTopologyKind:        GetTopologyKind(owningTopology),
 		clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeFabric, //nolint:lll
-
 	}
 
 	maps.Copy(labels, selectorLabels)

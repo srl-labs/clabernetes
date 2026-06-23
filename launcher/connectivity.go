@@ -39,13 +39,19 @@ func (c *clabernetes) getTunnels() ([]*clabernetesapisv1alpha1.PointToPointTunne
 	ctx, cancel := context.WithTimeout(c.ctx, clientDefaultTimeout)
 	defer cancel()
 
+	// in the decomposed (scalable) path the controller points us at a per-node Connectivity object
+	// via LauncherConnectivityNameEnv; otherwise fall back to the topology-wide object. See
+	// docs/design/0001-scale-node-link-crds.md.
+	connectivityName := os.Getenv(clabernetesconstants.LauncherConnectivityNameEnv)
+	if connectivityName == "" {
+		connectivityName = os.Getenv(clabernetesconstants.LauncherTopologyNameEnv)
+	}
+
 	tunnelsCR, err := c.kubeClabernetesClient.ClabernetesV1alpha1().Connectivities(
 		os.Getenv(clabernetesconstants.PodNamespaceEnv),
 	).Get(
 		ctx,
-		os.Getenv(
-			clabernetesconstants.LauncherTopologyNameEnv,
-		),
+		connectivityName,
 		metav1.GetOptions{},
 	)
 	if err != nil {

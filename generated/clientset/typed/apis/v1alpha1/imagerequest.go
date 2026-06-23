@@ -37,35 +37,16 @@ type ImageRequestsGetter interface {
 
 // ImageRequestInterface has methods to work with ImageRequest resources.
 type ImageRequestInterface interface {
-	Create(
-		ctx context.Context,
-		imageRequest *apisv1alpha1.ImageRequest,
-		opts v1.CreateOptions,
-	) (*apisv1alpha1.ImageRequest, error)
-	Update(
-		ctx context.Context,
-		imageRequest *apisv1alpha1.ImageRequest,
-		opts v1.UpdateOptions,
-	) (*apisv1alpha1.ImageRequest, error)
+	Create(ctx context.Context, imageRequest *apisv1alpha1.ImageRequest, opts v1.CreateOptions) (*apisv1alpha1.ImageRequest, error)
+	Update(ctx context.Context, imageRequest *apisv1alpha1.ImageRequest, opts v1.UpdateOptions) (*apisv1alpha1.ImageRequest, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(
-		ctx context.Context,
-		imageRequest *apisv1alpha1.ImageRequest,
-		opts v1.UpdateOptions,
-	) (*apisv1alpha1.ImageRequest, error)
+	UpdateStatus(ctx context.Context, imageRequest *apisv1alpha1.ImageRequest, opts v1.UpdateOptions) (*apisv1alpha1.ImageRequest, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*apisv1alpha1.ImageRequest, error)
 	List(ctx context.Context, opts v1.ListOptions) (*apisv1alpha1.ImageRequestList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(
-		ctx context.Context,
-		name string,
-		pt types.PatchType,
-		data []byte,
-		opts v1.PatchOptions,
-		subresources ...string,
-	) (result *apisv1alpha1.ImageRequest, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *apisv1alpha1.ImageRequest, err error)
 	ImageRequestExpansion
 }
 

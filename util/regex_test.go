@@ -42,6 +42,7 @@ func TestRegexStringSubmatchToMap(t *testing.T) {
 						clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 					}
 				}
-			})
+			},
+		)
 	}
 }

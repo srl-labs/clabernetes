@@ -153,7 +153,8 @@ func TestClabvert(t *testing.T) {
 						clabernetestesthelper.FailOutput(t, actualContents, expected)
 					}
 				}
-			})
+			},
+		)
 	}
 }
 

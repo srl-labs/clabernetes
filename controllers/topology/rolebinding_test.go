@@ -127,6 +127,7 @@ func TestRenderRoleBinding(t *testing.T) {
 				}
 
 				clabernetestesthelper.MarshaledEqual(t, got, want)
-			})
+			},
+		)
 	}
 }

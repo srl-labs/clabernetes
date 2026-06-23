@@ -94,6 +94,17 @@ func (c *Controller) SetupWithManager(mgr ctrlruntime.Manager) error {
 			&k8scorev1.Pod{},
 			ctrlruntimehandler.EnqueueRequestsFromMapFunc(c.enqueueForPod),
 		).
+		// watch owned Node objects (decomposed path) so that when a Node's status.readiness changes
+		// the owning Topology re-reconciles and re-aggregates it (ReconcileNodeStatuses). without this
+		// the Topology status lags behind its Nodes until the next periodic resync.
+		Watches(
+			&clabernetesapisv1alpha1.Node{},
+			ctrlruntimehandler.EnqueueRequestForOwner(
+				mgr.GetScheme(),
+				mgr.GetRESTMapper(),
+				&clabernetesapisv1alpha1.Topology{},
+			),
+		).
 		// watch our config cr too so we get any config updates handled
 		Watches(
 			&clabernetesapisv1alpha1.Config{},

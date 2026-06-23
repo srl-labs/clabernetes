@@ -70,6 +70,7 @@ limits:
 				if !reflect.DeepEqual(actual, testCase.expected) {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }

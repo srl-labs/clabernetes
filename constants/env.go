@@ -85,6 +85,14 @@ const (
 	// that a given launcher is responsible for.
 	LauncherNodeNameEnv = "LAUNCHER_NODE_NAME"
 
+	// LauncherConnectivityNameEnv is the env var that holds the name of the Connectivity custom
+	// resource a given launcher should read/watch for its tunnels. When unset the launcher falls
+	// back to the topology-wide Connectivity object (LauncherTopologyNameEnv) -- the legacy,
+	// non-decomposed behaviour. The decomposed (scalable) reconcile path sets this to a per-node
+	// Connectivity object so no single object grows with topology size; see
+	// docs/design/0001-scale-node-link-crds.md.
+	LauncherConnectivityNameEnv = "LAUNCHER_CONNECTIVITY_NAME"
+
 	// LauncherNodeImageEnv is the env var that holds the image name of the node in the original
 	// topology that a given launcher is responsible for.
 	LauncherNodeImageEnv = "LAUNCHER_NODE_IMAGE"

@@ -157,7 +157,8 @@ func (r *ServiceExposeReconciler) Render(
 
 	r.processMgmtLoadbalanacerExpose(
 		owningTopology,
-		reconcileData, service, nodeName)
+		reconcileData, service, nodeName,
+	)
 
 	r.renderServicePorts(
 		reconcileData,
@@ -226,7 +227,6 @@ func (r *ServiceExposeReconciler) renderServiceBase(
 	labels := map[string]string{
 		clabernetesconstants.LabelTopologyKind:        GetTopologyKind(owningTopology),
 		clabernetesconstants.LabelTopologyServiceType: clabernetesconstants.TopologyServiceTypeExpose, //nolint:lll
-
 	}
 
 	maps.Copy(labels, selectorLabels)

@@ -30,10 +30,7 @@ type fakeTopologies struct {
 	Fake *FakeClabernetesV1alpha1
 }
 
-func newFakeTopologies(
-	fake *FakeClabernetesV1alpha1,
-	namespace string,
-) apisv1alpha1.TopologyInterface {
+func newFakeTopologies(fake *FakeClabernetesV1alpha1, namespace string) apisv1alpha1.TopologyInterface {
 	return &fakeTopologies{
 		gentype.NewFakeClientWithList[*v1alpha1.Topology, *v1alpha1.TopologyList](
 			fake.Fake,

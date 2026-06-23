@@ -45,6 +45,7 @@ func TestIndent(t *testing.T) {
 				if actual != testCase.expected {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }

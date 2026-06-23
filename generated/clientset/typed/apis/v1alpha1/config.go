@@ -37,35 +37,16 @@ type ConfigsGetter interface {
 
 // ConfigInterface has methods to work with Config resources.
 type ConfigInterface interface {
-	Create(
-		ctx context.Context,
-		config *apisv1alpha1.Config,
-		opts v1.CreateOptions,
-	) (*apisv1alpha1.Config, error)
-	Update(
-		ctx context.Context,
-		config *apisv1alpha1.Config,
-		opts v1.UpdateOptions,
-	) (*apisv1alpha1.Config, error)
+	Create(ctx context.Context, config *apisv1alpha1.Config, opts v1.CreateOptions) (*apisv1alpha1.Config, error)
+	Update(ctx context.Context, config *apisv1alpha1.Config, opts v1.UpdateOptions) (*apisv1alpha1.Config, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(
-		ctx context.Context,
-		config *apisv1alpha1.Config,
-		opts v1.UpdateOptions,
-	) (*apisv1alpha1.Config, error)
+	UpdateStatus(ctx context.Context, config *apisv1alpha1.Config, opts v1.UpdateOptions) (*apisv1alpha1.Config, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*apisv1alpha1.Config, error)
 	List(ctx context.Context, opts v1.ListOptions) (*apisv1alpha1.ConfigList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(
-		ctx context.Context,
-		name string,
-		pt types.PatchType,
-		data []byte,
-		opts v1.PatchOptions,
-		subresources ...string,
-	) (result *apisv1alpha1.Config, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *apisv1alpha1.Config, err error)
 	ConfigExpansion
 }
 

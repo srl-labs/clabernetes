@@ -185,7 +185,8 @@ func TestResolvePersistentVolumeClaim(t *testing.T) {
 				}
 
 				clabernetestesthelper.MarshaledEqual(t, got.Extra, testCase.expectedExtra)
-			})
+			},
+		)
 	}
 }
 
@@ -307,7 +308,8 @@ func TestRenderPersistentVolumeClaim(t *testing.T) {
 				}
 
 				clabernetestesthelper.MarshaledEqual(t, got, want)
-			})
+			},
+		)
 	}
 }
 
@@ -564,6 +566,7 @@ func TestPersistentVolumeClaimConforms(t *testing.T) {
 						testCase.rendered,
 					)
 				}
-			})
+			},
+		)
 	}
 }

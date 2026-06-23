@@ -38,7 +38,8 @@ func TestObjectDifferGetCurrentObjectNames(t *testing.T) {
 				if !clabernetesutil.StringSliceContainsAll(actual, testCase.expected) {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }
 
@@ -77,7 +78,8 @@ func TestObjectDifferSetMissing(t *testing.T) {
 				if !clabernetesutil.StringSliceContainsAll(actual, testCase.expected) {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }
 
@@ -116,6 +118,7 @@ func TestObjectDifferSeExtra(t *testing.T) {
 				if !clabernetesutil.StringSliceContainsAll(actual, testCase.expected) {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }

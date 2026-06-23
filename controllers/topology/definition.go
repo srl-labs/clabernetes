@@ -26,7 +26,8 @@ func NewDefinitionProcessor(
 	configManagerGetter clabernetesconfig.ManagerGetterFunc,
 ) (DefinitionProcessor, error) {
 	switch {
-	case topology.Spec.Definition.Containerlab != "":
+	case topology.Spec.Definition.Containerlab != "" ||
+		topology.Spec.Definition.ContainerlabRef != nil:
 		reconcileData.Kind = clabernetesapis.TopologyKindContainerlab
 
 		return &containerlabDefinitionProcessor{

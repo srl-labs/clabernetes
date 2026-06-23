@@ -44,6 +44,7 @@ func TestRandomString(t *testing.T) {
 						t.Fatalf("expected only letters in random string, got %s", string(char))
 					}
 				}
-			})
+			},
+		)
 	}
 }

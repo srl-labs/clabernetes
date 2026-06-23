@@ -30,10 +30,7 @@ type fakeImageRequests struct {
 	Fake *FakeClabernetesV1alpha1
 }
 
-func newFakeImageRequests(
-	fake *FakeClabernetesV1alpha1,
-	namespace string,
-) apisv1alpha1.ImageRequestInterface {
+func newFakeImageRequests(fake *FakeClabernetesV1alpha1, namespace string) apisv1alpha1.ImageRequestInterface {
 	return &fakeImageRequests{
 		gentype.NewFakeClientWithList[*v1alpha1.ImageRequest, *v1alpha1.ImageRequestList](
 			fake.Fake,

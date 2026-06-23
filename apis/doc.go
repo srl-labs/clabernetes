@@ -18,4 +18,10 @@ const (
 
 	// Connectivity is the Kind of the Connectivity custom resource.
 	Connectivity = "connectivity"
+
+	// Node is the Kind of the Node custom resource.
+	Node = "node"
+
+	// Link is the Kind of the Link custom resource.
+	Link = "link"
 )

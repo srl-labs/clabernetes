@@ -58,6 +58,17 @@ func (c *Controller) Reconcile(
 	// reconcile the naming -- we *must* do this to ensure that our status field is set!
 	c.TopologyReconciler.ReconcileNaming(topology, reconcileData)
 
+	// resolve any indirect (ConfigMap/URL) definition and stash the raw body on the reconcile data;
+	// the processors prefer it over the inline spec field. The original `topology` keeps its small
+	// spec and is what we persist, so the raw definition is never written back. When no ref is set
+	// this is empty and processors read the inline field. See docs/design/0001-scale-node-link-crds.md.
+	reconcileData.ResolvedDefinition, err = c.resolveDefinitionRef(ctx, topology)
+	if err != nil {
+		c.BaseController.Log.Criticalf("failed resolving topology definition, error: %s", err)
+
+		return ctrlruntime.Result{}, err
+	}
+
 	err = c.processDefinition(topology, reconcileData)
 	if err != nil {
 		c.BaseController.Log.Criticalf("failed processing topology definition, error: %s", err)
@@ -108,6 +119,46 @@ func (c *Controller) reconcileResources(
 	topology *clabernetesapisv1alpha1.Topology,
 	reconcileData *ReconcileData,
 ) error {
+	if topology.Spec.Deployment.Decompose {
+		// experimental decomposed path: instead of rendering the per-node resources directly, expand
+		// the Topology into Node objects and let the Node controller reconcile each one. This is
+		// gated behind spec.deployment.decompose so the default behaviour is completely unaffected.
+		// See docs/design/0001-scale-node-link-crds.md.
+		err := c.TopologyReconciler.ReconcileNodes(ctx, topology, reconcileData)
+		if err != nil {
+			c.BaseController.Log.Criticalf("failed reconciling nodes, error: %s", err)
+
+			return err
+		}
+
+		// per-node connectivity: write one small Connectivity object per node (and the Link ledger),
+		// retiring the single topology-wide Connectivity that grew with topology size. The launchers
+		// are pointed at their own object by the Node controller.
+		err = c.TopologyReconciler.ReconcilePerNodeConnectivity(ctx, topology, reconcileData)
+		if err != nil {
+			c.BaseController.Log.Criticalf(
+				"failed reconciling per-node clabernetes connectivity resources, error: %s",
+				err,
+			)
+
+			return err
+		}
+
+		// roll the owned Node objects' readiness up into the Topology status (the Node controller owns
+		// the deployments here, so the Topology learns readiness from the Node objects).
+		err = c.TopologyReconciler.ReconcileNodeStatuses(ctx, topology, reconcileData)
+		if err != nil {
+			c.BaseController.Log.Criticalf(
+				"failed reconciling node statuses, error: %s",
+				err,
+			)
+
+			return err
+		}
+
+		return nil
+	}
+
 	err := c.TopologyReconciler.ReconcileConfigMap(
 		ctx,
 		topology,

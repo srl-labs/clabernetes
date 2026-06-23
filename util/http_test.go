@@ -46,7 +46,8 @@ func TestIsURL(t *testing.T) {
 				if actual != testCase.expected {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }
 
@@ -99,7 +100,8 @@ func TestWriteHTTPContentsFromPath(t *testing.T) {
 				if !strings.Contains(w.String(), "foo") {
 					t.Fatal("writer did not contain expected content 'foo'")
 				}
-			})
+			},
+		)
 	}
 }
 
@@ -136,7 +138,8 @@ func TestGitHubNormalLinkToRawLink(t *testing.T) {
 				if actual != testCase.expected {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }
 
@@ -175,6 +178,7 @@ func TestGitHubGroupAndRepoFromURL(t *testing.T) {
 				if actualRepo != testCase.expectedRepo {
 					clabernetestesthelper.FailOutput(t, actualRepo, testCase.expectedRepo)
 				}
-			})
+			},
+		)
 	}
 }

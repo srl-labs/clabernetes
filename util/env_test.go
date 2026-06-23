@@ -44,7 +44,8 @@ func TestGetEnvStrOrDefault(t *testing.T) {
 				if actual != testCase.expected {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }
 
@@ -85,7 +86,8 @@ func TestGetEnvIntOrDefault(t *testing.T) {
 				if actual != testCase.expected {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }
 
@@ -126,7 +128,8 @@ func TestGetEnvFloat64OrDefault(t *testing.T) {
 				if actual != testCase.expected {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }
 
@@ -167,6 +170,7 @@ func TestGetEnvBoolOrDefault(t *testing.T) {
 				if actual != testCase.expected {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }

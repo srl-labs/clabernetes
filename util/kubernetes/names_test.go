@@ -45,7 +45,8 @@ func TestSafeConcatNameKubernetes(t *testing.T) {
 				if actual != testCase.expected {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }
 
@@ -91,7 +92,8 @@ func TestSafeConcatNameMax(t *testing.T) {
 				if actual != testCase.expected {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }
 
@@ -138,6 +140,7 @@ func TestEnforceDNSLabelConvention(t *testing.T) {
 				if actual != testCase.expected {
 					clabernetestesthelper.FailOutput(t, actual, testCase.expected)
 				}
-			})
+			},
+		)
 	}
 }

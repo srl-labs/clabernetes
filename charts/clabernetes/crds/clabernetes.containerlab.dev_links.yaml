@@ -1,0 +1,132 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.21.0
+  name: links.clabernetes.containerlab.dev
+spec:
+  group: clabernetes.containerlab.dev
+  names:
+    kind: Link
+    listKind: LinkList
+    plural: links
+    shortNames:
+    - clablink
+    singular: link
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.topologyName
+      name: Topology
+      type: string
+    - jsonPath: .spec.tunnelID
+      name: TunnelID
+      type: integer
+    - jsonPath: .status.ready
+      name: Ready
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          Link represents a single point-to-point link between two Topology nodes that live in different
+          launcher pods -- i.e. a cross-pod link realized as a vxlan or slurpeeth tunnel. Links that are
+          internal to a node group (nodes sharing one network namespace) are NOT represented as Link
+          objects; they remain inside the owning Node's sub-topology.
+
+          A Link is created and owned by the Topology controller as part of the decomposed (scalable)
+          reconcile path; see docs/design/0001-scale-node-link-crds.md. Representing each link as its own
+          object is what removes the per-topology Connectivity object as a scaling bottleneck.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: LinkSpec is the spec for a Link resource.
+            properties:
+              connectivity:
+                description: Connectivity is the connectivity flavor (vxlan or slurpeeth)
+                  used to realize this link.
+                enum:
+                - vxlan
+                - slurpeeth
+                type: string
+              endpointA:
+                description: EndpointA is one end of the link.
+                properties:
+                  interfaceName:
+                    description: InterfaceName is the name of the interface on the
+                      node this link is on.
+                    type: string
+                  nodeName:
+                    description: NodeName is the name of the node this link resides
+                      on.
+                    type: string
+                required:
+                - interfaceName
+                - nodeName
+                type: object
+              endpointB:
+                description: |-
+                  EndpointB is the other end of the link. Its NodeName may be the containerlab "host" keyword
+                  for host links.
+                properties:
+                  interfaceName:
+                    description: InterfaceName is the name of the interface on the
+                      node this link is on.
+                    type: string
+                  nodeName:
+                    description: NodeName is the name of the node this link resides
+                      on.
+                    type: string
+                required:
+                - interfaceName
+                - nodeName
+                type: object
+              topologyName:
+                description: TopologyName is the name of the Topology that owns this
+                  Link.
+                type: string
+              tunnelID:
+                description: |-
+                  TunnelID is the vxlan VNI / slurpeeth segment id allocated to this link. It is assigned once
+                  by the owning Topology and is stable for the life of the Link -- renumbering a live link would
+                  tear down a working tunnel. A value of 0 means an id has not yet been allocated.
+                type: integer
+            required:
+            - endpointA
+            - endpointB
+            - topologyName
+            type: object
+          status:
+            description: LinkStatus is the status for a Link resource.
+            properties:
+              ready:
+                description: Ready indicates whether both endpoints of the link have
+                  established connectivity.
+                type: boolean
+            required:
+            - ready
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources: {}
