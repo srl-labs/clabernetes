@@ -6,8 +6,10 @@ import (
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 	clabernetescontrollers "github.com/srl-labs/clabernetes/controllers"
 	clabernetesmanagertypes "github.com/srl-labs/clabernetes/manager/types"
+	k8sappsv1 "k8s.io/api/apps/v1"
 	ctrlruntime "sigs.k8s.io/controller-runtime"
 	ctrlruntimecontroller "sigs.k8s.io/controller-runtime/pkg/controller"
+	ctrlruntimehandler "sigs.k8s.io/controller-runtime/pkg/handler"
 )
 
 // concurrentReconciles is the number of Node objects we are willing to reconcile in parallel. Node
@@ -67,5 +69,16 @@ func (c *Controller) SetupWithManager(mgr ctrlruntime.Manager) error {
 			},
 		).
 		For(&clabernetesapisv1alpha1.Node{}).
+		// watch the owned Deployment so that when the launcher pod becomes (un)available the Node is
+		// re-reconciled and its status.ready is refreshed from the Deployment's Available condition.
+		// without this the Node only reconciles on spec changes and its readiness goes stale.
+		Watches(
+			&k8sappsv1.Deployment{},
+			ctrlruntimehandler.EnqueueRequestForOwner(
+				mgr.GetScheme(),
+				mgr.GetRESTMapper(),
+				&clabernetesapisv1alpha1.Node{},
+			),
+		).
 		Complete(c)
 }

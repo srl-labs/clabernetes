@@ -7,6 +7,7 @@ import (
 	clabernetesconfig "github.com/srl-labs/clabernetes/config"
 	clabernetesconstants "github.com/srl-labs/clabernetes/constants"
 
+	clabernetesapis "github.com/srl-labs/clabernetes/apis"
 	clabernetesapisv1alpha1 "github.com/srl-labs/clabernetes/apis/v1alpha1"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -143,6 +144,65 @@ func (r *Reconciler) ReconcileNodeStatuses(
 	}
 
 	r.applyTopologyReadiness(owningTopology, reconcileData)
+
+	// now that we know each node's readiness, roll it down onto the Link objects too -- a Link is
+	// "ready" when both of its endpoint nodes are ready (the containerlab "host" end is always ready).
+	// this gives the Link ledger a meaningful status surface instead of a perpetual false.
+	err = r.reconcileLinkReadiness(ctx, owningTopology, reconcileData)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// reconcileLinkReadiness updates each owned Link's status.ready based on whether both of its endpoint
+// nodes report ready (per reconcileData.NodeStatuses). The "host" endpoint is treated as always ready.
+// Updates are idempotent -- a Link is only written when its readiness actually changes.
+func (r *Reconciler) reconcileLinkReadiness(
+	ctx context.Context,
+	owningTopology *clabernetesapisv1alpha1.Topology,
+	reconcileData *ReconcileData,
+) error {
+	existingLinkList := &clabernetesapisv1alpha1.LinkList{}
+
+	err := r.Client.List(
+		ctx,
+		existingLinkList,
+		ctrlruntimeclient.InNamespace(owningTopology.GetNamespace()),
+		ctrlruntimeclient.MatchingLabels{
+			clabernetesconstants.LabelTopologyOwner: owningTopology.GetName(),
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	endpointReady := func(nodeName string) bool {
+		if nodeName == clabernetesconstants.HostKeyword {
+			return true
+		}
+
+		return reconcileData.NodeStatuses[nodeName] == clabernetesconstants.NodeStatusReady
+	}
+
+	for idx := range existingLinkList.Items {
+		link := &existingLinkList.Items[idx]
+
+		ready := endpointReady(link.Spec.EndpointA.NodeName) &&
+			endpointReady(link.Spec.EndpointB.NodeName)
+
+		if link.Status.Ready == ready {
+			continue
+		}
+
+		link.Status.Ready = ready
+
+		err = r.updateObj(ctx, link, clabernetesapis.Link)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
