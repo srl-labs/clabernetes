@@ -103,9 +103,13 @@ publishes as the `c9s-peer-directory-0` to `c9s-peer-directory-7` ConfigMaps, pr
 every Pod; there is no discovery traffic and no DNS lookup on the path.
 
 The management gateway is the one address that never crosses to another Pod: every Pod answers
-it itself, with the same identity. Traffic a device sends beyond the management subnet leaves
-through the Pod's own network identity, so cluster Services and external destinations stay
-reachable through ordinary Kubernetes networking.
+it itself, with the same identity. The device's management interface carries a default route
+via that gateway, exactly as a container runtime would install one, so a network operating
+system that derives its management routing from the kernel's (SR-SIM, SR Linux) and a virtual
+machine behind vrnetlab's forwarding both find their gateway. Traffic a device sends beyond
+the management subnet leaves through the Pod's own network identity, so cluster Services and
+external destinations stay reachable through ordinary Kubernetes networking. A vrnetlab guest
+still needs the static management routes containerlab documents for it.
 
 ### What does not cross the mesh
 

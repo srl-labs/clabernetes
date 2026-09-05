@@ -369,6 +369,9 @@ func testEnsureInterpositionConverges(t *testing.T) {
 			t.Fatalf("%s: transport addresses = %+v", step, addresses)
 		}
 
+		assertDeviceDefaultRoute(t, step, "eth0")
+		assertLocalOriginPaths(t, step, transport.Attrs().Index, "eth0")
+
 		device, deviceErr := netlink.LinkByName("eth0")
 		if deviceErr != nil {
 			t.Fatalf("%s: synthetic device leg is absent: %v", step, deviceErr)
@@ -736,6 +739,8 @@ func testEnsureInterpositionConverges(t *testing.T) {
 		t.Fatalf("EnsureInterposition() with a bare device leg: %v", err)
 	}
 
+	assertTransportDefaultRoute(t, "bare device leg")
+
 	bareOwnRules := map[string]bool{}
 	bareLocalLookups := map[string]bool{}
 	bareBlackhole := false
@@ -876,6 +881,10 @@ func testEnsureInterpositionConverges(t *testing.T) {
 			router.Attrs().ParentIndex, renamed)
 	}
 
+	// The kernel dropped the leg's routes with the leg; the pass after it came back up put
+	// the device's default route back, on the renamed leg.
+	assertDeviceDefaultRoute(t, "after the device renamed its leg", "mgmt0")
+
 	// SR Linux then takes the address into its own management namespace, leaving the renamed
 	// leg bare. The device-leg blackhole must follow the leg under its new name: a rule keyed
 	// on the plan name detaches at the rename and matches nothing, so every frame the device's
@@ -888,6 +897,8 @@ func testEnsureInterpositionConverges(t *testing.T) {
 		t.Fatalf("EnsureInterposition() with the renamed leg bare: %v", err)
 	}
 
+	assertTransportDefaultRoute(t, "renamed leg bare")
+
 	shown, showErr := exec.CommandContext( //nolint:gosec // fixed iproute2 invocation.
 		t.Context(),
 		"ip", "rule", "show", "pref", strconv.Itoa(interpositionDeviceLegRulePriority),
@@ -898,6 +909,148 @@ func testEnsureInterpositionConverges(t *testing.T) {
 		strings.Contains(string(shown), "detached") {
 		t.Fatalf("device-leg blackhole after the rename = %q (%v), want one attached rule "+
 			"keyed on the renamed leg", strings.TrimSpace(string(shown)), showErr)
+	}
+}
+
+// assertDeviceDefaultRoute checks the main table carries exactly one IPv4 default route, via
+// the management gateway on the device leg, and none via the transport: the device reads its
+// gateway from that route like it would under a container runtime, and the transport's own
+// default lives in the transport table only.
+func assertDeviceDefaultRoute(t *testing.T, step, legName string) {
+	t.Helper()
+
+	leg, err := netlink.LinkByName(legName)
+	if err != nil {
+		t.Fatalf("%s: device leg %q is absent: %v", step, legName, err)
+	}
+
+	routes, _ := netlink.RouteListFiltered(
+		netlink.FAMILY_V4,
+		&netlink.Route{Table: unix.RT_TABLE_MAIN},
+		netlink.RT_FILTER_TABLE,
+	)
+
+	defaults := 0
+	viaLeg := false
+
+	for _, route := range routes {
+		if !isDefaultRouteDestination(route.Dst) {
+			continue
+		}
+
+		defaults++
+
+		if route.LinkIndex == leg.Attrs().Index && route.Gw != nil &&
+			route.Gw.String() == "172.80.80.1" {
+			viaLeg = true
+		}
+	}
+
+	if defaults != 1 || !viaLeg {
+		t.Fatalf("%s: main table defaults = %d via the device leg %t, want exactly one via the "+
+			"gateway on %q: %+v", step, defaults, viaLeg, legName, routes)
+	}
+}
+
+// assertLocalOriginPaths checks that the device's default route in main is taken only by
+// forwarded traffic (a nested guest behind a device-created interface) while everything the
+// namespace originates itself keeps its previous paths: the management subnet through the
+// device leg's connected route, everything else straight out the transport. A locally
+// originated packet on the device-leg default would be tracked twice, and the second
+// connection's reply could never reach the socket.
+func assertLocalOriginPaths(t *testing.T, step string, transportIndex int, legName string) {
+	t.Helper()
+
+	leg, err := netlink.LinkByName(legName)
+	if err != nil {
+		t.Fatalf("%s: device leg %q is absent: %v", step, legName, err)
+	}
+
+	deviceIndex := leg.Attrs().Index
+	external := net.ParseIP("192.0.2.10")
+
+	local, err := netlink.RouteGetWithOptions(external, &netlink.RouteGetOptions{})
+	if err != nil || len(local) == 0 || local[0].LinkIndex != transportIndex {
+		t.Fatalf("%s: locally originated traffic beyond the subnet resolves to %+v (%v), "+
+			"want the transport", step, local, err)
+	}
+
+	peer, err := netlink.RouteGetWithOptions(
+		net.ParseIP("172.80.80.21"),
+		&netlink.RouteGetOptions{},
+	)
+	if err != nil || len(peer) == 0 || peer[0].LinkIndex != deviceIndex {
+		t.Fatalf("%s: locally originated traffic to a peer resolves to %+v (%v), want the "+
+			"device leg's connected route", step, peer, err)
+	}
+
+	if err = netlink.LinkAdd(&netlink.Dummy{LinkAttrs: netlink.LinkAttrs{Name: "guest0"}}); err == nil {
+		defer func() {
+			_ = netlink.LinkDel(&netlink.Dummy{LinkAttrs: netlink.LinkAttrs{Name: "guest0"}})
+		}()
+
+		guest, _ := netlink.LinkByName("guest0")
+		bridgeAddress, _ := netlink.ParseAddr("172.31.255.29/30")
+		_ = netlink.AddrAdd(guest, bridgeAddress)
+		_ = netlink.LinkSetUp(guest)
+
+		forwarded, forwardErr := netlink.RouteGetWithOptions(external, &netlink.RouteGetOptions{
+			Iif: "guest0", SrcAddr: net.ParseIP("172.31.255.30"),
+		})
+		if forwardErr != nil || len(forwarded) == 0 || forwarded[0].LinkIndex != deviceIndex {
+			t.Fatalf("%s: forwarded guest traffic beyond the subnet resolves to %+v (%v), "+
+				"want the device leg default", step, forwarded, forwardErr)
+		}
+
+		// What the namespace originates toward a device-created subnet (vrnetlab talks to
+		// its guest over the bridge) keeps the connected route; the transport rule must not
+		// shadow it with the transport's default.
+		toGuest, guestErr := netlink.RouteGetWithOptions(
+			net.ParseIP("172.31.255.30"), &netlink.RouteGetOptions{},
+		)
+		if guestErr != nil || len(toGuest) == 0 || toGuest[0].LinkIndex != guest.Attrs().Index {
+			t.Fatalf("%s: locally originated traffic to a device-created subnet resolves to "+
+				"%+v (%v), want its connected route", step, toGuest, guestErr)
+		}
+	}
+}
+
+// assertTransportDefaultRoute checks the main table fell back to the transport's default: a
+// leg without a management address (a device that took the address into its own stack) cannot
+// carry the gateway route, and locally originated traffic still needs a default.
+func assertTransportDefaultRoute(t *testing.T, step string) {
+	t.Helper()
+
+	transport, err := netlink.LinkByName(TransportInterfaceName)
+	if err != nil {
+		t.Fatalf("%s: transport is absent: %v", step, err)
+	}
+
+	routes, _ := netlink.RouteListFiltered(
+		netlink.FAMILY_V4,
+		&netlink.Route{Table: unix.RT_TABLE_MAIN},
+		netlink.RT_FILTER_TABLE,
+	)
+
+	defaults := 0
+	viaTransport := false
+
+	for _, route := range routes {
+		if !isDefaultRouteDestination(route.Dst) {
+			continue
+		}
+
+		defaults++
+
+		if route.LinkIndex == transport.Attrs().Index && route.Gw != nil &&
+			route.Gw.String() == "10.244.2.1" {
+			viaTransport = true
+		}
+	}
+
+	if defaults != 1 || !viaTransport {
+		t.Fatalf("%s: main table defaults = %d via the transport %t, want exactly the CNI "+
+			"default: %+v", step, defaults, viaTransport, routes)
 	}
 }
 

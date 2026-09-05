@@ -74,6 +74,21 @@ const (
 	// transport replies and the fabric VTEPs (whose encapsulation sources the Pod address).
 	// Scoping by source keeps a kernel-dataplane device's own data routes in main authoritative.
 	interpositionTransportRulePriority = 901
+	// interpositionLocalOriginMainRulePriority consults the main table for locally originated
+	// lookups with its default route suppressed: every specific route stays authoritative (a
+	// kernel-held address's connected management route via the device leg, and whatever
+	// subnets a device creates for itself, like vrnetlab's guest bridge), while the default,
+	// which is the device's (D15), is left to the rule below.
+	interpositionLocalOriginMainRulePriority = 903
+	// interpositionLocalOriginRulePriority selects the transport table for every other locally
+	// originated lookup. The main table's default is the device's (D15: via the gateway on the
+	// device leg, for device stacks that read it and for forwarded guest traffic); a locally
+	// originated packet taking it would be translated on the device leg and then tracked a
+	// second time on the router leg, and that second connection's reply never reaches the
+	// socket. Locally originated traffic that no specific route claims therefore leaves
+	// through the transport directly, as it always did, whether it is the sidecar's or a
+	// single-namespace device's.
+	interpositionLocalOriginRulePriority = 904
 	// interpositionManagementRulePriority selects the transport table for traffic to the Pod's
 	// own management address when the pod kernel does not hold that address itself (the
 	// device runs its own stack behind the device leg), so application hooks and

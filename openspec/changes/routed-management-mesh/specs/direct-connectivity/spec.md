@@ -20,7 +20,10 @@ mesh state on the same reconciliation tick that re-asserts its other owned state
 traffic crossing the mesh SHALL be subject to the path's size: a TCP handshake advertising a
 segment larger than the mesh carries is clamped on the routed forward path, and an oversized
 packet with fragmentation forbidden receives a fragmentation-needed response from the local
-gateway.
+gateway. The interposed interface SHALL carry a default route via the sidecar gateway, as a
+container runtime installs one, so a device that derives its management routing from the
+kernel's, or that forwards a nested guest's traffic through the interface, reaches
+destinations beyond the management subnet through the Pod's own network identity.
 
 #### Scenario: Imported hook dials the management address
 
@@ -53,6 +56,15 @@ gateway.
   Pod
 - **THEN** the dial reaches this device over the management mesh without translation, and the
   reply returns the same way
+
+#### Scenario: Device stack reaches beyond the management subnet
+
+- **WHEN** a device that derives its management routing from the kernel's (SR-SIM, SR Linux)
+  boots, or a device forwards a nested guest's management traffic through the interposed
+  interface (vrnetlab)
+- **THEN** the interposed interface's default route names the sidecar gateway, the device's
+  management stack installs or uses that gateway, and traffic to a cluster address leaves
+  through the Pod's own network identity and its reply reaches the device
 
 #### Scenario: Device sends an oversized management packet
 

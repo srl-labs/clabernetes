@@ -234,6 +234,12 @@ func (o netlinkOperations) EnsureInterposition(spec InterpositionSpec) error {
 		return err
 	}
 
+	if err := ensureDeviceDefaultRoute(
+		spec, gateway, managementPrefix, capturedRoutes, transportIndex,
+	); err != nil {
+		return err
+	}
+
 	vtep, err := ensureMeshVTEP(spec, podAddress, meshMAC, meshMTU)
 	if err != nil {
 		return err
@@ -863,19 +869,44 @@ func ensureTransportTable(
 		return err
 	}
 
+	if err = ensureTransportRules(spec, podAddress); err != nil {
+		return err
+	}
+
+	if err = ensureOwnAddressRules(
+		netlink.FAMILY_V4, spec, managementAddress, gateway, kernelHeld,
+	); err != nil {
+		return err
+	}
+
+	if !ipv6Active {
+		return nil
+	}
+
+	return ensureTransportTableIPv6(spec, router, vtep)
+}
+
+// ensureTransportRules asserts the policy rules that select the transport table: device
+// traffic entering on the router leg, Pod-sourced traffic, and locally originated lookups
+// that no specific main-table route claims (main is consulted first with its default
+// suppressed, so a kernel-held address's connected route and a device's own subnets stay
+// authoritative for what the namespace originates).
+func ensureTransportRules(spec InterpositionSpec, podAddress netip.Addr) error {
 	rules, err := netlink.RuleList(netlink.FAMILY_V4)
 	if err != nil {
 		return fmt.Errorf("listing routing rules: %w", err)
 	}
 
-	// The management rule covers exactly the Pod's own management address: hooks, the
-	// Pod-address translation, and mesh-delivered peer traffic reach the local device through
-	// the router leg, while the device's own peer-bound traffic selects the table through the
-	// router rule and follows the subnet route to the mesh tunnel endpoint.
-
 	haveRouterRule, haveTransportRule := false, false
+	haveLocalOriginMainRule, haveLocalOriginRule := false, false
 
 	for _, rule := range rules {
+		if rule.Priority == interpositionLocalOriginMainRulePriority &&
+			rule.Table == unix.RT_TABLE_MAIN && rule.IifName == loopbackInterfaceName &&
+			rule.SuppressPrefixlen == 0 {
+			haveLocalOriginMainRule = true
+		}
+
 		if rule.Table != interpositionTransportTable {
 			continue
 		}
@@ -885,6 +916,8 @@ func ensureTransportTable(
 			haveRouterRule = rule.IifName == spec.RouterInterface
 		case interpositionTransportRulePriority:
 			haveTransportRule = true
+		case interpositionLocalOriginRulePriority:
+			haveLocalOriginRule = rule.IifName == loopbackInterfaceName
 		}
 	}
 
@@ -913,17 +946,32 @@ func ensureTransportTable(
 		}
 	}
 
-	if err = ensureOwnAddressRules(
-		netlink.FAMILY_V4, spec, managementAddress, gateway, kernelHeld,
-	); err != nil {
-		return err
+	if !haveLocalOriginMainRule {
+		rule := netlink.NewRule()
+		rule.Priority = interpositionLocalOriginMainRulePriority
+		rule.Table = unix.RT_TABLE_MAIN
+		rule.IifName = loopbackInterfaceName
+		// Only main's default is suppressed: a lookup that lands on it continues to the
+		// transport rule, one that finds a specific route (connected, or a device's own) ends.
+		rule.SuppressPrefixlen = 0
+
+		if err = netlink.RuleAdd(rule); err != nil {
+			return fmt.Errorf("asserting local-origin main rule: %w", err)
+		}
 	}
 
-	if !ipv6Active {
-		return nil
+	if !haveLocalOriginRule {
+		rule := netlink.NewRule()
+		rule.Priority = interpositionLocalOriginRulePriority
+		rule.Table = interpositionTransportTable
+		rule.IifName = loopbackInterfaceName
+
+		if err = netlink.RuleAdd(rule); err != nil {
+			return fmt.Errorf("asserting local-origin transport rule: %w", err)
+		}
 	}
 
-	return ensureTransportTableIPv6(spec, router, vtep)
+	return nil
 }
 
 // deviceLegName resolves the current name of the device leg. The device leg is the far end of
@@ -935,9 +983,20 @@ func ensureTransportTable(
 // exceeded reports abort every connection the sidecar opens to the device). A leg the device
 // moved into a namespace of its own, or that is otherwise unresolvable, keeps the plan name.
 func deviceLegName(spec InterpositionSpec) string {
+	if leg, present := deviceLegLink(spec); present {
+		return leg.Attrs().Name
+	}
+
+	return spec.DeviceInterface
+}
+
+// deviceLegLink resolves the device leg through the router leg's veth peer index, under
+// whatever name the device gave it. A leg the device moved into a namespace of its own, or
+// a pair that does not exist yet, is absent.
+func deviceLegLink(spec InterpositionSpec) (netlink.Link, bool) {
 	router, present, err := lookupLink(spec.RouterInterface)
 	if err != nil || !present || router.Attrs().ParentIndex == 0 {
-		return spec.DeviceInterface
+		return nil, false
 	}
 
 	// The peer index is only meaningful in this namespace; a peer moved elsewhere leaves an
@@ -945,10 +1004,130 @@ func deviceLegName(spec InterpositionSpec) string {
 	peer, err := netlink.LinkByIndex(router.Attrs().ParentIndex)
 	if err != nil || peer.Type() != "veth" ||
 		peer.Attrs().ParentIndex != router.Attrs().Index {
-		return spec.DeviceInterface
+		return nil, false
 	}
 
-	return peer.Attrs().Name
+	return peer, true
+}
+
+// ensureDeviceDefaultRoute gives the device the default route a container runtime gives it:
+// the main table's default via the management gateway on the device leg. A device reads its
+// management gateway from that route when it boots (SR-SIM and SR Linux derive their
+// management routing from the kernel's), and a device that translates a nested guest's traffic
+// onward (vrnetlab) masquerades only what leaves through the device leg; with the transport's
+// default left in main, neither had a usable gateway and nothing beyond the management subnet
+// was reachable from the device's own stack. The sidecar's own traffic never depends on main:
+// it selects the transport table by its source address or ingress, and its resolver binds the
+// Pod address. Device traffic that takes the route arrives on the router leg and follows the
+// transport table from there, so the Pod's own network identity still carries it out.
+//
+// The route is expressible only while the leg carries a management address (the kernel
+// resolves the gateway through the leg's connected route; on-link is refused because the
+// gateway is a local address of this namespace). That is the container runtime's moment too:
+// the leg is addressed before the device boots. A device that took the address into its own
+// stack no longer uses the kernel's routes, and a leg the device took down loses its routes
+// with it; in both states main falls back to the transport's default, so locally originated
+// traffic that does not select the transport table always has one. The route follows the leg
+// by index, so a rename keeps it, and every pass converges the current state.
+func ensureDeviceDefaultRoute(
+	spec InterpositionSpec,
+	gateway netip.Addr,
+	managementPrefix netip.Prefix,
+	captured []capturedRoute,
+	transportIndex int,
+) error {
+	if !gateway.Is4() {
+		return nil
+	}
+
+	desired := transportDefaultRoute(captured, transportIndex)
+
+	if leg, present := deviceLegLink(spec); present && legCarriesManagementAddress(
+		leg, managementPrefix,
+	) {
+		desired = &netlink.Route{
+			Table:     unix.RT_TABLE_MAIN,
+			LinkIndex: leg.Attrs().Index,
+			Gw:        gateway.AsSlice(),
+		}
+	}
+
+	if desired == nil {
+		return nil
+	}
+
+	routes, err := netlink.RouteListFiltered(
+		netlink.FAMILY_V4,
+		&netlink.Route{Table: unix.RT_TABLE_MAIN},
+		netlink.RT_FILTER_TABLE,
+	)
+	if err != nil {
+		return fmt.Errorf("listing main table routes: %w", err)
+	}
+
+	for _, route := range routes {
+		if !isDefaultRouteDestination(route.Dst) {
+			continue
+		}
+
+		if route.LinkIndex == desired.LinkIndex && route.Gw != nil &&
+			route.Gw.Equal(desired.Gw) {
+			return nil
+		}
+
+		stale := route
+		if err = netlink.RouteDel(&stale); err != nil {
+			return fmt.Errorf("removing main table default via %d: %w", route.LinkIndex, err)
+		}
+	}
+
+	if err = netlink.RouteReplace(desired); err != nil {
+		return fmt.Errorf("asserting main table default route: %w", err)
+	}
+
+	return nil
+}
+
+// transportDefaultRoute is the captured CNI default, replayed via the transport interface, or
+// nil when the snapshot has none.
+func transportDefaultRoute(captured []capturedRoute, transportIndex int) *netlink.Route {
+	for _, entry := range captured {
+		if entry.Gateway == "" || (entry.Destination != "" && entry.Destination != "0.0.0.0/0") {
+			continue
+		}
+
+		gateway := net.ParseIP(entry.Gateway)
+		if gateway == nil || transportIndex == 0 {
+			continue
+		}
+
+		return &netlink.Route{Table: unix.RT_TABLE_MAIN, LinkIndex: transportIndex, Gw: gateway}
+	}
+
+	return nil
+}
+
+// legCarriesManagementAddress reports whether the device leg is up and holds an IPv4 address
+// inside the management subnet, the state in which the kernel can route via the gateway
+// through it.
+func legCarriesManagementAddress(leg netlink.Link, managementPrefix netip.Prefix) bool {
+	if leg.Attrs().Flags&net.FlagUp == 0 {
+		return false
+	}
+
+	addresses, err := netlink.AddrList(leg, netlink.FAMILY_V4)
+	if err != nil {
+		return false
+	}
+
+	for _, address := range addresses {
+		if candidate, ok := netip.AddrFromSlice(address.IP); ok &&
+			managementPrefix.Masked().Contains(candidate.Unmap()) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // addressHeldLocally reports whether any interface of the pod namespace carries the exact

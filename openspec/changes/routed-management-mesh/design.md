@@ -185,6 +185,38 @@ an unscoped rule selected the transport table again on the device leg and looped
 between the legs until its TTL ran out. Unmarked local traffic, the device's own, stays local:
 steering it too would give a device's connections to its own address the gateway as source.
 
+**D15 — The device leg carries the default route a container runtime would give it.** Docker
+installs `default via <bridge gateway>` in a container's main table, and devices rely on it:
+SR-SIM and SR Linux derive their management routing from the kernel's (SR-SIM installed no
+management default and answered "No route to destination" beyond the subnet; SR Linux fell
+back to its internal gateway pair), and vrnetlab masquerades a nested guest's traffic only
+where it leaves through the device leg. With the CNI's default left in main, none of them had
+a usable gateway. The sidecar now keeps the transport's default in the transport table only
+(the sidecar's own traffic selects that table by source address or ingress, and its resolver
+binds the Pod address) and asserts `default via <gateway> dev <device leg>` in main while the
+leg carries a management address, which is the container runtime's moment too: the leg is
+addressed before the device boots. The kernel resolves the gateway through the leg's connected
+route; on-link is refused because the gateway is a local address of this namespace, so a leg a
+device stripped (its own stack no longer reads kernel routes) or took down (its routes go with
+it) gets the transport's default back in main instead, and locally originated traffic that does
+not select the transport table always has one. The route follows the leg by index, so a rename
+keeps it, and every pass converges the current state. The route is for device stacks that
+read it and for forwarded guest traffic: vrnetlab's masquerade meets the device leg, and the
+translated packet arrives on the router leg and follows the transport table out. Locally
+originated traffic must not take it: a single-namespace device's packet would be translated
+on the device leg and tracked a second time on the router leg, and the second connection's
+reply, delivered to the Pod address, never reaches the socket bound to the management address
+(UDP resolver queries from a Linux node timed out while ICMP survived the clash). Two rules
+ahead of main keep locally originated lookups on their previous paths: main is consulted
+first with its default suppressed (`suppress_prefixlength 0`), so every specific route stays
+authoritative, a kernel-held address's connected management route via the device leg and the
+subnets a device creates for itself alike (vrnetlab reaches its guest over its own bridge; a
+rule that sent everything locally originated to the transport table shadowed that bridge with
+the transport's default and the guest's bootstrap never completed), and what no specific route
+claims goes to the transport table, straight out the transport with the masquerade, whether
+the sidecar or the device originated it. The vrnetlab guest itself still needs the static
+management routes containerlab documents for it.
+
 ## Risks / Trade-offs
 
 - [Directory propagation lag after a Pod reschedule, up to the kubelet sync period] → the

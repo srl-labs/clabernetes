@@ -78,6 +78,16 @@
 - [x] 4b.12 Segment clamp also on transport ingress (exposed-port sessions): SR-SIM raises its
       leg to MTU 9000 and sized segments from a Pod-network client's SYN; the router leg
       dropped them silently and an SSH session through the pod address never showed a prompt.
+- [x] 4b.13 Device default route via the gateway on the device leg in the main table while the
+      leg carries a management address, transport default otherwise, converged per pass; the
+      CNI default always stays in the transport table (SR-SIM had no management default route
+      and SR Linux used its internal gateway; vrnetlab's masquerade never matched the transport
+      egress; on-link is refused for a gateway that is local to the namespace). Locally
+      originated lookups keep their previous paths through two rules ahead of main (main with
+      its default suppressed, then the transport table): on the device-leg default a Linux
+      node's UDP resolver queries were tracked twice and their replies never reached the
+      socket, and a rule that skipped main entirely shadowed vrnetlab's guest bridge with the
+      transport's default and broke the vr-sros bootstrap.
 
 ## 5. Documentation and validation
 
