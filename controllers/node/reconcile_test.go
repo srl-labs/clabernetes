@@ -433,7 +433,8 @@ func TestDefaultManagementPortsCarryExactApplicationProtocols(t *testing.T) {
 		t.Fatalf("default exposed ports = %#v, want %d entries", exposed, len(want))
 	}
 	for idx, port := range exposed {
-		if port.DestinationPort != want[idx].DestinationPort || port.Protocol != want[idx].Protocol {
+		if port.DestinationPort != want[idx].DestinationPort ||
+			port.Protocol != want[idx].Protocol {
 			t.Fatalf("default exposed port %d = %#v, want %#v", idx, port, want[idx])
 		}
 	}
@@ -680,7 +681,10 @@ func TestReconcileExposeServiceUpdatesApplicationProtocolAndPreservesNodePort(t 
 	existing.Spec.ClusterIPs = []string{"10.96.0.20"}
 	existing.OwnerReferences = []metav1.OwnerReference{{UID: node.GetUID()}}
 
-	client := ctrlruntimefake.NewClientBuilder().WithScheme(scheme).WithObjects(node, existing).Build()
+	client := ctrlruntimefake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(node, existing).
+		Build()
 	reconciler := &Reconciler{
 		Log:               &claberneteslogging.FakeInstance{},
 		Client:            client,

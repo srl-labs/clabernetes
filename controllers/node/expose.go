@@ -18,6 +18,8 @@ type managementPortDefinition struct {
 // translation, and Service application-protocol defaults. Keep the order stable for status and
 // rendered Service compatibility.
 func defaultManagementPorts() []managementPortDefinition {
+	const gnmiAppProtocol = "c9s.run/gnmi"
+
 	return []managementPortDefinition{
 		{clabernetesconstants.PortFTP, clabernetesconstants.TCP, "ftp"},
 		{clabernetesconstants.PortSSH, clabernetesconstants.TCP, "ssh"},
@@ -27,11 +29,11 @@ func defaultManagementPorts() []managementPortDefinition {
 		{clabernetesconstants.PortNETCONF, clabernetesconstants.TCP, "netconf-ssh"},
 		{clabernetesconstants.PortQemuTelnet, clabernetesconstants.TCP, "telnet"},
 		{clabernetesconstants.PortVNC, clabernetesconstants.TCP, "rfb"},
-		{clabernetesconstants.PortGNMIArista, clabernetesconstants.TCP, "c9s.run/gnmi"},
-		{clabernetesconstants.PortGNMI, clabernetesconstants.TCP, "c9s.run/gnmi"},
+		{clabernetesconstants.PortGNMIArista, clabernetesconstants.TCP, gnmiAppProtocol},
+		{clabernetesconstants.PortGNMI, clabernetesconstants.TCP, gnmiAppProtocol},
 		{clabernetesconstants.PortGRIBI, clabernetesconstants.TCP, "c9s.run/gribi"},
 		{clabernetesconstants.PortP4RT, clabernetesconstants.TCP, "c9s.run/p4runtime"},
-		{clabernetesconstants.PortGNMINokia, clabernetesconstants.TCP, "c9s.run/gnmi"},
+		{clabernetesconstants.PortGNMINokia, clabernetesconstants.TCP, gnmiAppProtocol},
 		{clabernetesconstants.PortSNMP, clabernetesconstants.UDP, "snmp"},
 	}
 }
@@ -55,7 +57,7 @@ func defaultExposePorts() []clabernetesapisv1alpha1.NodeExposedPort {
 func defaultAppProtocol(destinationPort int, protocol string) string {
 	for _, definition := range defaultManagementPorts() {
 		if definition.DestinationPort == destinationPort &&
-			definition.Protocol == strings.ToUpper(protocol) {
+			strings.EqualFold(definition.Protocol, protocol) {
 			return definition.AppProtocol
 		}
 	}

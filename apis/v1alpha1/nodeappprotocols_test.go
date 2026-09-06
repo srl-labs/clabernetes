@@ -4,6 +4,7 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"strings"
 	"testing"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -28,6 +29,9 @@ func nodeAppProtocolsSchema(t *testing.T) apiextensionsv1.JSONSchemaProps {
 	if !exists {
 		t.Fatal("node crd spec has no appProtocols property")
 	}
+	if appProtocols.Items == nil || appProtocols.Items.Schema == nil {
+		t.Fatal("appProtocols schema has no item schema")
+	}
 
 	return appProtocols
 }
@@ -43,9 +47,10 @@ func TestNodeAppProtocolsSchema(t *testing.T) {
 			schema.XListMapKeys,
 		)
 	}
-	if schema.Items == nil || schema.Items.Schema == nil {
-		t.Fatal("appProtocols schema has no item schema")
-	}
+}
+
+func TestNodeAppProtocolsPortPattern(t *testing.T) {
+	schema := nodeAppProtocolsSchema(t)
 
 	port := schema.Items.Schema.Properties["port"]
 	portPattern := regexp.MustCompile(port.Pattern)
@@ -61,11 +66,17 @@ func TestNodeAppProtocolsSchema(t *testing.T) {
 			t.Errorf("port %q should be rejected", rejected)
 		}
 	}
+}
+
+func TestNodeAppProtocolsPattern(t *testing.T) {
+	schema := nodeAppProtocolsSchema(t)
 
 	appProtocol := schema.Items.Schema.Properties["appProtocol"]
 	appProtocolPattern := regexp.MustCompile(appProtocol.Pattern)
 	for _, accepted := range []string{
 		"", "http", "netconf-ssh", "c9s.run/gnmi", "kubernetes.io/h2c", "example.com/Custom_1",
+		strings.Repeat("a", 63),
+		strings.Repeat("a", 253) + "/" + strings.Repeat("b", 63),
 	} {
 		if !appProtocolPattern.MatchString(accepted) {
 			t.Errorf("appProtocol %q should be accepted", accepted)
@@ -74,18 +85,19 @@ func TestNodeAppProtocolsSchema(t *testing.T) {
 	for _, rejected := range []string{
 		"/http", "example.com/", "Example.com/http", "example_com/http", "example.com/-http",
 		"example.com/http/extra", "contains whitespace",
+		strings.Repeat("a", 64),
+		"example.com/" + strings.Repeat("a", 64),
+		strings.Repeat("a", 254) + "/http",
 	} {
 		if appProtocolPattern.MatchString(rejected) {
 			t.Errorf("appProtocol %q should be rejected", rejected)
 		}
 	}
 
-	if appProtocol.MaxLength == nil || *appProtocol.MaxLength != 317 ||
-		len(appProtocol.XValidations) == 0 {
+	if appProtocol.MaxLength == nil || *appProtocol.MaxLength != 317 {
 		t.Fatalf(
-			"appProtocol bounds = maxLength %v validations %v, want qualified-name bounds",
+			"appProtocol maxLength = %v, want 317",
 			appProtocol.MaxLength,
-			appProtocol.XValidations,
 		)
 	}
 }

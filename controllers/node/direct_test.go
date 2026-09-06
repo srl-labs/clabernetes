@@ -1905,7 +1905,10 @@ func TestCompileDirectExposedPortsKeepsAutoExposeParity(t *testing.T) {
 		t.Fatalf("explicit ClusterIP expose Service = %#v", service)
 	}
 	if service.Spec.Ports[0].AppProtocol == nil || *service.Spec.Ports[0].AppProtocol != "ssh" {
-		t.Fatalf("explicit default port application protocol = %#v, want ssh", service.Spec.Ports[0])
+		t.Fatalf(
+			"explicit default port application protocol = %#v, want ssh",
+			service.Spec.Ports[0],
+		)
 	}
 }
 

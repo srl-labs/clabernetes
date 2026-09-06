@@ -142,18 +142,6 @@ func TestCompileContainerlabFlattening(t *testing.T) {
 		t.Fatalf("expected normalized node ports %v, got %v", expectedPorts, srl1.Ports)
 	}
 
-	expectedAppProtocols := []clabernetesapisv1alpha1.NodeAppProtocol{
-		{Port: "57400/tcp", AppProtocol: "kubernetes.io/h2c"},
-		{Port: "443/tcp", AppProtocol: "https"},
-	}
-	if !reflect.DeepEqual(compiled.AppProtocols["srl1"], expectedAppProtocols) {
-		t.Fatalf(
-			"expected application protocols %v, got %v",
-			expectedAppProtocols,
-			compiled.AppProtocols["srl1"],
-		)
-	}
-
 	multitool := compiled.Nodes["multitool"]
 	if multitool == nil {
 		t.Fatal("expected compiled node multitool")
@@ -472,6 +460,22 @@ topology:
 	}
 }
 
+func TestCompileContainerlabAppProtocols(t *testing.T) {
+	compiled := compileFlattenTest(t)
+
+	expectedAppProtocols := []clabernetesapisv1alpha1.NodeAppProtocol{
+		{Port: "57400/tcp", AppProtocol: "kubernetes.io/h2c"},
+		{Port: "443/tcp", AppProtocol: "https"},
+	}
+	if !reflect.DeepEqual(compiled.AppProtocols["srl1"], expectedAppProtocols) {
+		t.Fatalf(
+			"expected application protocols %v, got %v",
+			expectedAppProtocols,
+			compiled.AppProtocols["srl1"],
+		)
+	}
+}
+
 func TestCompileContainerlabAppProtocolsLabelInheritance(t *testing.T) {
 	compiled, err := compileDefinition(t, `
 name: inherited-app-protocols
@@ -525,7 +529,11 @@ topology:
 			t.Fatalf("expected compiled node %q", nodeName)
 		}
 		if len(node.Ports) != 0 {
-			t.Errorf("node %q application-protocol directive selected ports %v", nodeName, node.Ports)
+			t.Errorf(
+				"node %q application-protocol directive selected ports %v",
+				nodeName,
+				node.Ports,
+			)
 		}
 		if _, exists := node.Labels[clabernetesconstants.LabelAppProtocols]; exists {
 			t.Errorf("node %q retained appProtocols directive in labels: %v", nodeName, node.Labels)

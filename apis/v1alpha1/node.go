@@ -104,9 +104,9 @@ type NodeAppProtocol struct {
 	Port string `json:"port"`
 	// AppProtocol is a Kubernetes qualified name used as ServicePort.appProtocol. An empty value
 	// explicitly suppresses any built-in hint for this port.
+	// The pattern bounds the optional DNS prefix to 253 characters and the name to 63.
 	// +kubebuilder:validation:MaxLength=317
-	// +kubebuilder:validation:Pattern=`^$|^([a-z0-9]([-a-z0-9.]*[a-z0-9])?/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$`
-	// +kubebuilder:validation:XValidation:rule="self == '' || (!self.contains('/') && self.size() <= 63) || (self.contains('/') && self.split('/').size() == 2 && self.split('/')[0].size() <= 253 && self.split('/')[1].size() <= 63)",message="appProtocol must be empty or a Kubernetes qualified name with a DNS prefix up to 253 characters and name up to 63 characters"
+	// +kubebuilder:validation:Pattern=`^$|^([a-z0-9]([-a-z0-9.]{0,251}[a-z0-9])?/)?(([A-Za-z0-9][-A-Za-z0-9_.]{0,61})?[A-Za-z0-9])$`
 	AppProtocol string `json:"appProtocol"`
 }
 
