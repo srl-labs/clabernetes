@@ -66,6 +66,10 @@ func compileContainerlabDefinition(
 			map[string]*clabernetesutilcontainerlab.NodeDefinition,
 			len(containerlabConfig.Topology.Nodes),
 		),
+		AppProtocols: make(
+			map[string][]clabernetesapisv1alpha1.NodeAppProtocol,
+			len(containerlabConfig.Topology.Nodes),
+		),
 		Mgmt: containerlabConfig.Mgmt,
 	}
 
@@ -87,6 +91,10 @@ func compileContainerlabDefinition(
 
 		normalizeNodePorts(diagnostics, nodeName, compiled.Nodes[nodeName])
 		consumeExposePortsLabel(diagnostics, nodeName, compiled.Nodes[nodeName])
+		appProtocols := consumeAppProtocolsLabel(diagnostics, nodeName, compiled.Nodes[nodeName])
+		if len(appProtocols) != 0 {
+			compiled.AppProtocols[nodeName] = appProtocols
+		}
 		dropUnusableNodeLabels(diagnostics, nodeName, compiled.Nodes[nodeName])
 	}
 
@@ -608,6 +616,117 @@ func canonicalPortDefinition(port *clabernetesutilcontainerlab.TypedPort) string
 		port.DestinationPort,
 		strings.ToLower(port.Protocol),
 	)
+}
+
+// consumeAppProtocolsLabel translates c9s' portable application-protocol directive into Node
+// intent after containerlab label inheritance has selected its effective value. The label is
+// consumed even when invalid so it can never leak into Kubernetes metadata.
+func consumeAppProtocolsLabel(
+	diagnostics *compileDiagnostics,
+	nodeName string,
+	nodeDefinition *clabernetesutilcontainerlab.NodeDefinition,
+) []clabernetesapisv1alpha1.NodeAppProtocol {
+	value, ok := nodeDefinition.Labels[clabernetesconstants.LabelAppProtocols]
+	if !ok {
+		return nil
+	}
+
+	delete(nodeDefinition.Labels, clabernetesconstants.LabelAppProtocols)
+
+	entries := strings.Split(value, ",")
+	appProtocols := make([]clabernetesapisv1alpha1.NodeAppProtocol, 0, len(entries))
+	seenPorts := make(map[string]bool, len(entries))
+
+	for idx, rawEntry := range entries {
+		entry := strings.TrimSpace(rawEntry)
+		portDefinition, appProtocol, hasSeparator := strings.Cut(entry, "=")
+		if !hasSeparator {
+			addInvalidAppProtocolsLabelDiagnostic(
+				diagnostics,
+				nodeName,
+				idx,
+				entry,
+				"expected <port-definition>=<appProtocol>",
+			)
+
+			continue
+		}
+
+		portDefinition = strings.TrimSpace(portDefinition)
+		appProtocol = strings.TrimSpace(appProtocol)
+
+		typedPort, err := clabernetesutilcontainerlab.ProcessPortDefinition(portDefinition)
+		if err != nil {
+			addInvalidAppProtocolsLabelDiagnostic(
+				diagnostics,
+				nodeName,
+				idx,
+				entry,
+				err.Error(),
+			)
+
+			continue
+		}
+
+		canonicalPort := canonicalPortDefinition(typedPort)
+		if seenPorts[canonicalPort] {
+			addInvalidAppProtocolsLabelDiagnostic(
+				diagnostics,
+				nodeName,
+				idx,
+				entry,
+				fmt.Sprintf("destination port %q is duplicated after normalization", canonicalPort),
+			)
+
+			continue
+		}
+
+		seenPorts[canonicalPort] = true
+
+		if problems := k8svalidation.IsQualifiedName(appProtocol); appProtocol != "" &&
+			len(problems) != 0 {
+			addInvalidAppProtocolsLabelDiagnostic(
+				diagnostics,
+				nodeName,
+				idx,
+				entry,
+				strings.Join(problems, "; "),
+			)
+
+			continue
+		}
+
+		appProtocols = append(appProtocols, clabernetesapisv1alpha1.NodeAppProtocol{
+			Port:        canonicalPort,
+			AppProtocol: appProtocol,
+		})
+	}
+
+	return appProtocols
+}
+
+func addInvalidAppProtocolsLabelDiagnostic(
+	diagnostics *compileDiagnostics,
+	nodeName string,
+	entryIndex int,
+	entry,
+	reason string,
+) {
+	diagnostics.add(Diagnostic{
+		Code: "invalid-app-protocols-label",
+		Path: fmt.Sprintf(
+			"topology.nodes.%s.labels.%s[%d]",
+			nodeName,
+			clabernetesconstants.LabelAppProtocols,
+			entryIndex,
+		),
+		Message: fmt.Sprintf(
+			"node %q application protocols label entry %q is invalid: %s",
+			nodeName,
+			entry,
+			reason,
+		),
+	})
 }
 
 // dropUnusableNodeLabels records containerlab node labels that cannot be carried onto the emitted

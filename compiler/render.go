@@ -96,6 +96,7 @@ func RenderNodes(
 			Spec: clabernetesapisv1alpha1.NodeSpec{
 				NodeDefinition: *nodeDefinition.DeepCopy(),
 				ProfileRef:     &k8scorev1.LocalObjectReference{Name: profileName},
+				AppProtocols:   slices.Clone(compiled.AppProtocols[nodeName]),
 				FilesFromConfigMap: slices.Clone(
 					topology.Spec.Deployment.FilesFromConfigMap[sourceName],
 				),

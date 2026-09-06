@@ -171,8 +171,9 @@ func (r *ServiceReconciler) RenderExposeService(
 			Name: fmt.Sprintf(
 				"port-%d-%s", port.DestinationPort, strings.ToLower(port.Protocol),
 			),
-			Protocol: k8scorev1.Protocol(port.Protocol),
-			Port:     int32(port.DestinationPort), //nolint:gosec
+			Protocol:    k8scorev1.Protocol(port.Protocol),
+			AppProtocol: resolvedAppProtocol(node, port),
+			Port:        int32(port.DestinationPort), //nolint:gosec
 			TargetPort: intstr.IntOrString{
 				IntVal: int32(port.ExposePort), //nolint:gosec
 			},
@@ -254,6 +255,10 @@ func (r *ServiceReconciler) Conforms( //nolint:gocyclo
 			}
 
 			if !reflect.DeepEqual(expectedPort.TargetPort, actualPort.TargetPort) {
+				break
+			}
+
+			if !reflect.DeepEqual(expectedPort.AppProtocol, actualPort.AppProtocol) {
 				break
 			}
 

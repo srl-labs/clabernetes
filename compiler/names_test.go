@@ -21,7 +21,9 @@ topology:
     kind: linux
     image: alpine:3
   nodes:
-    R1: {}
+    R1:
+      labels:
+        c9s.run/appProtocols: "57400/TCP=kubernetes.io/h2c"
     Client_2: {}
     R1-console:
       network-mode: container:R1
@@ -59,6 +61,13 @@ func TestCompileSanitizesNodeNamesKubernetesCannotCarry(t *testing.T) {
 
 	if got := compiled.Nodes["r1-console"].NetworkMode; got != "container:r1" {
 		t.Fatalf("r1-console network-mode = %q, want container:r1", got)
+	}
+
+	if got, want := compiled.AppProtocols["r1"],
+		[]clabernetesapisv1alpha1.NodeAppProtocol{{
+			Port: "57400/tcp", AppProtocol: "kubernetes.io/h2c",
+		}}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("r1 application protocols = %v, want %v", got, want)
 	}
 
 	expectedLinks := []clabernetescompiler.CompiledLink{
@@ -161,6 +170,13 @@ func TestRenderFollowsSanitizedNodeNames(t *testing.T) {
 
 	if rendered.Spec.ProfileRef == nil || rendered.Spec.ProfileRef.Name != "name-test-r1" {
 		t.Fatalf("r1 profile ref = %+v, want the dedicated profile", rendered.Spec.ProfileRef)
+	}
+
+	if got, want := rendered.Spec.AppProtocols,
+		[]clabernetesapisv1alpha1.NodeAppProtocol{{
+			Port: "57400/tcp", AppProtocol: "kubernetes.io/h2c",
+		}}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("r1 application protocols = %v, want %v", got, want)
 	}
 
 	assertSanitizedProfiles(t, clabernetescompiler.RenderNodeProfiles(
