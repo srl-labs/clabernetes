@@ -50,6 +50,11 @@ const (
 	// c9s should expose. The topology compiler consumes it into Node.spec.ports; it must never be
 	// copied onto Kubernetes object metadata like an ordinary containerlab label.
 	LabelExposePorts = LabelPrefix + "/exposePorts"
+
+	// LabelAppProtocols is a definition-only containerlab label that declares per-destination-port
+	// Service application-protocol hints. The topology compiler consumes it into
+	// Node.spec.appProtocols; it must never become Kubernetes object metadata.
+	LabelAppProtocols = LabelPrefix + "/appProtocols"
 )
 
 const (

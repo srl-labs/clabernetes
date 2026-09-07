@@ -87,6 +87,33 @@ type NodeSpec struct {
 	// +listType=atomic
 	// +optional
 	FilesFromURL []FileFromURL `json:"filesFromURL,omitempty" yaml:"-"`
+	// AppProtocols holds application-protocol hints for selected expose Service destination ports.
+	// Entries replace built-in hints by canonical port and transport; an empty AppProtocol
+	// explicitly suppresses the hint. These entries do not select ports or affect device planning.
+	// +listType=map
+	// +listMapKey=port
+	// +optional
+	AppProtocols []NodeAppProtocol `json:"appProtocols,omitempty" yaml:"-"`
+}
+
+// NodeAppProtocolName is a Kubernetes qualified name or an empty suppression value.
+// The alias keeps Go string compatibility while letting the generator combine the prefix and
+// name length bounds with the DNS-label pattern on NodeAppProtocol.AppProtocol.
+// +kubebuilder:validation:MaxLength=317
+// +kubebuilder:validation:Pattern=`^$|^([a-z0-9]([-a-z0-9.]{0,251}[a-z0-9])?/)?(([A-Za-z0-9][-A-Za-z0-9_.]{0,61})?[A-Za-z0-9])$`
+type NodeAppProtocolName = string
+
+// NodeAppProtocol holds the application-protocol intent for one expose Service destination port.
+type NodeAppProtocol struct {
+	// Port is the destination port and transport in canonical "<number>/tcp" or "<number>/udp"
+	// form. The port number must be between 1 and 65535.
+	// +kubebuilder:validation:Pattern=`^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])/(tcp|udp)$`
+	Port string `json:"port"`
+	// AppProtocol is a Kubernetes qualified name used as ServicePort.appProtocol. An empty value
+	// explicitly suppresses any built-in hint for this port.
+	// The DNS prefix is limited to 253 characters and the name to 63.
+	// +kubebuilder:validation:Pattern=`^$|^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]{0,61})?[A-Za-z0-9])$`
+	AppProtocol NodeAppProtocolName `json:"appProtocol"`
 }
 
 // NodeStatus is the status for a Node resource. Everything in here is an *allocation* or an

@@ -133,6 +133,10 @@ type CompiledTopology struct {
 	Kind string
 	// Nodes maps (containerlab) node name to its flattened node definition.
 	Nodes map[string]*clabernetesutilcontainerlab.NodeDefinition
+	// AppProtocols maps node names to c9s-specific application-protocol intent consumed from the
+	// flattened containerlab labels. It stays outside Nodes so NodeDefinition remains containerlab
+	// vocabulary.
+	AppProtocols map[string][]clabernetesapisv1alpha1.NodeAppProtocol
 	// Links holds the wires of the topology.
 	Links []CompiledLink
 	// Mgmt holds the containerlab management network settings (if any).

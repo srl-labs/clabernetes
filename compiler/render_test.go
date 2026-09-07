@@ -304,6 +304,53 @@ topology:
 	t.Fatalf("expected a 9273 entry in rendered Node ports, got %+v", nodes[0].Spec.Ports)
 }
 
+func TestTopologyAppProtocolsReachNodeIntentWithoutSelectingPorts(t *testing.T) {
+	topology := &clabernetesapisv1alpha1.Topology{}
+	topology.Name = "app-protocols-test"
+	topology.Namespace = "clabernetes"
+	topology.Spec.Definition.Containerlab = `
+name: app-protocols-test
+topology:
+  nodes:
+    device:
+      kind: linux
+      image: alpine
+      labels:
+        c9s.run/appProtocols: "57400/TCP=kubernetes.io/h2c,443/tcp="
+`
+
+	compiled, err := clabernetescompiler.CompileTopology(
+		&claberneteslogging.FakeInstance{},
+		topology,
+	)
+	if err != nil {
+		t.Fatalf("unexpected error compiling topology: %s", err)
+	}
+
+	nodes := clabernetescompiler.RenderNodes(
+		topology,
+		compiled,
+		clabernetesconfig.GetFakeManager,
+	)
+	if len(nodes) != 1 {
+		t.Fatalf("expected one rendered node, got %d", len(nodes))
+	}
+
+	want := []clabernetesapisv1alpha1.NodeAppProtocol{
+		{Port: "57400/tcp", AppProtocol: "kubernetes.io/h2c"},
+		{Port: "443/tcp", AppProtocol: ""},
+	}
+	if !reflect.DeepEqual(nodes[0].Spec.AppProtocols, want) {
+		t.Fatalf("rendered application protocols = %v, want %v", nodes[0].Spec.AppProtocols, want)
+	}
+	if len(nodes[0].Spec.Ports) != 0 {
+		t.Fatalf("application-protocol directive selected ports %v", nodes[0].Spec.Ports)
+	}
+	if _, exists := nodes[0].Labels[clabernetesconstants.LabelAppProtocols]; exists {
+		t.Fatalf("appProtocols directive leaked into rendered Node labels: %v", nodes[0].Labels)
+	}
+}
+
 // TestRenderNodesCarriesContainerlabLabels pins where containerlab node labels end up: the Node's
 // metadata, which is where kubernetes labels belong and what carries them on to the device
 // deployment and its pods. There is deliberately no spec.labels for them to live in.

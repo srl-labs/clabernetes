@@ -4,6 +4,7 @@ package node //nolint:testpackage // tests exercise unexported reconciliation he
 import (
 	"context"
 	"errors"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -350,6 +351,95 @@ func TestRenderDirectExposeServiceTypes(t *testing.T) {
 	}
 }
 
+func TestRenderExposeServiceResolvesApplicationProtocols(t *testing.T) {
+	t.Parallel()
+
+	node := nodeReconcileTestNode()
+	node.Spec.AppProtocols = []clabernetesapisv1alpha1.NodeAppProtocol{
+		{Port: "443/tcp", AppProtocol: ""},
+		{Port: "9339/tcp", AppProtocol: "https"},
+		{Port: "57400/tcp", AppProtocol: "kubernetes.io/h2c"},
+		{Port: "9273/tcp", AppProtocol: "example.com/metrics"},
+		// An override is descriptive only and must not select this otherwise absent port.
+		{Port: "12345/tcp", AppProtocol: "example.com/unused"},
+	}
+	exposedPorts := &clabernetesapisv1alpha1.NodeExposedPorts{
+		Ports: []clabernetesapisv1alpha1.NodeExposedPort{
+			{DestinationPort: 22, ExposePort: 22, Protocol: "TCP"},
+			{DestinationPort: 443, ExposePort: 443, Protocol: "TCP"},
+			{DestinationPort: 9339, ExposePort: 9339, Protocol: "TCP"},
+			{DestinationPort: 57400, ExposePort: 57400, Protocol: "TCP"},
+			{DestinationPort: 9273, ExposePort: 9273, Protocol: "TCP"},
+			{DestinationPort: 9999, ExposePort: 9999, Protocol: "UDP"},
+		},
+	}
+
+	service := NewServiceReconciler(
+		&claberneteslogging.FakeInstance{},
+		clabernetesconfig.GetFakeManager,
+	).RenderExposeService(node, node.GetName(), &ResolvedProfile{}, exposedPorts)
+	if service == nil {
+		t.Fatal("expected expose Service")
+	}
+
+	want := map[int32]string{
+		22:    "ssh",
+		443:   "",
+		9339:  "https",
+		57400: "kubernetes.io/h2c",
+		9273:  "example.com/metrics",
+		9999:  "",
+	}
+	if len(service.Spec.Ports) != len(want) {
+		t.Fatalf("Service ports = %#v, want %d entries", service.Spec.Ports, len(want))
+	}
+
+	for _, port := range service.Spec.Ports {
+		got := ""
+		if port.AppProtocol != nil {
+			got = *port.AppProtocol
+		}
+		if got != want[port.Port] {
+			t.Errorf("port %d appProtocol = %q, want %q", port.Port, got, want[port.Port])
+		}
+	}
+}
+
+func TestDefaultManagementPortsCarryExactApplicationProtocols(t *testing.T) {
+	t.Parallel()
+
+	want := []managementPortDefinition{
+		{DestinationPort: 21, Protocol: "TCP", AppProtocol: "ftp"},
+		{DestinationPort: 22, Protocol: "TCP", AppProtocol: "ssh"},
+		{DestinationPort: 23, Protocol: "TCP", AppProtocol: "telnet"},
+		{DestinationPort: 80, Protocol: "TCP", AppProtocol: "http"},
+		{DestinationPort: 443, Protocol: "TCP", AppProtocol: "https"},
+		{DestinationPort: 830, Protocol: "TCP", AppProtocol: "netconf-ssh"},
+		{DestinationPort: 5000, Protocol: "TCP", AppProtocol: "telnet"},
+		{DestinationPort: 5900, Protocol: "TCP", AppProtocol: "rfb"},
+		{DestinationPort: 6030, Protocol: "TCP", AppProtocol: "c9s.run/gnmi"},
+		{DestinationPort: 9339, Protocol: "TCP", AppProtocol: "c9s.run/gnmi"},
+		{DestinationPort: 9340, Protocol: "TCP", AppProtocol: "c9s.run/gribi"},
+		{DestinationPort: 9559, Protocol: "TCP", AppProtocol: "c9s.run/p4runtime"},
+		{DestinationPort: 57400, Protocol: "TCP", AppProtocol: "c9s.run/gnmi"},
+		{DestinationPort: 161, Protocol: "UDP", AppProtocol: "snmp"},
+	}
+	if got := defaultManagementPorts(); !reflect.DeepEqual(got, want) {
+		t.Fatalf("default management ports = %#v, want %#v", got, want)
+	}
+
+	exposed := defaultExposePorts()
+	if len(exposed) != len(want) {
+		t.Fatalf("default exposed ports = %#v, want %d entries", exposed, len(want))
+	}
+	for idx, port := range exposed {
+		if port.DestinationPort != want[idx].DestinationPort ||
+			port.Protocol != want[idx].Protocol {
+			t.Fatalf("default exposed port %d = %#v, want %#v", idx, port, want[idx])
+		}
+	}
+}
+
 func TestNoneExposurePrunesOnlyExposeService(t *testing.T) {
 	t.Parallel()
 
@@ -560,6 +650,87 @@ func TestPrepareServiceForUpdatePreservesNodePorts(t *testing.T) {
 	if rendered.Spec.Ports[0].NodePort != 30_022 {
 		t.Fatalf("expected allocated node port preserved, got %+v", rendered.Spec.Ports[0])
 	}
+}
+
+func TestReconcileExposeServiceUpdatesApplicationProtocolAndPreservesNodePort(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	scheme := nodeReconcileTestScheme(t)
+	node := nodeReconcileTestNode()
+	exposedPorts := &clabernetesapisv1alpha1.NodeExposedPorts{
+		Ports: []clabernetesapisv1alpha1.NodeExposedPort{{
+			DestinationPort: 57400,
+			ExposePort:      57400,
+			Protocol:        "TCP",
+		}},
+	}
+	serviceReconciler := NewServiceReconciler(
+		&claberneteslogging.FakeInstance{},
+		clabernetesconfig.GetFakeManager,
+	)
+	existing := serviceReconciler.RenderExposeService(
+		node,
+		node.GetName(),
+		&ResolvedProfile{},
+		exposedPorts,
+	)
+	existing.Spec.Ports[0].AppProtocol = nil
+	existing.Spec.Ports[0].NodePort = 30_574
+	existing.Spec.ClusterIP = "10.96.0.20"
+	existing.Spec.ClusterIPs = []string{"10.96.0.20"}
+	existing.OwnerReferences = []metav1.OwnerReference{{UID: node.GetUID()}}
+
+	client := ctrlruntimefake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(node, existing).
+		Build()
+	reconciler := &Reconciler{
+		Log:               &claberneteslogging.FakeInstance{},
+		Client:            client,
+		ServiceReconciler: serviceReconciler,
+	}
+
+	assertReconciled := func(want *string) {
+		t.Helper()
+
+		rendered := serviceReconciler.RenderExposeService(
+			node,
+			node.GetName(),
+			&ResolvedProfile{},
+			exposedPorts,
+		)
+		if _, err := reconciler.reconcileRenderedExposeService(ctx, node, rendered); err != nil {
+			t.Fatalf("reconciling expose Service: %s", err)
+		}
+
+		actual := &k8scorev1.Service{}
+		if err := client.Get(ctx, ctrlruntimeclient.ObjectKeyFromObject(existing), actual); err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(actual.Spec.Ports[0].AppProtocol, want) {
+			t.Fatalf(
+				"reconciled appProtocol = %v, want %v",
+				actual.Spec.Ports[0].AppProtocol,
+				want,
+			)
+		}
+		if actual.Spec.Ports[0].NodePort != 30_574 {
+			t.Fatalf("reconciled Service lost NodePort: %#v", actual.Spec.Ports[0])
+		}
+	}
+
+	defaultProtocol := "c9s.run/gnmi"
+	assertReconciled(&defaultProtocol)
+
+	node.Spec.AppProtocols = []clabernetesapisv1alpha1.NodeAppProtocol{{
+		Port: "57400/tcp", AppProtocol: "kubernetes.io/h2c",
+	}}
+	overriddenProtocol := "kubernetes.io/h2c"
+	assertReconciled(&overriddenProtocol)
+
+	node.Spec.AppProtocols[0].AppProtocol = ""
+	assertReconciled(nil)
 }
 
 func TestResolveGroupProfileReferenceInheritsPrimary(t *testing.T) {

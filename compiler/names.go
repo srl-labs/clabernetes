@@ -56,6 +56,23 @@ func sanitizeCompiledNodeNames(
 
 	compiled.Nodes = nodes
 	compiled.NodeNameSources = sources
+	if len(compiled.AppProtocols) != 0 {
+		appProtocols := make(
+			map[string][]clabernetesapisv1alpha1.NodeAppProtocol,
+			len(compiled.AppProtocols),
+		)
+
+		for nodeName, entries := range compiled.AppProtocols {
+			compiledName, renamed := renames[nodeName]
+			if !renamed {
+				compiledName = nodeName
+			}
+
+			appProtocols[compiledName] = entries
+		}
+
+		compiled.AppProtocols = appProtocols
+	}
 
 	for _, nodeDefinition := range compiled.Nodes {
 		renameNetworkModePrimary(nodeDefinition, renames)

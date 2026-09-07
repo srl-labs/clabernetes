@@ -176,22 +176,122 @@ two-sided entries to their destination port.
 
 **Auto-exposed ports (when disabled, these are NOT exposed):**
 
-| Port | Protocol | Service |
-| ------ | ---------- | --------- |
-| 21 | TCP | FTP |
-| 22 | TCP | SSH |
-| 23 | TCP | Telnet |
-| 80 | TCP | HTTP |
-| 161 | UDP | SNMP |
-| 443 | TCP | HTTPS |
-| 830 | TCP | NETCONF over SSH |
-| 5000 | TCP | vrnetlab QEMU telnet |
-| 5900 | TCP | VNC |
-| 6030 | TCP | gNMI (Arista default) |
-| 9339 | TCP | gNMI/gNOI |
-| 9340 | TCP | gRIBI |
-| 9559 | TCP | P4RT |
-| 57400 | TCP | gNMI (Nokia default) |
+| Port | Protocol | Service | Default `appProtocol` |
+| ------ | ---------- | --------- | --------- |
+| 21 | TCP | FTP | `ftp` |
+| 22 | TCP | SSH | `ssh` |
+| 23 | TCP | Telnet | `telnet` |
+| 80 | TCP | HTTP | `http` |
+| 161 | UDP | SNMP | `snmp` |
+| 443 | TCP | HTTPS | `https` |
+| 830 | TCP | NETCONF over SSH | `netconf-ssh` |
+| 5000 | TCP | vrnetlab QEMU telnet | `telnet` |
+| 5900 | TCP | VNC | `rfb` |
+| 6030 | TCP | gNMI (Arista default) | `c9s.run/gnmi` |
+| 9339 | TCP | gNMI/gNOI | `c9s.run/gnmi` |
+| 9340 | TCP | gRIBI | `c9s.run/gribi` |
+| 9559 | TCP | P4RT | `c9s.run/p4runtime` |
+| 57400 | TCP | gNMI (Nokia default) | `c9s.run/gnmi` |
+
+## Application-protocol hints
+
+Each expose Service port can carry `spec.ports[].appProtocol` to identify the application using
+that endpoint. The defaults in the table above are matched by destination port and transport,
+including when an explicit Node port or image metadata selects the port. Unknown ports omit the
+hint unless you supply an override. Fabric, alias, and management-mesh Services do not receive
+these hints.
+
+These values describe the endpoint; c9s does not change the device configuration, transport,
+routing, or exposed port set. Kubernetes mirrors the hint to the corresponding EndpointSlices.
+Controllers that understand an application protocol may use it to configure protocol-specific
+behavior; see the [Kubernetes application-protocol documentation](https://kubernetes.io/docs/concepts/services-networking/service/#application-protocol).
+
+Port 5000/TCP is identified as `telnet` because it serves the vrnetlab QEMU console. Port 22/TCP
+remains `ssh`, including SSH File Transfer Protocol (SFTP) sessions carried as an SSH subsystem.
+RDP and a separate SFTP endpoint are not part of the automatic port set.
+
+### Direct Node overrides
+
+Set `spec.appProtocols` on a Node to replace or suppress a hint:
+
+```yaml
+apiVersion: c9s.run/v1alpha1
+kind: Node
+metadata:
+  name: srl1
+spec:
+  kind: nokia_srlinux
+  image: ghcr.io/nokia/srlinux:latest
+  appProtocols:
+    - port: 57400/tcp
+      appProtocol: kubernetes.io/h2c
+    - port: 443/tcp
+      appProtocol: ""
+```
+
+This example describes gNMI configured for cleartext HTTP/2 and suppresses the HTTPS hint on port
+443. Each entry requires both fields. `port` must be a canonical destination key from `1/tcp` to
+`65535/tcp`, or the equivalent lowercase `udp` form; host bindings, ranges, and duplicate keys are
+rejected. A non-empty `appProtocol` replaces the default. An empty string omits the Service field,
+while removing the entry restores any built-in default.
+
+An override does not select a port for exposure. Use `spec.ports` or `c9s.run/exposePorts` to select
+an additional port, and keep exposure policy on the NodeProfile. c9s reconciles added, changed,
+and suppressed hints on existing expose Services while preserving allocated NodePorts.
+
+### Topology overrides and inheritance
+
+Use the reserved `c9s.run/appProtocols` label in a Containerlab definition:
+
+```yaml
+topology:
+  defaults:
+    kind: nokia_srlinux
+    image: ghcr.io/nokia/srlinux:latest
+    labels:
+      c9s.run/appProtocols: "57400/TCP=kubernetes.io/h2c,443/tcp=https"
+  nodes:
+    srl1: {}
+    srl2:
+      labels:
+        c9s.run/appProtocols: "57400/tcp="
+```
+
+The comma-separated entries use `<port-definition>=<appProtocol>`. The source syntax accepts
+uppercase transport and an omitted transport (TCP), then normalizes keys to the Node API form.
+An empty right-hand side suppresses the hint. Empty entries, missing `=`, malformed ports,
+invalid non-empty names, and duplicate keys after normalization fail compilation with a diagnostic
+identifying the Node and entry.
+
+The directive inherits through defaults, kinds, groups, and Node labels using normal Containerlab
+label precedence. A more specific directive replaces the entire inherited value. In this example,
+`srl2` suppresses the gNMI hint and retains the built-in `https` hint on 443; it does not inherit the
+other entries from the defaults label.
+
+The topology compiler and `clabverter --emitCRs` consume this label into `Node.spec.appProtocols`
+and remove it from emitted metadata. It adds no `spec.ports` entries and does not override
+`disableAutoExpose` or `exposeType`. Local Containerlab treats it as an inert label.
+
+### Protocol names and TLS
+
+Non-empty values must follow Kubernetes qualified-name syntax: a name of at most 63 characters,
+optionally preceded by a lowercase DNS subdomain of at most 253 characters and `/`. The name
+starts and ends with an alphanumeric character and may contain `-`, `_`, and `.` internally.
+DNS labels must be non-empty, use lowercase alphanumerics and hyphens, and start and end with an
+alphanumeric character.
+
+Unprefixed values are reserved for [IANA service names](https://www.iana.org/assignments/service-names-port-numbers/),
+such as `ssh`, `http`, and `netconf-ssh`. Custom names require a DNS prefix, for example
+`example.com/metrics`. c9s validates the syntax of user values but does not check their IANA
+registration. Kubernetes-defined names such as `kubernetes.io/h2c` retain their defined meaning.
+
+The default device gRPC hints (`c9s.run/gnmi`, `c9s.run/gribi`, and `c9s.run/p4runtime`) describe the
+application without requesting generic HTTP or HTTPS handling. When device certificates or mutual
+TLS must reach the client unchanged, configure any ingress or service mesh for TLS pass-through;
+the hint alone does not enforce this. Select `kubernetes.io/h2c` only when the device endpoint is
+configured for cleartext HTTP/2. Select `https` on a gRPC port only when the endpoint uses TLS and
+termination by an intermediary is acceptable. These overrides describe an existing device setup;
+they do not enable or disable TLS on the device.
 
 ## Service Types
 

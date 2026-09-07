@@ -101,6 +101,39 @@ spec:
                   type: string
                 type: array
                 x-kubernetes-list-type: atomic
+              appProtocols:
+                description: |-
+                  AppProtocols holds application-protocol hints for selected expose Service destination ports.
+                  Entries replace built-in hints by canonical port and transport; an empty AppProtocol
+                  explicitly suppresses the hint. These entries do not select ports or affect device planning.
+                items:
+                  description: NodeAppProtocol holds the application-protocol intent
+                    for one expose Service destination port.
+                  properties:
+                    appProtocol:
+                      allOf:
+                      - pattern: ^$|^([a-z0-9]([-a-z0-9.]{0,251}[a-z0-9])?/)?(([A-Za-z0-9][-A-Za-z0-9_.]{0,61})?[A-Za-z0-9])$
+                      - pattern: ^$|^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]{0,61})?[A-Za-z0-9])$
+                      description: |-
+                        AppProtocol is a Kubernetes qualified name used as ServicePort.appProtocol. An empty value
+                        explicitly suppresses any built-in hint for this port.
+                        The DNS prefix is limited to 253 characters and the name to 63.
+                      maxLength: 317
+                      type: string
+                    port:
+                      description: |-
+                        Port is the destination port and transport in canonical "<number>/tcp" or "<number>/udp"
+                        form. The port number must be between 1 and 65535.
+                      pattern: ^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])/(tcp|udp)$
+                      type: string
+                  required:
+                  - appProtocol
+                  - port
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - port
+                x-kubernetes-list-type: map
               binds:
                 description: Binds is a list of bind (mount) compatible strings.
                 items:
