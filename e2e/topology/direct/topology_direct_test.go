@@ -38,6 +38,10 @@ func TestNodeLinkDirect(t *testing.T) {
 	clabernetestesthelper.KubectlCreateNamespace(t, namespace)
 
 	defer func() {
+		if t.Failed() {
+			clabernetestesthelper.DumpNamespaceDiagnostics(t, namespace)
+		}
+
 		if !*clabernetestesthelper.SkipCleanup {
 			t.Logf("deleting namespace %q used in test %q", namespace, testName)
 			clabernetestesthelper.KubectlDeleteNamespace(t, namespace)
@@ -156,6 +160,10 @@ func TestLinuxDataplaneDirect(t *testing.T) {
 	clabernetestesthelper.KubectlCreateNamespace(t, namespace)
 
 	defer func() {
+		if t.Failed() {
+			clabernetestesthelper.DumpNamespaceDiagnostics(t, namespace)
+		}
+
 		if !*clabernetestesthelper.SkipCleanup {
 			t.Logf("deleting namespace %q used in test %q", namespace, testName)
 			clabernetestesthelper.KubectlDeleteNamespace(t, namespace)
@@ -439,54 +447,28 @@ func waitForDeviceCommand(
 ) {
 	t.Helper()
 
-	deadline := time.Now().Add(directNodeReadyTimeout)
-
-	var lastOutput []byte
-
-	for time.Now().Before(deadline) {
-		arguments := append(
-			[]string{
-				"exec", "--namespace", namespace, device.podName, "-c", device.containerName,
-				"--",
-			},
-			command...,
-		)
-		cmd := exec.CommandContext(t.Context(), "kubectl", arguments...) //nolint:gosec
-
-		output, err := cmd.CombinedOutput()
-		if err == nil && strings.Contains(string(output), expect) {
-			return
-		}
-
-		lastOutput = output
-
-		time.Sleep(directPollInterval)
-	}
-
-	t.Fatalf(
-		"device %q never produced %q from %v: %s",
-		device.podName,
-		expect,
-		command,
-		strings.TrimSpace(string(lastOutput)),
+	arguments := append(
+		[]string{
+			"exec", "--namespace", namespace, device.podName, "-c", device.containerName,
+			"--",
+		},
+		command...,
 	)
+	clabernetestesthelper.KubectlWaitForOutput(t, directNodeReadyTimeout, arguments, expect)
 }
 
 func waitForDirectNodeReady(t *testing.T, namespace, nodeName string) {
 	t.Helper()
 
-	cmd := exec.CommandContext( //nolint:gosec
-		t.Context(),
-		"kubectl",
-		"wait",
-		"--for=jsonpath={.status.readiness}=ready",
-		"--timeout="+directNodeReadyTimeout.String(),
-		"--namespace",
-		namespace,
-		"node.c9s.run/"+nodeName,
+	clabernetestesthelper.KubectlWaitForOutput(
+		t,
+		directNodeReadyTimeout,
+		[]string{
+			"wait", "node.c9s.run/" + nodeName, "--namespace", namespace,
+			"--for=jsonpath={.status.readiness}=ready", "--timeout=25s",
+		},
+		"",
 	)
-
-	clabernetestesthelper.Execute(t, cmd)
 }
 
 func nodePlanDigest(t *testing.T, namespace, nodeName string) string {

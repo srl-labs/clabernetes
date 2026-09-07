@@ -32,6 +32,10 @@ func TestMultiWorkerRecoveryDirect(t *testing.T) {
 	clabernetestesthelper.KubectlCreateNamespace(t, namespace)
 
 	defer func() {
+		if t.Failed() {
+			clabernetestesthelper.DumpNamespaceDiagnostics(t, namespace)
+		}
+
 		if !*clabernetestesthelper.SkipCleanup {
 			t.Logf("deleting namespace %q used in test %q", namespace, testName)
 			clabernetestesthelper.KubectlDeleteNamespace(t, namespace)
