@@ -1775,7 +1775,7 @@ func schema_clabernetes_clabernetes_apis_v1alpha1_NodeAppProtocol(
 					},
 					"appProtocol": {
 						SchemaProps: spec.SchemaProps{
-							Description: "AppProtocol is a Kubernetes qualified name used as ServicePort.appProtocol. An empty value explicitly suppresses any built-in hint for this port. The pattern bounds the optional DNS prefix to 253 characters and the name to 63.",
+							Description: "AppProtocol is a Kubernetes qualified name used as ServicePort.appProtocol. An empty value explicitly suppresses any built-in hint for this port. The DNS prefix is limited to 253 characters and the name to 63.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",

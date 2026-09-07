@@ -96,6 +96,13 @@ type NodeSpec struct {
 	AppProtocols []NodeAppProtocol `json:"appProtocols,omitempty" yaml:"-"`
 }
 
+// NodeAppProtocolName is a Kubernetes qualified name or an empty suppression value.
+// The alias keeps Go string compatibility while letting the generator combine the prefix and
+// name length bounds with the DNS-label pattern on NodeAppProtocol.AppProtocol.
+// +kubebuilder:validation:MaxLength=317
+// +kubebuilder:validation:Pattern=`^$|^([a-z0-9]([-a-z0-9.]{0,251}[a-z0-9])?/)?(([A-Za-z0-9][-A-Za-z0-9_.]{0,61})?[A-Za-z0-9])$`
+type NodeAppProtocolName = string
+
 // NodeAppProtocol holds the application-protocol intent for one expose Service destination port.
 type NodeAppProtocol struct {
 	// Port is the destination port and transport in canonical "<number>/tcp" or "<number>/udp"
@@ -104,10 +111,9 @@ type NodeAppProtocol struct {
 	Port string `json:"port"`
 	// AppProtocol is a Kubernetes qualified name used as ServicePort.appProtocol. An empty value
 	// explicitly suppresses any built-in hint for this port.
-	// The pattern bounds the optional DNS prefix to 253 characters and the name to 63.
-	// +kubebuilder:validation:MaxLength=317
-	// +kubebuilder:validation:Pattern=`^$|^([a-z0-9]([-a-z0-9.]{0,251}[a-z0-9])?/)?(([A-Za-z0-9][-A-Za-z0-9_.]{0,61})?[A-Za-z0-9])$`
-	AppProtocol string `json:"appProtocol"`
+	// The DNS prefix is limited to 253 characters and the name to 63.
+	// +kubebuilder:validation:Pattern=`^$|^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]{0,61})?[A-Za-z0-9])$`
+	AppProtocol NodeAppProtocolName `json:"appProtocol"`
 }
 
 // NodeStatus is the status for a Node resource. Everything in here is an *allocation* or an

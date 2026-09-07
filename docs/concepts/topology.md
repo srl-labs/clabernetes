@@ -72,11 +72,34 @@ controller copies them to the device Deployment and its Pods. They inherit from 
 `kinds` like `env`, so Pods can be selected with `kubectl get pods -l owner=roman`. There is no
 `Node.spec.labels`; labels in the embedded definition are converted to Kubernetes metadata.
 Invalid Kubernetes labels and c9s-owned namespaces or identity/selector keys fail compilation
-before any resource is emitted. The one reserved source directive, `c9s.run/exposePorts`, is
-consumed into `Node.spec.ports` instead of becoming metadata. Its role is to request c9s Service
-reachability for one or more internal destination ports without using native Containerlab `ports`
-bindings, which would publish ports on the local Docker host; see
-[Service exposure](../guides/expose-configuration.md#portable-containerlab-topologies).
+before any resource is emitted. Two reserved source directives are consumed into Node intent
+instead of becoming metadata:
+
+- `c9s.run/exposePorts` becomes `Node.spec.ports`. It requests c9s Service reachability for internal
+  destination ports without using native Containerlab `ports` bindings, which would publish ports
+  on the local Docker host; see [portable topologies](../guides/expose-configuration.md#portable-containerlab-topologies).
+- `c9s.run/appProtocols` becomes `Node.spec.appProtocols`. It replaces or suppresses application
+  hints on selected expose Service ports without selecting additional ports or changing the device
+  plan.
+
+For example, a Node label can describe gNMI configured for cleartext HTTP/2 and suppress the
+default HTTPS hint:
+
+```yaml
+labels:
+  c9s.run/appProtocols: "57400/TCP=kubernetes.io/h2c,443/tcp="
+```
+
+The compiler normalizes this to entries keyed by `57400/tcp` and `443/tcp`, preserving the empty
+value as suppression. The directive inherits through defaults, kinds, groups, and Node labels;
+the more specific label replaces the entire inherited directive. Malformed entries, invalid names,
+and duplicate ports after normalization fail compilation. Neither directive is copied to Kubernetes
+metadata, and NodeProfile policy still determines exposure.
+
+See [application-protocol hints](../guides/expose-configuration.md#application-protocol-hints) for
+the complete default mapping, direct Node syntax, IANA and Kubernetes naming rules, and TLS
+pass-through guidance. Port 22 remains `ssh` when used for SSH File Transfer Protocol (SFTP);
+application hints do not configure TLS or add a separate SFTP endpoint.
 
 ## Reconciliation lifecycle
 
