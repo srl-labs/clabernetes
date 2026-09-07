@@ -121,6 +121,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/clabernetes/clabernetes/apis/v1alpha1.Node": schema_clabernetes_clabernetes_apis_v1alpha1_Node(
 			ref,
 		),
+		"github.com/clabernetes/clabernetes/apis/v1alpha1.NodeAppProtocol": schema_clabernetes_clabernetes_apis_v1alpha1_NodeAppProtocol(
+			ref,
+		),
 		"github.com/clabernetes/clabernetes/apis/v1alpha1.NodeDefinition": schema_clabernetes_clabernetes_apis_v1alpha1_NodeDefinition(
 			ref,
 		),
@@ -1753,6 +1756,38 @@ func schema_clabernetes_clabernetes_apis_v1alpha1_Node(
 	}
 }
 
+func schema_clabernetes_clabernetes_apis_v1alpha1_NodeAppProtocol(
+	ref common.ReferenceCallback,
+) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "NodeAppProtocol holds the application-protocol intent for one expose Service destination port.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"port": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Port is the destination port and transport in canonical \"<number>/tcp\" or \"<number>/udp\" form. The port number must be between 1 and 65535.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"appProtocol": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AppProtocol is a Kubernetes qualified name used as ServicePort.appProtocol. An empty value explicitly suppresses any built-in hint for this port. The DNS prefix is limited to 253 characters and the name to 63.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"port", "appProtocol"},
+			},
+		},
+	}
+}
+
 func schema_clabernetes_clabernetes_apis_v1alpha1_NodeDefinition(
 	ref common.ReferenceCallback,
 ) common.OpenAPIDefinition {
@@ -3223,11 +3258,34 @@ func schema_clabernetes_clabernetes_apis_v1alpha1_NodeSpec(
 							},
 						},
 					},
+					"appProtocols": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-map-keys": []interface{}{
+									"port",
+								},
+								"x-kubernetes-list-type": "map",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "AppProtocols holds application-protocol hints for selected expose Service destination ports. Entries replace built-in hints by canonical port and transport; an empty AppProtocol explicitly suppresses the hint. These entries do not select ports or affect device planning.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(
+											"github.com/clabernetes/clabernetes/apis/v1alpha1.NodeAppProtocol",
+										),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/clabernetes/clabernetes/apis/v1alpha1.CertificateConfig", "github.com/clabernetes/clabernetes/apis/v1alpha1.Component", "github.com/clabernetes/clabernetes/apis/v1alpha1.ConfigDispatcher", "github.com/clabernetes/clabernetes/apis/v1alpha1.DNSConfig", "github.com/clabernetes/clabernetes/apis/v1alpha1.Extras", "github.com/clabernetes/clabernetes/apis/v1alpha1.FileFromConfigMap", "github.com/clabernetes/clabernetes/apis/v1alpha1.FileFromSecret", "github.com/clabernetes/clabernetes/apis/v1alpha1.FileFromURL", "github.com/clabernetes/clabernetes/apis/v1alpha1.HealthcheckConfig", "k8s.io/api/core/v1.LocalObjectReference"},
+			"github.com/clabernetes/clabernetes/apis/v1alpha1.CertificateConfig", "github.com/clabernetes/clabernetes/apis/v1alpha1.Component", "github.com/clabernetes/clabernetes/apis/v1alpha1.ConfigDispatcher", "github.com/clabernetes/clabernetes/apis/v1alpha1.DNSConfig", "github.com/clabernetes/clabernetes/apis/v1alpha1.Extras", "github.com/clabernetes/clabernetes/apis/v1alpha1.FileFromConfigMap", "github.com/clabernetes/clabernetes/apis/v1alpha1.FileFromSecret", "github.com/clabernetes/clabernetes/apis/v1alpha1.FileFromURL", "github.com/clabernetes/clabernetes/apis/v1alpha1.HealthcheckConfig", "github.com/clabernetes/clabernetes/apis/v1alpha1.NodeAppProtocol", "k8s.io/api/core/v1.LocalObjectReference"},
 	}
 }
 

@@ -70,6 +70,7 @@ topology:
         owner: roman
         # The exposePorts directive is consumed into ports and never becomes Kubernetes metadata.
         c9s.run/exposePorts: "5201/UDP, 9273/tcp, 9273/tcp"
+        c9s.run/appProtocols: "57400/TCP=kubernetes.io/h2c, 443=https"
     multitool:
       kind: linux
   links:
@@ -454,6 +455,132 @@ topology:
 					test.expectedErrors,
 					unsupported.Diagnostics,
 				)
+			}
+		})
+	}
+}
+
+func TestCompileContainerlabAppProtocols(t *testing.T) {
+	compiled := compileFlattenTest(t)
+
+	expectedAppProtocols := []clabernetesapisv1alpha1.NodeAppProtocol{
+		{Port: "57400/tcp", AppProtocol: "kubernetes.io/h2c"},
+		{Port: "443/tcp", AppProtocol: "https"},
+	}
+	if !reflect.DeepEqual(compiled.AppProtocols["srl1"], expectedAppProtocols) {
+		t.Fatalf(
+			"expected application protocols %v, got %v",
+			expectedAppProtocols,
+			compiled.AppProtocols["srl1"],
+		)
+	}
+}
+
+func TestCompileContainerlabAppProtocolsLabelInheritance(t *testing.T) {
+	compiled, err := compileDefinition(t, `
+name: inherited-app-protocols
+topology:
+  defaults:
+    kind: linux
+    image: alpine
+    labels:
+      c9s.run/appProtocols: "830=netconf-ssh"
+  kinds:
+    telemetry:
+      labels:
+        c9s.run/appProtocols: "57400/TCP=kubernetes.io/h2c,443/tcp=https"
+  groups:
+    collectors:
+      labels:
+        c9s.run/appProtocols: "6030=c9s.run/gnmi"
+  nodes:
+    default-node: {}
+    kind-node:
+      kind: telemetry
+    group-node:
+      group: collectors
+    node-override:
+      kind: telemetry
+      group: collectors
+      labels:
+        c9s.run/appProtocols: "22/tcp="
+`)
+	if err != nil {
+		t.Fatalf("unexpected error compiling inherited application protocols: %s", err)
+	}
+
+	expected := map[string][]clabernetesapisv1alpha1.NodeAppProtocol{
+		"default-node": {{Port: "830/tcp", AppProtocol: "netconf-ssh"}},
+		"kind-node": {
+			{Port: "57400/tcp", AppProtocol: "kubernetes.io/h2c"},
+			{Port: "443/tcp", AppProtocol: "https"},
+		},
+		"group-node":    {{Port: "6030/tcp", AppProtocol: "c9s.run/gnmi"}},
+		"node-override": {{Port: "22/tcp", AppProtocol: ""}},
+	}
+
+	for nodeName, want := range expected {
+		if got := compiled.AppProtocols[nodeName]; !reflect.DeepEqual(got, want) {
+			t.Errorf("node %q application protocols = %v, want %v", nodeName, got, want)
+		}
+
+		node := compiled.Nodes[nodeName]
+		if node == nil {
+			t.Fatalf("expected compiled node %q", nodeName)
+		}
+		if len(node.Ports) != 0 {
+			t.Errorf(
+				"node %q application-protocol directive selected ports %v",
+				nodeName,
+				node.Ports,
+			)
+		}
+		if _, exists := node.Labels[clabernetesconstants.LabelAppProtocols]; exists {
+			t.Errorf("node %q retained appProtocols directive in labels: %v", nodeName, node.Labels)
+		}
+	}
+}
+
+func TestCompileContainerlabAppProtocolsLabelRejectsInvalidEntries(t *testing.T) {
+	tests := map[string]string{
+		"empty entry":       "57400/tcp=c9s.run/gnmi,",
+		"missing separator": "57400/tcp",
+		"malformed port":    "0/tcp=http",
+		"host binding":      "50000:57400/tcp=c9s.run/gnmi",
+		"unsupported port":  "57400/sctp=c9s.run/gnmi",
+		"invalid value":     "57400/tcp=bad prefix/value",
+		"normalized duplicate": "57400=c9s.run/gnmi," +
+			"57400/TCP=kubernetes.io/h2c",
+	}
+
+	for name, value := range tests {
+		t.Run(name, func(t *testing.T) {
+			_, err := compileDefinition(t, fmt.Sprintf(`
+name: invalid-app-protocols
+topology:
+  nodes:
+    device:
+      kind: linux
+      image: alpine
+      labels:
+        c9s.run/appProtocols: %q
+`, value))
+			if err == nil {
+				t.Fatal("expected invalid appProtocols entry to fail compilation")
+			}
+
+			unsupported := &clabernetescompiler.UnsupportedFeaturesError{}
+			if !errors.As(err, &unsupported) {
+				t.Fatalf("expected UnsupportedFeaturesError, got %T: %s", err, err)
+			}
+			if len(unsupported.Diagnostics) != 1 ||
+				unsupported.Diagnostics[0].Code != "invalid-app-protocols-label" ||
+				!strings.Contains(unsupported.Diagnostics[0].Message, "node \"device\"") ||
+				!strings.Contains(
+					unsupported.Diagnostics[0].Path,
+					clabernetesconstants.LabelAppProtocols,
+				) {
+				t.Fatalf("unexpected diagnostics: %+v", unsupported.Diagnostics)
 			}
 		})
 	}

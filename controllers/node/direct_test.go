@@ -1851,6 +1851,13 @@ func TestCompileDirectExposedPortsKeepsAutoExposeParity(t *testing.T) {
 		}
 	}
 
+	for _, port := range service.Spec.Ports {
+		if (port.Port == 22 && (port.AppProtocol == nil || *port.AppProtocol != "ssh")) ||
+			(port.Port == 161 && (port.AppProtocol == nil || *port.AppProtocol != "snmp")) {
+			t.Fatalf("planned default port lost its application protocol: %#v", port)
+		}
+	}
+
 	// Disabling auto expose keeps exactly the planned ports.
 	explicitOnly, err := compileDirectExposedPorts(
 		plan,
@@ -1895,6 +1902,12 @@ func TestCompileDirectExposedPortsKeepsAutoExposeParity(t *testing.T) {
 	if service == nil || service.Spec.Type != k8scorev1.ServiceTypeClusterIP ||
 		len(service.Spec.Ports) != 1 {
 		t.Fatalf("explicit ClusterIP expose Service = %#v", service)
+	}
+	if service.Spec.Ports[0].AppProtocol == nil || *service.Spec.Ports[0].AppProtocol != "ssh" {
+		t.Fatalf(
+			"explicit default port application protocol = %#v, want ssh",
+			service.Spec.Ports[0],
+		)
 	}
 }
 
