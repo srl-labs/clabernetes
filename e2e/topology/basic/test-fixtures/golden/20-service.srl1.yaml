@@ -22,39 +22,48 @@ spec:
     - IPv4
   ipFamilyPolicy: SingleStack
   ports:
-    - name: port-21-tcp
+    - appProtocol: ftp
+      name: port-21-tcp
       port: 21
       protocol: TCP
       targetPort: 21
-    - name: port-22-tcp
+    - appProtocol: ssh
+      name: port-22-tcp
       port: 22
       protocol: TCP
       targetPort: 22
-    - name: port-23-tcp
+    - appProtocol: telnet
+      name: port-23-tcp
       port: 23
       protocol: TCP
       targetPort: 23
-    - name: port-80-tcp
+    - appProtocol: http
+      name: port-80-tcp
       port: 80
       protocol: TCP
       targetPort: 80
-    - name: port-443-tcp
+    - appProtocol: https
+      name: port-443-tcp
       port: 443
       protocol: TCP
       targetPort: 443
-    - name: port-830-tcp
+    - appProtocol: netconf-ssh
+      name: port-830-tcp
       port: 830
       protocol: TCP
       targetPort: 830
-    - name: port-5000-tcp
+    - appProtocol: telnet
+      name: port-5000-tcp
       port: 5000
       protocol: TCP
       targetPort: 5000
-    - name: port-5900-tcp
+    - appProtocol: rfb
+      name: port-5900-tcp
       port: 5900
       protocol: TCP
       targetPort: 5900
-    - name: port-6030-tcp
+    - appProtocol: c9s.run/gnmi
+      name: port-6030-tcp
       port: 6030
       protocol: TCP
       targetPort: 6030
@@ -62,23 +71,28 @@ spec:
       port: 9273
       protocol: TCP
       targetPort: 9273
-    - name: port-9339-tcp
+    - appProtocol: c9s.run/gnmi
+      name: port-9339-tcp
       port: 9339
       protocol: TCP
       targetPort: 9339
-    - name: port-9340-tcp
+    - appProtocol: c9s.run/gribi
+      name: port-9340-tcp
       port: 9340
       protocol: TCP
       targetPort: 9340
-    - name: port-9559-tcp
+    - appProtocol: c9s.run/p4runtime
+      name: port-9559-tcp
       port: 9559
       protocol: TCP
       targetPort: 9559
-    - name: port-57400-tcp
+    - appProtocol: c9s.run/gnmi
+      name: port-57400-tcp
       port: 57400
       protocol: TCP
       targetPort: 57400
-    - name: port-161-udp
+    - appProtocol: snmp
+      name: port-161-udp
       port: 161
       protocol: UDP
       targetPort: 161

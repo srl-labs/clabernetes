@@ -103,6 +103,14 @@ func NormalizeTopology(t *testing.T, objectData []byte) []byte {
 func NormalizeExposeService(t *testing.T, objectData []byte) []byte {
 	t.Helper()
 
+	// Cloud controllers add this finalizer, while local clusters may have no load balancer.
+	objectData = YQCommand(
+		t,
+		objectData,
+		`del(.metadata.finalizers[] | select(. == "service.kubernetes.io/load-balancer-cleanup"))`,
+	)
+	objectData = YQCommand(t, objectData, "del(.metadata.finalizers | select(length == 0))")
+
 	// cluster ips obviously are going to be different all the time so we'll ignore them
 	objectData = YQCommand(t, objectData, "del(.spec.clusterIP)")
 	objectData = YQCommand(t, objectData, "del(.spec.clusterIPs)")
