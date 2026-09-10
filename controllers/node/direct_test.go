@@ -754,7 +754,8 @@ func TestDirectNonLiveLinkChangePerformsDeclaredLifecycleMode(t *testing.T) {
 			completedRestart := false
 
 			for attempt := range 16 {
-				if err = reconciler.Reconcile(ctx, node); err != nil {
+				var pending *directRestartPendingError
+				if err = reconciler.Reconcile(ctx, node); err != nil && !errors.As(err, &pending) {
 					t.Fatalf("%s reconcile attempt %d: %v", mode, attempt, err)
 				}
 

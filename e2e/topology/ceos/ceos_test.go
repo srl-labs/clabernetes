@@ -1,6 +1,7 @@
 package ceos_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	clabernetestesthelper "github.com/clabernetes/clabernetes/testhelper"
+	k8scorev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -25,9 +27,8 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// TestCEOSBootsAndReachesLinux exercises a systemd-based NOS in direct mode with no
-// startup-config at all: the imported kind's own template must render the runtime management
-// identity, the interface fixups must map eth1, and the dataplane must cross the fabric.
+// TestCEOSBootsAndReachesLinux checks that management is allocated, traffic crosses the fabric,
+// and Link changes recover automatically even when PID 1 ignores the restart signal.
 func TestCEOSBootsAndReachesLinux(t *testing.T) {
 	t.Parallel()
 
@@ -68,8 +69,9 @@ func TestCEOSBootsAndReachesLinux(t *testing.T) {
 		"deployment/l1",
 	)
 
-	assertRenderedManagement(t, namespace)
+	assertManagementAllocation(t, namespace)
 	waitForDatapath(t, namespace)
+	testLinkChanges(t, namespace)
 }
 
 func applyTopology(t *testing.T, namespace, ceosImage string) {
@@ -126,46 +128,30 @@ spec:
 	clabernetestesthelper.Execute(t, cmd)
 }
 
-// assertRenderedManagement proves the two-render preparation protocol delivered the runtime
-// management identity through the imported kind's own hook path: Management0 carries the Pod
-// address with its real prefix.
-func assertRenderedManagement(t *testing.T, namespace string) {
+// assertManagementAllocation checks the Node's allocated management address in its network
+// namespace. The management allocation is independent of the Pod's CNI address.
+func assertManagementAllocation(t *testing.T, namespace string) {
 	t.Helper()
-
-	podIP := strings.TrimSpace(string(runKubectl(
-		t,
-		"get",
-		"pods",
-		"--namespace",
-		namespace,
-		"--selector",
-		"c9s.run/direct-workload=ceos1",
-		"-o",
-		"jsonpath={.items[0].status.podIP}",
-	)))
-	if podIP == "" {
-		t.Fatal("ceos1 Pod has no address")
+	address := strings.TrimSpace(string(runKubectl(t,
+		"get", "nodes.c9s.run", "ceos1", "--namespace", namespace,
+		"-o", "jsonpath={.status.directManagement.ipv4}")))
+	if address == "" {
+		t.Fatal("ceos1 has no management allocation")
 	}
-
-	output := string(runKubectl(
-		t,
-		"exec",
-		"--namespace",
-		namespace,
-		"deployment/ceos1",
-		"-c",
-		clabernetestesthelper.DirectDeviceContainerName(t, namespace, "ceos1"),
-		"--",
-		"Cli",
-		"-c",
-		"show ip interface brief",
-	))
-	if !strings.Contains(output, podIP+"/") {
-		t.Fatalf("management interface does not carry the Pod identity %q: %s", podIP, output)
+	output := string(runKubectl(t, "exec", "--namespace", namespace, "deployment/ceos1", "-c",
+		clabernetestesthelper.DirectDeviceContainerName(t, namespace, "ceos1"), "--",
+		"ip", "-o", "-4", "address", "show"))
+	if !strings.Contains(output, "inet "+address+" ") {
+		t.Fatalf("management allocation %q is not realized: %s", address, output)
 	}
 }
 
 func waitForDatapath(t *testing.T, namespace string) {
+	t.Helper()
+	waitForDatapathAddress(t, namespace, "10.0.1.2")
+}
+
+func waitForDatapathAddress(t *testing.T, namespace, address string) {
 	t.Helper()
 
 	deadline := time.NewTimer(datapathWait)
@@ -189,7 +175,7 @@ func waitForDatapath(t *testing.T, namespace string) {
 			"2",
 			"-W",
 			"3",
-			"10.0.1.2",
+			address,
 		)
 
 		output, err := cmd.CombinedOutput()
@@ -222,4 +208,187 @@ func runKubectl(t *testing.T, args ...string) []byte {
 	)
 
 	return clabernetestesthelper.Execute(t, cmd)
+}
+
+// testLinkChanges verifies the application notices added/removed interfaces without an
+// operator touching a Node or Deployment. A graceful restart or automatic Pod recovery is valid.
+func testLinkChanges(t *testing.T, namespace string) {
+	t.Helper()
+	before := ceosPod(t, namespace)
+	manifest := `apiVersion: c9s.run/v1alpha1
+kind: Link
+metadata:
+  name: ceos-extra
+spec:
+  endpointA:
+    nodeName: l1
+    interfaceName: eth2
+  endpointB:
+    nodeName: ceos1
+    interfaceName: eth2
+`
+	cmd := exec.CommandContext( //nolint:gosec // Test-controlled kubectl arguments.
+		t.Context(),
+		"kubectl",
+		"apply",
+		"-n",
+		namespace,
+		"-f",
+		"-",
+	)
+	cmd.Stdin = strings.NewReader(manifest)
+	clabernetestesthelper.Execute(t, cmd)
+	waitForCEOSRestart(t, namespace, before)
+	waitForCEOSInterface(t, namespace, true)
+
+	runKubectl(
+		t,
+		"exec",
+		"-n",
+		namespace,
+		"deployment/ceos1",
+		"-c",
+		clabernetestesthelper.DirectDeviceContainerName(t, namespace, "ceos1"),
+		"--",
+		"Cli",
+		"-p",
+		"15",
+		"-c",
+		"configure\ninterface Ethernet2\nno switchport\nend",
+	)
+	// EOS applies routed-port conversion asynchronously; early IP configuration is ignored.
+	waitForCEOSOutput(
+		t,
+		namespace,
+		"show interfaces Ethernet2 switchport",
+		func(output string) bool {
+			return strings.Contains(output, "Switchport: Disabled")
+		},
+	)
+	runKubectl(
+		t,
+		"exec",
+		"-n",
+		namespace,
+		"deployment/ceos1",
+		"-c",
+		clabernetestesthelper.DirectDeviceContainerName(t, namespace, "ceos1"),
+		"--",
+		"Cli",
+		"-p",
+		"15",
+		"-c",
+		"configure\ninterface Ethernet2\nip address 10.0.2.2/30\nno shutdown\nend",
+	)
+	// The Linux peer receives its connectivity revision independently of cEOS's restart.
+	runKubectl(t, "exec", "-n", namespace, "deployment/l1", "-c",
+		clabernetestesthelper.DirectDeviceContainerName(t, namespace, "l1"), "--",
+		"sh", "-c", "for i in $(seq 1 60); do "+
+			"if ip link set eth2 up && ip address replace 10.0.2.1/30 dev eth2; then exit 0; fi; "+
+			"sleep 2; done; exit 1")
+	waitForDatapathAddress(t, namespace, "10.0.2.2")
+	waitForDatapath(t, namespace)
+	before = ceosPod(t, namespace)
+	runKubectl(t, "delete", "link", "ceos-extra", "-n", namespace)
+	waitForCEOSRestart(t, namespace, before)
+	waitForCEOSInterface(t, namespace, false)
+	waitForDatapath(t, namespace)
+}
+
+func ceosPod(t *testing.T, namespace string) *k8scorev1.Pod {
+	t.Helper()
+	var pods k8scorev1.PodList
+	raw := runKubectl(t, "get", "pods", "-n", namespace,
+		"-l", "c9s.run/direct-workload=ceos1", "-o", "json")
+	if err := json.Unmarshal(raw, &pods); err != nil {
+		t.Fatal(err)
+	}
+	for i := range pods.Items {
+		if pods.Items[i].DeletionTimestamp == nil {
+			return &pods.Items[i]
+		}
+	}
+
+	return nil
+}
+
+func waitForCEOSRestart(t *testing.T, namespace string, before *k8scorev1.Pod) {
+	t.Helper()
+	if before == nil {
+		t.Fatal("cEOS Pod missing before link change")
+	}
+	container := clabernetestesthelper.DirectDeviceContainerName(t, namespace, "ceos1")
+	var previous k8scorev1.ContainerStatus
+	for _, status := range before.Status.ContainerStatuses {
+		if status.Name == container {
+			previous = status
+		}
+	}
+	deadline := time.Now().Add(datapathWait)
+	for time.Now().Before(deadline) {
+		current := ceosPod(t, namespace)
+		if current != nil {
+			for _, status := range current.Status.ContainerStatuses {
+				if status.Name == container && status.Ready && status.State.Running != nil &&
+					(current.UID != before.UID || status.ContainerID != previous.ContainerID || status.RestartCount > previous.RestartCount) {
+					t.Logf(
+						"cEOS recovered automatically: Pod %s -> %s, container %s -> %s",
+						before.UID,
+						current.UID,
+						previous.ContainerID,
+						status.ContainerID,
+					)
+
+					return
+				}
+			}
+		}
+		select {
+		case <-t.Context().Done():
+			t.Fatal("canceled waiting for cEOS restart")
+		case <-time.After(datapathPollPeriod):
+		}
+	}
+	t.Fatal("cEOS did not restart automatically after link change")
+}
+
+func waitForCEOSInterface(t *testing.T, namespace string, present bool) {
+	t.Helper()
+	waitForCEOSOutput(t, namespace, "show interfaces status", func(output string) bool {
+		return strings.Contains(output, "Et1") && strings.Contains(output, "Et2") == present
+	})
+}
+
+func waitForCEOSOutput(t *testing.T, namespace, command string, check func(string) bool) {
+	t.Helper()
+	container := clabernetestesthelper.DirectDeviceContainerName(t, namespace, "ceos1")
+	deadline := time.Now().Add(datapathWait)
+	var output []byte
+	for time.Now().Before(deadline) {
+		cmd := exec.CommandContext( //nolint:gosec // Test-controlled kubectl arguments.
+			t.Context(),
+			"kubectl",
+			"exec",
+			"-n",
+			namespace,
+			"deployment/ceos1",
+			"-c",
+			container,
+			"--",
+			"Cli",
+			"-c",
+			command,
+		)
+		var err error
+		output, err = cmd.CombinedOutput()
+		if err == nil && check(string(output)) {
+			return
+		}
+		select {
+		case <-t.Context().Done():
+			t.Fatal("canceled waiting for cEOS interface")
+		case <-time.After(datapathPollPeriod):
+		}
+	}
+	t.Fatalf("cEOS command %q did not reach expected state: %s", command, output)
 }

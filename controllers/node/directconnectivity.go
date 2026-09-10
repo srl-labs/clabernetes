@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	clabernetesapisv1alpha1 "github.com/clabernetes/clabernetes/apis/v1alpha1"
 	clabernetesconstants "github.com/clabernetes/clabernetes/constants"
@@ -17,6 +18,7 @@ import (
 	k8sappsv1 "k8s.io/api/apps/v1"
 	k8scorev1 "k8s.io/api/core/v1"
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -46,10 +48,18 @@ type directConnectivityDecision struct {
 	AffectedNodeIDs []string
 }
 
+// directRestartPendingError requests a timed reconcile without reporting a preflight failure.
+type directRestartPendingError struct{ after time.Duration }
+
+func (e *directRestartPendingError) Error() string {
+	return "waiting for direct application restart"
+}
+
 type directRestartBaseline struct {
-	PlanDigest string                           `json:"planDigest"`
-	PodUID     string                           `json:"podUID"`
-	Containers []directRestartContainerBaseline `json:"containers"`
+	RequestedAt *metav1.Time                     `json:"requestedAt,omitempty"`
+	PlanDigest  string                           `json:"planDigest"`
+	PodUID      string                           `json:"podUID"`
+	Containers  []directRestartContainerBaseline `json:"containers"`
 }
 
 type directRestartContainerBaseline struct {
@@ -122,28 +132,12 @@ func (r *Reconciler) reconcileDirectLinkRestart(
 			})
 		}
 
-		raw, marshalErr := json.Marshal(baseline)
-		if marshalErr != nil {
-			return fmt.Errorf("encoding direct restart baseline: %w", marshalErr)
-		}
-
-		updated := configMap.DeepCopy()
-		if updated.Annotations == nil {
-			updated.Annotations = map[string]string{}
-		}
-
-		updated.Annotations[directRestartBaselineAnnotation] = string(raw)
-		delete(updated.Annotations, directRestartCompletedAnnotation)
-
-		if err = r.Client.Update(ctx, updated); err != nil {
-			return fmt.Errorf("recording direct restart baseline: %w", err)
-		}
-
-		return nil
+		return r.recordDirectRestartBaseline(ctx, configMap, baseline)
 	}
 
 	restarted := make(map[string]bool, len(targets))
 	allRestarted := true
+	restartStalled := false
 
 	for _, before := range baseline.Containers {
 		current, exists := statuses[before.Name]
@@ -156,11 +150,32 @@ func (r *Reconciler) reconcileDirectLinkRestart(
 		restarted[before.Name] = current.RestartCount > before.RestartCount ||
 			current.ContainerID != before.ContainerID
 		allRestarted = allRestarted && restarted[before.Name]
+		restartStalled = restartStalled || !restarted[before.Name]
 	}
 
 	if allRestarted {
 		return r.completeDirectRestart(ctx, configMap, stateKey)
 	}
+	if !restartStalled {
+		// Kubelet is already stopping or starting the application; give it time to boot.
+		return &directRestartPendingError{after: directRequeueInterval}
+	}
+
+	// A signal accepted by kill(2) does not prove PID 1 exited (systemd may ignore SIGTERM).
+	// Let kubelet enforce termination when the same application outlives its grace period.
+	grace := time.Duration(k8scorev1.DefaultTerminationGracePeriodSeconds) * time.Second
+	if pod.Spec.TerminationGracePeriodSeconds != nil {
+		grace = time.Duration(*pod.Spec.TerminationGracePeriodSeconds) * time.Second
+	}
+	if baseline.RequestedAt != nil && time.Since(baseline.RequestedAt.Time) >= grace {
+		return r.replaceDirectRestartPod(ctx, node, pod, grace)
+	}
+
+	ctx, cancel := context.WithTimeout(
+		ctx,
+		time.Duration(k8scorev1.DefaultTerminationGracePeriodSeconds)*time.Second,
+	)
+	defer cancel()
 
 	connectivityName, readinessCommand := directConnectivityReadinessCommand(pod)
 	if connectivityName == "" || len(readinessCommand) == 0 {
@@ -175,6 +190,16 @@ func (r *Reconciler) reconcileDirectLinkRestart(
 		readinessCommand,
 	); err != nil {
 		return fmt.Errorf("waiting for connectivity before direct application restart: %w", err)
+	}
+
+	// Persist the deadline only after connectivity is ready and before sending any signal.
+	// A manager restart or an interrupted exec must not reset this recovery deadline.
+	if baseline.RequestedAt == nil {
+		now := metav1.Now()
+		baseline.RequestedAt = &now
+		if err = r.recordDirectRestartBaseline(ctx, configMap, baseline); err != nil {
+			return err
+		}
 	}
 
 	for _, target := range targets {
@@ -205,6 +230,51 @@ func (r *Reconciler) reconcileDirectLinkRestart(
 		); err != nil {
 			return fmt.Errorf("restarting direct application container %q: %w", name, err)
 		}
+	}
+
+	return &directRestartPendingError{
+		after: max(time.Second, time.Until(baseline.RequestedAt.Add(grace))),
+	}
+}
+
+func (r *Reconciler) recordDirectRestartBaseline(
+	ctx context.Context,
+	configMap *k8scorev1.ConfigMap,
+	baseline directRestartBaseline,
+) error {
+	raw, err := json.Marshal(baseline)
+	if err != nil {
+		return fmt.Errorf("encoding direct restart baseline: %w", err)
+	}
+	updated := configMap.DeepCopy()
+	if updated.Annotations == nil {
+		updated.Annotations = map[string]string{}
+	}
+	updated.Annotations[directRestartBaselineAnnotation] = string(raw)
+	delete(updated.Annotations, directRestartCompletedAnnotation)
+	if err = r.Client.Update(ctx, updated); err != nil {
+		return fmt.Errorf("recording direct restart baseline: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Reconciler) replaceDirectRestartPod(
+	ctx context.Context,
+	node *clabernetesapisv1alpha1.Node,
+	pod *k8scorev1.Pod,
+	grace time.Duration,
+) error {
+	uid, resourceVersion := pod.UID, pod.ResourceVersion
+	if err := r.Client.Delete(ctx, pod, ctrlruntimeclient.Preconditions{
+		UID: &uid, ResourceVersion: &resourceVersion,
+	}); err != nil && !apimachineryerrors.IsNotFound(err) {
+		return fmt.Errorf("replacing Pod after application restart timed out: %w", err)
+	}
+	if r.EventRecorder != nil {
+		r.EventRecorder.Eventf(node, pod, k8scorev1.EventTypeWarning,
+			"LinkRestartTimedOut", "RecreatePod",
+			"Application restart did not complete within %s; replacing Pod %s", grace, pod.Name)
 	}
 
 	return nil

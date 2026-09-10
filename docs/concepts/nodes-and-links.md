@@ -48,7 +48,11 @@ diagnostic naming the field.
 - **Grouping:** `network-mode: container:<primary>` places the Node in the primary Node's Pod.
   Other network modes are rejected.
 - **Link changes:** `link-apply-mode` (`live`, `restart`, or `recreate`) overrides the kind's
-  default action when Links of the Node change.
+  default action when Links of the Node change. For `restart`, c9s first signals the application
+  after connectivity is ready. If the same application is still running after the Pod's termination
+  grace period (30 seconds by default), c9s emits `LinkRestartTimedOut` and replaces the Pod.
+  This recovery also restarts any Nodes sharing that Pod; configuration survival follows the
+  [persistent storage policy](/docs/guides/persistence).
 - **Rejected at planning:** `config` (config-engine variables), `env-files`, `runtime`,
   `stages`, and `credentials`, see
   [Differences from containerlab](/docs/concepts/containerlab-differences).
