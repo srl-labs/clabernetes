@@ -711,7 +711,7 @@ func TestUpdateDirectStatusesUsesCurrentPlanPodAndKubernetesContainerState(t *te
 	}
 }
 
-func TestUpdateDirectStatusesReportsExactPlannerDeclaredLinkLifecycleMode(t *testing.T) {
+func TestUpdateDirectStatusesReportsSelectedLinkLifecycleMode(t *testing.T) {
 	for _, mode := range []clabernetesinternaldeviceplan.LinkApplyMode{
 		clabernetesinternaldeviceplan.LinkApplyLive,
 		clabernetesinternaldeviceplan.LinkApplyRestart,
@@ -778,7 +778,10 @@ func TestUpdateDirectStatusesReportsExactPlannerDeclaredLinkLifecycleMode(t *tes
 			wantReason := "Link" + string(mode)
 			if condition == nil || condition.Status != metav1.ConditionTrue ||
 				condition.Reason != wantReason ||
-				!strings.Contains(condition.Message, "planner-declared "+string(mode)) ||
+				!strings.Contains(
+					condition.Message,
+					string(mode)+" Link lifecycle action selected",
+				) ||
 				!strings.Contains(condition.Message, "selected") ||
 				!strings.Contains(condition.Message, planDigest) {
 				t.Fatalf("%s lifecycle condition = %#v", mode, condition)
