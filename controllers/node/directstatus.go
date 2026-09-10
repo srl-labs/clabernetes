@@ -527,7 +527,7 @@ func setDirectLinkLifecycleActionCondition(
 		metav1.ConditionTrue,
 		"Link"+string(mode),
 		fmt.Sprintf(
-			"planner-declared %s Link lifecycle action selected for direct plan %s; "+
+			"%s Link lifecycle action selected for direct plan %s; "+
 				"ConnectivityReady and ContainersReady report convergence",
 			mode,
 			planDigest,

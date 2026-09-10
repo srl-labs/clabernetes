@@ -46,7 +46,7 @@ preparation, and connectivity conditions, the plan digest, and the applied NodeP
 | `Prepared` | the preparation init container staged and verified every file |
 | `ConnectivityReady` | every interface of the cold-start plan exists |
 | `ContainersReady` | every application container of the Node runs and passes its probes |
-| `LinkLifecycleAction` | the action taken for the latest Link-only change: `live`, `restart`, or `recreate` |
+| `LinkLifecycleAction` | the action taken for the latest Link-only change: `live` or `recreate` (`restart` also recreates the Pod) |
 | `DeviceStateReset` | progress of a device-state reset, see [Persistent storage](/docs/guides/persistence) |
 
 A spec change flips readiness to `notready` at once, with `PlanApplied=False` and reason

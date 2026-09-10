@@ -15,29 +15,15 @@ import (
 	"time"
 
 	clabernetesinternaldeviceplan "github.com/clabernetes/clabernetes/internal/deviceplan"
-	"golang.org/x/sys/unix"
 )
 
 const (
-	maxLifecycleFileBytes    = 64 << 20
-	maxLifecycleBinaryBytes  = 256 << 20
-	applicationRestartMarker = "request"
+	maxLifecycleFileBytes   = 64 << 20
+	maxLifecycleBinaryBytes = 256 << 20
 	// containerLogPath is the application process' stdout, which the kubelet collects as the
 	// container log.
 	containerLogPath = "/proc/1/fd/1"
 )
-
-// ApplicationRestartOperations is the narrow process boundary used to restart a kubelet-owned
-// application container without a shell, runtime socket, or kind-specific command.
-type ApplicationRestartOperations interface {
-	SignalPID(pid int, signal syscall.Signal) error
-}
-
-type processRestartOperations struct{}
-
-func (processRestartOperations) SignalPID(pid int, signal syscall.Signal) error {
-	return unix.Kill(pid, signal)
-}
 
 // InstallLifecycleBinary atomically publishes the currently running c9s executable into a
 // plan-owned shared volume. Device images therefore need neither a shell nor a preinstalled c9s
@@ -112,78 +98,6 @@ func InstallLifecycleBinary(destination string) error {
 		if err = os.Symlink(filepath.Base(destination), linkPath); err != nil {
 			return fmt.Errorf("cannot publish runtime CLI link %q: %w", name, err)
 		}
-	}
-
-	return nil
-}
-
-// RunApplicationRestart records one plan-scoped idempotency marker and signals the device PID 1.
-// Kubernetes RestartPolicy=Always performs the actual direct-container restart in the same Pod.
-func RunApplicationRestart(requestDigest, stateDirectory, stopSignal string) error {
-	return RunApplicationRestartWithOperations(
-		requestDigest,
-		stateDirectory,
-		stopSignal,
-		processRestartOperations{},
-	)
-}
-
-// RunApplicationRestartWithOperations exposes the process seam for deterministic tests.
-func RunApplicationRestartWithOperations(
-	requestDigest,
-	stateDirectory,
-	stopSignal string,
-	operations ApplicationRestartOperations,
-) error {
-	if !validRevisionDigest(requestDigest) {
-		return errors.New("application restart request digest is invalid")
-	}
-	stateDirectory = filepath.Clean(stateDirectory)
-	if !filepath.IsAbs(stateDirectory) || stateDirectory == string(filepath.Separator) {
-		return errors.New("application restart state directory must be a scoped absolute path")
-	}
-	if operations == nil {
-		return errors.New("application restart operations are nil")
-	}
-	if err := os.MkdirAll(stateDirectory, 0o750); err != nil {
-		return fmt.Errorf("creating application restart state: %w", err)
-	}
-	markerPath := filepath.Join(stateDirectory, applicationRestartMarker)
-	if raw, err := os.ReadFile(markerPath); err == nil {
-		if strings.TrimSpace(string(raw)) == requestDigest {
-			return nil
-		}
-	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("reading application restart marker: %w", err)
-	}
-	signalName := strings.ToUpper(strings.TrimSpace(stopSignal))
-	if signalName == "" {
-		signalName = "SIGTERM"
-	}
-	signal := unix.SignalNum(signalName)
-	if signal == 0 || signal == syscall.SIGKILL {
-		return fmt.Errorf("application stop signal %q is unsupported", stopSignal)
-	}
-	if err := operations.SignalPID(1, signal); err != nil {
-		return fmt.Errorf("signaling application PID 1: %w", err)
-	}
-	temporary, err := os.CreateTemp(stateDirectory, ".restart-request-")
-	if err != nil {
-		return fmt.Errorf("creating application restart marker: %w", err)
-	}
-	temporaryName := temporary.Name()
-	defer func() { _ = os.Remove(temporaryName) }()
-	if _, err = temporary.WriteString(requestDigest + "\n"); err == nil {
-		err = temporary.Sync()
-	}
-	if closeErr := temporary.Close(); err == nil {
-		err = closeErr
-	}
-	if err != nil {
-		return fmt.Errorf("writing application restart marker: %w", err)
-	}
-	if err = os.Rename(temporaryName, markerPath); err != nil {
-		return fmt.Errorf("publishing application restart marker: %w", err)
 	}
 
 	return nil

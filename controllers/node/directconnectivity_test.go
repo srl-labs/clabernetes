@@ -259,14 +259,22 @@ func TestDirectConnectivityRevisionSelectsDeclaredNonLiveLifecycle(t *testing.T)
 	} {
 		t.Run(string(mode), func(t *testing.T) {
 			t.Parallel()
-			testDirectConnectivityRevisionSelectsDeclaredNonLiveLifecycle(t, mode)
+			testDirectConnectivityRevisionSelectsDeclaredNonLiveLifecycle(t, mode, false)
 		})
 	}
+}
+
+func TestDirectConnectivityRevisionRecreatesLegacyRestartRevision(t *testing.T) {
+	t.Parallel()
+	testDirectConnectivityRevisionSelectsDeclaredNonLiveLifecycle(
+		t, clabernetesinternaldeviceplan.LinkApplyRestart, true,
+	)
 }
 
 func testDirectConnectivityRevisionSelectsDeclaredNonLiveLifecycle(
 	t *testing.T,
 	mode clabernetesinternaldeviceplan.LinkApplyMode,
+	projected bool,
 ) {
 	t.Helper()
 
@@ -319,6 +327,15 @@ func testDirectConnectivityRevisionSelectsDeclaredNonLiveLifecycle(
 		t.Fatal(err)
 	}
 
+	if projected {
+		baseRevision, err = clabernetesinternaldirectruntime.NewConnectivityRevisionForMode(
+			baseInput, basePlan, desiredInput, desiredPlan, mode,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
 	revisionConfigMap, err := (&ConnectivityRevisionConfigMapReconciler{Client: client}).Ensure(
 		ctx,
 		node,
@@ -352,9 +369,10 @@ func testDirectConnectivityRevisionSelectsDeclaredNonLiveLifecycle(
 		t.Fatal(err)
 	}
 
-	wantRetain := mode == clabernetesinternaldeviceplan.LinkApplyRestart
-	if decision.RetainPod != wantRetain || decision.LifecycleMode != mode ||
-		len(decision.AffectedNodeIDs) != 1 || decision.AffectedNodeIDs[0] != string(node.GetUID()) {
+	if decision.RetainPod ||
+		decision.LifecycleMode != clabernetesinternaldeviceplan.LinkApplyRecreate ||
+		len(decision.AffectedNodeIDs) != 1 ||
+		decision.AffectedNodeIDs[0] != string(node.GetUID()) {
 		t.Fatalf(
 			"%s transition = retain %t mode %q affected %#v",
 			mode,
@@ -362,10 +380,6 @@ func testDirectConnectivityRevisionSelectsDeclaredNonLiveLifecycle(
 			decision.LifecycleMode,
 			decision.AffectedNodeIDs,
 		)
-	}
-
-	if wantRetain && decision.Revision.MaximumMode != mode {
-		t.Fatalf("Restart revision = %#v", decision.Revision)
 	}
 }
 

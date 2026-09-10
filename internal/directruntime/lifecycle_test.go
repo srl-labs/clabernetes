@@ -1,101 +1,16 @@
-//nolint:err113 // dense fixture-driven tests exercise one boundary end to end.
 package directruntime_test
 
 import (
 	"bytes"
 	"context"
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"testing"
 
 	clabernetesinternaldeviceplan "github.com/clabernetes/clabernetes/internal/deviceplan"
 	clabernetesinternaldirectruntime "github.com/clabernetes/clabernetes/internal/directruntime"
 )
-
-type recordingRestartOperations struct {
-	signals []syscall.Signal
-	err     error
-}
-
-func (o *recordingRestartOperations) SignalPID(pid int, signal syscall.Signal) error {
-	if pid != 1 {
-		return errors.New("unexpected restart PID")
-	}
-
-	o.signals = append(o.signals, signal)
-
-	return o.err
-}
-
-func TestApplicationRestartSignalsPIDOneOncePerPlanRequest(t *testing.T) {
-	t.Parallel()
-
-	request := "sha256:" + strings.Repeat("a", 64)
-	state := filepath.Join(t.TempDir(), "container-a")
-
-	operations := &recordingRestartOperations{}
-	for range 2 {
-		if err := clabernetesinternaldirectruntime.RunApplicationRestartWithOperations(
-			request,
-			state,
-			"SIGUSR1",
-			operations,
-		); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	if len(operations.signals) != 1 || operations.signals[0] != syscall.SIGUSR1 {
-		t.Fatalf("restart signals = %#v", operations.signals)
-	}
-
-	if err := clabernetesinternaldirectruntime.RunApplicationRestartWithOperations(
-		"sha256:"+strings.Repeat("b", 64),
-		state,
-		"",
-		operations,
-	); err != nil {
-		t.Fatal(err)
-	}
-
-	if len(operations.signals) != 2 || operations.signals[1] != syscall.SIGTERM {
-		t.Fatalf("restart signals after new request = %#v", operations.signals)
-	}
-}
-
-func TestApplicationRestartFailsClosedBeforePublishingMarker(t *testing.T) {
-	t.Parallel()
-
-	request := "sha256:" + strings.Repeat("c", 64)
-	state := filepath.Join(t.TempDir(), "container-a")
-
-	operations := &recordingRestartOperations{err: errors.New("signal denied")}
-	if err := clabernetesinternaldirectruntime.RunApplicationRestartWithOperations(
-		request,
-		state,
-		"SIGTERM",
-		operations,
-	); err == nil || !strings.Contains(err.Error(), "signal denied") {
-		t.Fatalf("restart error = %v", err)
-	}
-
-	operations.err = nil
-	if err := clabernetesinternaldirectruntime.RunApplicationRestartWithOperations(
-		request,
-		state,
-		"SIGTERM",
-		operations,
-	); err != nil {
-		t.Fatal(err)
-	}
-
-	if len(operations.signals) != 2 {
-		t.Fatalf("restart signal attempts = %#v", operations.signals)
-	}
-}
 
 func TestRunLifecycleExecutesTypedActionsInsideTargetFilesystem(t *testing.T) {
 	t.Parallel()
