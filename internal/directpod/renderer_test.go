@@ -571,36 +571,6 @@ func TestRenderOwnsLinkLifecycleRolloutAnnotations(t *testing.T) {
 	}
 }
 
-func TestApplicationRestartCommandUsesPlanScopedShellIndependentBoundary(t *testing.T) {
-	t.Parallel()
-
-	container := renderablePlan().Containers[0]
-	container.StopSignal = "SIGUSR1"
-	digest := "sha256:" + strings.Repeat("b", 64)
-
-	command, err := clabernetesinternaldirectpod.ApplicationRestartCommand(digest, container)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for _, value := range []string{
-		"/var/lib/clabernetes/lifecycle-bin/manager",
-		"restart",
-		"--request",
-		digest,
-		"--signal",
-		"SIGUSR1",
-	} {
-		if !slices.Contains(command, value) {
-			t.Fatalf("application restart command lacks %q: %#v", value, command)
-		}
-	}
-
-	if slices.Contains(command, "sh") || slices.Contains(command, "kill") {
-		t.Fatalf("application restart command depends on device-image tools: %#v", command)
-	}
-}
-
 func TestRenderPreservesGenericWorkloadPolicyMetadataAndOwnership(t *testing.T) {
 	t.Parallel()
 

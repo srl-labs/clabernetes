@@ -28,7 +28,7 @@ func TestMain(m *testing.M) {
 }
 
 // TestCEOSBootsAndReachesLinux checks that management is allocated, traffic crosses the fabric,
-// and Link changes recover automatically even when PID 1 ignores the restart signal.
+// and Link changes recreate the Pod automatically.
 func TestCEOSBootsAndReachesLinux(t *testing.T) {
 	t.Parallel()
 
@@ -211,7 +211,7 @@ func runKubectl(t *testing.T, args ...string) []byte {
 }
 
 // testLinkChanges verifies the application notices added/removed interfaces without an
-// operator touching a Node or Deployment. A graceful restart or automatic Pod recovery is valid.
+// operator touching a Node or Deployment. Each change must replace the cEOS Pod.
 func testLinkChanges(t *testing.T, namespace string) {
 	t.Helper()
 	before := ceosPod(t, namespace)
@@ -238,7 +238,7 @@ spec:
 	)
 	cmd.Stdin = strings.NewReader(manifest)
 	clabernetestesthelper.Execute(t, cmd)
-	waitForCEOSRestart(t, namespace, before)
+	waitForCEOSRecreate(t, namespace, before)
 	waitForCEOSInterface(t, namespace, true)
 
 	runKubectl(
@@ -280,7 +280,7 @@ spec:
 		"-c",
 		"configure\ninterface Ethernet2\nip address 10.0.2.2/30\nno shutdown\nend",
 	)
-	// The Linux peer receives its connectivity revision independently of cEOS's restart.
+	// The Linux peer receives its connectivity revision independently of cEOS's Pod replacement.
 	runKubectl(t, "exec", "-n", namespace, "deployment/l1", "-c",
 		clabernetestesthelper.DirectDeviceContainerName(t, namespace, "l1"), "--",
 		"sh", "-c", "for i in $(seq 1 60); do "+
@@ -290,7 +290,7 @@ spec:
 	waitForDatapath(t, namespace)
 	before = ceosPod(t, namespace)
 	runKubectl(t, "delete", "link", "ceos-extra", "-n", namespace)
-	waitForCEOSRestart(t, namespace, before)
+	waitForCEOSRecreate(t, namespace, before)
 	waitForCEOSInterface(t, namespace, false)
 	waitForDatapath(t, namespace)
 }
@@ -312,31 +312,23 @@ func ceosPod(t *testing.T, namespace string) *k8scorev1.Pod {
 	return nil
 }
 
-func waitForCEOSRestart(t *testing.T, namespace string, before *k8scorev1.Pod) {
+func waitForCEOSRecreate(t *testing.T, namespace string, before *k8scorev1.Pod) {
 	t.Helper()
 	if before == nil {
 		t.Fatal("cEOS Pod missing before link change")
 	}
 	container := clabernetestesthelper.DirectDeviceContainerName(t, namespace, "ceos1")
-	var previous k8scorev1.ContainerStatus
-	for _, status := range before.Status.ContainerStatuses {
-		if status.Name == container {
-			previous = status
-		}
-	}
 	deadline := time.Now().Add(datapathWait)
 	for time.Now().Before(deadline) {
 		current := ceosPod(t, namespace)
 		if current != nil {
 			for _, status := range current.Status.ContainerStatuses {
 				if status.Name == container && status.Ready && status.State.Running != nil &&
-					(current.UID != before.UID || status.ContainerID != previous.ContainerID || status.RestartCount > previous.RestartCount) {
+					current.UID != before.UID {
 					t.Logf(
-						"cEOS recovered automatically: Pod %s -> %s, container %s -> %s",
+						"cEOS recreated automatically: Pod %s -> %s",
 						before.UID,
 						current.UID,
-						previous.ContainerID,
-						status.ContainerID,
 					)
 
 					return
@@ -345,11 +337,11 @@ func waitForCEOSRestart(t *testing.T, namespace string, before *k8scorev1.Pod) {
 		}
 		select {
 		case <-t.Context().Done():
-			t.Fatal("canceled waiting for cEOS restart")
+			t.Fatal("canceled waiting for cEOS Pod replacement")
 		case <-time.After(datapathPollPeriod):
 		}
 	}
-	t.Fatal("cEOS did not restart automatically after link change")
+	t.Fatal("cEOS Pod was not replaced automatically after link change")
 }
 
 func waitForCEOSInterface(t *testing.T, namespace string, present bool) {

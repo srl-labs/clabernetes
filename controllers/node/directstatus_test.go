@@ -591,7 +591,7 @@ func TestUpdateDirectStatusesUsesCurrentPlanPodAndKubernetesContainerState(t *te
 
 	if !slices.ContainsFunc(initialEvents, func(event string) bool {
 		return strings.Contains(event, "Normal LinkRestart") &&
-			strings.Contains(event, "planner-declared Restart Link lifecycle action selected") &&
+			strings.Contains(event, "Restart Link lifecycle action selected") &&
 			strings.Contains(event, planDigest)
 	}) {
 		t.Fatalf("initial Link lifecycle events = %#v", initialEvents)

@@ -147,9 +147,6 @@ func (c *Controller) Reconcile(
 	}
 
 	err = c.reconciler.Reconcile(ctx, node)
-	if pending, ok := stderrors.AsType[*directRestartPendingError](err); ok {
-		return ctrlruntime.Result{RequeueAfter: pending.after}, nil
-	}
 	if err != nil {
 		return ctrlruntime.Result{}, err
 	}
@@ -200,9 +197,6 @@ func (r *Reconciler) Reconcile(
 	}
 
 	err := r.reconcileDirect(ctx, node)
-	if _, ok := stderrors.AsType[*directRestartPendingError](err); ok {
-		return err
-	}
 	if err == nil {
 		return nil
 	}

@@ -65,8 +65,6 @@ const (
 	deviceRuntimePodUID               = "podUID"
 	deviceRuntimePodAddress           = "podAddress"
 	deviceRuntimeConnectivityRevision = "connectivityRevision"
-	deviceRuntimeRequest              = "request"
-	deviceRuntimeSignal               = "signal"
 	deviceRuntimeNodeID               = "nodeID"
 	deviceRuntimeInterface            = "interface"
 	deviceRuntimePersistentNode       = "persistentNode"
@@ -347,23 +345,6 @@ func deviceRuntimeCommand() *cli.Command {
 					return clabernetesinternaldirectruntime.RunLaunch(
 						plan,
 						c.String(deviceRuntimeContainer),
-					)
-				},
-			},
-			{
-				Name:   "restart",
-				Usage:  "restart one kubelet-owned application container",
-				Hidden: true,
-				Flags: []cli.Flag{
-					&cli.StringFlag{Name: deviceRuntimeRequest, Required: true},
-					&cli.StringFlag{Name: deviceRuntimeState, Required: true},
-					&cli.StringFlag{Name: deviceRuntimeSignal},
-				},
-				Action: func(c *cli.Context) error {
-					return clabernetesinternaldirectruntime.RunApplicationRestart(
-						c.String(deviceRuntimeRequest),
-						c.String(deviceRuntimeState),
-						c.String(deviceRuntimeSignal),
 					)
 				},
 			},

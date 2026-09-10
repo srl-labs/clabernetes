@@ -1,4 +1,4 @@
-//nolint:err113,gocognit,gocyclo,nestif,testpackage // dense fixture-driven tests exercise one boundary end to end.
+//nolint:gocognit,gocyclo,nestif,testpackage // dense fixture-driven tests exercise one boundary end to end.
 package node
 
 import (
@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maps"
 	"reflect"
 	"slices"
 	"strings"
@@ -566,7 +565,7 @@ func TestDirectLiveLinkChangeUpdatesRevisionWithoutPodTemplateRollout(t *testing
 	}
 }
 
-func TestDirectNonLiveLinkChangePerformsDeclaredLifecycleMode(t *testing.T) {
+func TestDirectNonLiveLinkChangeRecreatesDeployment(t *testing.T) {
 	for _, mode := range []clabernetesinternaldeviceplan.LinkApplyMode{
 		clabernetesinternaldeviceplan.LinkApplyRestart,
 		clabernetesinternaldeviceplan.LinkApplyRecreate,
@@ -621,106 +620,6 @@ func TestDirectNonLiveLinkChangePerformsDeclaredLifecycleMode(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			var pod *k8scorev1.Pod
-
-			restartExecutions := 0
-			readinessExecutions := 0
-
-			if mode == clabernetesinternaldeviceplan.LinkApplyRestart {
-				pod = &k8scorev1.Pod{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "device-pod", Namespace: node.GetNamespace(), UID: "pod-uid-a",
-						Labels:      maps.Clone(initial.Spec.Template.Labels),
-						Annotations: maps.Clone(initial.Spec.Template.Annotations),
-					},
-					Spec: *initial.Spec.Template.Spec.DeepCopy(),
-				}
-				if err = client.Create(ctx, pod); err != nil {
-					t.Fatal(err)
-				}
-
-				pod.Status.Phase = k8scorev1.PodRunning
-
-				pod.Status.InitContainerStatuses = []k8scorev1.ContainerStatus{
-					{
-						Name: clabernetesinternaldirectpod.PreparationContainerName,
-						State: k8scorev1.ContainerState{
-							Terminated: &k8scorev1.ContainerStateTerminated{
-								ExitCode: 0,
-							},
-						},
-					},
-					{
-						Name: clabernetesinternaldirectpod.ConnectivityContainerName, Ready: true,
-						State: k8scorev1.ContainerState{
-							Running: &k8scorev1.ContainerStateRunning{},
-						},
-					},
-				}
-				for index, container := range pod.Spec.Containers {
-					pod.Status.ContainerStatuses = append(
-						pod.Status.ContainerStatuses,
-						k8scorev1.ContainerStatus{
-							Name: container.Name, Ready: true,
-							ContainerID: "containerd://initial-" + container.Name,
-							State: k8scorev1.ContainerState{
-								Running: &k8scorev1.ContainerStateRunning{},
-							},
-							RestartCount: int32(index),
-						},
-					)
-				}
-
-				if err = client.Status().Update(ctx, pod); err != nil {
-					t.Fatal(err)
-				}
-
-				reconciler.DirectContainerExecutor = func(
-					_ context.Context,
-					namespace,
-					podName,
-					containerName string,
-					command []string,
-				) error {
-					if namespace != node.GetNamespace() || podName != pod.GetName() {
-						return errors.New("executor received another Pod")
-					}
-
-					if containerName == clabernetesinternaldirectpod.ConnectivityContainerName {
-						readinessExecutions++
-
-						return nil
-					}
-
-					if !slices.Contains(command, "restart") {
-						return errors.New("executor received an untyped application command")
-					}
-
-					current := &k8scorev1.Pod{}
-					if getErr := client.Get(
-						ctx,
-						ctrlruntimeclient.ObjectKeyFromObject(pod),
-						current,
-					); getErr != nil {
-						return getErr
-					}
-
-					for statusIndex := range current.Status.ContainerStatuses {
-						status := &current.Status.ContainerStatuses[statusIndex]
-						if status.Name != containerName {
-							continue
-						}
-
-						status.RestartCount++
-						status.ContainerID = "containerd://restarted-" + containerName
-					}
-
-					restartExecutions++
-
-					return client.Status().Update(ctx, current)
-				}
-			}
-
 			link := &clabernetesapisv1alpha1.Link{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "loop", Namespace: node.GetNamespace(), UID: "uid-link-loop",
@@ -751,11 +650,9 @@ func TestDirectNonLiveLinkChangePerformsDeclaredLifecycleMode(t *testing.T) {
 			}
 
 			actual := &k8sappsv1.Deployment{}
-			completedRestart := false
 
 			for attempt := range 16 {
-				var pending *directRestartPendingError
-				if err = reconciler.Reconcile(ctx, node); err != nil && !errors.As(err, &pending) {
+				if err = reconciler.Reconcile(ctx, node); err != nil {
 					t.Fatalf("%s reconcile attempt %d: %v", mode, attempt, err)
 				}
 
@@ -769,32 +666,11 @@ func TestDirectNonLiveLinkChangePerformsDeclaredLifecycleMode(t *testing.T) {
 					continue
 				}
 
-				if mode == clabernetesinternaldeviceplan.LinkApplyRecreate &&
-					actual.Spec.Template.Annotations[clabernetesinternaldirectpod.LinkLifecycleModeAnnotation] ==
-						string(
-							mode,
-						) {
+				if actual.Spec.Template.Annotations[clabernetesinternaldirectpod.LinkLifecycleModeAnnotation] ==
+					string(
+						clabernetesinternaldeviceplan.LinkApplyRecreate,
+					) {
 					break
-				}
-
-				if mode == clabernetesinternaldeviceplan.LinkApplyRestart {
-					references, referenceErr := clabernetesinternaldirectpod.DeploymentPlanReferences(
-						actual,
-					)
-					if referenceErr != nil {
-						continue
-					}
-
-					revisionConfigMap := &k8scorev1.ConfigMap{}
-					if getErr := client.Get(ctx, ctrlruntimeclient.ObjectKey{
-						Namespace: node.GetNamespace(),
-						Name:      references.ConnectivityRevisionConfigMapName,
-					}, revisionConfigMap); getErr == nil &&
-						revisionConfigMap.Annotations[directRestartCompletedAnnotation] != "" {
-						completedRestart = true
-
-						break
-					}
 				}
 			}
 
@@ -803,52 +679,28 @@ func TestDirectNonLiveLinkChangePerformsDeclaredLifecycleMode(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if mode == clabernetesinternaldeviceplan.LinkApplyRestart {
-				if err = reconciler.Reconcile(ctx, node); err != nil {
-					t.Fatalf("idempotent Restart reconcile: %v", err)
-				}
-
-				completeDirectTestWorkers(ctx, t, client, node.GetNamespace())
-
-				currentPod := &k8scorev1.Pod{}
-				if err = client.Get(
-					ctx,
-					ctrlruntimeclient.ObjectKeyFromObject(pod),
-					currentPod,
-				); err != nil {
-					t.Fatal(err)
-				}
-
-				if !completedRestart || actualReferences != initialReferences ||
-					!reflect.DeepEqual(
-						actual.Spec,
-						initial.Spec,
-					) || currentPod.GetUID() != pod.GetUID() ||
-					restartExecutions != 1 || readinessExecutions == 0 ||
-					actual.Spec.Template.Annotations[clabernetesinternaldirectpod.LinkLifecycleModeAnnotation] != "" {
-					t.Fatalf(
-						"Restart result = completed %t refs %#v/%#v pod %q executions %d/%d annotations %#v",
-						completedRestart,
-						initialReferences,
-						actualReferences,
-						currentPod.GetUID(),
-						restartExecutions,
-						readinessExecutions,
-						actual.Spec.Template.Annotations,
-					)
-				}
-			} else {
-				lifecycleDigest := actual.Spec.Template.Annotations[clabernetesinternaldirectpod.LinkLifecyclePlanDigestAnnotation]
-				if actualReferences == initialReferences ||
-					actual.Spec.Template.Annotations[clabernetesinternaldirectpod.LinkLifecycleModeAnnotation] !=
-						string(mode) || lifecycleDigest != actualReferences.PlanDigest {
-					t.Fatalf(
-						"Recreate rollout = refs %#v/%#v annotations %#v",
-						initialReferences,
-						actualReferences,
-						actual.Spec.Template.Annotations,
-					)
-				}
+			lifecycleDigest := actual.Spec.Template.Annotations[clabernetesinternaldirectpod.LinkLifecyclePlanDigestAnnotation]
+			if actualReferences == initialReferences ||
+				actual.Spec.Template.Annotations[clabernetesinternaldirectpod.LinkLifecycleModeAnnotation] !=
+					string(
+						clabernetesinternaldeviceplan.LinkApplyRecreate,
+					) || lifecycleDigest != actualReferences.PlanDigest {
+				t.Fatalf(
+					"Recreate rollout = refs %#v/%#v annotations %#v",
+					initialReferences,
+					actualReferences,
+					actual.Spec.Template.Annotations,
+				)
+			}
+			rolled := actual.DeepCopy()
+			if err = reconciler.Reconcile(ctx, node); err != nil {
+				t.Fatalf("idempotent Recreate reconcile: %v", err)
+			}
+			if err = client.Get(ctx, ctrlruntimeclient.ObjectKeyFromObject(node), actual); err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(actual.Spec, rolled.Spec) {
+				t.Fatal("unchanged link triggered another rollout")
 			}
 		})
 	}

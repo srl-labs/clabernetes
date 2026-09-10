@@ -1647,41 +1647,6 @@ func renderApplicationLifecycle(
 	return len(targets) != 0, len(targets) != 0, nil
 }
 
-// ApplicationRestartCommand returns the shell-independent command used by the manager to signal
-// one direct application container after a planner-declared Restart connectivity transition.
-func ApplicationRestartCommand(
-	requestDigest string,
-	container clabernetesinternaldeviceplan.ContainerPlan,
-) ([]string, error) {
-	encoded := strings.TrimPrefix(requestDigest, "sha256:")
-	if len(encoded) != 64 || encoded == requestDigest {
-		return nil, errors.New("application restart plan digest is invalid")
-	}
-
-	if _, err := hex.DecodeString(encoded); err != nil {
-		return nil, errors.New("application restart plan digest is invalid")
-	}
-
-	if container.ID == "" {
-		return nil, errors.New("application restart container identity is empty")
-	}
-
-	command := []string{
-		lifecycleBinaryPath,
-		runtimeCommandName,
-		"restart",
-		"--request",
-		requestDigest,
-		runtimeFlagState,
-		path.Join(lifecycleScratchRoot, "link-restarts", dnsName("container", container.ID)),
-	}
-	if container.StopSignal != "" {
-		command = append(command, "--signal", container.StopSignal)
-	}
-
-	return command, nil
-}
-
 // ApplicationSaveCommand returns the shell-independent command for one package-owned SaveConfig
 // action in the primary direct application container of a logical Node.
 func ApplicationSaveCommand(
