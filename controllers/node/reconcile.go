@@ -56,7 +56,6 @@ type Reconciler struct {
 	ConnectivityRevisionConfigMapReconciler *ConnectivityRevisionConfigMapReconciler
 	ServiceReconciler                       *ServiceReconciler
 	PersistentVolumeClaimReconciler         *PersistentVolumeClaimReconciler
-	ImageDiscoveryReconciler                *ImageDiscoveryReconciler
 	ImageMetadataResolver                   *ImageMetadataResolver
 	CertificateReconciler                   *CertificateReconciler
 	EntropyReconciler                       *EntropyReconciler

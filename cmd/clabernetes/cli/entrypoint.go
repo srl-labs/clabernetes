@@ -45,6 +45,8 @@ const (
 	devicePlanPayloads                = "payloads"
 	devicePlanCertificates            = "certificates"
 	devicePlanEntropy                 = "entropy"
+	devicePlanSession                 = "session"
+	devicePlanMaxRounds               = "maxRounds"
 	deviceRuntimePlan                 = "plan"
 	deviceRuntimeInput                = "input"
 	deviceRuntimeArtifacts            = "artifacts"
@@ -91,7 +93,6 @@ func Entrypoint() *cli.App {
 		Usage:   "run clabernetes manager",
 		Commands: []*cli.Command{
 			devicePayloadWorkerCommand(),
-			deviceImageWorkerCommand(),
 			devicePlanWorkerCommand(),
 			deviceRuntimeCommand(),
 			{
@@ -206,42 +207,6 @@ func devicePayloadWorkerCommand() *cli.Command {
 				input,
 				c.String(devicePlanPayloads),
 			)
-		},
-	}
-}
-
-func deviceImageWorkerCommand() *cli.Command {
-	return &cli.Command{
-		Name:  "node-images",
-		Usage: "run isolated imported image-role discovery",
-		Flags: []cli.Flag{
-			&cli.StringFlag{Name: devicePlanInput, Value: "-"},
-			&cli.StringFlag{Name: devicePlanRevision, Required: true},
-			&cli.Int64Flag{Name: devicePlanMaxInputBytes, Value: 1 << 20},
-			&cli.StringFlag{Name: devicePlanPayloads},
-			&cli.StringFlag{Name: devicePlanEntropy},
-		},
-		Action: func(c *cli.Context) error {
-			input, closeInput, err := openDevicePlanInput(c.String(devicePlanInput))
-			if err != nil {
-				return err
-			}
-			defer closeInput()
-
-			ctx := c.Context
-			if ctx == nil {
-				ctx = context.Background()
-			}
-
-			return (clabernetesinternaldeviceplan.ImageWorker{
-				Adapter: clabernetesinternaldeviceplan.Adapter{
-					Revision:    c.String(devicePlanRevision),
-					PayloadRoot: c.String(devicePlanPayloads),
-					EntropyRoot: c.String(devicePlanEntropy),
-				},
-				Input: input, Output: c.App.Writer,
-				MaxInputBytes: c.Int64(devicePlanMaxInputBytes),
-			}).Run(ctx)
 		},
 	}
 }
@@ -650,6 +615,8 @@ func devicePlanWorkerCommand() *cli.Command {
 			&cli.StringFlag{Name: devicePlanPayloads},
 			&cli.StringFlag{Name: devicePlanCertificates},
 			&cli.StringFlag{Name: devicePlanEntropy},
+			&cli.BoolFlag{Name: devicePlanSession},
+			&cli.IntFlag{Name: devicePlanMaxRounds, Value: 8},
 		},
 		Action: func(c *cli.Context) error {
 			input, closeInput, err := openDevicePlanInput(c.String(devicePlanInput))
@@ -663,14 +630,22 @@ func devicePlanWorkerCommand() *cli.Command {
 				ctx = context.Background()
 			}
 
+			adapter := clabernetesinternaldeviceplan.Adapter{
+				Revision:        c.String(devicePlanRevision),
+				PayloadRoot:     c.String(devicePlanPayloads),
+				CertificateRoot: c.String(devicePlanCertificates),
+				EntropyRoot:     c.String(devicePlanEntropy),
+			}
+			if c.Bool(devicePlanSession) {
+				return (clabernetesinternaldeviceplan.SessionWorker{
+					Adapter: adapter, Input: input, Output: c.App.Writer,
+					MaxFrameBytes: int(c.Int64(devicePlanMaxInputBytes)),
+					MaxRounds:     c.Int(devicePlanMaxRounds),
+				}).Run(ctx)
+			}
+
 			return (clabernetesinternaldeviceplan.Worker{
-				Adapter: clabernetesinternaldeviceplan.Adapter{
-					Revision:        c.String(devicePlanRevision),
-					PayloadRoot:     c.String(devicePlanPayloads),
-					CertificateRoot: c.String(devicePlanCertificates),
-					EntropyRoot:     c.String(devicePlanEntropy),
-				},
-				Input: input, Output: c.App.Writer,
+				Adapter: adapter, Input: input, Output: c.App.Writer,
 				MaxInputBytes: c.Int64(devicePlanMaxInputBytes),
 			}).Run(ctx)
 		},

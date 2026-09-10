@@ -150,7 +150,9 @@ func TestRestrictedManagerRolesCanPublishEventsAndExecDirectContainers(t *testin
 		}
 
 		wantExec := k8srbacv1.PolicyRule{
-			APIGroups: []string{""}, Resources: []string{"pods/exec"}, Verbs: []string{"create"},
+			APIGroups: []string{""},
+			Resources: []string{"pods/attach", "pods/exec"},
+			Verbs:     []string{"create"},
 		}
 
 		if !slices.ContainsFunc(role.Rules, func(rule k8srbacv1.PolicyRule) bool {
@@ -215,7 +217,7 @@ func TestRestrictedClusterRoleDoesNotGrantClusterWideExecLogsOrEvents(t *testing
 		for _, rule := range role.Rules {
 			for _, resource := range rule.Resources {
 				switch resource {
-				case "pods/exec", "pods/log", "events":
+				case "pods/attach", "pods/exec", "pods/log", "events":
 					t.Fatalf(
 						"restricted ClusterRole must not grant %q cluster-wide: %#v",
 						resource,

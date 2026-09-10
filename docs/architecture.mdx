@@ -92,7 +92,9 @@ resources are emitted.
 
 Imported containerlab code mixes intent with side effects, so kind hooks never run inside the
 long-running manager. The node controller instead launches a short-lived, locked-down and
-deadline-bounded **planning Pod** per plan input. Inside it, the imported registry
+deadline-bounded **planning Pod** per plan input. The controller first resolves metadata for each
+logical Node's declared image, then attaches a private request/response stream to the worker.
+Inside it, the imported registry
 and node hooks run against a generic recording runtime and a disposable workspace: container
 creation, files, mounts, lifecycle, exec, namespace, and interface operations are *recorded*
 rather than performed, and the result is a deterministic, runtime-neutral **device plan**.
@@ -100,12 +102,20 @@ rather than performed, and the result is a deterministic, runtime-neutral **devi
 The plan's image configuration comes from a registry **metadata resolver** in the manager that
 fetches only manifests and config blobs (never layers) using same-namespace pull Secrets and
 the controller-only `Config.spec.imagePull.registryMetadataTrust` and `registryMetadataMirrors`
-policies. The kubelet performs
+policies. Assigning another imported role to an already-known image is handled in worker memory.
+If setup genuinely discovers a new image reference or certificate requirement, the worker asks
+the manager over the same attached stream; the manager resolves or issues it, and that process
+reruns the relevant evaluation without another Pod. The worker has no service-account token or
+network access. A repeated request that adds no facts and the overall session deadline fail the
+attempt instead of driving normal startup. The kubelet performs
 the only real image pull, and readiness fails on a material digest mismatch between the planned
 image and the kubelet-reported `imageID`.
 
-Accepted plans are stored in immutable, digest-named, owner-referenced ConfigMaps that contain
-no secret bytes; payloads and certificates ride as referenced objects. Each cold plan owns one
+The ordinary path is therefore: resolve declared-image metadata, run one planner Pod, then create
+the device Pod. There are no separate image-discovery Pods. Accepted finalized inputs and plans
+are stored in immutable, digest-named, owner-referenced ConfigMaps that contain no secret bytes,
+so unchanged Nodes skip the planner Pod; payloads and certificates ride as referenced objects.
+Each cold plan owns one
 bounded mutable connectivity-revision ConfigMap so live-capable Link changes update interfaces
 without rolling the Pod.
 
