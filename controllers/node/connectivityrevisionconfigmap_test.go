@@ -32,7 +32,7 @@ func TestConnectivityRevisionConfigMapRetainsGenericLifecycleActionState(t *test
 	}
 
 	want := directConnectivityLifecycleAction{
-		Mode: clabernetesinternaldeviceplan.LinkApplyRestart, PlanDigest: revision.DesiredPlanDigest,
+		Mode: clabernetesinternaldeviceplan.LinkApplyLive, PlanDigest: revision.DesiredPlanDigest,
 		AffectedNodeIDs: []string{"node-b", "node-a", "node-a"},
 	}
 
@@ -48,10 +48,6 @@ func TestConnectivityRevisionConfigMapRetainsGenericLifecycleActionState(t *test
 		t.Fatalf("recorded lifecycle action = %#v", got)
 	}
 
-	configMap.Annotations[directRestartBaselineAnnotation] = `{"planDigest":"retained"}`
-	if err = client.Update(ctx, configMap); err != nil {
-		t.Fatal(err)
-	}
 	// A replacement reconciler has no process-local memory from the controller that recorded the
 	// action; the Kubernetes artifact remains the complete recovery source.
 	reconciler = &ConnectivityRevisionConfigMapReconciler{Client: client}
@@ -61,11 +57,10 @@ func TestConnectivityRevisionConfigMapRetainsGenericLifecycleActionState(t *test
 		t.Fatal(err)
 	}
 
-	if configMap.Annotations[directRestartBaselineAnnotation] == "" ||
-		directConnectivityLifecycleActionFrom(
-			configMap,
-			revision.DesiredPlanDigest,
-		).Mode != want.Mode {
+	if directConnectivityLifecycleActionFrom(
+		configMap,
+		revision.DesiredPlanDigest,
+	).Mode != want.Mode {
 		t.Fatalf("idempotent revision ensure dropped lifecycle state: %#v", configMap.Annotations)
 	}
 }

@@ -344,10 +344,8 @@ SR OS diagnostics rather than booting degraded:
   interfaces added or recreated at runtime. Two practical caveats: a linux peer's boot-time
   `exec` addressing does not survive its own veth being recreated (exactly as on a containerlab
   host), and a freshly changed wire can take a few seconds of ARP convergence. If you do
-  override the mode, prefer `recreate` (a clean Pod roll) and avoid `restart` for
-  multi-container chassis: SR OS exits non-zero on its stop signal, so the kubelet treats
-  each in-place restart as a failure and applies exponential backoff while the card
-  containers crash-loop until their CPM is back.
+  override the mode, both `restart` and `recreate` replace the entire Pod, restarting all
+  CPM and card containers in a shared chassis Pod.
 
 ## Interface Naming
 

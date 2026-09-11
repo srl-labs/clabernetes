@@ -1,13 +1,10 @@
-//nolint:err113,funlen,gocognit,gocyclo // single-pass boundary logic with structured one-off diagnostics and protocol literals.
+//nolint:err113,funlen,gocyclo // single-pass boundary logic with structured one-off diagnostics and protocol literals.
 package node
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"slices"
-	"strings"
 
 	clabernetesapisv1alpha1 "github.com/clabernetes/clabernetes/apis/v1alpha1"
 	clabernetesconstants "github.com/clabernetes/clabernetes/constants"
@@ -18,13 +15,6 @@ import (
 	k8scorev1 "k8s.io/api/core/v1"
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
-)
-
-const (
-	directRestartBaselineAnnotation = clabernetesconstants.LabelPrefix +
-		"/connectivityRestartBaseline"
-	directRestartCompletedAnnotation = clabernetesconstants.LabelPrefix +
-		"/connectivityRestartCompleted"
 )
 
 var errDirectColdPlanUnavailable = errors.New("direct Deployment cold plan is unavailable")
@@ -44,279 +34,6 @@ type directConnectivityDecision struct {
 	RetainPod       bool
 	LifecycleMode   clabernetesinternaldeviceplan.LinkApplyMode
 	AffectedNodeIDs []string
-}
-
-type directRestartBaseline struct {
-	PlanDigest string                           `json:"planDigest"`
-	PodUID     string                           `json:"podUID"`
-	Containers []directRestartContainerBaseline `json:"containers"`
-}
-
-type directRestartContainerBaseline struct {
-	Name         string `json:"name"`
-	ContainerID  string `json:"containerID"`
-	RestartCount int32  `json:"restartCount"`
-}
-
-func (r *Reconciler) reconcileDirectLinkRestart(
-	ctx context.Context,
-	node *clabernetesapisv1alpha1.Node,
-	deployment *k8sappsv1.Deployment,
-	configMap *k8scorev1.ConfigMap,
-	action directConnectivityLifecycleAction,
-	plan clabernetesinternaldeviceplan.Plan,
-) error {
-	if action.Mode != clabernetesinternaldeviceplan.LinkApplyRestart {
-		return nil
-	}
-
-	if r.DirectContainerExecutor == nil {
-		return errors.New("planner-declared Restart has no direct container execution boundary")
-	}
-
-	pod, err := r.currentDirectPod(ctx, node, deployment)
-	if err != nil || pod == nil {
-		return err
-	}
-
-	targets, err := directRestartTargets(plan, action.AffectedNodeIDs)
-	if err != nil {
-		return err
-	}
-
-	stateKey := string(pod.GetUID()) + "/" + action.PlanDigest
-	if configMap.Annotations[directRestartCompletedAnnotation] == stateKey {
-		return nil
-	}
-
-	baseline, baselineValid := decodeDirectRestartBaseline(
-		configMap.Annotations[directRestartBaselineAnnotation],
-	)
-	if baselineValid && baseline.PlanDigest == action.PlanDigest &&
-		baseline.PodUID != string(pod.GetUID()) {
-		return r.completeDirectRestart(ctx, configMap, stateKey)
-	}
-
-	statuses := make(map[string]k8scorev1.ContainerStatus, len(pod.Status.ContainerStatuses))
-	for _, status := range pod.Status.ContainerStatuses {
-		statuses[status.Name] = status
-	}
-
-	if !baselineValid || baseline.PlanDigest != action.PlanDigest ||
-		baseline.PodUID != string(pod.GetUID()) || !baselineTargetsMatch(baseline, targets) {
-		baseline = directRestartBaseline{
-			PlanDigest: action.PlanDigest,
-			PodUID:     string(pod.GetUID()),
-			Containers: make([]directRestartContainerBaseline, 0, len(targets)),
-		}
-		for _, target := range targets {
-			name := clabernetesinternaldirectpod.ApplicationContainerName(target.ID)
-
-			status, exists := statuses[name]
-			if !exists || status.State.Running == nil || status.ContainerID == "" {
-				return nil
-			}
-
-			baseline.Containers = append(baseline.Containers, directRestartContainerBaseline{
-				Name: name, ContainerID: status.ContainerID, RestartCount: status.RestartCount,
-			})
-		}
-
-		raw, marshalErr := json.Marshal(baseline)
-		if marshalErr != nil {
-			return fmt.Errorf("encoding direct restart baseline: %w", marshalErr)
-		}
-
-		updated := configMap.DeepCopy()
-		if updated.Annotations == nil {
-			updated.Annotations = map[string]string{}
-		}
-
-		updated.Annotations[directRestartBaselineAnnotation] = string(raw)
-		delete(updated.Annotations, directRestartCompletedAnnotation)
-
-		if err = r.Client.Update(ctx, updated); err != nil {
-			return fmt.Errorf("recording direct restart baseline: %w", err)
-		}
-
-		return nil
-	}
-
-	restarted := make(map[string]bool, len(targets))
-	allRestarted := true
-
-	for _, before := range baseline.Containers {
-		current, exists := statuses[before.Name]
-		if !exists || current.State.Running == nil {
-			allRestarted = false
-
-			continue
-		}
-
-		restarted[before.Name] = current.RestartCount > before.RestartCount ||
-			current.ContainerID != before.ContainerID
-		allRestarted = allRestarted && restarted[before.Name]
-	}
-
-	if allRestarted {
-		return r.completeDirectRestart(ctx, configMap, stateKey)
-	}
-
-	connectivityName, readinessCommand := directConnectivityReadinessCommand(pod)
-	if connectivityName == "" || len(readinessCommand) == 0 {
-		return errors.New("direct connectivity helper has no exact revision readiness command")
-	}
-
-	if err = r.DirectContainerExecutor(
-		ctx,
-		pod.GetNamespace(),
-		pod.GetName(),
-		connectivityName,
-		readinessCommand,
-	); err != nil {
-		return fmt.Errorf("waiting for connectivity before direct application restart: %w", err)
-	}
-
-	for _, target := range targets {
-		name := clabernetesinternaldirectpod.ApplicationContainerName(target.ID)
-		if restarted[name] {
-			continue
-		}
-
-		status := statuses[name]
-		if status.State.Running == nil {
-			continue
-		}
-
-		command, commandErr := clabernetesinternaldirectpod.ApplicationRestartCommand(
-			action.PlanDigest,
-			target,
-		)
-		if commandErr != nil {
-			return commandErr
-		}
-
-		if err = r.DirectContainerExecutor(
-			ctx,
-			pod.GetNamespace(),
-			pod.GetName(),
-			name,
-			command,
-		); err != nil {
-			return fmt.Errorf("restarting direct application container %q: %w", name, err)
-		}
-	}
-
-	return nil
-}
-
-func directRestartTargets(
-	plan clabernetesinternaldeviceplan.Plan,
-	affectedNodeIDs []string,
-) ([]clabernetesinternaldeviceplan.ContainerPlan, error) {
-	affected := make(map[string]bool, len(affectedNodeIDs))
-	for _, nodeID := range affectedNodeIDs {
-		affected[nodeID] = true
-	}
-
-	targetIDs := map[string]bool{}
-
-	for _, node := range plan.Nodes {
-		if !affected[node.ID] {
-			continue
-		}
-
-		for _, containerID := range node.ContainerIDs {
-			targetIDs[containerID] = true
-		}
-	}
-
-	targets := make([]clabernetesinternaldeviceplan.ContainerPlan, 0, len(targetIDs))
-	for _, container := range plan.Containers {
-		if targetIDs[container.ID] {
-			targets = append(targets, container)
-			delete(targetIDs, container.ID)
-		}
-	}
-
-	if len(targets) == 0 || len(targetIDs) != 0 {
-		return nil, errors.New("planner-declared Restart targets are absent from the applied plan")
-	}
-
-	slices.SortFunc(targets, func(left, right clabernetesinternaldeviceplan.ContainerPlan) int {
-		return strings.Compare(left.ID, right.ID)
-	})
-
-	return targets, nil
-}
-
-func decodeDirectRestartBaseline(raw string) (directRestartBaseline, bool) {
-	baseline := directRestartBaseline{}
-	if raw == "" || json.Unmarshal([]byte(raw), &baseline) != nil || baseline.PlanDigest == "" ||
-		baseline.PodUID == "" || len(baseline.Containers) == 0 {
-		return directRestartBaseline{}, false
-	}
-
-	for _, container := range baseline.Containers {
-		if container.Name == "" || container.ContainerID == "" {
-			return directRestartBaseline{}, false
-		}
-	}
-
-	return baseline, true
-}
-
-func baselineTargetsMatch(
-	baseline directRestartBaseline,
-	targets []clabernetesinternaldeviceplan.ContainerPlan,
-) bool {
-	if len(baseline.Containers) != len(targets) {
-		return false
-	}
-
-	for index, target := range targets {
-		if baseline.Containers[index].Name !=
-			clabernetesinternaldirectpod.ApplicationContainerName(target.ID) {
-			return false
-		}
-	}
-
-	return true
-}
-
-func directConnectivityReadinessCommand(pod *k8scorev1.Pod) (string, []string) {
-	for _, container := range pod.Spec.InitContainers {
-		if container.Name != clabernetesinternaldirectpod.ConnectivityContainerName {
-			continue
-		}
-
-		command := clabernetesinternaldirectpod.ConnectivityReadinessCommand(container)
-		if len(command) == 0 {
-			return "", nil
-		}
-
-		return container.Name, command
-	}
-
-	return "", nil
-}
-
-func (r *Reconciler) completeDirectRestart(
-	ctx context.Context,
-	configMap *k8scorev1.ConfigMap,
-	stateKey string,
-) error {
-	updated := configMap.DeepCopy()
-	if updated.Annotations == nil {
-		updated.Annotations = map[string]string{}
-	}
-
-	updated.Annotations[directRestartCompletedAnnotation] = stateKey
-	if err := r.Client.Update(ctx, updated); err != nil {
-		return fmt.Errorf("recording completed direct application restart: %w", err)
-	}
-
-	return nil
 }
 
 func (r *Reconciler) currentOwnedDirectDeployment(
@@ -378,9 +95,9 @@ func (r *Reconciler) directConnectivityRevision(
 	}
 
 	if transition.Changed &&
-		transition.RequiredMode == clabernetesinternaldeviceplan.LinkApplyRecreate {
+		transition.RequiredMode != clabernetesinternaldeviceplan.LinkApplyLive {
 		return directConnectivityDecision{
-			LifecycleMode:   transition.RequiredMode,
+			LifecycleMode:   clabernetesinternaldeviceplan.LinkApplyRecreate,
 			AffectedNodeIDs: transition.AffectedNodeIDs,
 		}, nil
 	}
@@ -391,9 +108,18 @@ func (r *Reconciler) directConnectivityRevision(
 		desiredInput,
 		desiredPlan,
 	)
-	if err != nil ||
-		cumulativeTransition.RequiredMode == clabernetesinternaldeviceplan.LinkApplyRecreate {
+	if err != nil {
 		return directConnectivityDecision{}, nil //nolint:nilerr // an unevaluable cumulative transition deliberately falls back to the recreate path.
+	}
+
+	// Older controllers may have projected a Restart revision into a retained Pod. Finish
+	// that transition with a cold rollout even when the desired revision has not changed.
+	if cumulativeTransition.Changed &&
+		cumulativeTransition.RequiredMode != clabernetesinternaldeviceplan.LinkApplyLive {
+		return directConnectivityDecision{
+			LifecycleMode:   clabernetesinternaldeviceplan.LinkApplyRecreate,
+			AffectedNodeIDs: cumulativeTransition.AffectedNodeIDs,
+		}, nil
 	}
 
 	revision, err := clabernetesinternaldirectruntime.NewConnectivityRevisionForMode(

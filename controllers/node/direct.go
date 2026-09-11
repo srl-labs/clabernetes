@@ -438,10 +438,8 @@ func (r *Reconciler) reconcileDirect(
 	var keepPlanConfigMapName string
 	var keepConnectivityRevisionConfigMapName string
 	var currentDeployment *k8sappsv1.Deployment
-	var connectivityLifecycleAction directConnectivityLifecycleAction
-	var connectivityRevisionConfigMap *k8scorev1.ConfigMap
 	if retainPod {
-		connectivityRevisionConfigMap, err = r.ConnectivityRevisionConfigMapReconciler.Ensure(
+		connectivityRevisionConfigMap, err := r.ConnectivityRevisionConfigMapReconciler.Ensure(
 			ctx,
 			node,
 			connectivityRevision,
@@ -449,13 +447,12 @@ func (r *Reconciler) reconcileDirect(
 		if err != nil {
 			return err
 		}
-		if linkLifecycleMode == clabernetesinternaldeviceplan.LinkApplyLive ||
-			linkLifecycleMode == clabernetesinternaldeviceplan.LinkApplyRestart {
-			connectivityLifecycleAction = directConnectivityLifecycleAction{
+		if linkLifecycleMode == clabernetesinternaldeviceplan.LinkApplyLive {
+			connectivityLifecycleAction := directConnectivityLifecycleAction{
 				Mode: linkLifecycleMode, PlanDigest: connectivityRevision.DesiredPlanDigest,
 				AffectedNodeIDs: slices.Clone(connectivityDecision.AffectedNodeIDs),
 			}
-			connectivityRevisionConfigMap, err = r.ConnectivityRevisionConfigMapReconciler.
+			_, err = r.ConnectivityRevisionConfigMapReconciler.
 				RecordLifecycleAction(
 					ctx,
 					node,
@@ -466,7 +463,7 @@ func (r *Reconciler) reconcileDirect(
 				return err
 			}
 		} else {
-			connectivityLifecycleAction = directConnectivityLifecycleActionFrom(
+			connectivityLifecycleAction := directConnectivityLifecycleActionFrom(
 				connectivityRevisionConfigMap,
 				connectivityRevision.DesiredPlanDigest,
 			)
@@ -487,8 +484,7 @@ func (r *Reconciler) reconcileDirect(
 		if err != nil {
 			return err
 		}
-		// Assign, do not redeclare: reconcileDirectLinkRestart receives the outer variable.
-		connectivityRevisionConfigMap, err = r.ConnectivityRevisionConfigMapReconciler.Ensure(
+		connectivityRevisionConfigMap, err := r.ConnectivityRevisionConfigMapReconciler.Ensure(
 			ctx,
 			node,
 			connectivityRevision,
@@ -569,16 +565,6 @@ func (r *Reconciler) reconcileDirect(
 		directExposedPorts,
 		profile,
 		linkLifecycleMode,
-	); err != nil {
-		return err
-	}
-	if err = r.reconcileDirectLinkRestart(
-		ctx,
-		node,
-		currentDeployment,
-		connectivityRevisionConfigMap,
-		connectivityLifecycleAction,
-		statusPlan,
 	); err != nil {
 		return err
 	}
