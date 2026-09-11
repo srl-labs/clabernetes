@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"sort"
 
@@ -30,10 +31,13 @@ import (
 	ctrlruntimecontroller "sigs.k8s.io/controller-runtime/pkg/controller"
 	ctrlruntimeevent "sigs.k8s.io/controller-runtime/pkg/event"
 	ctrlruntimehandler "sigs.k8s.io/controller-runtime/pkg/handler"
+	ctrlruntimepredicate "sigs.k8s.io/controller-runtime/pkg/predicate"
 	ctrlruntimereconcile "sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 const profileReferenceField = "spec.profileRef.name"
+
+const defaultPlannerSessionConcurrency = 16
 
 // nodeCRKind is the Node CR kind used for owner references and watch setup.
 const nodeCRKind = "Node"
@@ -44,6 +48,7 @@ type Controller struct {
 	*clabernetescontrollers.BaseController
 
 	reconciler *Reconciler
+	session    *PlannerSessionReconciler
 }
 
 // NewController returns a new Controller.
@@ -81,12 +86,69 @@ func NewController(
 			&k8scorev1.PodLogOptions{Container: containerName},
 		).DoRaw(ctx)
 	})
-	reconciler.ImageDiscoveryReconciler.ReadLogs = readLogs
 	reconciler.PlannerReconciler.ReadLogs = readLogs
 
 	return &Controller{
 		BaseController: baseController,
 		reconciler:     reconciler,
+		session: &PlannerSessionReconciler{
+			Client: baseController.Client,
+			Reader: clabernetes.GetCtrlRuntimeMgr().GetAPIReader(),
+			Attach: newPlannerSessionAttacher(
+				clabernetes.GetKubeConfig(),
+				clabernetes.GetKubeClient(),
+			),
+			ImageMetadata:       reconciler.ImageMetadataResolver,
+			Certificates:        reconciler.CertificateReconciler,
+			ConfigManagerGetter: clabernetesconfig.GetManager,
+			Platform:            reconciler.DirectPlatform,
+		},
+	}
+}
+
+func newPlannerSessionAttacher(
+	config *clientgorest.Config,
+	client *kubernetes.Clientset,
+) PlannerSessionAttacher {
+	return func(
+		ctx context.Context,
+		namespace,
+		podName,
+		containerName string,
+		input io.Reader,
+		output,
+		stderr io.Writer,
+	) error {
+		if config == nil || client == nil || namespace == "" || podName == "" ||
+			containerName == "" || input == nil || output == nil || stderr == nil {
+			return errors.New("planner session attach identity is incomplete")
+		}
+		request := client.CoreV1().RESTClient().Post().
+			Namespace(namespace).
+			Resource("pods").
+			Name(podName).
+			SubResource("attach").
+			VersionedParams(&k8scorev1.PodAttachOptions{
+				Container: containerName,
+				Stdin:     true,
+				Stdout:    true,
+				Stderr:    true,
+			}, clientgoscheme.ParameterCodec)
+		executor, err := clientgoremotecommand.NewSPDYExecutor(
+			config,
+			http.MethodPost,
+			request.URL(),
+		)
+		if err != nil {
+			return fmt.Errorf("creating planner session attacher: %w", err)
+		}
+		if err = executor.StreamWithContext(ctx, clientgoremotecommand.StreamOptions{
+			Stdin: input, Stdout: output, Stderr: stderr,
+		}); err != nil {
+			return fmt.Errorf("attaching planner session: %w", err)
+		}
+
+		return nil
 	}
 }
 
@@ -158,6 +220,23 @@ func (c *Controller) SetupWithManager(mgr ctrlruntime.Manager) error {
 	)
 	if err != nil {
 		return fmt.Errorf("indexing Nodes by NodeProfile reference: %w", err)
+	}
+	if c.session == nil {
+		return errors.New("planner session reconciler is required")
+	}
+	if err = ctrlruntime.NewControllerManagedBy(mgr).
+		Named("clabernetes-planner-session").
+		WithOptions(ctrlruntimecontroller.Options{
+			MaxConcurrentReconciles: defaultPlannerSessionConcurrency,
+		}).
+		For(&k8scorev1.Pod{}).
+		WithEventFilter(ctrlruntimepredicate.NewPredicateFuncs(func(
+			object ctrlruntimeclient.Object,
+		) bool {
+			return object.GetLabels()[plannerSessionLabel] == plannerSessionValue
+		})).
+		Complete(c.session); err != nil {
+		return fmt.Errorf("setting up planner session controller: %w", err)
 	}
 
 	return ctrlruntime.NewControllerManagedBy(mgr).

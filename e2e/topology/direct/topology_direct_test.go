@@ -543,8 +543,8 @@ func observeDevicePod(t *testing.T, namespace, nodeName string) devicePodObserva
 	}
 }
 
-// waitForWorkerArtifactCollection asserts that completed planning and image-discovery worker
-// Pods are removed once their records are persisted rather than accumulating forever.
+// waitForWorkerArtifactCollection asserts that completed planner-session Pods are removed once
+// their records are persisted rather than accumulating forever.
 func waitForWorkerArtifactCollection(t *testing.T, namespace string) {
 	t.Helper()
 
